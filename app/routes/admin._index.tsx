@@ -1,5 +1,5 @@
 import { redirect } from "@remix-run/react";
 
 export const loader = () => {
-  return redirect("/dashboard");
+  return redirect("/admin/clients");
 };
