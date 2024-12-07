@@ -115,22 +115,6 @@ function BaseLayout({ children }: { children: React.ReactNode }) {
                     })),
                   ]}
                 />
-                {/* <Breadcrumb>
-                  <BreadcrumbList>
-                    {matches.filter(validateBreadcrumb).map((match, index) => (
-                      <li key={index}>
-                        {index > 0 && (
-                          <BreadcrumbSeparator className="hidden md:block" />
-                        )}
-                        <BreadcrumbItem className="hidden md:block">
-                          <BreadcrumbLink asChild>
-                            {match.handle.breadcrumb(match)}
-                          </BreadcrumbLink>
-                        </BreadcrumbItem>
-                      </li>
-                    ))}
-                  </BreadcrumbList>
-                </Breadcrumb> */}
               </div>
               <div className="flex-1" />
               <div className="flex items-center gap-2 px-4">

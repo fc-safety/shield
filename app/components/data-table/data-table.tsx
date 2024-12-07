@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 
+import { cn } from "~/lib/utils";
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar, DataTableToolbarProps } from "./data-table-toolbar";
 
@@ -75,9 +76,18 @@ export function DataTable<TData, TValue>({
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
+                {headerGroup.headers.map((header, idx) => {
                   return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      className={cn(
+                        idx === 0 ? "pl-4" : "",
+                        idx === table.getVisibleFlatColumns().length - 1
+                          ? "pr-4"
+                          : ""
+                      )}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -97,8 +107,14 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                  {row.getVisibleCells().map((cell, idx) => (
+                    <TableCell
+                      key={cell.id}
+                      className={cn(
+                        idx === 0 ? "pl-4" : "",
+                        idx === row.getVisibleCells().length - 1 ? "pr-4" : ""
+                      )}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()

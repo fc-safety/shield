@@ -30,6 +30,7 @@ export const assetManufacturers = [
 
 export type Asset = {
   id: string;
+  active: boolean;
   type: (typeof assetTypes)[number];
   tag: string;
   site: (typeof assetSites)[number];
@@ -59,6 +60,7 @@ function generateDemoAssets(count: number) {
 
     assets.push({
       id,
+      active: true,
       type,
       tag,
       site,
@@ -86,15 +88,77 @@ export interface AssetHistoryLog {
   details: string;
 }
 
+export const demoUsers = [
+  {
+    id: "U001",
+    name: "Alice Johnson",
+    username: "alicej",
+    email: "alicej@example.com",
+  },
+  {
+    id: "U002",
+    name: "Bob Smith",
+    username: "bobsmith",
+    email: "bobsmith@example.com",
+  },
+  {
+    id: "U003",
+    name: "Charlie Brown",
+    username: "charlieb",
+    email: "charlieb@example.com",
+  },
+  {
+    id: "U004",
+    name: "Dana White",
+    username: "danaw",
+    email: "danaw@example.com",
+  },
+  {
+    id: "U005",
+    name: "Evan Green",
+    username: "evang",
+    email: "evang@example.com",
+  },
+  {
+    id: "U006",
+    name: "Frank Brown",
+    username: "frankb",
+    email: "frankb@example.com",
+  },
+  {
+    id: "U007",
+    name: "Grace White",
+    username: "gracew",
+    email: "gracew@example.com",
+  },
+  {
+    id: "U008",
+    name: "Hank Green",
+    username: "hankg",
+    email: "hankg@example.com",
+  },
+  {
+    id: "U009",
+    name: "Ivan Brown",
+    username: "ivanb",
+    email: "ivanb@example.com",
+  },
+  {
+    id: "U010",
+    name: "Jack White",
+    username: "jackw",
+    email: "jackw@example.com",
+  },
+  {
+    id: "U011",
+    name: "Larry Green",
+    username: "larryg",
+    email: "larryg@example.com",
+  },
+];
+
 function generateDemoAssetHistoryLogs(count: number) {
   const actions = ["created", "updated", "deleted", "moved", "inspected"];
-  const users = [
-    { id: "U001", name: "Alice Johnson", username: "alicej" },
-    { id: "U002", name: "Bob Smith", username: "bobsmith" },
-    { id: "U003", name: "Charlie Brown", username: "charlieb" },
-    { id: "U004", name: "Dana White", username: "danaw" },
-    { id: "U005", name: "Evan Green", username: "evang" },
-  ];
   const detailsTemplates = [
     "Asset was {action} by {username}.",
     "Performed {action} on asset.",
@@ -111,7 +175,7 @@ function generateDemoAssetHistoryLogs(count: number) {
       Date.now() - Math.floor(Math.random() * 10000000000)
     );
     const action = actions[Math.floor(Math.random() * actions.length)];
-    const user = users[Math.floor(Math.random() * users.length)];
+    const user = demoUsers[Math.floor(Math.random() * demoUsers.length)];
     const detailsTemplate =
       detailsTemplates[Math.floor(Math.random() * detailsTemplates.length)];
     const details = detailsTemplate

@@ -6,6 +6,9 @@ import {
   CornerDownRight,
   MoreHorizontal,
   Plus,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldClose,
   SquareActivity,
   Trash,
   TriangleAlert,
@@ -70,11 +73,11 @@ const columns: ColumnDef<Asset>[] = [
     cell: ({ getValue }) => {
       const status = getValue();
       return status === "ok" ? (
-        <CheckCircle2 className="text-green-500" />
+        <ShieldCheck className="text-green-500" />
       ) : status === "warning" ? (
-        <TriangleAlert className="text-yellow-500" />
+        <ShieldAlert className="text-yellow-500" />
       ) : (
-        <XCircle className="text-red-500" />
+        <ShieldClose className="text-red-500" />
       );
     },
   },
