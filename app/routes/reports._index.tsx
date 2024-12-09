@@ -1,18 +1,16 @@
 import { Link, useLoaderData } from "@remix-run/react";
 import { ColumnDef } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import LocalizedFormat from "dayjs/plugin/localizedFormat";
+import RelativeTime from "dayjs/plugin/relativeTime";
 import {
-  CheckCircle2,
   ChevronDown,
   CornerDownRight,
+  Download,
+  FilePlus,
   MoreHorizontal,
-  Plus,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldClose,
-  SquareActivity,
+  Printer,
   Trash,
-  TriangleAlert,
-  XCircle,
 } from "lucide-react";
 import { getSelectColumn } from "~/components/data-table/columns";
 import { DataTable } from "~/components/data-table/data-table";
@@ -25,44 +23,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Asset, assetStatuses, assetTypes, demoAssets } from "~/lib/demo-data";
+import { Report } from "~/lib/demo-data";
+import { demoReports } from "~/lib/demo-data-sources/reports";
 
-const columns: ColumnDef<Asset>[] = [
-  getSelectColumn<Asset>(),
+dayjs.extend(LocalizedFormat);
+dayjs.extend(RelativeTime);
+
+const columns: ColumnDef<Report>[] = [
+  getSelectColumn<Report>(),
   {
-    accessorKey: "type",
+    accessorKey: "title",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Type" />
+      <DataTableColumnHeader column={column} title="Title" />
     ),
   },
   {
-    accessorKey: "tag",
+    accessorKey: "description",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Tag" />
+      <DataTableColumnHeader column={column} title="Description" />
     ),
   },
   {
-    accessorKey: "site",
+    accessorKey: "createdAt",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Site" />
+      <DataTableColumnHeader column={column} title="Created On" />
     ),
-  },
-  {
-    accessorKey: "location",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Location" />
-    ),
-  },
-  {
-    accessorKey: "placement",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Placement" />
-    ),
-  },
-  {
-    accessorKey: "manufactuer",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Manufactuer" />
+    cell: ({ getValue }) => (
+      <span title={dayjs(getValue() as string).format("llll")}>
+        {dayjs(getValue() as string).fromNow()}
+      </span>
     ),
   },
   {
@@ -70,16 +59,6 @@ const columns: ColumnDef<Asset>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
     ),
-    cell: ({ getValue }) => {
-      const status = getValue();
-      return status === "ok" ? (
-        <ShieldCheck className="text-green-500" />
-      ) : status === "warning" ? (
-        <ShieldAlert className="text-yellow-500" />
-      ) : (
-        <ShieldClose className="text-red-500" />
-      );
-    },
   },
   {
     id: "actions",
@@ -97,15 +76,19 @@ const columns: ColumnDef<Asset>[] = [
           <DropdownMenuContent align="end">
             {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
             <DropdownMenuItem asChild>
-              <Link to={`/assets/${asset.id}`}>
+              <Link to={`/reports/${asset.id}`}>
                 <CornerDownRight />
                 Details
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <SquareActivity />
-              Inspect
+              <Download />
+              Download
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Printer />
+              Print
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Trash />
@@ -120,44 +103,33 @@ const columns: ColumnDef<Asset>[] = [
 
 export const loader = () => {
   return {
-    assets: demoAssets,
+    reports: demoReports,
   };
 };
 
-export default function AssetsIndex() {
-  const data = useLoaderData<typeof loader>();
+export default function ReportsIndex() {
+  const { reports } = useLoaderData<typeof loader>();
 
   return (
     <>
       <DataTable
         columns={columns}
-        data={data.assets}
-        searchPlaceholder="Search assets..."
-        filters={({ table }) => [
-          {
-            column: table.getColumn("type"),
-            options: assetTypes.map((type) => ({ label: type, value: type })),
-            title: "Type",
-          },
-          {
-            column: table.getColumn("status"),
-            options: assetStatuses.map((type) => ({
-              label: type,
-              value: type,
-              icon:
-                type === "ok"
-                  ? CheckCircle2
-                  : type === "warning"
-                  ? TriangleAlert
-                  : XCircle,
-            })),
-            title: "Status",
-          },
-        ]}
+        data={reports}
+        searchPlaceholder="Search reports..."
+        initialState={{
+          sorting: [
+            {
+              id: "createdAt",
+              desc: true,
+            },
+          ],
+        }}
         actions={({ table }) => [
-          <Button key="add" size="sm">
-            <Plus />
-            Add Asset
+          <Button key="add" size="sm" asChild>
+            <Link to="/reports/build">
+              <FilePlus />
+              Build Report
+            </Link>
           </Button>,
           <DropdownMenu key="bulk-actions">
             <DropdownMenuTrigger asChild>
@@ -171,10 +143,6 @@ export default function AssetsIndex() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <SquareActivity />
-                Update Status
-              </DropdownMenuItem>
               <DropdownMenuItem>
                 <Trash />
                 Delete Selected

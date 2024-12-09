@@ -198,3 +198,17 @@ function generateDemoAssetHistoryLogs(count: number) {
 
 export const demoAssetHistoryLogs: AssetHistoryLog[] =
   generateDemoAssetHistoryLogs(100);
+
+export interface Report {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    username: string;
+  };
+}

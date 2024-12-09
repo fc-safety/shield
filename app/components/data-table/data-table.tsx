@@ -1,6 +1,7 @@
 import {
   ColumnDef,
   ColumnFiltersState,
+  InitialTableState,
   SortingState,
   VisibilityState,
   flexRender,
@@ -31,11 +32,13 @@ interface DataTableProps<TData, TValue>
   extends Omit<DataTableToolbarProps<TData>, "table"> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  initialState?: InitialTableState;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  initialState,
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
@@ -44,7 +47,9 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [sorting, setSorting] = React.useState<SortingState>(
+    initialState?.sorting ?? []
+  );
 
   const table = useReactTable({
     data,
@@ -55,6 +60,7 @@ export function DataTable<TData, TValue>({
       rowSelection,
       columnFilters,
     },
+    initialState,
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,

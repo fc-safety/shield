@@ -55,7 +55,18 @@ export default function AssetHistoryLogs({
 }: AssetHistoryLogsProps) {
   return (
     <>
-      <DataTable data={historyLogs} columns={columns} />
+      <DataTable
+        data={historyLogs}
+        columns={columns}
+        initialState={{
+          sorting: [
+            {
+              id: "date",
+              desc: true,
+            },
+          ],
+        }}
+      />
     </>
   );
 }
