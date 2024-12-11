@@ -5,6 +5,7 @@ import {
   assetSites,
   assetStatuses,
   assetTypes,
+  reportTypes,
 } from "./demo-data";
 
 export const assetSchema = z.object({
@@ -20,3 +21,15 @@ export const assetSchema = z.object({
 });
 
 export const assetSchemaResolver = zodResolver(assetSchema);
+
+export const buildReportSchema = z
+  .object({
+    id: z.string(),
+    title: z.string().min(1),
+    description: z.string(),
+    type: z.enum(reportTypes),
+    columns: z.array(z.string()),
+  })
+  .partial({ id: true });
+
+export const buildReportSchemaResolver = zodResolver(buildReportSchema);

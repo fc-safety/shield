@@ -31,6 +31,7 @@ export const assetManufacturers = [
 export type Asset = {
   id: string;
   active: boolean;
+  name?: string;
   type: (typeof assetTypes)[number];
   tag: string;
   site: (typeof assetSites)[number];
@@ -199,10 +200,13 @@ function generateDemoAssetHistoryLogs(count: number) {
 export const demoAssetHistoryLogs: AssetHistoryLog[] =
   generateDemoAssetHistoryLogs(100);
 
+export const reportTypes = ["asset", "inspection", "user", "location"] as const;
+
 export interface Report {
   id: string;
   title: string;
   description: string;
+  type: (typeof reportTypes)[number];
   status: string;
   createdAt: string;
   updatedAt: string;

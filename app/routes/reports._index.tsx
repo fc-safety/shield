@@ -33,6 +33,11 @@ const columns: ColumnDef<Report>[] = [
   getSelectColumn<Report>(),
   {
     accessorKey: "title",
+    cell: ({ getValue, row }) => (
+      <Link to={`/reports/${row.original.id}`} className="hover:underline">
+        {getValue() as string}
+      </Link>
+    ),
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Title" />
     ),

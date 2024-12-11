@@ -30,15 +30,27 @@ import { Asset, assetStatuses, assetTypes, demoAssets } from "~/lib/demo-data";
 const columns: ColumnDef<Asset>[] = [
   getSelectColumn<Asset>(),
   {
-    accessorKey: "type",
+    accessorKey: "name",
+    cell: ({ row, getValue }) => (
+      <Link to={`/assets/${row.original.id}`} className="hover:underline">
+        {(getValue() as string) ??
+          `${row.original.location} - ${row.original.type}`}
+      </Link>
+    ),
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Type" />
+      <DataTableColumnHeader column={column} title="Name" />
     ),
   },
   {
     accessorKey: "tag",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Tag" />
+    ),
+  },
+  {
+    accessorKey: "type",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Type" />
     ),
   },
   {
