@@ -1,6 +1,6 @@
-import { LoaderFunctionArgs } from "@remix-run/node";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { useLoaderData } from "react-router";
 import { useRemixForm } from "remix-hook-form";
 import { z } from "zod";
 import { DataTable } from "~/components/data-table/data-table";
@@ -26,15 +26,19 @@ import {
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { reportTypes } from "~/lib/demo-data";
+import { demoReports } from "~/lib/demo-data-sources/reports";
 import { buildReportSchema, buildReportSchemaResolver } from "~/lib/schema";
+import type { Route } from "../+types/root";
 
 export const handle = {
   breadcrumb: () => ({ label: "Build" }),
 };
 
-export const loader = ({ request }: LoaderFunctionArgs) => {
+export const loader = ({ params }: Route.LoaderArgs) => {
+  const { id } = params;
+  const report = (id && demoReports.find((report) => report.id === id)) || null;
   return {
-    report: null,
+    report,
   };
 };
 
@@ -48,7 +52,7 @@ const REPORT_TYPE_COLUMNS: Record<(typeof reportTypes)[number], string[]> = {
     "site",
     "location",
     "placement",
-    "manufactuer",
+    "manufacturer",
     "status",
   ],
   inspection: [
@@ -58,7 +62,7 @@ const REPORT_TYPE_COLUMNS: Record<(typeof reportTypes)[number], string[]> = {
     "site",
     "location",
     "placement",
-    "manufactuer",
+    "manufacturer",
     "status",
   ],
   user: ["name", "username", "email"],
@@ -73,9 +77,11 @@ const DEFAULT_REPORT_OPTIONS: TForm = {
 };
 
 export default function BuildReport() {
+  const { report } = useLoaderData<typeof loader>();
+
   const form = useRemixForm<TForm>({
     resolver: buildReportSchemaResolver,
-    defaultValues: DEFAULT_REPORT_OPTIONS,
+    defaultValues: report ?? DEFAULT_REPORT_OPTIONS,
     mode: "onChange",
   });
 

@@ -1,14 +1,12 @@
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import {
   Links,
   Meta,
-  MetaFunction,
   Outlet,
   Scripts,
   ScrollRestoration,
   useMatches,
   useRouteLoaderData,
-} from "@remix-run/react";
+} from "react-router";
 
 import {
   PreventFlashOnWrongTheme,
@@ -27,15 +25,16 @@ import {
 } from "~/components/ui/sidebar";
 import { cn, validateBreadcrumb } from "~/lib/utils";
 import "~/tailwind.css";
+import type { Route } from "./+types/root";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
   return {
     theme: getTheme(),
   };
 }
 
-export const links: LinksFunction = () => [
+export const links: Route.LinksFunction = () => [
   // { rel: "preconnect", href: "https://fonts.googleapis.com" },
   // {
   //   rel: "preconnect",
@@ -54,7 +53,7 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export const meta: MetaFunction = ({ matches }) => {
+export const meta: Route.MetaFunction = ({ matches }) => {
   let title = "Shield | FC Safety";
 
   const breadcrumb = matches

@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
-import { Asset, assetTypes } from "~/lib/demo-data";
+import { type Asset, assetTypes } from "~/lib/demo-data";
 import { assetSchema, assetSchemaResolver } from "~/lib/schema";
 import {
   Form,

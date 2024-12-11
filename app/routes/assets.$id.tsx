@@ -1,11 +1,6 @@
-import {
-  ActionFunction,
-  ActionFunctionArgs,
-  LoaderFunctionArgs,
-} from "@remix-run/node";
-import { redirect, useLoaderData } from "@remix-run/react";
 import { ShieldAlert, ShieldCheck, ShieldClose } from "lucide-react";
-import { PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
+import { redirect, useLoaderData } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import AssetDetailsForm from "~/components/assets/asset-details-form";
 import AssetHistoryLogs from "~/components/assets/asset-history-logs";
@@ -16,14 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { demoAssetHistoryLogs, demoAssets } from "~/lib/demo-data";
 import { assetSchemaResolver } from "~/lib/schema";
 import { cn } from "~/lib/utils";
+import type { Route } from "../+types/root";
 
 export const handle = {
   breadcrumb: () => ({ label: "Details" }),
 };
 
-export const action: ActionFunction = async ({
-  request,
-}: ActionFunctionArgs) => {
+export const action = async ({ request }: Route.ActionArgs) => {
   const { data, errors } = await getValidatedFormData(
     request,
     assetSchemaResolver
@@ -43,7 +37,7 @@ export const action: ActionFunction = async ({
   return redirect("/assets/" + asset.id);
 };
 
-export const loader = ({ params }: LoaderFunctionArgs) => {
+export const loader = ({ params }: Route.LoaderArgs) => {
   const { id } = params;
   const asset = demoAssets.find((asset) => asset.id === id);
 

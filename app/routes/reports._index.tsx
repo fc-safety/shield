@@ -1,5 +1,4 @@
-import { Link, useLoaderData } from "@remix-run/react";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import LocalizedFormat from "dayjs/plugin/localizedFormat";
 import RelativeTime from "dayjs/plugin/relativeTime";
@@ -12,6 +11,7 @@ import {
   Printer,
   Trash,
 } from "lucide-react";
+import { Link, useLoaderData } from "react-router";
 import { getSelectColumn } from "~/components/data-table/columns";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Report } from "~/lib/demo-data";
+import { type Report } from "~/lib/demo-data";
 import { demoReports } from "~/lib/demo-data-sources/reports";
 
 dayjs.extend(LocalizedFormat);

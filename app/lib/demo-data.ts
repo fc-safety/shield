@@ -37,7 +37,7 @@ export type Asset = {
   site: (typeof assetSites)[number];
   location: string;
   placement: string;
-  manufactuer: (typeof assetManufacturers)[number];
+  manufacturer: (typeof assetManufacturers)[number];
   status: (typeof assetStatuses)[number];
 };
 
@@ -67,7 +67,7 @@ function generateDemoAssets(count: number) {
       site,
       location,
       placement,
-      manufactuer: manufacturer,
+      manufacturer,
       status,
     });
   }
@@ -207,6 +207,7 @@ export interface Report {
   title: string;
   description: string;
   type: (typeof reportTypes)[number];
+  columns: string[];
   status: string;
   createdAt: string;
   updatedAt: string;

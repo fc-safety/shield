@@ -10,13 +10,13 @@ interface BreadcrumbItem {
 }
 
 export function validateBreadcrumb<
-  M extends { handle?: unknown },
+  M extends { handle?: unknown } | undefined,
   T extends {
     breadcrumb: (match: M) => BreadcrumbItem;
   }
 >(match: M): match is M & { handle: T } {
   return (
-    !!match.handle &&
+    !!match?.handle &&
     typeof match.handle === "object" &&
     "breadcrumb" in match.handle &&
     typeof match.handle.breadcrumb === "function"

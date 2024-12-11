@@ -16,7 +16,7 @@ export const assetSchema = z.object({
   site: z.enum(assetSites),
   location: z.string(),
   placement: z.string(),
-  manufactuer: z.enum(assetManufacturers),
+  manufacturer: z.enum(assetManufacturers),
   status: z.enum(assetStatuses),
 });
 

@@ -1,9 +1,9 @@
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  InitialTableState,
-  SortingState,
-  VisibilityState,
+  type ColumnDef,
+  type ColumnFiltersState,
+  type InitialTableState,
+  type SortingState,
+  type VisibilityState,
   flexRender,
   getCoreRowModel,
   getFacetedRowModel,
@@ -26,7 +26,10 @@ import {
 
 import { cn } from "~/lib/utils";
 import { DataTablePagination } from "./data-table-pagination";
-import { DataTableToolbar, DataTableToolbarProps } from "./data-table-toolbar";
+import {
+  DataTableToolbar,
+  type DataTableToolbarProps,
+} from "./data-table-toolbar";
 
 interface DataTableProps<TData, TValue>
   extends Omit<DataTableToolbarProps<TData>, "table"> {

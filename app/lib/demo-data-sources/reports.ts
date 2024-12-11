@@ -1,10 +1,12 @@
-import { Report } from "../demo-data";
+import type { Report } from "../demo-data";
 
 export const demoReports: Report[] = [
   {
     id: "1",
     title: "Asset Inventory Overview",
     description: "An overview of all assets currently in inventory.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -18,6 +20,8 @@ export const demoReports: Report[] = [
     id: "2",
     title: "Asset Utilization Trends",
     description: "Insights into how assets are being utilized over time.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -32,6 +36,8 @@ export const demoReports: Report[] = [
     title: "Underperforming Assets Report",
     description:
       "Identify assets that are not meeting performance expectations.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -45,6 +51,8 @@ export const demoReports: Report[] = [
     id: "4",
     title: "Asset Depreciation Analysis",
     description: "A detailed analysis of asset depreciation values.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -58,6 +66,8 @@ export const demoReports: Report[] = [
     id: "5",
     title: "Asset Repair History",
     description: "A history of repairs performed on all assets.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -72,6 +82,8 @@ export const demoReports: Report[] = [
     title: "Assets Near End of Life",
     description:
       "Identify assets that are nearing the end of their usable life.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -85,6 +97,8 @@ export const demoReports: Report[] = [
     id: "7",
     title: "Newly Acquired Assets",
     description: "Track recently acquired assets.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -99,6 +113,8 @@ export const demoReports: Report[] = [
     title: "Idle Assets by Location",
     description:
       "Report on assets that are not actively being used, grouped by location.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -113,6 +129,8 @@ export const demoReports: Report[] = [
     title: "Asset Maintenance Schedule Compliance",
     description:
       "Check if maintenance schedules are being adhered to for assets.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",
@@ -126,6 +144,8 @@ export const demoReports: Report[] = [
     id: "10",
     title: "Top 10 Most Valuable Assets",
     description: "List of the most valuable assets currently in inventory.",
+    type: "asset",
+    columns: ["name", "tag", "type", "manufacturer"],
     status: "active",
     createdAt: "2024-12-01T12:00:00Z",
     updatedAt: "2024-12-01T12:00:00Z",

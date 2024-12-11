@@ -1,5 +1,5 @@
 import { createThemeSessionResolver } from "remix-themes";
-import { createCookieSessionStorage } from "@remix-run/node";
+import { createCookieSessionStorage } from "react-router";
 
 const isProduction = process.env.NODE_ENV === "production";
 const domain = process.env.APP_DOMAIN;
