@@ -5,6 +5,7 @@ import { useRemixForm } from "remix-hook-form";
 import { z } from "zod";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import { DateRangePicker } from "~/components/date-range-picker";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
@@ -229,6 +230,19 @@ function ReportOptionsForm({
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea {...field} placeholder="(Optional)" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="dateRange"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date Range</FormLabel>
+              <FormControl>
+                <DateRangePicker {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

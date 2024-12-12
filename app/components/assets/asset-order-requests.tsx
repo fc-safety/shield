@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import { add } from "date-fns";
 import { useRemixForm } from "remix-hook-form";
 import { Button } from "~/components/ui/button";
 import {
@@ -13,16 +13,19 @@ import {
 import {
   Form,
   FormDescription,
+  FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
+import { DatePicker } from "../date-picker";
+
+const DEFAULT_REQUESTED_BY_DATE = add(new Date(), { days: 2 });
 
 export default function AssetOrderRequests() {
   const orderRequestForm = useRemixForm({
     defaultValues: {
-      requestedByDate: dayjs().add(2, "day").format("YYYY-MM-DD"),
+      requestedByDate: DEFAULT_REQUESTED_BY_DATE,
     },
   });
 
@@ -51,21 +54,27 @@ export default function AssetOrderRequests() {
                   request.
                 </DialogDescription>
               </DialogHeader>
-              <FormItem>
-                <FormLabel>
-                  How soon do you need the request fulfilled?
-                </FormLabel>
-                <Input
-                  type="date"
-                  min={dayjs().add(2, "day").format("YYYY-MM-DD")}
-                  className="col-span-3"
-                  {...orderRequestForm.register("requestedByDate")}
-                />
-                <FormMessage />
-                <FormDescription>
-                  Requests need a lead time of at least 2 days.
-                </FormDescription>
-              </FormItem>
+              <FormField
+                control={orderRequestForm.control}
+                name="requestedByDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      How soon do you need the request fulfilled?
+                    </FormLabel>
+                    <DatePicker
+                      min={DEFAULT_REQUESTED_BY_DATE}
+                      className="w-full"
+                      {...field}
+                    />
+                    <FormMessage />
+                    <FormDescription>
+                      Requests need a lead time of at least 2 days.
+                    </FormDescription>
+                  </FormItem>
+                )}
+              />
+
               <DialogFooter>
                 <Button type="submit">Submit</Button>
               </DialogFooter>

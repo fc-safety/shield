@@ -1,13 +1,12 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import dayjs from "dayjs";
-import LocalizedFormat from "dayjs/plugin/localizedFormat";
-import RelativeTime from "dayjs/plugin/relativeTime";
+import { format, formatDistanceToNow } from "date-fns";
 import {
   ChevronDown,
   CornerDownRight,
   Download,
   FilePlus,
   MoreHorizontal,
+  Pencil,
   Printer,
   Trash,
 } from "lucide-react";
@@ -25,9 +24,6 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { type Report } from "~/lib/demo-data";
 import { demoReports } from "~/lib/demo-data-sources/reports";
-
-dayjs.extend(LocalizedFormat);
-dayjs.extend(RelativeTime);
 
 const columns: ColumnDef<Report>[] = [
   getSelectColumn<Report>(),
@@ -54,8 +50,11 @@ const columns: ColumnDef<Report>[] = [
       <DataTableColumnHeader column={column} title="Created On" />
     ),
     cell: ({ getValue }) => (
-      <span title={dayjs(getValue() as string).format("llll")}>
-        {dayjs(getValue() as string).fromNow()}
+      <span title={format(getValue() as string, "PPpp")}>
+        {formatDistanceToNow(getValue() as string, {
+          addSuffix: true,
+          includeSeconds: true,
+        })}
       </span>
     ),
   },
@@ -84,6 +83,12 @@ const columns: ColumnDef<Report>[] = [
               <Link to={`/reports/${asset.id}`}>
                 <CornerDownRight />
                 Details
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to={`/reports/build/${asset.id}`}>
+                <Pencil />
+                Edit
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

@@ -208,6 +208,10 @@ export interface Report {
   description: string;
   type: (typeof reportTypes)[number];
   columns: string[];
+  dateRange?: {
+    from: Date;
+    to: Date;
+  };
   status: string;
   createdAt: string;
   updatedAt: string;

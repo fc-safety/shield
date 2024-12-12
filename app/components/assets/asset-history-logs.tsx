@@ -1,13 +1,8 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import dayjs from "dayjs";
-import LocalizedFormat from "dayjs/plugin/localizedFormat";
-import RelativeTime from "dayjs/plugin/relativeTime";
+import { format, formatDistanceToNow } from "date-fns";
 import { type AssetHistoryLog } from "~/lib/demo-data";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
-
-dayjs.extend(LocalizedFormat);
-dayjs.extend(RelativeTime);
 
 interface AssetHistoryLogsProps {
   historyLogs: AssetHistoryLog[];
@@ -21,8 +16,11 @@ const columns: ColumnDef<AssetHistoryLog>[] = [
       <DataTableColumnHeader column={column} title="Date" />
     ),
     cell: ({ getValue }) => (
-      <span title={dayjs(getValue() as string).format("llll")}>
-        {dayjs(getValue() as string).fromNow()}
+      <span title={format(getValue() as string, "PPpp")}>
+        {formatDistanceToNow(getValue() as string, {
+          addSuffix: true,
+          includeSeconds: true,
+        })}
       </span>
     ),
   },
