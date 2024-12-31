@@ -42,7 +42,9 @@ export const buildUser = async (
 
   if (response.status === 401) {
     try {
-      const refreshedTokens = await strategy.refreshToken(refreshToken);
+      const refreshedTokens = await strategy.then((s) =>
+        s.refreshToken(refreshToken)
+      );
       accessToken = refreshedTokens.accessToken();
       refreshToken = refreshedTokens.refreshToken();
     } catch (e) {
@@ -66,7 +68,7 @@ export const buildUser = async (
   } satisfies User;
 };
 
-export const strategy = await OAuth2Strategy.discover<Tokens>(
+export const strategy = OAuth2Strategy.discover<Tokens>(
   ISSUER_URL,
   {
     clientId: CLIENT_ID,
@@ -82,4 +84,4 @@ export const strategy = await OAuth2Strategy.discover<Tokens>(
   }
 );
 
-authenticator.use(strategy, "oauth2");
+strategy.then((s) => authenticator.use(s, "oauth2"));

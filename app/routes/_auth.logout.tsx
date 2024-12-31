@@ -12,7 +12,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const tokens = session.get("tokens");
   if (tokens) {
-    await strategy.revokeToken(tokens.accessToken);
+    await strategy.then((s) => s.revokeToken(tokens.accessToken));
     logoutUrl = URL.parse(LOGOUT_URL);
     logoutUrl?.searchParams.set("client_id", CLIENT_ID);
 
