@@ -15,6 +15,7 @@ export const CLIENT_SECRET = getNotEmptyVar("CLIENT_SECRET");
 export const ISSUER_URL = getNotEmptyVar("ISSUER_URL");
 export const USERINFO_URL = getNotEmptyVar("USERINFO_URL");
 export const LOGOUT_URL = getNotEmptyVar("LOGOUT_URL");
+export const REDIRECT_URL = getNotEmptyVar("REDIRECT_URL");
 export const SESSION_SECRET = getNotEmptyVar("SESSION_SECRET");
 
 // API

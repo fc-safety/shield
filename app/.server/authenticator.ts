@@ -1,6 +1,12 @@
 import { Authenticator } from "remix-auth";
 import { OAuth2Strategy } from "remix-auth-oauth2";
-import { CLIENT_ID, CLIENT_SECRET, ISSUER_URL, USERINFO_URL } from "./config";
+import {
+  CLIENT_ID,
+  CLIENT_SECRET,
+  ISSUER_URL,
+  REDIRECT_URL,
+  USERINFO_URL,
+} from "./config";
 
 export interface Tokens {
   accessToken: string;
@@ -73,7 +79,7 @@ export const strategy = OAuth2Strategy.discover<Tokens>(
   {
     clientId: CLIENT_ID,
     clientSecret: CLIENT_SECRET,
-    redirectURI: "http://localhost:5173/callback",
+    redirectURI: REDIRECT_URL,
     scopes: ["openid", "email", "profile"], // optional
   },
   async ({ tokens }) => {
