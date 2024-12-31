@@ -22,8 +22,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { type Report } from "~/lib/demo-data";
-import { demoReports } from "~/lib/demo-data-sources/reports";
+
+interface Report {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  status: string;
+}
 
 const columns: ColumnDef<Report>[] = [
   getSelectColumn<Report>(),
@@ -113,7 +119,7 @@ const columns: ColumnDef<Report>[] = [
 
 export const loader = () => {
   return {
-    reports: demoReports,
+    reports: [],
   };
 };
 

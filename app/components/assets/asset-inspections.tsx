@@ -1,16 +1,16 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
-import { type AssetHistoryLog } from "~/lib/demo-data";
+import type { Inspection } from "~/lib/models";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 
 interface AssetHistoryLogsProps {
-  historyLogs: AssetHistoryLog[];
+  inspections: Inspection[];
 }
 
-const columns: ColumnDef<AssetHistoryLog>[] = [
+const columns: ColumnDef<Inspection>[] = [
   {
-    accessorKey: "timestamp",
+    accessorKey: "createdOn",
     id: "date",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Date" />
@@ -34,27 +34,28 @@ const columns: ColumnDef<AssetHistoryLog>[] = [
     ),
   },
   {
-    accessorKey: "user.name",
     id: "user",
+    accessorFn: (row) =>
+      `${row.inspector?.firstName} ${row.inspector?.lastName}`,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="User" />
     ),
   },
   {
-    accessorKey: "details",
+    accessorKey: "comments",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Details" />
+      <DataTableColumnHeader column={column} title="Comments" />
     ),
   },
 ];
 
-export default function AssetHistoryLogs({
-  historyLogs,
+export default function AssetInspections({
+  inspections,
 }: AssetHistoryLogsProps) {
   return (
     <>
       <DataTable
-        data={historyLogs}
+        data={inspections}
         columns={columns}
         initialState={{
           sorting: [

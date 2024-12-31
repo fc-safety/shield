@@ -31,7 +31,9 @@ export default function AssetOrderRequests() {
 
   return (
     <div className="space-y-4">
-      <p className="text-muted-foreground text-xs">No active order requests.</p>
+      <p className="text-muted-foreground text-xs">
+        No active supply requests.
+      </p>
 
       <Dialog>
         <Form {...orderRequestForm}>
@@ -43,12 +45,12 @@ export default function AssetOrderRequests() {
           >
             <DialogTrigger asChild>
               <Button type="submit" variant="secondary">
-                Create Order Request
+                Create Supply Request
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
-                <DialogTitle>Order Request</DialogTitle>
+                <DialogTitle>Supply Request</DialogTitle>
                 <DialogDescription>
                   Please fill out additional details needed to create the order
                   request.

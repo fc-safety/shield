@@ -1,4 +1,5 @@
 import {
+  data,
   Links,
   Meta,
   Outlet,
@@ -8,12 +9,13 @@ import {
   useRouteLoaderData,
 } from "react-router";
 
+import type { PropsWithChildren } from "react";
 import {
   PreventFlashOnWrongTheme,
   ThemeProvider,
   useTheme,
 } from "remix-themes";
-import { themeSessionResolver } from "~/.server/sessions";
+import { requireUserSession, themeSessionResolver } from "~/.server/sessions";
 import { AppSidebar } from "~/components/app-sidebar";
 import { BreadcrumbResponsive } from "~/components/breadcrumb-responsive";
 import { ModeToggle } from "~/components/mode-toggle";
@@ -29,9 +31,20 @@ import type { Route } from "./+types/root";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
-  return {
-    theme: getTheme(),
-  };
+
+  const { user, sessionToken } = await requireUserSession(request);
+
+  return data(
+    {
+      theme: getTheme(),
+      user,
+    },
+    {
+      headers: {
+        "Set-Cookie": sessionToken,
+      },
+    }
+  );
 }
 
 export const links: Route.LinksFunction = () => [
@@ -78,7 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function BaseLayout({ children }: { children: React.ReactNode }) {
+function BaseLayout({ children }: PropsWithChildren) {
   const data = useRouteLoaderData<typeof loader>("root");
   const [theme] = useTheme();
   const matches = useMatches();
@@ -94,7 +107,7 @@ function BaseLayout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <SidebarProvider>
-          <AppSidebar />
+          <AppSidebar user={data?.user} />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
               <div className="flex items-center gap-2 px-2 sm:px-4">

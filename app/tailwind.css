@@ -48,10 +48,10 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* CUSTOM */
-    --chart-status-ready: 141 98% 38%;
-    --chart-status-overdue: 55 92% 60%;
-    --chart-status-expired: 6 92% 60%;
-    --chart-status-never: 0 0% 88%;
+    --chart-status-ok: 141 98% 38%;
+    --chart-status-warning: 55 92% 60%;
+    --chart-status-error: 6 92% 60%;
+    /* --chart-status-never: 0 0% 88%; */
   }
   .dark,
   :root[class~="dark"] {
@@ -89,10 +89,10 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* CUSTOM */
-    --chart-status-ready: 142 88% 38%;
-    --chart-status-overdue: 50 92% 50%;
-    --chart-status-expired: 6 92% 40%;
-    --chart-status-never: 0 0% 24%;
+    --chart-status-ok: 142 88% 38%;
+    --chart-status-warning: 50 92% 50%;
+    --chart-status-error: 6 92% 40%;
+    /* --chart-status-never: 0 0% 24%; */
   }
 }
 

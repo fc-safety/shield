@@ -1,5 +1,8 @@
-import { DemoChart1 } from "~/components/demo/demo-chart-1";
-import { DemoChart2 } from "~/components/demo/demo-chart-2";
+import { InspectionSummaryChart } from "~/components/dashboard/inspection-summary-chart";
+import { LocationReadinessChart } from "~/components/dashboard/location-readiness-chart";
+import type { Asset } from "~/lib/models";
+import { countBy } from "~/lib/utils";
+import type { Route } from "./+types/dashboard";
 
 export const handle = {
   breadcrumb: () => ({
@@ -7,12 +10,27 @@ export const handle = {
   }),
 };
 
-export default function Dashboard() {
+const demoAssets: Asset[] = [];
+
+export const loader = () => {
+  return {
+    inspectionSummaryData: countBy(demoAssets, "status").map(
+      ({ status, count }) => ({
+        status,
+        totalAssets: count,
+      })
+    ),
+  };
+};
+
+export default function Dashboard({
+  loaderData: { inspectionSummaryData },
+}: Route.ComponentProps) {
   return (
     <div className="flex flex-1 flex-col gap-4 grow">
       <div className="grid auto-rows-min gap-2 sm:gap-4 lg:grid-cols-2 3xl:grid-cols-3">
-        <DemoChart1 />
-        <DemoChart2 />
+        <InspectionSummaryChart data={inspectionSummaryData} />
+        <LocationReadinessChart />
         <div className="aspect-video rounded-xl bg-muted/50" />
         <div className="aspect-video rounded-xl bg-muted/50" />
         <div className="aspect-video rounded-xl bg-muted/50" />

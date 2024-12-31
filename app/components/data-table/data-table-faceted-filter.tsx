@@ -19,11 +19,12 @@ import {
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { Separator } from "~/components/ui/separator";
-import { cn } from "~/lib/utils";
+import { asArray, cn } from "~/lib/utils";
 
 export interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;
   title?: string;
+  multiple?: boolean;
   options: {
     label: string;
     value: string;
@@ -34,10 +35,13 @@ export interface DataTableFacetedFilterProps<TData, TValue> {
 export function DataTableFacetedFilter<TData, TValue>({
   column,
   title,
+  multiple = false,
   options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
-  const selectedValues = new Set(column?.getFilterValue() as string[]);
+  const selectedValues = new Set(
+    asArray<string>(column?.getFilterValue() as string[])
+  );
 
   return (
     <Popover>
@@ -95,6 +99,9 @@ export function DataTableFacetedFilter<TData, TValue>({
                       if (isSelected) {
                         selectedValues.delete(option.value);
                       } else {
+                        if (selectedValues.size > 0 && !multiple) {
+                          selectedValues.clear();
+                        }
                         selectedValues.add(option.value);
                       }
                       const filterValues = Array.from(selectedValues);

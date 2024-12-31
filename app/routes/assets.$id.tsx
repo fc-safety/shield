@@ -1,62 +1,61 @@
-import { ShieldAlert, ShieldCheck, ShieldClose } from "lucide-react";
 import { type PropsWithChildren } from "react";
-import { redirect, useLoaderData } from "react-router";
+import { redirect } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
+import { deleteAsset, getAsset, updateAsset } from "~/.server/api";
 import AssetDetailsForm from "~/components/assets/asset-details-form";
-import AssetHistoryLogs from "~/components/assets/asset-history-logs";
+import AssetInspections from "~/components/assets/asset-inspections";
 import AssetOrderRequests from "~/components/assets/asset-order-requests";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { demoAssetHistoryLogs, demoAssets } from "~/lib/demo-data";
-import { assetSchemaResolver } from "~/lib/schema";
+import { updateAssetSchemaResolver } from "~/lib/schema";
 import { cn } from "~/lib/utils";
-import type { Route } from "../+types/root";
+import type { Route } from "./+types/assets.$id";
 
 export const handle = {
   breadcrumb: () => ({ label: "Details" }),
 };
 
-export const action = async ({ request }: Route.ActionArgs) => {
-  const { data, errors } = await getValidatedFormData(
-    request,
-    assetSchemaResolver
-  );
-
-  if (errors) {
-    throw Response.json({ errors }, { status: 400 });
-  }
-
-  const asset = demoAssets.find((asset) => asset.id === data?.id);
-
-  if (!asset) {
-    throw new Response("Asset not found", { status: 404 });
-  }
-
-  Object.assign(asset, data ?? {});
-  return redirect("/assets/" + asset.id);
-};
-
-export const loader = ({ params }: Route.LoaderArgs) => {
+export const action = async ({ request, params }: Route.ActionArgs) => {
   const { id } = params;
-  const asset = demoAssets.find((asset) => asset.id === id);
-
-  if (!asset) {
-    throw new Response("Asset not found", { status: 404 });
+  if (!id) {
+    throw new Response("No Asset ID", { status: 400 });
   }
 
-  return {
-    asset,
-    historyLogs: demoAssetHistoryLogs,
-  };
+  if (request.method === "POST" || request.method === "PATCH") {
+    const { data, errors } = await getValidatedFormData(
+      request,
+      updateAssetSchemaResolver
+    );
+
+    if (errors) {
+      throw Response.json({ errors }, { status: 400 });
+    }
+
+    return updateAsset(request, id, data);
+  } else if (request.method === "DELETE") {
+    await deleteAsset(request, id);
+    return redirect("/assets");
+  }
+
+  throw new Response("Invalid method", { status: 405 });
 };
 
-export default function AssetDetails() {
-  const { asset, historyLogs } = useLoaderData<typeof loader>();
+export const loader = async ({ params, request }: Route.LoaderArgs) => {
+  const { id } = params;
+  if (!id) {
+    throw new Response("No Asset ID", { status: 400 });
+  }
 
+  return getAsset(request, id);
+};
+
+export default function AssetDetails({
+  loaderData: asset,
+}: Route.ComponentProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-      <AuxiliaryCard title="Compliance">
+    <div className="grid grid-cols-6 gap-2 sm:gap-4">
+      {/* <AuxiliaryCard title="Compliance">
         <div className="flex flex-col items-center gap-2 h-full pt-2">
           {asset.status === "ok" ? (
             <ShieldCheck className="text-primary size-16" />
@@ -73,8 +72,8 @@ export default function AssetDetails() {
               : "Not Compliant"}
           </p>
         </div>
-      </AuxiliaryCard>
-      <AuxiliaryCard title="Order Requests">
+      </AuxiliaryCard> */}
+      <AuxiliaryCard title="Supply Requests">
         <AssetOrderRequests />
       </AuxiliaryCard>
       <AuxiliaryCard title="Notifications">
@@ -90,7 +89,7 @@ export default function AssetDetails() {
           </Button>
         </div>
       </AuxiliaryCard>
-      <Card className="col-span-2">
+      <Card className="col-span-3">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             Asset Details
@@ -101,12 +100,20 @@ export default function AssetDetails() {
           <AssetDetailsForm asset={asset} />
         </CardContent>
       </Card>
-      <Card className="col-span-2">
+      <Card className="col-span-3">
         <CardHeader>
-          <CardTitle>History</CardTitle>
+          <CardTitle>Consumables</CardTitle>
         </CardHeader>
         <CardContent>
-          <AssetHistoryLogs historyLogs={historyLogs} />
+          {/* <AssetInspections historyLogs={historyLogs} /> */}
+        </CardContent>
+      </Card>
+      <Card className="col-span-full">
+        <CardHeader>
+          <CardTitle>Inspections</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AssetInspections inspections={asset.inspections ?? []} />
         </CardContent>
       </Card>
     </div>
@@ -118,7 +125,7 @@ function AuxiliaryCard({
   children,
 }: PropsWithChildren<{ title: string }>) {
   return (
-    <Card className="col-span-2 md:col-span-1 lg:col-span-2 xl:col-span-1">
+    <Card className="col-span-full md:col-span-2">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>

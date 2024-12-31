@@ -1,4 +1,3 @@
-import { Link, NavLink } from "react-router";
 import {
   BookOpenText,
   Boxes,
@@ -13,6 +12,8 @@ import {
   Shield,
   User2,
 } from "lucide-react";
+import { Link, NavLink } from "react-router";
+import type { User } from "~/.server/authenticator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +34,11 @@ import {
   SidebarRail,
 } from "~/components/ui/sidebar";
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  user?: User;
+}
+
+export function AppSidebar({ user }: AppSidebarProps) {
   const items = [
     {
       groupTitle: "Application",
@@ -151,7 +156,7 @@ export function AppSidebar() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
-                  <User2 /> john.doe@example.com
+                  <User2 /> {user?.name ?? user?.email ?? "My Account"}
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
@@ -165,8 +170,10 @@ export function AppSidebar() {
                 <DropdownMenuItem>
                   <span>Billing</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Sign out</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/logout">
+                    <span>Sign out</span>
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

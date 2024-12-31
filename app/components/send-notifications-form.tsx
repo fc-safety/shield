@@ -23,25 +23,28 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
-import { demoUsers } from "~/lib/demo-data";
 import { cn } from "~/lib/utils";
 
-type User = (typeof demoUsers)[number];
+type Person = {
+  id: string;
+  name: string;
+  email: string;
+};
 
 export function SendNotificationsForm() {
   const [open, setOpen] = useState(false);
-  const users = demoUsers;
+  const users: Person[] = [];
   const notificationsForm = useRemixForm({
     defaultValues: {
-      recipients: [] as User[],
+      recipients: [] as Person[],
     },
   });
   const { watch, setValue } = notificationsForm;
 
   const recipients = watch("recipients");
 
-  const [selectionQueue, setSelectionQueue] = useState<User[]>([]);
-  const [deselectionQueue, setDeselectionQueue] = useState<User[]>([]);
+  const [selectionQueue, setSelectionQueue] = useState<Person[]>([]);
+  const [deselectionQueue, setDeselectionQueue] = useState<Person[]>([]);
 
   const flushSelectedQueue = useCallback(() => {
     if (selectionQueue.length > 0) {

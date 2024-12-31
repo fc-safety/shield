@@ -259,13 +259,23 @@ const ChartLegend = RechartsPrimitive.Legend;
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
-    Pick<RechartsPrimitive.LegendProps, "payload" | "verticalAlign"> & {
+    Pick<
+      RechartsPrimitive.LegendProps,
+      "payload" | "verticalAlign" | "align"
+    > & {
       hideIcon?: boolean;
       nameKey?: string;
     }
 >(
   (
-    { className, hideIcon = false, payload, verticalAlign = "bottom", nameKey },
+    {
+      className,
+      hideIcon = false,
+      payload,
+      verticalAlign = "bottom",
+      align = "center",
+      nameKey,
+    },
     ref
   ) => {
     const { config } = useChart();
@@ -278,8 +288,9 @@ const ChartLegendContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "flex items-center justify-center gap-4",
+          "flex justify-center gap-4",
           verticalAlign === "top" ? "pb-3" : "pt-3",
+          align !== "center" ? "flex-col items-start" : "flex-row items-center",
           className
         )}
       >

@@ -1,16 +1,15 @@
 import { useRemixForm } from "remix-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
-import { type Asset, assetTypes } from "~/lib/demo-data";
-import { assetSchema, assetSchemaResolver } from "~/lib/schema";
+import type { Asset } from "~/lib/models";
+import {
+  createAssetSchema,
+  createAssetSchemaResolver,
+  updateAssetSchema,
+  updateAssetSchemaResolver,
+} from "~/lib/schema";
+import ProductSelector from "../products/product-selector";
 import {
   Form,
   FormControl,
@@ -22,25 +21,58 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 
+type TForm = z.infer<typeof updateAssetSchema | typeof createAssetSchema>;
 interface AssetDetailsFormProps {
-  asset: Asset;
+  asset?: Asset;
+  onSubmitted?: () => void;
 }
 
-type TForm = z.infer<typeof assetSchema>;
+const FORM_DEFAULTS = {
+  active: true,
+  serialNumber: "",
+  name: "",
+  location: "",
+  placement: "",
+} satisfies TForm;
 
-export default function AssetDetailsForm({ asset }: AssetDetailsFormProps) {
+export default function AssetDetailsForm({
+  asset,
+  onSubmitted,
+}: AssetDetailsFormProps) {
   const form = useRemixForm<TForm>({
-    resolver: assetSchemaResolver,
-    values: asset,
+    resolver: asset ? updateAssetSchemaResolver : createAssetSchemaResolver,
+    defaultValues: FORM_DEFAULTS,
+    values: asset && {
+      ...asset,
+      tag: asset.tag && {
+        connect: asset.tag,
+      },
+      product: asset.product && {
+        connect: asset.product,
+      },
+    },
   });
 
   const {
     formState: { isDirty, isValid },
+    watch,
   } = form;
+
+  const id = watch("id");
+
+  const isNew = !id;
 
   return (
     <Form {...form}>
-      <form className="space-y-8" method="post" onSubmit={form.handleSubmit}>
+      <form
+        className="space-y-8"
+        method={"post"}
+        onSubmit={(e) => {
+          form.handleSubmit(e).then(() => {
+            onSubmitted?.();
+          });
+        }}
+      >
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}
@@ -61,24 +93,32 @@ export default function AssetDetailsForm({ asset }: AssetDetailsFormProps) {
         />
         <FormField
           control={form.control}
-          name="type"
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          render={({ field: { onChange, onBlur, ref, ...rest } }) => (
+          name="product"
+          render={({ field: { onChange, value, disabled } }) => (
             <FormItem>
-              <FormLabel>Type</FormLabel>
+              <FormLabel>Product</FormLabel>
               <FormControl>
-                <Select {...rest} onValueChange={onChange}>
-                  <SelectTrigger className="h-8" onBlur={onBlur}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    {assetTypes.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ProductSelector
+                  value={value?.connect.id ?? ""}
+                  onValueChange={(id) =>
+                    onChange(id ? { connect: { id } } : undefined)
+                  }
+                  disabled={disabled}
+                  className="flex"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="serialNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Product Serial Number</FormLabel>
+              <FormControl>
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -87,15 +127,42 @@ export default function AssetDetailsForm({ asset }: AssetDetailsFormProps) {
         <FormField
           control={form.control}
           name="tag"
-          render={({ field }) => (
+          render={({ field: { onChange, value, ...field } }) => (
             <FormItem>
               <FormLabel>Tag ID</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input
+                  {...field}
+                  value={value?.connect.id ?? ""}
+                  onChange={(e) =>
+                    onChange(
+                      e.target.value
+                        ? {
+                            connect: {
+                              id: e.target.value,
+                            },
+                          }
+                        : undefined
+                    )
+                  }
+                />
               </FormControl>
               <FormDescription>
                 This is the number on the NFC tag.
               </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -126,7 +193,7 @@ export default function AssetDetailsForm({ asset }: AssetDetailsFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={!isDirty || !isValid}>
+        <Button type="submit" disabled={(!isNew && !isDirty) || !isValid}>
           Save
         </Button>
       </form>

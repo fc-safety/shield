@@ -25,15 +25,11 @@ export interface DataTableToolbarProps<TData> {
 
 export function DataTableToolbar<TData>({
   table,
-  filters: filtersProp = [],
-  actions: actionsProp = [],
+  filters = [],
+  actions = [],
   searchPlaceholder = "Search...",
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
-  const filters =
-    typeof filtersProp === "function" ? filtersProp({ table }) : filtersProp;
-  const actions =
-    typeof actionsProp === "function" ? actionsProp({ table }) : actionsProp;
 
   return (
     <div className="flex items-center justify-between">
@@ -44,7 +40,7 @@ export function DataTableToolbar<TData>({
           onChange={(event) => table.setGlobalFilter(event.target.value)}
           className="h-8 w-[150px] lg:w-[250px]"
         />
-        {filters
+        {(typeof filters === "function" ? filters({ table }) : filters)
           .filter(({ column }) => !!column)
           .map((filter, idx) => (
             <DataTableFacetedFilter
@@ -64,7 +60,7 @@ export function DataTableToolbar<TData>({
         )}
       </div>
       <div className="flex items-center space-x-2">
-        {actions}
+        {typeof actions === "function" ? actions({ table }) : actions}
         <DataTableViewOptions table={table} />
       </div>
     </div>

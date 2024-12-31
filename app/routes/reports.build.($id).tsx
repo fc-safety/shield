@@ -26,14 +26,24 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
-import { reportTypes } from "~/lib/demo-data";
-import { demoReports } from "~/lib/demo-data-sources/reports";
 import { buildReportSchema, buildReportSchemaResolver } from "~/lib/schema";
-import type { Route } from "../+types/root";
+import type { Route } from "./+types/reports.build.($id)";
 
 export const handle = {
   breadcrumb: () => ({ label: "Build" }),
 };
+
+const reportTypes = ["asset", "inspection", "user", "location"] as const;
+const demoReports = [
+  { id: "asset", title: "Asset Report", description: "Asset Report" },
+  {
+    id: "inspection",
+    title: "Inspection Report",
+    description: "Inspection Report",
+  },
+  { id: "user", title: "User Report", description: "User Report" },
+  { id: "location", title: "Location Report", description: "Location Report" },
+];
 
 export const loader = ({ params }: Route.LoaderArgs) => {
   const { id } = params;
