@@ -1,5 +1,6 @@
 import {
   data,
+  isRouteErrorResponse,
   Links,
   Meta,
   Outlet,
@@ -9,6 +10,12 @@ import {
   useRouteLoaderData,
 } from "react-router";
 
+import { AppSidebar } from "@/components/app-sidebar";
+import { BreadcrumbResponsive } from "@/components/breadcrumb-responsive";
+import { ModeToggle } from "@/components/mode-toggle";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { AlertCircle } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import {
   PreventFlashOnWrongTheme,
@@ -16,10 +23,6 @@ import {
   useTheme,
 } from "remix-themes";
 import { requireUserSession, themeSessionResolver } from "~/.server/sessions";
-import { AppSidebar } from "~/components/app-sidebar";
-import { BreadcrumbResponsive } from "~/components/breadcrumb-responsive";
-import { ModeToggle } from "~/components/mode-toggle";
-import { Separator } from "~/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
@@ -78,6 +81,28 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   }
   return [{ title }];
 };
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (isRouteErrorResponse(error)) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>
+          {error.status} {error.statusText}
+        </AlertTitle>
+        <AlertDescription>{error.data}</AlertDescription>
+      </Alert>
+    );
+  } else {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>Oops! Something went wrong.</AlertDescription>
+      </Alert>
+    );
+  }
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData<typeof loader>("root");

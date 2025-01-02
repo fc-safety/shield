@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { startTransition, useEffect } from "react";
 import { Outlet } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
@@ -32,7 +32,11 @@ export default function Assets({
 }: Route.ComponentProps) {
   const { setProducts } = useAssetsState();
   useEffect(() => {
-    setProducts(products);
+    products.then((resolvedProducts) => {
+      startTransition(() => {
+        setProducts(resolvedProducts);
+      });
+    });
   }, [products, setProducts]);
 
   return <Outlet />;

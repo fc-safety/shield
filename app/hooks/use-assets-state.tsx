@@ -8,7 +8,7 @@ interface ProductFilterOptions {
 
 interface AssetsState {
   products: Promise<Product[]>;
-  setProducts: (products: Promise<Product[]>) => void;
+  setProducts: (products: Product[]) => void;
   getProducts: (options?: ProductFilterOptions) => Promise<Product[]>;
   getProductCategories: (
     options?: ProductFilterOptions
@@ -16,15 +16,27 @@ interface AssetsState {
   getManufacturers: (options?: ProductFilterOptions) => Promise<Manufacturer[]>;
 }
 
+function createDeferred<T>() {
+  let resolve: (value: T) => void = () => {};
+  let reject: (reason?: unknown) => void = () => {};
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 export const useAssetsState = create<AssetsState>((set, get) => {
+  const deferredProducts = createDeferred<Product[]>();
+
   const getProducts = ({
     productFilter = () => true,
   }: ProductFilterOptions = {}) =>
     get().products.then((products) => products.filter(productFilter));
 
   return {
-    products: Promise.resolve([]),
-    setProducts: (products) => set({ products }),
+    products: deferredProducts.promise,
+    setProducts: (products) => deferredProducts.resolve(products),
     getProducts,
     getProductCategories: (options?: ProductFilterOptions) =>
       getProducts(options).then((products) =>

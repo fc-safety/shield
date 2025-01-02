@@ -55,12 +55,11 @@ export default function AssetDetailsForm({
   });
 
   const {
-    formState: { isDirty, isValid },
+    formState: { isDirty, isValid, isSubmitting },
     watch,
   } = form;
 
   const id = watch("id");
-
   const isNew = !id;
 
   return (
@@ -78,13 +77,14 @@ export default function AssetDetailsForm({
         <FormField
           control={form.control}
           name="active"
-          render={({ field: { onChange, ...field } }) => (
+          render={({ field: { onChange, onBlur, value } }) => (
             <FormItem className="flex items-center gap-2 space-y-0">
               <FormControl>
                 <Switch
-                  checked={field.value}
+                  checked={value}
                   onCheckedChange={onChange}
                   className="pt-0"
+                  onBlur={onBlur}
                 />
               </FormControl>
               <FormLabel>Active</FormLabel>
@@ -194,8 +194,11 @@ export default function AssetDetailsForm({
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={(!isNew && !isDirty) || !isValid}>
-          Save
+        <Button
+          type="submit"
+          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
+        >
+          {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>
     </Form>

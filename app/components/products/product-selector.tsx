@@ -83,12 +83,15 @@ interface ProductSelectStep {
 
 export default function ProductSelector(props: ProductSelectorProps) {
   const { getProducts } = useAssetsState();
-  return (
-    <Suspense fallback={<Loader2 className="animate-spin" />}>
-      <Await resolve={getProducts()}>
-        {(value) => <ProductSelectorRoot {...props} products={value} />}
-      </Await>
-    </Suspense>
+
+  const [products, setProducts] = useState<Product[] | null>(null);
+  useEffect(() => {
+    getProducts().then(setProducts);
+  }, [getProducts]);
+  return products ? (
+    <ProductSelectorRoot {...props} products={products} />
+  ) : (
+    <Loader2 className="animate-spin" />
   );
 }
 
@@ -112,16 +115,9 @@ function ProductSelectorRoot({
     reset: resetStep,
   } = useSteps();
 
-  const getProduct = useCallback(
-    (id: string) => {
-      return products.find((p) => p.id === id);
-    },
-    [products]
-  );
-
   const defaultProduct = useMemo(
-    () => (value && getProduct(value)) ?? null,
-    [getProduct, value]
+    () => (value && products.find((p) => p.id === value)) ?? null,
+    [products, value]
   );
   const defaultSelected = useMemo(
     () =>
@@ -134,7 +130,7 @@ function ProductSelectorRoot({
         : DEFAULT_SELECTIONS,
     [defaultProduct]
   );
-  const [selected, setSelected] = useImmer<Selections>(defaultSelected);
+  const [selected, setSelected] = useImmer<Selections>(DEFAULT_SELECTIONS);
 
   const handleReset = useCallback(() => {
     setSelected(defaultSelected);
@@ -221,9 +217,6 @@ function ProductSelectorRoot({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className="grid gap-2">
-        {/* <span className="text-xs">
-          Selected product: {defaultProduct?.name}
-        </span> */}
         {defaultProduct ? (
           <Card>
             <CardHeader>
