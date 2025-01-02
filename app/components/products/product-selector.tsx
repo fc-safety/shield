@@ -1,4 +1,7 @@
+import DataList from "@/components/data-list";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Search } from "lucide-react";
+import { Loader2, Pencil, Search } from "lucide-react";
 import type React from "react";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Await } from "react-router";
@@ -78,12 +81,24 @@ interface ProductSelectStep {
   nextAction?: () => void;
 }
 
-export default function ProductSelector({
+export default function ProductSelector(props: ProductSelectorProps) {
+  const { getProducts } = useAssetsState();
+  return (
+    <Suspense fallback={<Loader2 className="animate-spin" />}>
+      <Await resolve={getProducts()}>
+        {(value) => <ProductSelectorRoot {...props} products={value} />}
+      </Await>
+    </Suspense>
+  );
+}
+
+function ProductSelectorRoot({
   value,
   onValueChange,
   disabled = false,
   className,
-}: ProductSelectorProps) {
+  products,
+}: ProductSelectorProps & { products: Product[] }) {
   const [open, setOpen] = useState(false);
 
   const {
@@ -97,9 +112,17 @@ export default function ProductSelector({
     reset: resetStep,
   } = useSteps();
 
-  const { getProducts } = useAssetsState();
+  const getProduct = useCallback(
+    (id: string) => {
+      return products.find((p) => p.id === id);
+    },
+    [products]
+  );
 
-  const [defaultProduct, setDefaultProduct] = useState<Product | null>(null);
+  const defaultProduct = useMemo(
+    () => (value && getProduct(value)) ?? null,
+    [getProduct, value]
+  );
   const defaultSelected = useMemo(
     () =>
       defaultProduct
@@ -112,15 +135,6 @@ export default function ProductSelector({
     [defaultProduct]
   );
   const [selected, setSelected] = useImmer<Selections>(defaultSelected);
-
-  useEffect(() => {
-    if (value) {
-      getProducts().then((products) => {
-        const product = products.find((p) => p.id === value);
-        setDefaultProduct(product ?? null);
-      });
-    }
-  });
 
   const handleReset = useCallback(() => {
     setSelected(defaultSelected);
@@ -185,12 +199,7 @@ export default function ProductSelector({
       },
       {
         idx: 3,
-        step: (
-          <div>
-            <h2>Review</h2>
-            <pre>{JSON.stringify(selected, null, 2)}</pre>
-          </div>
-        ),
+        step: <StepReview key="step3" productId={selected.productId} />,
         canStepForward: true,
         nextText: "Finish",
         nextAction: () => {
@@ -211,35 +220,82 @@ export default function ProductSelector({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <div>
-        <span className="text-xs">
+      <div className="grid gap-2">
+        {/* <span className="text-xs">
           Selected product: {defaultProduct?.name}
-        </span>
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled}
-            className={cn(className)}
-          >
-            <Search />
-            Select Product
-          </Button>
-        </DialogTrigger>
+        </span> */}
+        {defaultProduct ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center">
+                <div className="grid gap-2">
+                  <span>
+                    <span className="text-xs text-muted-foreground">
+                      {defaultProduct.manufacturer.name}
+                    </span>
+                  </span>
+                  <span>
+                    {defaultProduct.name}
+                    <Badge
+                      className="text-xs uppercase w-max ml-2"
+                      variant="secondary"
+                    >
+                      {defaultProduct.productCategory.shortName ??
+                        defaultProduct.productCategory.name}
+                    </Badge>
+                  </span>
+                </div>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={disabled}
+                    className={cn(className)}
+                  >
+                    <Pencil />
+                  </Button>
+                </DialogTrigger>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{defaultProduct.description ?? <>&mdash;</>}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              disabled={disabled}
+              className={cn(className)}
+            >
+              <Search />
+              Find Product
+            </Button>
+          </DialogTrigger>
+        )}
       </div>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="px-0">
+        <DialogHeader className="px-6">
           <DialogTitle>Find Product</DialogTitle>
         </DialogHeader>
-        <Progress
-          value={Math.round((step / (maxStep - minStep)) * 100)}
-          className="w-full"
-        />
-        <ScrollArea className="h-96 w-[32rem] rounded-md -mx-6 px-6 self-stretch">
+        <div className="w-full px-6">
+          <Progress
+            value={Math.round((step / (maxStep - minStep)) * 100)}
+            className="w-full"
+          />
+        </div>
+        <ScrollArea className="h-96 border-b border-t px-6 self-stretch">
           {currentStep?.step}
         </ScrollArea>
-        <div className="flex justify-between">
-          <Button onClick={stepBackward} disabled={!getCanStepBackward()}>
+        <div className="flex justify-between px-6">
+          <Button
+            onClick={stepBackward}
+            className={cn(
+              !getCanStepBackward() && "opacity-0 pointer-events-none"
+            )}
+          >
             Back
           </Button>
           <Button
@@ -273,9 +329,9 @@ function StepSelectProductCategory({
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 py-2">
       <h3 className="text-normal font-regular">Select Category</h3>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<Loader2 className="animate-spin" />}>
         <Await resolve={productCategories}>
           {(value) => (
             <RadioGroup
@@ -339,9 +395,9 @@ function StepSelectManufacturer({
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 py-2">
       <h3 className="text-normal font-regular">Select Manufacturer</h3>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<Loader2 className="animate-spin" />}>
         <Await resolve={manufacturers}>
           {(value) => (
             <RadioGroup
@@ -401,9 +457,9 @@ function StepSelectProduct({
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 py-2">
       <h3 className="text-normal font-regular">Select Product</h3>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<Loader2 className="animate-spin" />}>
         <Await resolve={products}>
           {(value) => (
             <RadioGroup
@@ -436,6 +492,35 @@ function StepSelectProduct({
                 ))}
             </RadioGroup>
           )}
+        </Await>
+      </Suspense>
+    </div>
+  );
+}
+
+function StepReview({ productId }: { productId: Product["id"] | undefined }) {
+  const { getProducts } = useAssetsState();
+  return (
+    <div className="flex flex-col gap-4 py-2">
+      <h3 className="text-normal font-regular">Review</h3>
+      <Suspense fallback={<Loader2 className="animate-spin" />}>
+        <Await resolve={getProducts()}>
+          {(value) => {
+            const product = value.find((p) => p.id === productId);
+            return (
+              <DataList
+                details={[
+                  { label: "Product", value: product?.name },
+                  {
+                    label: "Description",
+                    value: product?.description ?? <>&mdash;</>,
+                  },
+                  { label: "Manufacturer", value: product?.manufacturer.name },
+                  { label: "Category", value: product?.productCategory.name },
+                ]}
+              />
+            );
+          }}
         </Await>
       </Suspense>
     </div>

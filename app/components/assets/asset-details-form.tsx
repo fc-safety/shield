@@ -51,6 +51,7 @@ export default function AssetDetailsForm({
         connect: asset.product,
       },
     },
+    mode: "onChange",
   });
 
   const {

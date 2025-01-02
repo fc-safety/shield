@@ -1,6 +1,7 @@
 import { type PropsWithChildren } from "react";
 import { redirect } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
+import type { z } from "zod";
 import { deleteAsset, getAsset, updateAsset } from "~/.server/api";
 import AssetDetailsForm from "~/components/assets/asset-details-form";
 import AssetInspections from "~/components/assets/asset-inspections";
@@ -8,7 +9,7 @@ import AssetOrderRequests from "~/components/assets/asset-order-requests";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { updateAssetSchemaResolver } from "~/lib/schema";
+import { updateAssetSchema, updateAssetSchemaResolver } from "~/lib/schema";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/assets.$id";
 
@@ -23,10 +24,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   }
 
   if (request.method === "POST" || request.method === "PATCH") {
-    const { data, errors } = await getValidatedFormData(
-      request,
-      updateAssetSchemaResolver
-    );
+    const { data, errors } = await getValidatedFormData<
+      z.infer<typeof updateAssetSchema>
+    >(request, updateAssetSchemaResolver);
 
     if (errors) {
       throw Response.json({ errors }, { status: 400 });

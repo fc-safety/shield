@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
 import { useImmer } from "use-immer";
 import { getAssets } from "~/.server/api";
+import NewAssetButton from "~/components/assets/new-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -223,31 +224,31 @@ export default function AssetsIndex({
           //     title: "Status",
           //   },
         ]}
-        // TODO: If bulk actions are needed, make sure to add select column.
-        // actions={({ table }) => [
-        //   <NewAssetButton key="add" />,
-        //   <DropdownMenu key="bulk-actions">
-        //     <DropdownMenuTrigger asChild>
-        //       <Button
-        //         variant="outline"
-        //         size="sm"
-        //         disabled={
-        //           !table.getIsSomeRowsSelected() &&
-        //           !table.getIsAllRowsSelected()
-        //         }
-        //       >
-        //         Actions ({table.getSelectedRowModel().rows.length})
-        //         <ChevronDown className="h-4 w-4" />
-        //       </Button>
-        //     </DropdownMenuTrigger>
-        //     <DropdownMenuContent align="end">
-        //       <DropdownMenuItem>
-        //         <Trash />
-        //         Some Bulk Action
-        //       </DropdownMenuItem>
-        //     </DropdownMenuContent>
-        //   </DropdownMenu>,
-        // ]}
+        actions={[
+          <NewAssetButton key="add" />,
+          // TODO: If bulk actions are needed, make sure to add select column.
+          //   <DropdownMenu key="bulk-actions">
+          //     <DropdownMenuTrigger asChild>
+          //       <Button
+          //         variant="outline"
+          //         size="sm"
+          //         disabled={
+          //           !table.getIsSomeRowsSelected() &&
+          //           !table.getIsAllRowsSelected()
+          //         }
+          //       >
+          //         Actions ({table.getSelectedRowModel().rows.length})
+          //         <ChevronDown className="h-4 w-4" />
+          //       </Button>
+          //     </DropdownMenuTrigger>
+          //     <DropdownMenuContent align="end">
+          //       <DropdownMenuItem>
+          //         <Trash />
+          //         Some Bulk Action
+          //       </DropdownMenuItem>
+          //     </DropdownMenuContent>
+          //   </DropdownMenu>,
+        ]}
       />
       <ConfirmationDialog
         open={deleteAction.open}
