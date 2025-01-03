@@ -1,8 +1,8 @@
 "use client";
 
-import { Link } from "react-router";
 import * as React from "react";
 import { Fragment } from "react";
+import { Link } from "react-router";
 
 import { useMediaQuery } from "usehooks-ts";
 import {
@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 
-const ITEMS_TO_DISPLAY = 3;
+const ITEMS_TO_DISPLAY = 4;
 
 interface BreadcrumbResponsiveProps {
   items: { id: string; to?: string; label: React.ReactNode }[];
@@ -111,19 +111,21 @@ export const BreadcrumbResponsive: React.FC<BreadcrumbResponsiveProps> = ({
             <BreadcrumbSeparator />
           </>
         ) : null}
-        {items.slice(Math.max(1, -ITEMS_TO_DISPLAY + 1), -1).map((item) => (
-          <Fragment key={item.id}>
-            <BreadcrumbItem>
-              <BreadcrumbLink
-                asChild
-                className="max-w-20 truncate md:max-w-none"
-              >
-                <Link to={item.to ? item.to : "#"}>{item.label}</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-          </Fragment>
-        ))}
+        {items
+          .slice(Math.max(-(items.length - 1), -ITEMS_TO_DISPLAY + 1), -1)
+          .map((item) => (
+            <Fragment key={item.id}>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  asChild
+                  className="max-w-20 truncate md:max-w-none"
+                >
+                  <Link to={item.to ? item.to : "#"}>{item.label}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+            </Fragment>
+          ))}
         <BreadcrumbItem>
           <BreadcrumbPage className="max-w-20 truncate md:max-w-none">
             {items.at(-1)?.label}

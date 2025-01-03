@@ -15,7 +15,8 @@ import { BreadcrumbResponsive } from "@/components/breadcrumb-responsive";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { AlertCircle } from "lucide-react";
+import { Toaster } from "@/components/ui/sonner";
+import { AlertCircle, Home } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import {
   PreventFlashOnWrongTheme,
@@ -142,7 +143,7 @@ function BaseLayout({ children }: PropsWithChildren) {
                   items={[
                     {
                       to: "/",
-                      label: "Home",
+                      label: <Home size={16} />,
                       id: "home",
                     },
                     ...matches.filter(validateBreadcrumb).map((match) => ({
@@ -159,6 +160,7 @@ function BaseLayout({ children }: PropsWithChildren) {
               </div>
             </header>
             <div className="flex flex-col p-2 sm:p-4 pt-0 grow">{children}</div>
+            <Toaster position="top-right" />
           </SidebarInset>
         </SidebarProvider>
         <ScrollRestoration />

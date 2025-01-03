@@ -1,8 +1,23 @@
 import { data } from "react-router";
 import type { z } from "zod";
-import type { Asset, Manufacturer, Product, ResultsPage } from "~/lib/models";
-import type { createAssetSchema, updateAssetSchema } from "~/lib/schema";
+import type {
+  Asset,
+  Client,
+  Manufacturer,
+  Product,
+  ResultsPage,
+  Site,
+} from "~/lib/models";
+import type {
+  createAssetSchema,
+  createClientSchema,
+  createSiteSchema,
+  updateAssetSchema,
+  updateClientSchema,
+  updateSiteSchema,
+} from "~/lib/schema";
 import { API_BASE_URL } from "./config";
+import { logger } from "./logger";
 import { requireUserSession } from "./sessions";
 
 type FetchParameters = Parameters<typeof fetch>;
@@ -48,12 +63,32 @@ export const authenticatedResolver = async (
   };
 };
 
+const defaultDataGetter = async (
+  responses: Promise<Response> | AtLeastOneAwaitableResponse
+) => {
+  const response = Array.isArray(responses) ? responses[0] : responses;
+  return response.then(async (r) => {
+    if (r.ok) {
+      return r.json();
+    }
+    logger.error(
+      {
+        status: r.status,
+        url: r.url,
+        data: await r.json().catch(() => r.text().catch(() => null)),
+      },
+      "Request failed with code: " + r.status
+    );
+    throw new Response(r.statusText, { status: r.status });
+  });
+};
+
 export const authenticatedData = async <T>(
   request: Request,
   fetchArgs: AtLeastOneFetch,
-  getData: (responses: AtLeastOneAwaitableResponse) => Promise<T> = (
-    responses
-  ) => responses[0].then((r) => r.json())
+  getData: (
+    responses: AtLeastOneAwaitableResponse
+  ) => Promise<T> = defaultDataGetter
 ) => {
   const { responses, headers } = await authenticatedResolver(
     request,
@@ -211,6 +246,135 @@ export const getManufacturers = async (
   return authenticatedData<ResultsPage<Manufacturer>>(request, [
     {
       url: buildUrl("manufacturers", query),
+    },
+  ]);
+};
+
+// ----------------------------------------------------------------------------
+// ---------------------------- CLIENTS ---------------------------------------
+// ----------------------------------------------------------------------------
+
+export const getClients = async (
+  request: Request,
+  query: Record<string, string | number> = {}
+) => {
+  return authenticatedData<ResultsPage<Client>>(request, [
+    {
+      url: buildUrl("clients", query),
+    },
+  ]);
+};
+
+export const getClient = async (request: Request, id: string) => {
+  return authenticatedData<Client>(request, [
+    {
+      url: buildUrl("clients/:id", { id }),
+    },
+  ]);
+};
+
+export const createClient = async (
+  request: Request,
+  client: z.infer<typeof createClientSchema>
+) => {
+  return authenticatedData<Client>(request, [
+    {
+      url: buildUrl("clients"),
+      options: {
+        method: "POST",
+        body: JSON.stringify(client),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    },
+  ]);
+};
+
+export const updateClient = async (
+  request: Request,
+  id: string,
+  client: z.infer<typeof updateClientSchema>
+) => {
+  return authenticatedData<Client>(request, [
+    {
+      url: buildUrl("clients/:id", { id }),
+      options: {
+        method: "PATCH",
+        body: JSON.stringify(client),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    },
+  ]);
+};
+
+export const deleteClient = async (request: Request, id: string) => {
+  return authenticatedData<Client>(request, [
+    {
+      url: buildUrl("clients/:id", { id }),
+      options: {
+        method: "DELETE",
+      },
+    },
+  ]);
+};
+
+// Sites
+
+export const getSite = async (request: Request, id: string) => {
+  return authenticatedData<Site>(request, [
+    {
+      url: buildUrl("sites/:id", { id }),
+    },
+  ]);
+};
+
+export const createSite = async (
+  request: Request,
+  site: z.infer<typeof createSiteSchema>
+) => {
+  return authenticatedData<Site>(request, [
+    {
+      url: buildUrl("sites"),
+      options: {
+        method: "POST",
+        body: JSON.stringify(site),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    },
+  ]);
+};
+
+export const updateSite = async (
+  request: Request,
+  id: string,
+  site: z.infer<typeof updateSiteSchema>
+) => {
+  return authenticatedData<Site>(request, [
+    {
+      url: buildUrl("sites/:id", { id }),
+      options: {
+        method: "PATCH",
+        body: JSON.stringify(site),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    },
+  ]);
+};
+
+export const deleteSite = async (request: Request, id: string) => {
+  return authenticatedData<Site>(request, [
+    {
+      url: buildUrl("sites/:id", { id }),
+      options: {
+        method: "DELETE",
+      },
     },
   ]);
 };

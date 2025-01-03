@@ -63,25 +63,38 @@ enum InspectionStatus {
 
 export interface Address {
   id: string;
-  street_1: string;
-  street_2: string;
+  street1: string;
+  street2: string | null;
   city: string;
   state: string;
   zip: string;
 }
 
-export interface Client {
-  id: string;
+export const ClientStatuses = ["PENDING", "ACTIVE", "INACTIVE"] as const;
+
+export interface Client extends BaseModel {
+  externalId: string;
+  status: (typeof ClientStatuses)[number];
+  startedOn: Date;
   name: string;
   address: Address;
+  addressId: string;
+  phoneNumber: string;
+  homeUrl?: string;
+  sites?: Site[];
 }
 
-export interface Site {
-  id: string;
+export interface Site extends BaseModel {
+  externalId: string;
   name: string;
-  client: Client;
-  parent_site: Site | null;
   address: Address;
+  addressId: string;
+  phoneNumber: string;
+  primary: boolean;
+  parentSite?: Site | null;
+  parentSiteId?: string | null;
+  client?: Client;
+  clientId: string;
 }
 
 export interface Person extends BaseModel {

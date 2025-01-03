@@ -2,8 +2,10 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
+import { getValidatedFormData } from "remix-hook-form";
 import { useImmer } from "use-immer";
-import { getAssets } from "~/.server/api";
+import type { z } from "zod";
+import { createAsset, getAssets } from "~/.server/api";
 import NewAssetButton from "~/components/assets/new-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
@@ -17,11 +19,24 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import type { Asset, ProductCategory } from "~/lib/models";
+import { createAssetSchema, createAssetSchemaResolver } from "~/lib/schema";
 import { dedupById } from "~/lib/utils";
-import type { Route } from "./+types/assets._index";
+import type { Route } from "./+types/index";
 
 export const loader = ({ request }: Route.LoaderArgs) => {
   return getAssets(request, { limit: 10000 });
+};
+
+export const action = async ({ request }: Route.ActionArgs) => {
+  const { data, errors } = await getValidatedFormData<
+    z.infer<typeof createAssetSchema>
+  >(request, createAssetSchemaResolver);
+
+  if (errors) {
+    throw Response.json({ errors }, { status: 400 });
+  }
+
+  return createAsset(request, data);
 };
 
 export default function AssetsIndex({

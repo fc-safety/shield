@@ -1,0 +1,195 @@
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import type { ColumnDef } from "@tanstack/react-table";
+import {
+  CornerDownRight,
+  MoreHorizontal,
+  PhoneCall,
+  Trash,
+} from "lucide-react";
+import { useMemo } from "react";
+import { Link, useFetcher } from "react-router";
+import { getValidatedFormData } from "remix-hook-form";
+import { useImmer } from "use-immer";
+import { z } from "zod";
+import { createClient, getClients } from "~/.server/api";
+import NewClientButton from "~/components/clients/new-client-button";
+import ConfirmationDialog from "~/components/confirmation-dialog";
+import { Button } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "~/components/ui/hover-card";
+import type { Client } from "~/lib/models";
+import { createClientSchema, createClientSchemaResolver } from "~/lib/schema";
+import { beautifyPhone } from "~/lib/utils";
+import type { Route } from "./+types/index";
+
+export function loader({ request }: Route.LoaderArgs) {
+  return getClients(request, { limit: 10000 });
+}
+
+export const action = async ({ request }: Route.ActionArgs) => {
+  const { data, errors } = await getValidatedFormData<
+    z.infer<typeof createClientSchema>
+  >(request, createClientSchemaResolver);
+
+  if (errors) {
+    throw Response.json({ errors }, { status: 400 });
+  }
+
+  return createClient(request, data);
+};
+
+export default function ClientsIndex({
+  loaderData: clients,
+}: Route.ComponentProps) {
+  const fetcher = useFetcher();
+
+  const [deleteAction, setDeleteAction] = useImmer({
+    open: false,
+    action: () => {},
+    cancel: () => {},
+    title: "Are you sure?",
+    message: "",
+    requiredUserInput: "",
+  });
+
+  const columns: ColumnDef<Client>[] = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Name" />
+        ),
+        cell: ({ row, getValue }) => (
+          <Link to={row.original.id} className="hover:underline">
+            {getValue() as string}
+          </Link>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Status" />
+        ),
+        cell: ({ getValue }) => (
+          <span className="capitalize">{String(getValue()).toLowerCase()}</span>
+        ),
+      },
+      {
+        accessorFn: (data) => `${data.address.city}, ${data.address.state}`,
+        id: "city",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="City" />
+        ),
+      },
+      {
+        accessorFn: (data) => beautifyPhone(data.phoneNumber),
+        id: "phone",
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title="Phone" />
+        ),
+        cell: ({ row, getValue }) => (
+          <HoverCard>
+            <HoverCardTrigger>{getValue() as string}</HoverCardTrigger>
+            <HoverCardContent>
+              <Button variant="link" asChild>
+                <a href={`tel:${row.original.phoneNumber}`}>
+                  <PhoneCall />
+                  Call {getValue() as string}
+                </a>
+              </Button>
+            </HoverCardContent>
+          </HoverCard>
+        ),
+      },
+      {
+        id: "actions",
+        cell: ({ row }) => {
+          const client = row.original;
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
+                <DropdownMenuItem asChild>
+                  <Link to={client.id}>
+                    <CornerDownRight />
+                    Details
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() =>
+                    setDeleteAction((draft) => {
+                      draft.open = true;
+                      draft.title = "Delete Client";
+                      draft.message = `Are you sure you want to delete ${
+                        client.name || client.id
+                      }?`;
+                      draft.requiredUserInput = client.name || client.id;
+                      draft.action = () => {
+                        fetcher.submit(
+                          {},
+                          {
+                            method: "delete",
+                            action: client.id,
+                          }
+                        );
+                      };
+                    })
+                  }
+                >
+                  <Trash />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      },
+    ],
+    [fetcher, setDeleteAction]
+  );
+
+  return (
+    <>
+      <DataTable
+        columns={columns}
+        data={clients.results}
+        searchPlaceholder="Search clients..."
+        actions={[<NewClientButton key="add" />]}
+      />
+      <ConfirmationDialog
+        open={deleteAction.open}
+        onOpenChange={(open) =>
+          setDeleteAction((draft) => {
+            draft.open = open;
+          })
+        }
+        destructive
+        onConfirm={() => deleteAction.action()}
+        confirmText="Delete"
+        onCancel={() => deleteAction.cancel()}
+        requiredUserInput={deleteAction.requiredUserInput}
+        title={deleteAction.title}
+        message={deleteAction.message}
+      />
+    </>
+  );
+}

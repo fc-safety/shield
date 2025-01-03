@@ -1,3 +1,4 @@
+import { Form } from "react-router";
 import { useRemixForm } from "remix-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -11,13 +12,13 @@ import {
 } from "~/lib/schema";
 import ProductSelector from "../products/product-selector";
 import {
-  Form,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  Form as FormProvider,
 } from "../ui/form";
 import { Input } from "../ui/input";
 
@@ -63,8 +64,8 @@ export default function AssetDetailsForm({
   const isNew = !id;
 
   return (
-    <Form {...form}>
-      <form
+    <FormProvider {...form}>
+      <Form
         className="space-y-8"
         method={"post"}
         onSubmit={(e) => {
@@ -200,7 +201,7 @@ export default function AssetDetailsForm({
         >
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
-      </form>
-    </Form>
+      </Form>
+    </FormProvider>
   );
 }

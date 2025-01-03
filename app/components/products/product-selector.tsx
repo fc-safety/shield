@@ -241,8 +241,8 @@ function ProductSelectorRoot({
                 <DialogTrigger asChild>
                   <Button
                     type="button"
-                    size="sm"
                     variant="ghost"
+                    size="icon"
                     disabled={disabled}
                     className={cn(className)}
                   >

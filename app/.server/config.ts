@@ -23,3 +23,6 @@ export const API_BASE_URL = getNotEmptyVar("API_BASE_URL").replace(/\/+$/, "");
 
 // Cookies
 export const COOKIE_SECRET = getNotEmptyVar("COOKIE_SECRET");
+
+// Address Support
+export const ZIPCODESTACK_API_KEY = getNotEmptyVar("ZIPCODESTACK_API_KEY");

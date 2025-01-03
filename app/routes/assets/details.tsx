@@ -11,7 +11,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { updateAssetSchema, updateAssetSchemaResolver } from "~/lib/schema";
 import { cn } from "~/lib/utils";
-import type { Route } from "./+types/assets.$id";
+import type { Route } from "./+types/details";
 
 export const handle = {
   breadcrumb: () => ({ label: "Details" }),

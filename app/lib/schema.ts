@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { ClientStatuses } from "./models";
 
 const refById = z.object({
   connect: z.object({
@@ -9,29 +10,87 @@ const refById = z.object({
 
 export const addressSchema = z.object({
   id: z.string().optional(),
-  street_1: z.string(),
-  street_2: z.string().optional(),
-  city: z.string(),
-  state: z.string(),
-  zip: z.string(),
+  street1: z.string().min(1),
+  street2: z
+    .nullable(z.string())
+    .optional()
+    .transform((street2) => street2 || undefined),
+  city: z.string().min(1),
+  state: z.string().min(2),
+  zip: z.string().length(5),
 });
 export const addressSchemaResolver = zodResolver(addressSchema);
 
-export const clientSchema = z.object({
-  id: z.string().optional(),
-  name: z.string(),
-  address: refById,
+export const createClientSchema = z.object({
+  externalId: z
+    .string()
+    .length(24)
+    .optional()
+    .transform((id) => id || undefined),
+  name: z.string().min(1),
+  startedOn: z.coerce.date(),
+  address: z.object({
+    create: addressSchema,
+  }),
+  status: z.enum(ClientStatuses).optional(),
+  phoneNumber: z
+    .string()
+    .regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number."),
+  homeUrl: z
+    .nullable(z.string())
+    .optional()
+    .transform((url) => url || undefined),
 });
-export const clientSchemaResolver = zodResolver(clientSchema);
+export const createClientSchemaResolver = zodResolver(createClientSchema);
 
-export const siteSchema = z.object({
-  id: z.string().optional(),
+export const updateClientSchema = createClientSchema
+  .omit({ externalId: true })
+  .extend({
+    id: z.string(),
+    address: z.object({ update: addressSchema.partial() }),
+  })
+  .partial();
+export const updateClientSchemaResolver = zodResolver(updateClientSchema);
+
+export const createSiteSchema = z.object({
+  externalId: z
+    .string()
+    .length(24)
+    .optional()
+    .transform((id) => id || undefined),
+  primary: z.boolean().default(false),
   name: z.string(),
-  client: refById,
-  parent_site: refById.optional(),
-  address: refById,
+  address: z.object({
+    create: addressSchema,
+  }),
+  phoneNumber: z
+    .string()
+    .regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number."),
+  client: z
+    .object({
+      connect: z.object({
+        id: z.string(),
+      }),
+    })
+    .optional(),
+  parentSite: z
+    .object({
+      connect: z.object({
+        id: z.string(),
+      }),
+    })
+    .optional(),
 });
-export const siteSchemaResolver = zodResolver(siteSchema);
+export const createSiteSchemaResolver = zodResolver(createSiteSchema);
+
+export const updateSiteSchema = createSiteSchema
+  .omit({ externalId: true })
+  .extend({
+    id: z.string(),
+    address: z.object({ update: addressSchema.partial() }),
+  })
+  .partial();
+export const updateSiteSchemaResolver = zodResolver(updateSiteSchema);
 
 export const productCategorySchema = z.object({
   id: z.string().optional(),

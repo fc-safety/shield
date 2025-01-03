@@ -27,7 +27,7 @@ import {
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { buildReportSchema, buildReportSchemaResolver } from "~/lib/schema";
-import type { Route } from "./+types/reports.build.($id)";
+import type { Route } from "./+types/build";
 
 export const handle = {
   breadcrumb: () => ({ label: "Build" }),

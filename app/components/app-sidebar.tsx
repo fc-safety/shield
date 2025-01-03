@@ -1,6 +1,5 @@
 import {
   BookOpenText,
-  Boxes,
   Building2,
   ChevronUp,
   FileSpreadsheet,
@@ -72,11 +71,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
           title: "Clients",
           url: "admin/clients",
           icon: Building2,
-        },
-        {
-          title: "Categories",
-          url: "admin/categories",
-          icon: Boxes,
         },
         {
           title: "Products",
