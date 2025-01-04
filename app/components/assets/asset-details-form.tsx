@@ -66,7 +66,7 @@ export default function AssetDetailsForm({
   return (
     <FormProvider {...form}>
       <Form
-        className="space-y-8"
+        className="space-y-4"
         method={"post"}
         onSubmit={(e) => {
           form.handleSubmit(e).then(() => {

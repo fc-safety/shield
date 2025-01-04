@@ -66,7 +66,10 @@ export default function ClientDetails() {
           <CardTitle>Sites</CardTitle>
         </CardHeader>
         <CardContent>
-          <ClientSitesTable sites={client?.sites ?? []} />
+          <ClientSitesTable
+            sites={client?.sites ?? []}
+            clientId={client?.id ?? ""}
+          />
         </CardContent>
       </Card>
     </div>
@@ -74,10 +77,11 @@ export default function ClientDetails() {
 }
 
 interface ClientSitesTableProps {
+  clientId: string;
   sites: Site[];
 }
 
-function ClientSitesTable({ sites }: ClientSitesTableProps) {
+function ClientSitesTable({ sites, clientId }: ClientSitesTableProps) {
   const columns: ColumnDef<Site>[] = [
     {
       accessorKey: "name",
@@ -130,7 +134,7 @@ function ClientSitesTable({ sites }: ClientSitesTableProps) {
         data={sites}
         columns={columns}
         searchPlaceholder="Search sites..."
-        actions={[<NewSiteButton key="add" />]}
+        actions={[<NewSiteButton key="add" clientId={clientId} />]}
       />
     </>
   );

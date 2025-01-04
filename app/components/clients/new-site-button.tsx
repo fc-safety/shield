@@ -10,7 +10,11 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import SiteDetailsForm from "./site-details-form";
 
-export default function NewSiteButton() {
+interface NewSiteButtonProps {
+  clientId: string;
+}
+
+export default function NewSiteButton({ clientId }: NewSiteButtonProps) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -24,7 +28,10 @@ export default function NewSiteButton() {
         <DialogHeader>
           <DialogTitle>Add New Site</DialogTitle>
         </DialogHeader>
-        <SiteDetailsForm onSubmitted={() => setOpen(false)} />
+        <SiteDetailsForm
+          onSubmitted={() => setOpen(false)}
+          clientId={clientId}
+        />
       </DialogContent>
     </Dialog>
   );

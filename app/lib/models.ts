@@ -107,20 +107,20 @@ export interface Person extends BaseModel {
   clientId: string;
 }
 
-export interface ProductCategory {
-  id: string;
+export interface ProductCategory extends BaseModel {
+  active: boolean;
   name: string;
-  shortName: string;
-  description: string;
-  icon: string;
-  color: string;
+  shortName?: string | null;
+  description?: string | null;
+  icon?: string | null;
+  color?: string | null;
 }
 
 export interface Manufacturer {
   id: string;
   active: boolean;
   name: string;
-  home_url: string;
+  homeUrl?: string | null;
 }
 
 export interface Product {

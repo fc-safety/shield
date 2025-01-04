@@ -66,13 +66,11 @@ export const createSiteSchema = z.object({
   phoneNumber: z
     .string()
     .regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number."),
-  client: z
-    .object({
-      connect: z.object({
-        id: z.string(),
-      }),
-    })
-    .optional(),
+  client: z.object({
+    connect: z.object({
+      id: z.string(),
+    }),
+  }),
   parentSite: z
     .object({
       connect: z.object({

@@ -1,12 +1,27 @@
-import { Outlet } from "react-router";
-import { getClient } from "~/.server/api";
+import { Outlet, type UIMatch } from "react-router";
+import { getValidatedFormData } from "remix-hook-form";
+import type { z } from "zod";
+import { createSite, getClient } from "~/.server/api";
+import { createSiteSchemaResolver, type createSiteSchema } from "~/lib/schema";
 import type { Route } from "./+types/layout";
 
 export const handle = {
-  breadcrumb: ({ data }: Route.MetaArgs) => ({
+  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"]>) => ({
     label: data.name || "Details",
   }),
 };
+
+export async function action({ request }: Route.ActionArgs) {
+  const { data, errors } = await getValidatedFormData<
+    z.infer<typeof createSiteSchema>
+  >(request, createSiteSchemaResolver);
+
+  if (errors) {
+    throw Response.json({ errors }, { status: 400 });
+  }
+
+  return createSite(request, data);
+}
 
 export function loader({ params, request }: Route.LoaderArgs) {
   const { id } = params;

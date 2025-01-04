@@ -5,6 +5,7 @@ import type {
   Client,
   Manufacturer,
   Product,
+  ProductCategory,
   ResultsPage,
   Site,
 } from "~/lib/models";
@@ -238,6 +239,28 @@ export const deleteAsset = async (request: Request, id: string) => {
 // ----------------------------------------------------------------------------
 // ---------------------------- PRODUCTS --------------------------------------
 // ----------------------------------------------------------------------------
+
+export const getProducts = async (
+  request: Request,
+  query: Record<string, string | number> = {}
+) => {
+  return authenticatedData<ResultsPage<Product>>(request, [
+    {
+      url: buildUrl("products", query),
+    },
+  ]);
+};
+
+export const getProductCategories = async (
+  request: Request,
+  query: Record<string, string | number> = {}
+) => {
+  return authenticatedData<ResultsPage<ProductCategory>>(request, [
+    {
+      url: buildUrl("product-categories", query),
+    },
+  ]);
+};
 
 export const getManufacturers = async (
   request: Request,

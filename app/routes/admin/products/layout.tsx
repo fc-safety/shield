@@ -1,3 +1,5 @@
+import { Outlet } from "react-router";
+
 export const handle = {
   breadcrumb: () => ({
     label: "Products",
@@ -5,5 +7,5 @@ export const handle = {
 };
 
 export default function AdminProducts() {
-  return <>AdminProducts</>;
+  return <Outlet />;
 }

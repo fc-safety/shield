@@ -38,7 +38,18 @@ export default [
         ),
       ]),
     ]),
-    route("products", "./routes/admin/products.tsx"),
+    route("products", "./routes/admin/products/layout.tsx", [
+      index("./routes/admin/products/index.tsx"),
+      route("all", "./routes/admin/products/all-products.tsx"),
+      route(":id", "./routes/admin/products/details.tsx"),
+      route("categories", "./routes/admin/products/categories.tsx"),
+      route("categories/:id", "./routes/admin/products/category-details.tsx"),
+      route("manufacturers", "./routes/admin/products/manufacturers.tsx"),
+      route(
+        "manufacturers/:id",
+        "./routes/admin/products/manufacturer-details.tsx"
+      ),
+    ]),
     route("tags", "./routes/admin/tags.tsx"),
   ]),
 

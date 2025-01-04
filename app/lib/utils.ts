@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { z } from "zod";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -44,22 +45,27 @@ export const dedupById = <T extends { id: string }>(items: T[]) => [
     .values(),
 ];
 
-interface BreadcrumbItem {
-  label: string;
-}
+export const breadcrumbHandlerSchema = z.object({
+  handle: z.object({
+    breadcrumb: z
+      .function()
+      .args(
+        z
+          .object({
+            handle: z.any().optional(),
+          })
+          .optional()
+      )
+      .returns(z.object({ label: z.string() })),
+  }),
+});
 
-export function validateBreadcrumb<
-  M extends { handle?: unknown } | undefined,
-  T extends {
-    breadcrumb: (match: M) => BreadcrumbItem;
-  }
->(match: M): match is M & { handle: T } {
-  return (
-    !!match?.handle &&
-    typeof match.handle === "object" &&
-    "breadcrumb" in match.handle &&
-    typeof match.handle.breadcrumb === "function"
-  );
+type BreadcrumbHandler = z.infer<typeof breadcrumbHandlerSchema>;
+
+export function validateBreadcrumb<M>(
+  match: M
+): match is M & BreadcrumbHandler {
+  return breadcrumbHandlerSchema.safeParse(match).success;
 }
 
 const PHONE_NUMBER_FORMATTING_REGEX =

@@ -1,7 +1,5 @@
 import DataList from "@/components/data-list";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +20,7 @@ import { create } from "zustand";
 import { useAssetsState } from "~/hooks/use-assets-state";
 import type { Product } from "~/lib/models";
 import { cn } from "~/lib/utils";
+import ProductCard from "./product-card";
 
 interface ProductSelectorProps {
   value?: string;
@@ -218,43 +217,21 @@ function ProductSelectorRoot({
     <Dialog open={open} onOpenChange={setOpen}>
       <div className="grid gap-2">
         {defaultProduct ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex justify-between items-center">
-                <div className="grid gap-2">
-                  <span>
-                    <span className="text-xs text-muted-foreground">
-                      {defaultProduct.manufacturer.name}
-                    </span>
-                  </span>
-                  <span>
-                    {defaultProduct.name}
-                    <Badge
-                      className="text-xs uppercase w-max ml-2"
-                      variant="secondary"
-                    >
-                      {defaultProduct.productCategory.shortName ??
-                        defaultProduct.productCategory.name}
-                    </Badge>
-                  </span>
-                </div>
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    disabled={disabled}
-                    className={cn(className)}
-                  >
-                    <Pencil />
-                  </Button>
-                </DialogTrigger>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{defaultProduct.description ?? <>&mdash;</>}</p>
-            </CardContent>
-          </Card>
+          <ProductCard
+            product={defaultProduct}
+            renderEditButton={() => (
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={disabled}
+                >
+                  <Pencil />
+                </Button>
+              </DialogTrigger>
+            )}
+          />
         ) : (
           <DialogTrigger asChild>
             <Button

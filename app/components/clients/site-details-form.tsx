@@ -8,7 +8,7 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Form } from "react-router";
 import { useRemixForm } from "remix-hook-form";
 import { useDebounceValue } from "usehooks-ts";
@@ -28,30 +28,41 @@ import { Label } from "../ui/label";
 type TForm = z.infer<typeof createSiteSchema | typeof updateSiteSchema>;
 interface SiteDetailsFormProps {
   site?: Site;
+  clientId: string;
   onSubmitted?: () => void;
 }
 
-const FORM_DEFAULTS = {
-  primary: false,
-  name: "",
-  address: {
-    create: {
-      street1: "",
-      city: "",
-      state: "",
-      zip: "",
-    },
-  },
-  phoneNumber: "",
-} satisfies z.infer<typeof createSiteSchema>;
-
 export default function SiteDetailsForm({
   site,
+  clientId,
   onSubmitted,
 }: SiteDetailsFormProps) {
   const isNew = !site;
   const currentlyPopulatedZip = useRef<string | null>(null);
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
+
+  const FORM_DEFAULTS = useMemo(
+    () =>
+      ({
+        primary: false,
+        name: "",
+        address: {
+          create: {
+            street1: "",
+            city: "",
+            state: "",
+            zip: "",
+          },
+        },
+        phoneNumber: "",
+        client: {
+          connect: {
+            id: clientId,
+          },
+        },
+      } satisfies z.infer<typeof createSiteSchema>),
+    [clientId]
+  );
 
   const form = useRemixForm<TForm>({
     resolver: site ? updateSiteSchemaResolver : createSiteSchemaResolver,
@@ -106,11 +117,17 @@ export default function SiteDetailsForm({
           if (r) {
             setValue(
               site ? "address.update.city" : "address.create.city",
-              r.city
+              r.city,
+              {
+                shouldValidate: true,
+              }
             );
             setValue(
               site ? "address.update.state" : "address.create.state",
-              r.state_code ?? r.state_en
+              r.state_code ?? r.state_en,
+              {
+                shouldValidate: true,
+              }
             );
           }
           setZipPopulatePending(false);
@@ -121,8 +138,9 @@ export default function SiteDetailsForm({
   return (
     <FormProvider {...form}>
       <Form
-        className="space-y-6"
+        className="space-y-4"
         method="post"
+        action="?resource=site"
         onSubmit={(e) => {
           form.handleSubmit(e).then(() => {
             onSubmitted?.();
@@ -130,6 +148,7 @@ export default function SiteDetailsForm({
         }}
       >
         <Input type="hidden" {...form.register("id")} hidden />
+        <Input type="hidden" {...form.register("client.connect.id")} hidden />
         <FormField
           control={form.control}
           name="primary"
@@ -163,7 +182,11 @@ export default function SiteDetailsForm({
               <FormLabel>External ID</FormLabel>
               <FormControl>
                 {isNew ? (
-                  <Input {...field} placeholder="Automatically generated" />
+                  <Input
+                    {...field}
+                    placeholder="Automatically generated"
+                    tabIndex={-1}
+                  />
                 ) : (
                   <CopyableInput {...field} readOnly />
                 )}
@@ -179,8 +202,7 @@ export default function SiteDetailsForm({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
-                <Input {...field} autoFocus />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

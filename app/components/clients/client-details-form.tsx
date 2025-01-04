@@ -34,6 +34,7 @@ interface ClientDetailsFormProps {
 }
 
 const FORM_DEFAULTS = {
+  id: "",
   name: "",
   startedOn: new Date(),
   address: {
@@ -46,7 +47,7 @@ const FORM_DEFAULTS = {
   },
   status: "PENDING",
   phoneNumber: "",
-} satisfies z.infer<typeof createClientSchema>;
+} satisfies z.infer<typeof createClientSchema | typeof updateClientSchema>;
 
 export default function ClientDetailsForm({
   client,
@@ -97,11 +98,17 @@ export default function ClientDetailsForm({
           if (r) {
             setValue(
               client ? "address.update.city" : "address.create.city",
-              r.city
+              r.city,
+              {
+                shouldValidate: true,
+              }
             );
             setValue(
               client ? "address.update.state" : "address.create.state",
-              r.state_code ?? r.state_en
+              r.state_code ?? r.state_en,
+              {
+                shouldValidate: true,
+              }
             );
           }
           setZipPopulatePending(false);
@@ -112,7 +119,7 @@ export default function ClientDetailsForm({
   return (
     <FormProvider {...form}>
       <Form
-        className="space-y-6"
+        className="space-y-4"
         method="post"
         onSubmit={(e) => {
           form.handleSubmit(e).then(() => {
@@ -155,7 +162,11 @@ export default function ClientDetailsForm({
               <FormLabel>External ID</FormLabel>
               <FormControl>
                 {isNew ? (
-                  <Input {...field} placeholder="Automatically generated" />
+                  <Input
+                    {...field}
+                    placeholder="Automatically generated"
+                    tabIndex={-1}
+                  />
                 ) : (
                   <CopyableInput {...field} readOnly />
                 )}
@@ -171,8 +182,7 @@ export default function ClientDetailsForm({
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
-                <Input {...field} autoFocus />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

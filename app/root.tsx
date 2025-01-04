@@ -17,7 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Toaster } from "@/components/ui/sonner";
 import { AlertCircle, Home } from "lucide-react";
-import type { PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 import {
   PreventFlashOnWrongTheme,
   ThemeProvider,
