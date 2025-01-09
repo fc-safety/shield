@@ -25,6 +25,23 @@ export default [
   ]),
   route("settings", "./routes/settings.tsx"),
 
+  // Product Routes
+  route("products", "./routes/products/layout.tsx", [
+    index("./routes/products/index.tsx"),
+    route("all", "./routes/products/all-products/layout.tsx", [
+      index("./routes/products/all-products/index.tsx"),
+      route(":id", "./routes/products/all-products/details.tsx"),
+    ]),
+    route("categories", "./routes/products/categories/layout.tsx", [
+      index("./routes/products/categories/index.tsx"),
+      route(":id", "./routes/products/categories/details.tsx"),
+    ]),
+    route("manufacturers", "./routes/products/manufacturers/layout.tsx", [
+      index("./routes/products/manufacturers/index.tsx"),
+      route(":id", "./routes/products/manufacturers/details.tsx"),
+    ]),
+  ]),
+
   // Admin Routes
   route("admin", "./routes/admin/layout.tsx", [
     index("./routes/admin/index.tsx"),
@@ -38,19 +55,10 @@ export default [
         ),
       ]),
     ]),
-    route("products", "./routes/admin/products/layout.tsx", [
-      index("./routes/admin/products/index.tsx"),
-      route("all", "./routes/admin/products/all-products.tsx"),
-      route(":id", "./routes/admin/products/details.tsx"),
-      route("categories", "./routes/admin/products/categories.tsx"),
-      route("categories/:id", "./routes/admin/products/category-details.tsx"),
-      route("manufacturers", "./routes/admin/products/manufacturers.tsx"),
-      route(
-        "manufacturers/:id",
-        "./routes/admin/products/manufacturer-details.tsx"
-      ),
+    route("tags", "./routes/admin/tags/layout.tsx", [
+      index("./routes/admin/tags/index.tsx"),
+      route(":id", "./routes/admin/tags/details.tsx"),
     ]),
-    route("tags", "./routes/admin/tags.tsx"),
   ]),
 
   // Help routes
@@ -61,5 +69,11 @@ export default [
   ...prefix("action", [route("set-theme", "./routes/actions/set-theme.tsx")]),
 
   // API Routes
-  ...prefix("api", [route("query-zip/:zip", "./routes/api/query-zip.tsx")]),
+  ...prefix("api", [
+    route("query-zip/:zip", "./routes/api/query-zip.ts"),
+    route("link-preview-metadata", "./routes/api/link-preview-metadata.ts"),
+    route("product-categories", "./routes/api/product-categories.ts"),
+    route("manufacturers", "./routes/api/manufacturers.ts"),
+    route("products", "./routes/api/products.ts"),
+  ]),
 ] satisfies RouteConfig;

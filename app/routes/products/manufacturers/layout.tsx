@@ -2,10 +2,10 @@ import { Outlet } from "react-router";
 
 export const handle = {
   breadcrumb: () => ({
-    label: "Products",
+    label: "Manufacturers",
   }),
 };
 
-export default function AdminProducts() {
+export default function ProductManufacturersLayout() {
   return <Outlet />;
 }

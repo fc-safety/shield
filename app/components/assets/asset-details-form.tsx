@@ -45,12 +45,20 @@ export default function AssetDetailsForm({
     defaultValues: FORM_DEFAULTS,
     values: asset && {
       ...asset,
-      tag: asset.tag && {
-        connect: asset.tag,
-      },
-      product: asset.product && {
-        connect: asset.product,
-      },
+      tag: asset.tagId
+        ? {
+            connect: {
+              id: asset.tagId,
+            },
+          }
+        : undefined,
+      product: asset.productId
+        ? {
+            connect: {
+              id: asset.productId,
+            },
+          }
+        : undefined,
     },
     mode: "onChange",
   });

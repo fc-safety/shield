@@ -1,5 +1,5 @@
 import { redirect } from "react-router";
 
 export const loader = () => {
-  return redirect("/admin/products/all");
+  return redirect("/products/all");
 };

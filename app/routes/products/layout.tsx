@@ -1,9 +1,11 @@
 import { Outlet } from "react-router";
 
 export const handle = {
-  breadcrumb: () => ({ label: "Assets" }),
+  breadcrumb: () => ({
+    label: "Products",
+  }),
 };
 
-export default function Assets() {
+export default function Products() {
   return <Outlet />;
 }

@@ -2,7 +2,7 @@ import { type PropsWithChildren } from "react";
 import { redirect } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
-import { deleteAsset, getAsset, updateAsset } from "~/.server/api";
+import { api } from "~/.server/api";
 import AssetDetailsForm from "~/components/assets/asset-details-form";
 import AssetInspections from "~/components/assets/asset-inspections";
 import AssetOrderRequests from "~/components/assets/asset-order-requests";
@@ -14,7 +14,7 @@ import { cn } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
-  breadcrumb: () => ({ label: "Details" }),
+  breadcrumb: ({ data }: Route.MetaArgs) => ({ label: data.name || "Details" }),
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
@@ -32,9 +32,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       throw Response.json({ errors }, { status: 400 });
     }
 
-    return updateAsset(request, id, data);
+    return api.assets.update(request, id, data);
   } else if (request.method === "DELETE") {
-    await deleteAsset(request, id);
+    await api.assets.delete(request, id);
     return redirect("/assets");
   }
 
@@ -47,7 +47,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     throw new Response("No Asset ID", { status: 400 });
   }
 
-  return getAsset(request, id);
+  return api.assets.get(request, id);
 };
 
 export default function AssetDetails({

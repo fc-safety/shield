@@ -12,7 +12,7 @@ import { Link, useFetcher } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import { useImmer } from "use-immer";
 import { z } from "zod";
-import { createClient, getClients } from "~/.server/api";
+import { api } from "~/.server/api";
 import NewClientButton from "~/components/clients/new-client-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { Button } from "~/components/ui/button";
@@ -34,7 +34,7 @@ import { beautifyPhone } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export function loader({ request }: Route.LoaderArgs) {
-  return getClients(request, { limit: 10000 });
+  return api.clients.list(request, { limit: 10000 });
 }
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -46,7 +46,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     throw Response.json({ errors }, { status: 400 });
   }
 
-  return createClient(request, data);
+  return api.clients.create(request, data);
 };
 
 export default function ClientsIndex({

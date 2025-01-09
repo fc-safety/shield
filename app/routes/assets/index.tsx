@@ -5,7 +5,7 @@ import { Link, useFetcher, useSearchParams } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import { useImmer } from "use-immer";
 import type { z } from "zod";
-import { createAsset, getAssets } from "~/.server/api";
+import { api } from "~/.server/api";
 import NewAssetButton from "~/components/assets/new-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
@@ -24,7 +24,7 @@ import { dedupById } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const loader = ({ request }: Route.LoaderArgs) => {
-  return getAssets(request, { limit: 10000 });
+  return api.assets.list(request, { limit: 10000 });
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -36,7 +36,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     throw Response.json({ errors }, { status: 400 });
   }
 
-  return createAsset(request, data);
+  return api.assets.create(request, data);
 };
 
 export default function AssetsIndex({
@@ -71,7 +71,7 @@ export default function AssetsIndex({
       {
         accessorKey: "name",
         cell: ({ row, getValue }) => (
-          <Link to={`/assets/${row.original.id}`} className="hover:underline">
+          <Link to={row.original.id} className="hover:underline">
             {(getValue() as string) ??
               `${row.original.location} - ${
                 row.original.product?.productCategory?.shortName ??

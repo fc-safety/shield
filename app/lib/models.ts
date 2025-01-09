@@ -15,6 +15,7 @@ export interface Asset extends BaseModel {
   active: boolean;
   name: string;
   product: Product;
+  productId: string;
   tagId?: string;
   tag?: Tag;
   location: string;
@@ -30,7 +31,9 @@ export interface Asset extends BaseModel {
 
 export interface Consumable extends BaseModel {
   asset?: Asset;
+  assetId?: string;
   product: Product;
+  productId: string;
   expiresOn?: Date;
   siteId: string;
   clientId: string;
@@ -39,7 +42,8 @@ export interface Consumable extends BaseModel {
 export interface Tag extends BaseModel {
   setupOn: Date;
   serialNumber: string;
-  asset: Asset;
+  asset?: Asset | null;
+  assetId?: string | null;
   siteId?: string;
   clientId?: string;
 }
@@ -116,21 +120,27 @@ export interface ProductCategory extends BaseModel {
   color?: string | null;
 }
 
-export interface Manufacturer {
-  id: string;
+export interface Manufacturer extends BaseModel {
   active: boolean;
   name: string;
   homeUrl?: string | null;
+  products?: Omit<Product, "manufacturer">[];
 }
 
-export interface Product {
-  id: string;
+export const ProductTypes = ["CONSUMABLE", "PRIMARY"] as const;
+
+export interface Product extends BaseModel {
   active: boolean;
-  productCategory: ProductCategory;
   manufacturer: Manufacturer;
+  manufacturerId: string;
+  type: (typeof ProductTypes)[number];
   name: string;
-  description: string;
-  sku: string;
-  productUrl: string;
-  imageUrl: string;
+  description?: string | null;
+  sku?: string | null;
+  productUrl?: string | null;
+  imageUrl?: string | null;
+  productCategory: ProductCategory;
+  productCategoryId: string;
+
+  // TODO: Add consumable support
 }

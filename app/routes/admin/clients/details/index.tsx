@@ -3,7 +3,7 @@ import { PhoneCall, Star } from "lucide-react";
 import { Link, redirect, useRouteLoaderData } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
-import { deleteClient, updateClient } from "~/.server/api";
+import { api } from "~/.server/api";
 import ClientDetailsForm from "~/components/clients/client-details-form";
 import NewSiteButton from "~/components/clients/new-site-button";
 import { DataTable } from "~/components/data-table/data-table";
@@ -38,9 +38,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       throw Response.json({ errors }, { status: 400 });
     }
 
-    return updateClient(request, id, data);
+    return api.clients.update(request, id, data);
   } else if (request.method === "DELETE") {
-    await deleteClient(request, id);
+    await api.clients.delete(request, id);
     return redirect("/admin/clients");
   }
 
@@ -52,8 +52,8 @@ export default function ClientDetails() {
     "routes/admin/clients/details/layout"
   );
   return (
-    <div className="grid grid-cols-6 gap-2 sm:gap-4">
-      <Card className="col-span-3">
+    <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
+      <Card className="h-max">
         <CardHeader>
           <CardTitle>Client Details</CardTitle>
         </CardHeader>
@@ -61,7 +61,7 @@ export default function ClientDetails() {
           <ClientDetailsForm client={client} />
         </CardContent>
       </Card>
-      <Card className="col-span-3 h-max">
+      <Card className="h-max">
         <CardHeader>
           <CardTitle>Sites</CardTitle>
         </CardHeader>

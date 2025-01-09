@@ -159,7 +159,14 @@ function BaseLayout({ children }: PropsWithChildren) {
                 <ModeToggle />
               </div>
             </header>
-            <div className="flex flex-col p-2 sm:p-4 pt-0 grow">{children}</div>
+            <div className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow">
+              {children}
+            </div>
+            <footer className="px-2 py-6 sm:px-4 sm:py-12 grid grid-cols-1 md:grid-cols-3 bg-secondary text-secondary-foreground">
+              <div className="col-span-full text-center">
+                Copyright &copy; {new Date().getFullYear()} FC Safety
+              </div>
+            </footer>
             <Toaster position="top-right" />
           </SidebarInset>
         </SidebarProvider>

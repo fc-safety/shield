@@ -1,12 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ClientStatuses } from "./models";
-
-const refById = z.object({
-  connect: z.object({
-    id: z.string(),
-  }),
-});
+import { ClientStatuses, ProductTypes } from "./models";
 
 export const addressSchema = z.object({
   id: z.string().optional(),
@@ -90,44 +84,101 @@ export const updateSiteSchema = createSiteSchema
   .partial();
 export const updateSiteSchemaResolver = zodResolver(updateSiteSchema);
 
-export const productCategorySchema = z.object({
-  id: z.string().optional(),
-  name: z.string(),
-  short_name: z.string(),
-  description: z.string(),
-  icon: z.string(),
-  color: z.string(),
-});
-export const productCategorySchemaResolver = zodResolver(productCategorySchema);
-
-export const manufacturerSchema = z.object({
+export const createProductCategorySchema = z.object({
   id: z.string().optional(),
   active: z.boolean(),
-  name: z.string(),
-  home_url: z.string(),
+  name: z.string().min(1),
+  shortName: z.string().optional(),
+  description: z.string().optional(),
+  icon: z.string().optional(),
+  color: z.string().optional(),
 });
-export const manufacturerSchemaResolver = zodResolver(manufacturerSchema);
+export const createProductCategorySchemaResolver = zodResolver(
+  createProductCategorySchema
+);
 
-export const productSchema = z.object({
+export const updateProductCategorySchema = createProductCategorySchema
+  .extend({ id: z.string() })
+  .partial();
+export const updateProductCategorySchemaResolver = zodResolver(
+  updateProductCategorySchema
+);
+
+export const createManufacturerSchema = z.object({
   id: z.string().optional(),
   active: z.boolean(),
-  product_category: refById,
-  manufacturer: refById,
-  name: z.string(),
-  description: z.string(),
-  sku: z.string(),
-  product_url: z.string(),
-  image_url: z.string(),
+  name: z.string().min(1),
+  homeUrl: z.string().optional(),
 });
-export const productSchemaResolver = zodResolver(productSchema);
+export const createManufacturerSchemaResolver = zodResolver(
+  createManufacturerSchema
+);
 
-export const tagSchema = z.object({
+export const updateManufacturerSchema = createManufacturerSchema
+  .extend({ id: z.string() })
+  .partial();
+export const updateManufacturerSchemaResolver = zodResolver(
+  updateManufacturerSchema
+);
+
+export const createProductSchema = z.object({
   id: z.string().optional(),
-  serial_no: z.string(),
-  client: refById,
-  asset: refById,
+  active: z.boolean().default(true),
+  manufacturer: z.object({
+    connect: z.object({
+      id: z.string(),
+    }),
+  }),
+  type: z.enum(ProductTypes).default("PRIMARY"),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  sku: z.string().optional(),
+  productUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
+  productCategory: z.object({
+    connect: z.object({
+      id: z.string(),
+    }),
+  }),
 });
-export const tagSchemaResolver = zodResolver(tagSchema);
+export const createProductSchemaResolver = zodResolver(createProductSchema);
+
+export const updateProductSchema = createProductSchema
+  .extend({ id: z.string() })
+  .partial();
+export const updateProductSchemaResolver = zodResolver(updateProductSchema);
+
+export const createTagSchema = z.object({
+  id: z.string().optional(),
+  serialNumber: z.string(),
+  asset: z
+    .object({
+      connect: z.object({
+        id: z.string(),
+      }),
+    })
+    .optional(),
+  site: z
+    .object({
+      connect: z.object({
+        id: z.string(),
+      }),
+    })
+    .optional(),
+  client: z
+    .object({
+      connect: z.object({
+        id: z.string(),
+      }),
+    })
+    .optional(),
+});
+export const createTagSchemaResolver = zodResolver(createTagSchema);
+
+export const updateTagSchema = createTagSchema
+  .extend({ id: z.string() })
+  .partial();
+export const updateTagSchemaResolver = zodResolver(updateTagSchema);
 
 export const createAssetSchema = z.object({
   active: z.boolean(),

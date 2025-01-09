@@ -17,9 +17,9 @@ import { z } from "zod";
 import { ClientStatuses, type Client } from "~/lib/models";
 import {
   createClientSchemaResolver,
-  updateClientSchema,
   updateClientSchemaResolver,
   type createClientSchema,
+  type updateClientSchema,
 } from "~/lib/schema";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
@@ -47,7 +47,7 @@ const FORM_DEFAULTS = {
   },
   status: "PENDING",
   phoneNumber: "",
-} satisfies z.infer<typeof createClientSchema | typeof updateClientSchema>;
+} satisfies TForm;
 
 export default function ClientDetailsForm({
   client,

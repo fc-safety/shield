@@ -1,69 +1,72 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { redirect } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
-import SiteDetailsForm from "~/components/clients/site-details-form";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { updateSiteSchema, updateSiteSchemaResolver } from "~/lib/schema";
-import type { Route } from "./+types/site-details";
+import ProductDetailsForm from "~/components/products/product-details-form";
+import {
+  updateProductSchemaResolver,
+  type updateProductSchema,
+} from "~/lib/schema";
+import type { Route } from "./+types/details";
 
 export const handle = {
   breadcrumb: ({ data }: Route.MetaArgs) => ({
-    label: data.name || "Site Details",
+    label: data.name || "Details",
   }),
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-  const { id, siteId } = params;
-  if (!id || !siteId) {
-    throw new Response("No Client and/or Site IDs", { status: 400 });
+  const { id } = params;
+  if (!id) {
+    throw new Response("No Product ID", { status: 400 });
   }
 
   if (request.method === "POST" || request.method === "PATCH") {
     const { data, errors } = await getValidatedFormData<
-      z.infer<typeof updateSiteSchema>
-    >(request, updateSiteSchemaResolver);
+      z.infer<typeof updateProductSchema>
+    >(request, updateProductSchemaResolver);
 
     if (errors) {
       throw Response.json({ errors }, { status: 400 });
     }
 
-    return api.sites.update(request, siteId, data);
+    return api.products.update(request, id, data);
   } else if (request.method === "DELETE") {
-    await api.sites.delete(request, siteId);
-    return redirect(`/admin/clients/${id}`);
+    await api.products.delete(request, id);
+    return redirect("/products/all");
   }
 
   throw new Response("Invalid method", { status: 405 });
 };
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const { siteId } = params;
-  if (!siteId) {
-    throw new Response("No Site ID", { status: 400 });
+  const { id } = params;
+  if (!id) {
+    throw new Response("No Product ID", { status: 400 });
   }
 
-  return api.sites.get(request, siteId);
+  return api.products.get(request, id);
 };
 
-export default function SiteDetails({
-  loaderData: site,
+export default function ProductDetails({
+  loaderData: product,
 }: Route.ComponentProps) {
   return (
     <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
         <CardHeader>
-          <CardTitle>Site Details</CardTitle>
+          <CardTitle>Product Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <SiteDetailsForm clientId={site.clientId} site={site} />
+          <ProductDetailsForm product={product} />
         </CardContent>
       </Card>
       <Card className="h-max">
         <CardHeader>
-          <CardTitle>...</CardTitle>
+          <CardTitle>Questions</CardTitle>
         </CardHeader>
-        <CardContent></CardContent>
+        <CardContent>Empty</CardContent>
       </Card>
     </div>
   );

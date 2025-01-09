@@ -8,12 +8,14 @@ import {
   Building2,
   ChevronRight,
   ChevronUp,
+  Factory,
   FileSpreadsheet,
   FireExtinguisher,
   LayoutDashboard,
   MessageCircleQuestion,
   Nfc,
   Settings,
+  Shapes,
   Shield,
   User2,
 } from "lucide-react";
@@ -92,31 +94,32 @@ export function AppSidebar({ user }: AppSidebarProps) {
       ],
     },
     {
+      groupTitle: "Products",
+      items: [
+        {
+          title: "All Products",
+          url: "products/all",
+          icon: FireExtinguisher,
+        },
+        {
+          title: "Categories",
+          url: "products/categories",
+          icon: Shapes,
+        },
+        {
+          title: "Manufacturers",
+          url: "products/manufacturers",
+          icon: Factory,
+        },
+      ],
+    },
+    {
       groupTitle: "Admin",
       items: [
         {
           title: "Clients",
           url: "admin/clients",
           icon: Building2,
-        },
-        {
-          title: "Products",
-          icon: FireExtinguisher,
-          defaultOpen: true,
-          children: [
-            {
-              title: "All Products",
-              url: "admin/products/all",
-            },
-            {
-              title: "Categories",
-              url: "admin/products/categories",
-            },
-            {
-              title: "Manufacturers",
-              url: "admin/products/manufacturers",
-            },
-          ],
         },
         {
           title: "Tags",
@@ -200,7 +203,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
                                   {({ isActive }) => (
                                     <SidebarMenuSubButton
                                       asChild
-                                      isActive={isActive}
+                                      isActive={
+                                        isActive ||
+                                        matches.some(
+                                          (m) =>
+                                            m.pathname === subItem.url ||
+                                            m.pathname === `/${subItem.url}`
+                                        )
+                                      }
                                     >
                                       <span>{subItem.title}</span>
                                     </SidebarMenuSubButton>
@@ -216,7 +226,17 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     <SidebarMenuItem key={item.title}>
                       <NavLink to={item.url}>
                         {({ isActive }) => (
-                          <SidebarMenuButton asChild isActive={isActive}>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={
+                              isActive ||
+                              matches.some(
+                                (m) =>
+                                  m.pathname === item.url ||
+                                  m.pathname === `/${item.url}`
+                              )
+                            }
+                          >
                             <span>
                               {item.icon && <item.icon />}
                               <span>{item.title}</span>

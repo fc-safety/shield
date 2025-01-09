@@ -13,18 +13,25 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Pencil, Search } from "lucide-react";
 import type React from "react";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { Await } from "react-router";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Await, useFetcher } from "react-router";
 import { useImmer } from "use-immer";
 import { create } from "zustand";
-import { useAssetsState } from "~/hooks/use-assets-state";
-import type { Product } from "~/lib/models";
-import { cn } from "~/lib/utils";
+import type { Manufacturer, Product, ProductCategory } from "~/lib/models";
+import { cn, dedupById } from "~/lib/utils";
 import ProductCard from "./product-card";
 
 interface ProductSelectorProps {
   value?: string;
   onValueChange?: (value: string) => void;
+  onBlur?: () => void;
   disabled?: boolean;
   className?: string;
 }
@@ -80,28 +87,18 @@ interface ProductSelectStep {
   nextAction?: () => void;
 }
 
-export default function ProductSelector(props: ProductSelectorProps) {
-  const { getProducts } = useAssetsState();
-
-  const [products, setProducts] = useState<Product[] | null>(null);
-  useEffect(() => {
-    getProducts().then(setProducts);
-  }, [getProducts]);
-  return products ? (
-    <ProductSelectorRoot {...props} products={products} />
-  ) : (
-    <Loader2 className="animate-spin" />
-  );
-}
-
-function ProductSelectorRoot({
+export default function ProductSelector({
   value,
   onValueChange,
+  onBlur,
   disabled = false,
   className,
-  products,
-}: ProductSelectorProps & { products: Product[] }) {
+}: ProductSelectorProps) {
+  const opened = useRef(false);
   const [open, setOpen] = useState(false);
+  const fetcher = useFetcher({ key: "products" });
+
+  const [products, setProducts] = useState<Product[]>([]);
 
   const {
     step,
@@ -115,7 +112,7 @@ function ProductSelectorRoot({
   } = useSteps();
 
   const defaultProduct = useMemo(
-    () => (value && products.find((p) => p.id === value)) ?? null,
+    () => products.find((p) => p.id === value),
     [products, value]
   );
   const defaultSelected = useMemo(
@@ -131,6 +128,35 @@ function ProductSelectorRoot({
   );
   const [selected, setSelected] = useImmer<Selections>(DEFAULT_SELECTIONS);
 
+  const productCategories = useMemo(
+    () => dedupById(products.map((p) => p.productCategory)),
+    [products]
+  );
+  const manufacturers = useMemo(
+    () =>
+      dedupById(
+        products
+          .filter(
+            (p) =>
+              !selected.productCategoryId ||
+              p.productCategory.id === selected.productCategoryId
+          )
+          .map((p) => p.manufacturer)
+      ),
+    [products, selected.productCategoryId]
+  );
+  const narrowedProducts = useMemo(
+    () =>
+      products.filter(
+        (p) =>
+          (!selected.productCategoryId ||
+            p.productCategory.id === selected.productCategoryId) &&
+          (!selected.manufacturerId ||
+            p.manufacturer.id === selected.manufacturerId)
+      ),
+    [products, selected.productCategoryId, selected.manufacturerId]
+  );
+
   const handleReset = useCallback(() => {
     setSelected(defaultSelected);
     resetStep();
@@ -139,6 +165,38 @@ function ProductSelectorRoot({
   useEffect(() => {
     open && handleReset();
   }, [open, handleReset]);
+
+  // Trigger onBlur when the dialog is closed.
+  useEffect(() => {
+    if (opened.current && !open) {
+      onBlur?.();
+    }
+
+    if (open) {
+      opened.current = true;
+    }
+  }, [open, onBlur]);
+
+  // Preload the products lazily.
+  const handlePreload = useCallback(() => {
+    if (fetcher.state === "idle" && fetcher.data === undefined) {
+      fetcher.load("/api/products");
+    }
+  }, [fetcher]);
+
+  // Set the products when they are loaded from the fetcher.
+  useEffect(() => {
+    if (fetcher.data) {
+      setProducts(fetcher.data.results);
+    }
+  }, [fetcher.data]);
+
+  // Preload the products when a value is set.
+  useEffect(() => {
+    if (value) {
+      handlePreload();
+    }
+  }, [value, handlePreload]);
 
   const steps: ProductSelectStep[] = useMemo(
     () => [
@@ -155,6 +213,7 @@ function ProductSelectorRoot({
                 draft.productId = undefined;
               })
             }
+            productCategories={productCategories}
           />
         ),
         canStepForward: !!selected.productCategoryId,
@@ -164,7 +223,6 @@ function ProductSelectorRoot({
         step: (
           <StepSelectManufacturer
             key="step1"
-            productCategoryId={selected.productCategoryId}
             manufacturerId={selected.manufacturerId}
             setManufacturerId={(id) =>
               setSelected((draft) => {
@@ -172,6 +230,7 @@ function ProductSelectorRoot({
                 draft.productId = undefined;
               })
             }
+            manufacturers={manufacturers}
           />
         ),
         canStepForward: !!selected.manufacturerId,
@@ -181,12 +240,13 @@ function ProductSelectorRoot({
         step: (
           <StepSelectProduct
             key="step2"
-            {...selected}
+            productId={selected.productId}
             setProductId={(id) =>
               setSelected((draft) => {
                 draft.productId = id;
               })
             }
+            products={narrowedProducts}
           />
         ),
         canStepForward: !!selected.productId,
@@ -194,7 +254,12 @@ function ProductSelectorRoot({
       },
       {
         idx: 3,
-        step: <StepReview key="step3" productId={selected.productId} />,
+        step: (
+          <StepReview
+            key="step3"
+            product={products.find((p) => p.id === selected.productId)}
+          />
+        ),
         canStepForward: true,
         nextText: "Finish",
         nextAction: () => {
@@ -205,7 +270,17 @@ function ProductSelectorRoot({
         },
       },
     ],
-    [selected, setSelected, onValueChange]
+    [
+      selected.productCategoryId,
+      selected.manufacturerId,
+      selected.productId,
+      productCategories,
+      manufacturers,
+      narrowedProducts,
+      products,
+      setSelected,
+      onValueChange,
+    ]
   );
 
   const currentStep = useMemo(
@@ -215,37 +290,36 @@ function ProductSelectorRoot({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <div className="grid gap-2">
-        {defaultProduct ? (
-          <ProductCard
-            product={defaultProduct}
-            renderEditButton={() => (
-              <DialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={disabled}
-                >
-                  <Pencil />
-                </Button>
-              </DialogTrigger>
-            )}
-          />
-        ) : (
-          <DialogTrigger asChild>
-            <Button
-              type="button"
-              size="sm"
-              disabled={disabled}
-              className={cn(className)}
-            >
-              <Search />
-              Find Product
-            </Button>
-          </DialogTrigger>
-        )}
-      </div>
+      {value ? (
+        <ProductCard
+          product={defaultProduct}
+          renderEditButton={() => (
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={disabled}
+              >
+                <Pencil />
+              </Button>
+            </DialogTrigger>
+          )}
+        />
+      ) : (
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            size="sm"
+            disabled={disabled}
+            className={cn(className)}
+            onMouseEnter={handlePreload}
+          >
+            <Search />
+            Find Product
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="px-0">
         <DialogHeader className="px-6">
           <DialogTitle>Find Product</DialogTitle>
@@ -286,18 +360,14 @@ function ProductSelectorRoot({
 interface StepSelectProductCategoryProps {
   productCategoryId?: string;
   setProductCategoryId: (productCategoryId: string) => void;
+  productCategories: ProductCategory[];
 }
 
 function StepSelectProductCategory({
   productCategoryId,
   setProductCategoryId,
+  productCategories,
 }: StepSelectProductCategoryProps) {
-  const { getProductCategories } = useAssetsState();
-  const productCategories = useMemo(
-    () => getProductCategories(),
-    [getProductCategories]
-  );
-
   return (
     <div className="flex flex-col gap-4 py-2">
       <h3 className="text-normal font-regular">Select Category</h3>
@@ -346,24 +416,14 @@ interface StepSelectManufacturerProps {
   productCategoryId?: string;
   manufacturerId?: string;
   setManufacturerId: (manufacturerId: string) => void;
+  manufacturers: Manufacturer[];
 }
 
 function StepSelectManufacturer({
-  productCategoryId,
   manufacturerId,
   setManufacturerId,
+  manufacturers,
 }: StepSelectManufacturerProps) {
-  const { getManufacturers } = useAssetsState();
-  const manufacturers = useMemo(
-    () =>
-      getManufacturers({
-        productFilter: (product) =>
-          !productCategoryId ||
-          product.productCategory.id === productCategoryId,
-      }),
-    [getManufacturers, productCategoryId]
-  );
-
   return (
     <div className="flex flex-col gap-4 py-2">
       <h3 className="text-normal font-regular">Select Manufacturer</h3>
@@ -372,7 +432,7 @@ function StepSelectManufacturer({
           {(value) => (
             <RadioGroup
               defaultValue="card"
-              className="grid grid-cols-2 gap-4"
+              className="grid grid-cols-2 gap-4 py-2"
               onValueChange={setManufacturerId}
               value={manufacturerId ?? ""}
             >
@@ -402,30 +462,16 @@ function StepSelectManufacturer({
 }
 
 interface StepSelectProductProps {
-  productCategoryId?: string;
-  manufacturerId?: string;
   productId?: string;
   setProductId: (manufacturerId: string) => void;
+  products: Product[];
 }
 
 function StepSelectProduct({
-  productCategoryId,
-  manufacturerId,
   productId,
   setProductId,
+  products,
 }: StepSelectProductProps) {
-  const { getProducts } = useAssetsState();
-  const products = useMemo(
-    () =>
-      getProducts({
-        productFilter: (product) =>
-          (!productCategoryId ||
-            product.productCategory.id === productCategoryId) &&
-          (!manufacturerId || product.manufacturer.id === manufacturerId),
-      }),
-    [getProducts, productCategoryId, manufacturerId]
-  );
-
   return (
     <div className="flex flex-col gap-4 py-2">
       <h3 className="text-normal font-regular">Select Product</h3>
@@ -468,31 +514,21 @@ function StepSelectProduct({
   );
 }
 
-function StepReview({ productId }: { productId: Product["id"] | undefined }) {
-  const { getProducts } = useAssetsState();
+function StepReview({ product }: { product: Product | undefined }) {
   return (
     <div className="flex flex-col gap-4 py-2">
       <h3 className="text-normal font-regular">Review</h3>
-      <Suspense fallback={<Loader2 className="animate-spin" />}>
-        <Await resolve={getProducts()}>
-          {(value) => {
-            const product = value.find((p) => p.id === productId);
-            return (
-              <DataList
-                details={[
-                  { label: "Product", value: product?.name },
-                  {
-                    label: "Description",
-                    value: product?.description ?? <>&mdash;</>,
-                  },
-                  { label: "Manufacturer", value: product?.manufacturer.name },
-                  { label: "Category", value: product?.productCategory.name },
-                ]}
-              />
-            );
-          }}
-        </Await>
-      </Suspense>
+      <DataList
+        details={[
+          { label: "Product", value: product?.name },
+          {
+            label: "Description",
+            value: product?.description ?? <>&mdash;</>,
+          },
+          { label: "Manufacturer", value: product?.manufacturer.name },
+          { label: "Category", value: product?.productCategory.name },
+        ]}
+      />
     </div>
   );
 }

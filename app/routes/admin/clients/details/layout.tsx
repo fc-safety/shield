@@ -1,7 +1,7 @@
 import { Outlet, type UIMatch } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
-import { createSite, getClient } from "~/.server/api";
+import { api } from "~/.server/api";
 import { createSiteSchemaResolver, type createSiteSchema } from "~/lib/schema";
 import type { Route } from "./+types/layout";
 
@@ -20,7 +20,7 @@ export async function action({ request }: Route.ActionArgs) {
     throw Response.json({ errors }, { status: 400 });
   }
 
-  return createSite(request, data);
+  return api.sites.create(request, data);
 }
 
 export function loader({ params, request }: Route.LoaderArgs) {
@@ -29,7 +29,7 @@ export function loader({ params, request }: Route.LoaderArgs) {
     throw new Response("No Client ID", { status: 400 });
   }
 
-  return getClient(request, id);
+  return api.clients.get(request, id);
 }
 
 export default function AdminClientDetailsLayout() {
