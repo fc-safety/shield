@@ -8,6 +8,8 @@ import ProductCategoryDetailsForm from "~/components/products/product-category-d
 import {
   createAssetQuestionSchema,
   createAssetQuestionSchemaResolver,
+  updateAssetQuestionSchema,
+  updateAssetQuestionSchemaResolver,
   updateProductCategorySchemaResolver,
   type updateProductCategorySchema,
 } from "~/lib/schema";
@@ -25,8 +27,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     throw new Response("No Product Category ID", { status: 400 });
   }
 
+  const searchParams =
+    URL.parse(request.url)?.searchParams ?? new URLSearchParams();
+
   // Handle asset questions actions.
-  const action = URL.parse(request.url)?.searchParams.get("action");
+  const action = searchParams.get("action");
   if (action === "add-asset-question") {
     const { data, errors } = await getValidatedFormData<
       z.infer<typeof createAssetQuestionSchema>
@@ -37,6 +42,39 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     }
 
     const { init } = await api.productCategories.addQuestion(request, id, data);
+    return redirect(`/products/categories/${id}`, init ?? undefined);
+  } else if (action === "update-asset-question") {
+    const questionId = searchParams.get("questionId");
+    if (!questionId) {
+      throw new Response("questionId in query params is required", {
+        status: 400,
+      });
+    }
+
+    const { data, errors } = await getValidatedFormData<
+      z.infer<typeof updateAssetQuestionSchema>
+    >(request, updateAssetQuestionSchemaResolver);
+
+    if (errors) {
+      throw Response.json({ errors }, { status: 400 });
+    }
+
+    const { init } = await api.productCategories.updateQuestion(
+      request,
+      id,
+      questionId,
+      data
+    );
+    return redirect(`/products/categories/${id}`, init ?? undefined);
+  } else if (action === "delete-asset-question") {
+    const questionId = searchParams.get("questionId");
+    if (!questionId) {
+      throw new Response("questionId in query params is required", {
+        status: 400,
+      });
+    }
+
+    const { init } = await api.products.deleteQuestion(request, id, questionId);
     return redirect(`/products/categories/${id}`, init ?? undefined);
   }
 
@@ -51,8 +89,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
     return api.productCategories.update(request, id, data);
   } else if (request.method === "DELETE") {
-    await api.productCategories.delete(request, id);
-    return redirect("/products/categories");
+    const { init } = await api.productCategories.delete(request, id);
+    return redirect("/products/categories", init ?? undefined);
   }
 
   throw new Response("Invalid method", { status: 405 });

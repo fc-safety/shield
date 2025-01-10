@@ -79,7 +79,9 @@ export default function AssetQuestionDetailForm({
       <Form
         className="space-y-4"
         method={"post"}
-        action={isNew ? "?action=add-asset-question" : undefined}
+        action={
+          isNew ? "?action=add-asset-question" : "?action=update-asset-question"
+        }
         onSubmit={(e) => {
           form.handleSubmit(e).then(() => {
             onSubmitted?.();

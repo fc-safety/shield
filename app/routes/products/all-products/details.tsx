@@ -8,8 +8,10 @@ import ProductDetailsForm from "~/components/products/product-details-form";
 import { Button } from "~/components/ui/button";
 import {
   createAssetQuestionSchemaResolver,
+  updateAssetQuestionSchemaResolver,
   updateProductSchemaResolver,
   type createAssetQuestionSchema,
+  type updateAssetQuestionSchema,
   type updateProductSchema,
 } from "~/lib/schema";
 import type { Route } from "./+types/details";
@@ -26,7 +28,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     throw new Response("No Product ID", { status: 400 });
   }
 
-  const action = URL.parse(request.url)?.searchParams.get("action");
+  const searchParams =
+    URL.parse(request.url)?.searchParams ?? new URLSearchParams();
+
+  const action = searchParams.get("action");
   if (action === "add-asset-question") {
     const { data, errors } = await getValidatedFormData<
       z.infer<typeof createAssetQuestionSchema>
@@ -37,6 +42,39 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     }
 
     const { init } = await api.products.addQuestion(request, id, data);
+    return redirect(`/products/all/${id}`, init ?? undefined);
+  } else if (action === "update-asset-question") {
+    const questionId = searchParams.get("questionId");
+    if (!questionId) {
+      throw new Response("questionId in query params is required", {
+        status: 400,
+      });
+    }
+
+    const { data, errors } = await getValidatedFormData<
+      z.infer<typeof updateAssetQuestionSchema>
+    >(request, updateAssetQuestionSchemaResolver);
+
+    if (errors) {
+      throw Response.json({ errors }, { status: 400 });
+    }
+
+    const { init } = await api.products.updateQuestion(
+      request,
+      id,
+      questionId,
+      data
+    );
+    return redirect(`/products/all/${id}`, init ?? undefined);
+  } else if (action === "delete-asset-question") {
+    const questionId = searchParams.get("questionId");
+    if (!questionId) {
+      throw new Response("questionId in query params is required", {
+        status: 400,
+      });
+    }
+
+    const { init } = await api.products.deleteQuestion(request, id, questionId);
     return redirect(`/products/all/${id}`, init ?? undefined);
   }
 

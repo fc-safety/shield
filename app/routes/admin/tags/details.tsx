@@ -30,8 +30,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
     return api.tags.update(request, id, data);
   } else if (request.method === "DELETE") {
-    await api.tags.delete(request, id);
-    return redirect("/admin/tags/");
+    const { init } = await api.tags.delete(request, id);
+    return redirect("/admin/tags/", init ?? undefined);
   }
 
   throw new Response("Invalid method", { status: 405 });

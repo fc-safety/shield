@@ -238,8 +238,8 @@ export const createAssetQuestionSchemaResolver = zodResolver(
 );
 
 export const updateAssetQuestionSchema = createAssetQuestionSchema
-  .extend({ id: z.string() })
-  .partial();
+  .partial()
+  .extend({ id: z.string() });
 export const updateAssetQuestionSchemaResolver = zodResolver(
   updateAssetQuestionSchema
 );

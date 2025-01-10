@@ -8,16 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import AssetQuestionDetailForm, {
-  type AssetQuestionDetailFormProps,
-} from "./asset-question-detail-form";
+import AssetQuestionDetailForm from "./asset-question-detail-form";
 
-interface NewAssetQuestionButtonProps
-  extends Omit<AssetQuestionDetailFormProps, "onSubmitted" | "assetQuestion"> {}
-
-export default function NewAssetQuestionButton({
-  ...formProps
-}: NewAssetQuestionButtonProps) {
+export default function NewAssetQuestionButton() {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -31,10 +24,7 @@ export default function NewAssetQuestionButton({
         <DialogHeader>
           <DialogTitle>Add Question</DialogTitle>
         </DialogHeader>
-        <AssetQuestionDetailForm
-          onSubmitted={() => setOpen(false)}
-          {...formProps}
-        />
+        <AssetQuestionDetailForm onSubmitted={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

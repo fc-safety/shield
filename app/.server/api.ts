@@ -18,6 +18,7 @@ import type {
   createProductSchema,
   createSiteSchema,
   createTagSchema,
+  updateAssetQuestionSchema,
   updateAssetSchema,
   updateClientSchema,
   updateManufacturerSchema,
@@ -55,6 +56,34 @@ export const api = {
           .json(input)
           .build(),
       ]),
+    updateQuestion: async (
+      request: Request,
+      productId: string,
+      questionId: string,
+      input: z.infer<typeof updateAssetQuestionSchema>
+    ) =>
+      authenticatedData<AssetQuestion>(request, [
+        FetchOptions.url("/products/:id/questions/:questionId", {
+          id: productId,
+          questionId,
+        })
+          .patch()
+          .json(input)
+          .build(),
+      ]),
+    deleteQuestion: async (
+      request: Request,
+      productId: string,
+      questionId: string
+    ) =>
+      authenticatedData<AssetQuestion>(request, [
+        FetchOptions.url("/products/:id/questions/:questionId", {
+          id: productId,
+          questionId,
+        })
+          .delete()
+          .build(),
+      ]),
   },
   manufacturers: CRUD.for<
     Manufacturer,
@@ -69,13 +98,43 @@ export const api = {
     >("/product-categories").all(),
     addQuestion: async (
       request: Request,
-      productId: string,
+      categoryId: string,
       input: z.infer<typeof createAssetQuestionSchema>
     ) =>
       authenticatedData<AssetQuestion>(request, [
-        FetchOptions.url("/product-categories/:id/questions", { id: productId })
+        FetchOptions.url("/product-categories/:id/questions", {
+          id: categoryId,
+        })
           .post()
           .json(input)
+          .build(),
+      ]),
+    updateQuestion: async (
+      request: Request,
+      categoryId: string,
+      questionId: string,
+      input: z.infer<typeof updateAssetQuestionSchema>
+    ) =>
+      authenticatedData<AssetQuestion>(request, [
+        FetchOptions.url("/product-categories/:id/questions/:questionId", {
+          id: categoryId,
+          questionId,
+        })
+          .patch()
+          .json(input)
+          .build(),
+      ]),
+    deleteQuestion: async (
+      request: Request,
+      productId: string,
+      questionId: string
+    ) =>
+      authenticatedData<AssetQuestion>(request, [
+        FetchOptions.url("/product-categories/:id/questions/:questionId", {
+          id: productId,
+          questionId,
+        })
+          .delete()
           .build(),
       ]),
   },

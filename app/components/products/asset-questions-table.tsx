@@ -1,9 +1,23 @@
 import NewAssetQuestionButton from "@/components/assets/new-asset-question-button";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Power, PowerOff } from "lucide-react";
+import { MoreHorizontal, Pencil, Power, PowerOff, Trash } from "lucide-react";
+import { useState } from "react";
+import { useFetcher } from "react-router";
+import { useImmer } from "use-immer";
 import type { AssetQuestion } from "~/lib/models";
+import AssetQuestionDetailForm from "../assets/asset-question-detail-form";
+import ConfirmationDialog from "../confirmation-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 
 interface AssetQuestionsTableProps {
   questions: AssetQuestion[];
@@ -14,6 +28,25 @@ export default function AssetQuestionsTable({
   questions,
   readOnly = false,
 }: AssetQuestionsTableProps) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<AssetQuestion>();
+
+  const fetcher = useFetcher();
+
+  const [deleteAction, setDeleteAction] = useImmer({
+    open: false,
+    action: () => {},
+    cancel: () => {},
+    title: "Are you sure?",
+    message: "",
+    requiredUserInput: "",
+  });
+
+  const handleEditQuestion = (question: AssetQuestion) => {
+    setSelectedQuestion(question);
+    setEditOpen(true);
+  };
+
   const columns: ColumnDef<AssetQuestion>[] = [
     {
       accessorKey: "active",
@@ -66,6 +99,52 @@ export default function AssetQuestionsTable({
         </span>
       ),
     },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const question = row.original;
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
+              <DropdownMenuItem onSelect={() => handleEditQuestion(question)}>
+                <Pencil />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() =>
+                  setDeleteAction((draft) => {
+                    draft.open = true;
+                    draft.title = "Delete Question";
+                    draft.message = `Are you sure you want to delete the question "${question.prompt}"?`;
+                    draft.action = () => {
+                      fetcher.submit(
+                        {},
+                        {
+                          method: "delete",
+                          action: `?action=delete-asset-question&questionId=${question.id}`,
+                        }
+                      );
+                    };
+                  })
+                }
+              >
+                <Trash />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
   ];
 
   return (
@@ -74,8 +153,39 @@ export default function AssetQuestionsTable({
         data={questions}
         columns={columns}
         searchPlaceholder="Search questions..."
+        initialState={{
+          columnVisibility: {
+            actions: !readOnly,
+          },
+        }}
         actions={readOnly ? [] : [<NewAssetQuestionButton key="add" />]}
       />
+      <ConfirmationDialog
+        open={deleteAction.open}
+        onOpenChange={(open) =>
+          setDeleteAction((draft) => {
+            draft.open = open;
+          })
+        }
+        destructive
+        onConfirm={() => deleteAction.action()}
+        confirmText="Delete"
+        onCancel={() => deleteAction.cancel()}
+        requiredUserInput={deleteAction.requiredUserInput}
+        title={deleteAction.title}
+        message={deleteAction.message}
+      />
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Question</DialogTitle>
+          </DialogHeader>
+          <AssetQuestionDetailForm
+            assetQuestion={selectedQuestion}
+            onSubmitted={() => setEditOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -40,8 +40,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
     return api.clients.update(request, id, data);
   } else if (request.method === "DELETE") {
-    await api.clients.delete(request, id);
-    return redirect("/admin/clients");
+    const { init } = await api.clients.delete(request, id);
+    return redirect("/admin/clients", init ?? undefined);
   }
 
   throw new Response("Invalid method", { status: 405 });
