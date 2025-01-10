@@ -111,6 +111,34 @@ export interface Person extends BaseModel {
   clientId: string;
 }
 
+export const AssetQuestionTypes = ["SETUP", "INSPECTION"] as const;
+export type AssetQuestionType = (typeof AssetQuestionTypes)[number];
+
+export const AssetQuestionResponseTypes = [
+  "BINARY",
+  "INDETERMINATE_BINARY",
+  "TEXT",
+  "TEXTAREA",
+  "DATE",
+  "NUMBER",
+  "IMAGE",
+] as const;
+export type AssetQuestionResponseType =
+  (typeof AssetQuestionResponseTypes)[number];
+
+export interface AssetQuestion extends BaseModel {
+  active: boolean;
+  type: AssetQuestionType;
+  required: boolean;
+  order?: number | null;
+  prompt: string;
+  valueType: AssetQuestionResponseType;
+  productCategory?: ProductCategory | null;
+  productCategoryId: string | null;
+  product?: Product | null;
+  productId: string | null;
+}
+
 export interface ProductCategory extends BaseModel {
   active: boolean;
   name: string;
@@ -118,6 +146,7 @@ export interface ProductCategory extends BaseModel {
   description?: string | null;
   icon?: string | null;
   color?: string | null;
+  assetQuestions?: AssetQuestion[];
 }
 
 export interface Manufacturer extends BaseModel {
@@ -141,6 +170,7 @@ export interface Product extends BaseModel {
   imageUrl?: string | null;
   productCategory: ProductCategory;
   productCategoryId: string;
+  assetQuestions?: AssetQuestion[];
 
   // TODO: Add consumable support
 }

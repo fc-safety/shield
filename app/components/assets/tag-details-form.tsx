@@ -1,14 +1,4 @@
-import { Form } from "react-router";
-import { useRemixForm } from "remix-hook-form";
-import { z } from "zod";
-import { Button } from "~/components/ui/button";
-import type { Tag } from "~/lib/models";
-import {
-  createTagSchema,
-  createTagSchemaResolver,
-  updateTagSchema,
-  updateTagSchemaResolver,
-} from "~/lib/schema";
+import { Button } from "@/components/ui/button";
 import {
   FormControl,
   FormField,
@@ -16,8 +6,18 @@ import {
   FormLabel,
   FormMessage,
   Form as FormProvider,
-} from "../ui/form";
-import { Input } from "../ui/input";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Form } from "react-router";
+import { useRemixForm } from "remix-hook-form";
+import { z } from "zod";
+import type { Tag } from "~/lib/models";
+import {
+  createTagSchema,
+  createTagSchemaResolver,
+  updateTagSchema,
+  updateTagSchemaResolver,
+} from "~/lib/schema";
 
 type TForm = z.infer<typeof updateTagSchema | typeof createTagSchema>;
 interface TagDetailsFormProps {
@@ -33,43 +33,42 @@ export default function TagDetailsForm({
   tag,
   onSubmitted,
 }: TagDetailsFormProps) {
+  const isNew = !tag;
+
   const form = useRemixForm<TForm>({
     resolver: tag ? updateTagSchemaResolver : createTagSchemaResolver,
-    defaultValues: FORM_DEFAULTS,
-    values: tag && {
-      ...tag,
-      asset: tag.assetId
-        ? {
-            connect: {
-              id: tag.assetId,
-            },
-          }
-        : undefined,
-      site: tag.siteId
-        ? {
-            connect: {
-              id: tag.siteId,
-            },
-          }
-        : undefined,
-      client: tag.clientId
-        ? {
-            connect: {
-              id: tag.clientId,
-            },
-          }
-        : undefined,
-    },
+    values: tag
+      ? {
+          ...tag,
+          asset: tag.assetId
+            ? {
+                connect: {
+                  id: tag.assetId,
+                },
+              }
+            : undefined,
+          site: tag.siteId
+            ? {
+                connect: {
+                  id: tag.siteId,
+                },
+              }
+            : undefined,
+          client: tag.clientId
+            ? {
+                connect: {
+                  id: tag.clientId,
+                },
+              }
+            : undefined,
+        }
+      : FORM_DEFAULTS,
     mode: "onChange",
   });
 
   const {
     formState: { isDirty, isValid, isSubmitting },
-    watch,
   } = form;
-
-  const id = watch("id");
-  const isNew = !id;
 
   return (
     <FormProvider {...form}>

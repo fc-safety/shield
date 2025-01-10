@@ -1,15 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ClientStatuses, ProductTypes } from "./models";
+import {
+  AssetQuestionResponseTypes,
+  AssetQuestionTypes,
+  ClientStatuses,
+  ProductTypes,
+} from "./models";
 
 export const addressSchema = z.object({
   id: z.string().optional(),
-  street1: z.string().min(1),
+  street1: z.string().nonempty(),
   street2: z
     .nullable(z.string())
     .optional()
     .transform((street2) => street2 || undefined),
-  city: z.string().min(1),
+  city: z.string().nonempty(),
   state: z.string().min(2),
   zip: z.string().length(5),
 });
@@ -21,7 +26,7 @@ export const createClientSchema = z.object({
     .length(24)
     .optional()
     .transform((id) => id || undefined),
-  name: z.string().min(1),
+  name: z.string().nonempty(),
   startedOn: z.coerce.date(),
   address: z.object({
     create: addressSchema,
@@ -87,7 +92,7 @@ export const updateSiteSchemaResolver = zodResolver(updateSiteSchema);
 export const createProductCategorySchema = z.object({
   id: z.string().optional(),
   active: z.boolean(),
-  name: z.string().min(1),
+  name: z.string().nonempty(),
   shortName: z.string().optional(),
   description: z.string().optional(),
   icon: z.string().optional(),
@@ -107,7 +112,7 @@ export const updateProductCategorySchemaResolver = zodResolver(
 export const createManufacturerSchema = z.object({
   id: z.string().optional(),
   active: z.boolean(),
-  name: z.string().min(1),
+  name: z.string().nonempty(),
   homeUrl: z.string().optional(),
 });
 export const createManufacturerSchemaResolver = zodResolver(
@@ -130,7 +135,7 @@ export const createProductSchema = z.object({
     }),
   }),
   type: z.enum(ProductTypes).default("PRIMARY"),
-  name: z.string().min(1),
+  name: z.string().nonempty(),
   description: z.string().optional(),
   sku: z.string().optional(),
   productUrl: z.string().optional(),
@@ -182,10 +187,10 @@ export const updateTagSchemaResolver = zodResolver(updateTagSchema);
 
 export const createAssetSchema = z.object({
   active: z.boolean(),
-  name: z.string().min(1),
-  location: z.string().min(1),
-  placement: z.string().min(1),
-  serialNumber: z.string().min(1),
+  name: z.string().nonempty(),
+  location: z.string().nonempty(),
+  placement: z.string().nonempty(),
+  serialNumber: z.string().nonempty(),
   product: z.object({
     connect: z.object({
       id: z.string(),
@@ -220,10 +225,29 @@ export const updateAssetSchema = createAssetSchema
   .partial();
 export const updateAssetSchemaResolver = zodResolver(updateAssetSchema);
 
+export const createAssetQuestionSchema = z.object({
+  active: z.boolean().default(true),
+  type: z.enum(AssetQuestionTypes),
+  required: z.boolean().default(false),
+  order: z.number().optional(),
+  prompt: z.string().nonempty(),
+  valueType: z.enum(AssetQuestionResponseTypes),
+});
+export const createAssetQuestionSchemaResolver = zodResolver(
+  createAssetQuestionSchema
+);
+
+export const updateAssetQuestionSchema = createAssetQuestionSchema
+  .extend({ id: z.string() })
+  .partial();
+export const updateAssetQuestionSchemaResolver = zodResolver(
+  updateAssetQuestionSchema
+);
+
 // TODO: Below is old code, may need to be updated
 export const buildReportSchema = z.object({
   id: z.string().optional(),
-  title: z.string().min(1),
+  title: z.string().nonempty(),
   description: z.string(),
   type: z.enum(["asset", "inspection", "user", "location"]),
   columns: z.array(z.string()),

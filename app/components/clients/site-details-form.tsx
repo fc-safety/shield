@@ -66,28 +66,29 @@ export default function SiteDetailsForm({
 
   const form = useRemixForm<TForm>({
     resolver: site ? updateSiteSchemaResolver : createSiteSchemaResolver,
-    defaultValues: FORM_DEFAULTS,
-    values: site && {
-      ...site,
-      address: {
-        update: {
-          ...site.address,
-          street2: site.address.street2 || undefined,
-        },
-      },
-      client: {
-        connect: {
-          id: site.clientId,
-        },
-      },
-      parentSite: site.parentSiteId
-        ? {
-            connect: {
-              id: site.parentSiteId,
+    values: site
+      ? {
+          ...site,
+          address: {
+            update: {
+              ...site.address,
+              street2: site.address.street2 || undefined,
             },
-          }
-        : undefined,
-    },
+          },
+          client: {
+            connect: {
+              id: site.clientId,
+            },
+          },
+          parentSite: site.parentSiteId
+            ? {
+                connect: {
+                  id: site.parentSiteId,
+                },
+              }
+            : undefined,
+        }
+      : FORM_DEFAULTS,
     mode: "onBlur",
   });
 
@@ -140,7 +141,7 @@ export default function SiteDetailsForm({
       <Form
         className="space-y-4"
         method="post"
-        action="?resource=site"
+        action={isNew ? "?action=create-site" : undefined}
         onSubmit={(e) => {
           form.handleSubmit(e).then(() => {
             onSubmitted?.();

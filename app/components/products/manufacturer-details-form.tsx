@@ -45,7 +45,7 @@ export default function ManufacturerDetailsForm({
     resolver: isNew
       ? createManufacturerSchemaResolver
       : updateManufacturerSchemaResolver,
-    defaultValues: manufacturer
+    values: manufacturer
       ? {
           ...manufacturer,
           homeUrl: manufacturer.homeUrl ?? "",

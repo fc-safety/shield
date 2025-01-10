@@ -40,36 +40,35 @@ export default function AssetDetailsForm({
   asset,
   onSubmitted,
 }: AssetDetailsFormProps) {
+  const isNew = !asset;
+
   const form = useRemixForm<TForm>({
     resolver: asset ? updateAssetSchemaResolver : createAssetSchemaResolver,
-    defaultValues: FORM_DEFAULTS,
-    values: asset && {
-      ...asset,
-      tag: asset.tagId
-        ? {
-            connect: {
-              id: asset.tagId,
-            },
-          }
-        : undefined,
-      product: asset.productId
-        ? {
-            connect: {
-              id: asset.productId,
-            },
-          }
-        : undefined,
-    },
+    values: asset
+      ? {
+          ...asset,
+          tag: asset.tagId
+            ? {
+                connect: {
+                  id: asset.tagId,
+                },
+              }
+            : undefined,
+          product: asset.productId
+            ? {
+                connect: {
+                  id: asset.productId,
+                },
+              }
+            : undefined,
+        }
+      : FORM_DEFAULTS,
     mode: "onChange",
   });
 
   const {
     formState: { isDirty, isValid, isSubmitting },
-    watch,
   } = form;
-
-  const id = watch("id");
-  const isNew = !id;
 
   return (
     <FormProvider {...form}>

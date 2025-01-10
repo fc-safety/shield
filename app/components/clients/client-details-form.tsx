@@ -59,16 +59,17 @@ export default function ClientDetailsForm({
 
   const form = useRemixForm<TForm>({
     resolver: client ? updateClientSchemaResolver : createClientSchemaResolver,
-    defaultValues: FORM_DEFAULTS,
-    values: client && {
-      ...client,
-      address: {
-        update: {
-          ...client.address,
-          street2: client.address.street2 || undefined,
-        },
-      },
-    },
+    values: client
+      ? {
+          ...client,
+          address: {
+            update: {
+              ...client.address,
+              street2: client.address.street2 || undefined,
+            },
+          },
+        }
+      : FORM_DEFAULTS,
     mode: "onBlur",
   });
 

@@ -1,5 +1,7 @@
+import type { z } from "zod";
 import {
   type Asset,
+  type AssetQuestion,
   type Client,
   type Manufacturer,
   type Product,
@@ -8,6 +10,7 @@ import {
   type Tag,
 } from "~/lib/models";
 import type {
+  createAssetQuestionSchema,
   createAssetSchema,
   createClientSchema,
   createManufacturerSchema,
@@ -23,7 +26,7 @@ import type {
   updateSiteSchema,
   updateTagSchema,
 } from "~/lib/schema";
-import { CRUD } from "./api-utils";
+import { authenticatedData, CRUD, FetchOptions } from "./api-utils";
 
 export const api = {
   // ASSETS
@@ -35,21 +38,47 @@ export const api = {
   ).all(),
 
   // PRODUCTS
-  products: CRUD.for<
-    Product,
-    typeof createProductSchema,
-    typeof updateProductSchema
-  >("/products").all(),
+  products: {
+    ...CRUD.for<
+      Product,
+      typeof createProductSchema,
+      typeof updateProductSchema
+    >("/products").all(),
+    addQuestion: async (
+      request: Request,
+      productId: string,
+      input: z.infer<typeof createAssetQuestionSchema>
+    ) =>
+      authenticatedData<AssetQuestion>(request, [
+        FetchOptions.url("/products/:id/questions", { id: productId })
+          .post()
+          .json(input)
+          .build(),
+      ]),
+  },
   manufacturers: CRUD.for<
     Manufacturer,
     typeof createManufacturerSchema,
     typeof updateManufacturerSchema
   >("/manufacturers").all(),
-  productCategories: CRUD.for<
-    ProductCategory,
-    typeof createProductCategorySchema,
-    typeof updateProductCategorySchema
-  >("/product-categories").all(),
+  productCategories: {
+    ...CRUD.for<
+      ProductCategory,
+      typeof createProductCategorySchema,
+      typeof updateProductCategorySchema
+    >("/product-categories").all(),
+    addQuestion: async (
+      request: Request,
+      productId: string,
+      input: z.infer<typeof createAssetQuestionSchema>
+    ) =>
+      authenticatedData<AssetQuestion>(request, [
+        FetchOptions.url("/product-categories/:id/questions", { id: productId })
+          .post()
+          .json(input)
+          .build(),
+      ]),
+  },
 
   // CLIENTS & SITES
   clients: CRUD.for<

@@ -10,65 +10,64 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Form } from "react-router";
 import { useRemixForm } from "remix-hook-form";
 import type { z } from "zod";
-import { ProductTypes, type Product } from "~/lib/models";
 import {
-  createProductSchemaResolver,
-  updateProductSchemaResolver,
-  type createProductSchema,
-  type updateProductSchema,
+  AssetQuestionResponseTypes,
+  AssetQuestionTypes,
+  type AssetQuestion,
+} from "~/lib/models";
+import {
+  createAssetQuestionSchemaResolver,
+  updateAssetQuestionSchemaResolver,
+  type createAssetQuestionSchema,
+  type updateAssetQuestionSchema,
 } from "~/lib/schema";
-import ManufacturerSelector from "./manufacturer-selector";
-import ProductCategorySelector from "./product-category-selector";
 
-type TForm = z.infer<typeof createProductSchema | typeof updateProductSchema>;
-interface ProductDetailsFormProps {
-  product?: Product;
+type TForm = z.infer<
+  typeof updateAssetQuestionSchema | typeof createAssetQuestionSchema
+>;
+
+export interface AssetQuestionDetailFormProps {
+  assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
 }
 
 const FORM_DEFAULTS = {
-  id: "",
   active: true,
-  type: "PRIMARY",
-  name: "",
-  description: "",
-  sku: "",
-  productUrl: "",
+  type: "INSPECTION",
+  required: false,
+  prompt: "",
+  valueType: "TEXT",
 } satisfies TForm;
 
-export default function ProductDetailsForm({
-  product,
+export default function AssetQuestionDetailForm({
+  assetQuestion,
   onSubmitted,
-}: ProductDetailsFormProps) {
-  const isNew = !product;
+}: AssetQuestionDetailFormProps) {
+  const isNew = !assetQuestion;
 
   const form = useRemixForm<TForm>({
-    resolver: isNew ? createProductSchemaResolver : updateProductSchemaResolver,
-    values: product
+    resolver: assetQuestion
+      ? updateAssetQuestionSchemaResolver
+      : createAssetQuestionSchemaResolver,
+    values: assetQuestion
       ? {
-          ...product,
-          productCategory: {
-            connect: {
-              id: product.productCategoryId,
-            },
-          },
-          manufacturer: {
-            connect: {
-              id: product.manufacturerId,
-            },
-          },
-          description: product.description ?? "",
-          sku: product.sku ?? "",
-          productUrl: product.productUrl ?? "",
-          imageUrl: product.imageUrl ?? "",
+          ...assetQuestion,
+          order: assetQuestion.order || undefined,
         }
       : FORM_DEFAULTS,
-    mode: "onBlur",
+    mode: "onChange",
   });
 
   const {
@@ -79,7 +78,8 @@ export default function ProductDetailsForm({
     <FormProvider {...form}>
       <Form
         className="space-y-4"
-        method="post"
+        method={"post"}
+        action={isNew ? "?action=add-asset-question" : undefined}
         onSubmit={(e) => {
           form.handleSubmit(e).then(() => {
             onSubmitted?.();
@@ -107,42 +107,6 @@ export default function ProductDetailsForm({
         />
         <FormField
           control={form.control}
-          name="productCategory"
-          render={({ field: { value, onChange, onBlur } }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <FormControl>
-                <ProductCategorySelector
-                  value={value?.connect.id}
-                  onValueChange={(id) => onChange({ connect: { id } })}
-                  onBlur={onBlur}
-                  className="flex"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="manufacturer"
-          render={({ field: { value, onChange, onBlur } }) => (
-            <FormItem>
-              <FormLabel>Manufacturer</FormLabel>
-              <FormControl>
-                <ManufacturerSelector
-                  value={value?.connect.id}
-                  onValueChange={(id) => onChange({ connect: { id } })}
-                  onBlur={onBlur}
-                  className="flex"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
           name="type"
           render={({ field: { onChange, ...field } }) => (
             <FormItem>
@@ -153,10 +117,16 @@ export default function ProductDetailsForm({
                   onValueChange={onChange}
                   className="flex gap-4"
                 >
-                  {ProductTypes.map((type, idx) => (
+                  {AssetQuestionTypes.map((type, idx) => (
                     <div key={type} className="flex items-center space-x-2">
-                      <RadioGroupItem value={type} id={"status" + idx} />
-                      <Label className="capitalize" htmlFor={"status" + idx}>
+                      <RadioGroupItem
+                        value={type}
+                        id={"questionStatus" + idx}
+                      />
+                      <Label
+                        className="capitalize"
+                        htmlFor={"questionStatus" + idx}
+                      >
                         {type.toLowerCase()}
                       </Label>
                     </div>
@@ -169,12 +139,17 @@ export default function ProductDetailsForm({
         />
         <FormField
           control={form.control}
-          name="name"
-          render={({ field }) => (
+          name="required"
+          render={({ field: { onChange, onBlur, value } }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Required</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Switch
+                  checked={value}
+                  onCheckedChange={onChange}
+                  className="flex"
+                  onBlur={onBlur}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -182,10 +157,10 @@ export default function ProductDetailsForm({
         />
         <FormField
           control={form.control}
-          name="description"
+          name="prompt"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel>Prompt</FormLabel>
               <FormControl>
                 <Textarea {...field} />
               </FormControl>
@@ -195,12 +170,27 @@ export default function ProductDetailsForm({
         />
         <FormField
           control={form.control}
-          name="sku"
-          render={({ field }) => (
+          name="valueType"
+          render={({ field: { onChange, onBlur, value } }) => (
             <FormItem>
-              <FormLabel>SKU</FormLabel>
+              <FormLabel>Answer Type</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Select value={value} onValueChange={onChange}>
+                  <SelectTrigger className="h-8 capitalize" onBlur={onBlur}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {AssetQuestionResponseTypes.map((type) => (
+                      <SelectItem
+                        key={type}
+                        value={type}
+                        className="capitalize"
+                      >
+                        {type.replace("_", " ").toLowerCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -208,25 +198,12 @@ export default function ProductDetailsForm({
         />
         <FormField
           control={form.control}
-          name="productUrl"
+          name="order"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Product URL</FormLabel>
+              <FormLabel>Order</FormLabel>
               <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="imageUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Image URL</FormLabel>
-              <FormControl>
-                <Input {...field} />
+                <Input {...field} type="number" />
               </FormControl>
               <FormMessage />
             </FormItem>

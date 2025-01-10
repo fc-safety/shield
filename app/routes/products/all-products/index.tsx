@@ -144,7 +144,7 @@ export default function AllProducts({
           <NewProductButton />
         </div>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,_minmax(350px,_1fr))] gap-4 sm:gap-8">
+      <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4 sm:gap-8">
         {table
           .getRowModel()
           .rows.filter((row) => row.getIsGrouped())
@@ -157,7 +157,7 @@ export default function AllProducts({
               >
                 <CollapsibleTrigger asChild>
                   <Button
-                    className="text-lg col-span-full"
+                    className="text-xl col-span-full"
                     variant="ghost"
                     size="lg"
                   >

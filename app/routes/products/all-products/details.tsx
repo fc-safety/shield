@@ -1,11 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { redirect } from "react-router";
+import { Link, redirect } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import AssetQuestionsTable from "~/components/products/asset-questions-table";
 import ProductDetailsForm from "~/components/products/product-details-form";
+import { Button } from "~/components/ui/button";
 import {
+  createAssetQuestionSchemaResolver,
   updateProductSchemaResolver,
+  type createAssetQuestionSchema,
   type updateProductSchema,
 } from "~/lib/schema";
 import type { Route } from "./+types/details";
@@ -22,6 +26,20 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     throw new Response("No Product ID", { status: 400 });
   }
 
+  const action = URL.parse(request.url)?.searchParams.get("action");
+  if (action === "add-asset-question") {
+    const { data, errors } = await getValidatedFormData<
+      z.infer<typeof createAssetQuestionSchema>
+    >(request, createAssetQuestionSchemaResolver);
+
+    if (errors) {
+      throw Response.json({ errors }, { status: 400 });
+    }
+
+    const { init } = await api.products.addQuestion(request, id, data);
+    return redirect(`/products/all/${id}`, init ?? undefined);
+  }
+
   if (request.method === "POST" || request.method === "PATCH") {
     const { data, errors } = await getValidatedFormData<
       z.infer<typeof updateProductSchema>
@@ -33,8 +51,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
     return api.products.update(request, id, data);
   } else if (request.method === "DELETE") {
-    await api.products.delete(request, id);
-    return redirect("/products/all");
+    const { init } = await api.products.delete(request, id);
+    return redirect("/products/all", init ?? undefined);
   }
 
   throw new Response("Invalid method", { status: 405 });
@@ -62,12 +80,38 @@ export default function ProductDetails({
           <ProductDetailsForm product={product} />
         </CardContent>
       </Card>
-      <Card className="h-max">
-        <CardHeader>
-          <CardTitle>Questions</CardTitle>
-        </CardHeader>
-        <CardContent>Empty</CardContent>
-      </Card>
+      <div className="h-max grid grid-cols-1 gap-2 sm:gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Questions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AssetQuestionsTable questions={product.assetQuestions ?? []} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex justify-between items-center gap-2">
+              <span>
+                {product.productCategory.shortName ??
+                  product.productCategory.name}{" "}
+                Category Questions
+              </span>
+              <Button variant="link" asChild>
+                <Link to={`/products/categories/${product.productCategory.id}`}>
+                  Manage Category
+                </Link>
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AssetQuestionsTable
+              questions={product.productCategory.assetQuestions ?? []}
+              readOnly
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

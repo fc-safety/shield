@@ -49,7 +49,7 @@ export default function ProductCategoryDetailsForm({
     resolver: isNew
       ? createProductCategorySchemaResolver
       : updateProductCategorySchemaResolver,
-    defaultValues: productCategory
+    values: productCategory
       ? {
           ...productCategory,
           shortName: productCategory.shortName ?? "",

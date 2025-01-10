@@ -3,8 +3,11 @@ import { redirect } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import AssetQuestionsTable from "~/components/products/asset-questions-table";
 import ProductCategoryDetailsForm from "~/components/products/product-category-details-form";
 import {
+  createAssetQuestionSchema,
+  createAssetQuestionSchemaResolver,
   updateProductCategorySchemaResolver,
   type updateProductCategorySchema,
 } from "~/lib/schema";
@@ -20,6 +23,21 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   const { id } = params;
   if (!id) {
     throw new Response("No Product Category ID", { status: 400 });
+  }
+
+  // Handle asset questions actions.
+  const action = URL.parse(request.url)?.searchParams.get("action");
+  if (action === "add-asset-question") {
+    const { data, errors } = await getValidatedFormData<
+      z.infer<typeof createAssetQuestionSchema>
+    >(request, createAssetQuestionSchemaResolver);
+
+    if (errors) {
+      throw Response.json({ errors }, { status: 400 });
+    }
+
+    const { init } = await api.productCategories.addQuestion(request, id, data);
+    return redirect(`/products/categories/${id}`, init ?? undefined);
   }
 
   if (request.method === "POST" || request.method === "PATCH") {
@@ -66,7 +84,11 @@ export default function ProductCategoryDetails({
         <CardHeader>
           <CardTitle>Questions</CardTitle>
         </CardHeader>
-        <CardContent>Empty</CardContent>
+        <CardContent>
+          <AssetQuestionsTable
+            questions={productCategory.assetQuestions ?? []}
+          />
+        </CardContent>
       </Card>
     </div>
   );
