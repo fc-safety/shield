@@ -7,7 +7,7 @@ import type { Route } from "./+types/layout";
 
 export const handle = {
   breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"]>) => ({
-    label: data.name || "Details",
+    label: data?.name || "Details",
   }),
 };
 

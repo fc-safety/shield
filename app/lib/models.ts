@@ -133,10 +133,42 @@ export interface AssetQuestion extends BaseModel {
   order?: number | null;
   prompt: string;
   valueType: AssetQuestionResponseType;
+  assetAlertCriteria?: AssetAlertCriterion[];
   productCategory?: ProductCategory | null;
   productCategoryId: string | null;
   product?: Product | null;
   productId: string | null;
+}
+
+export const AlertLevels = ["URGENT", "INFO"] as const;
+export type AlertLevel = (typeof AlertLevels)[number];
+
+interface RuleMatch {
+  isEmpty?: boolean;
+  equals?: string;
+  not?: string;
+  contains?: string;
+  notContains?: string;
+  startsWith?: string;
+  endsWith?: string;
+  gt?: string | number;
+  gte?: string | number;
+  lt?: string | number;
+  lte?: string | number;
+}
+
+interface BaseAssetAlertCriterionRule {
+  value: string | RuleMatch;
+}
+
+type AssetAlertCriterionRule = BaseAssetAlertCriterionRule & {
+  AND?: AssetAlertCriterionRule[];
+  OR?: AssetAlertCriterionRule[];
+};
+
+export interface AssetAlertCriterion extends BaseModel {
+  alertLevel: AlertLevel;
+  rule: AssetAlertCriterionRule;
 }
 
 export interface ProductCategory extends BaseModel {

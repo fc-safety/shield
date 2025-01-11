@@ -225,6 +225,49 @@ export const updateAssetSchema = createAssetSchema
   .partial();
 export const updateAssetSchemaResolver = zodResolver(updateAssetSchema);
 
+export const ruleOperatorsSchema = z
+  .object({
+    empty: z.literal(true),
+    notEmpty: z.literal(true),
+    equals: z.string(),
+    not: z.string(),
+    contains: z.string(),
+    notContains: z.string(),
+    startsWith: z.string(),
+    endsWith: z.string(),
+    gt: z.union([z.string(), z.number()]),
+    gte: z.union([z.string(), z.number()]),
+    lt: z.union([z.string(), z.number()]),
+    lte: z.union([z.string(), z.number()]),
+  })
+  .partial();
+
+const baseCreateAssetAlertCriterionRuleSchema = z.object({
+  value: z.union([z.string(), ruleOperatorsSchema]).optional(),
+});
+
+export type CreateAssetAlertCriterionRule = z.infer<
+  typeof baseCreateAssetAlertCriterionRuleSchema
+> & {
+  AND?: CreateAssetAlertCriterionRule[];
+  OR?: CreateAssetAlertCriterionRule[];
+};
+
+export const createAssetAlertCriterionRuleSchema: z.ZodType<CreateAssetAlertCriterionRule> =
+  baseCreateAssetAlertCriterionRuleSchema.extend({
+    AND: z.array(baseCreateAssetAlertCriterionRuleSchema).optional(),
+    OR: z.array(baseCreateAssetAlertCriterionRuleSchema).optional(),
+  });
+
+export const createAssetAlertCriterionSchema = z.object({
+  rule: createAssetAlertCriterionRuleSchema,
+  alertLevel: z.enum(["URGENT", "INFO"]),
+});
+
+export const updateAssetAlertCriterionSchema = createAssetAlertCriterionSchema
+  .extend({ id: z.string() })
+  .partial();
+
 export const createAssetQuestionSchema = z.object({
   active: z.boolean().default(true),
   type: z.enum(AssetQuestionTypes),
@@ -232,6 +275,14 @@ export const createAssetQuestionSchema = z.object({
   order: z.number().optional(),
   prompt: z.string().nonempty(),
   valueType: z.enum(AssetQuestionResponseTypes),
+  assetAlertCriteria: z
+    .object({
+      createMany: z.object({
+        data: z.array(createAssetAlertCriterionSchema),
+      }),
+    })
+    .partial()
+    .optional(),
 });
 export const createAssetQuestionSchemaResolver = zodResolver(
   createAssetQuestionSchema
@@ -239,7 +290,24 @@ export const createAssetQuestionSchemaResolver = zodResolver(
 
 export const updateAssetQuestionSchema = createAssetQuestionSchema
   .partial()
-  .extend({ id: z.string() });
+  .extend({
+    id: z.string(),
+    assetAlertCriteria: z
+      .object({
+        createMany: z.object({
+          data: z.array(createAssetAlertCriterionSchema),
+        }),
+        updateMany: z.array(
+          z.object({
+            where: z.object({ id: z.string() }),
+            data: updateAssetAlertCriterionSchema,
+          })
+        ),
+        deleteMany: z.array(z.object({ id: z.string() })),
+      })
+      .partial()
+      .optional(),
+  });
 export const updateAssetQuestionSchemaResolver = zodResolver(
   updateAssetQuestionSchema
 );

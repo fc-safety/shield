@@ -86,16 +86,18 @@ export default function AssetDetailsForm({
           control={form.control}
           name="active"
           render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem className="flex items-center gap-2 space-y-0">
-              <FormControl>
-                <Switch
-                  checked={value}
-                  onCheckedChange={onChange}
-                  className="pt-0"
-                  onBlur={onBlur}
-                />
-              </FormControl>
-              <FormLabel>Active</FormLabel>
+            <FormItem>
+              <div className="flex items-center gap-2 space-y-0">
+                <FormControl>
+                  <Switch
+                    checked={value}
+                    onCheckedChange={onChange}
+                    className="pt-0"
+                    onBlur={onBlur}
+                  />
+                </FormControl>
+                <FormLabel>Active</FormLabel>
+              </div>
               <FormMessage />
             </FormItem>
           )}

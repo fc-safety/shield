@@ -1,4 +1,4 @@
-import { redirect } from "react-router";
+import { redirect, type UIMatch } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
@@ -8,8 +8,10 @@ import { updateSiteSchema, updateSiteSchemaResolver } from "~/lib/schema";
 import type { Route } from "./+types/site-details";
 
 export const handle = {
-  breadcrumb: ({ data }: Route.MetaArgs) => ({
-    label: data.name || "Site Details",
+  breadcrumb: ({
+    data,
+  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+    label: data?.name || "Site Details",
   }),
 };
 

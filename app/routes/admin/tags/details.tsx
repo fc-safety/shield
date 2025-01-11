@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { redirect } from "react-router";
+import { redirect, type UIMatch } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
@@ -8,8 +8,10 @@ import { updateTagSchema, updateTagSchemaResolver } from "~/lib/schema";
 import type { Route } from "./+types/details";
 
 export const handle = {
-  breadcrumb: ({ data }: Route.MetaArgs) => ({
-    label: data.serialNumber || "Details",
+  breadcrumb: ({
+    data,
+  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+    label: data?.serialNumber || "Details",
   }),
 };
 

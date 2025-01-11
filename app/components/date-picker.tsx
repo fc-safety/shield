@@ -17,7 +17,7 @@ interface DatePickerProps {
   min?: Date;
   max?: Date;
   value?: Date;
-  onChange?: (date: Date | undefined) => void;
+  onValueChange?: (date: Date | undefined) => void;
   onBlur?: () => void;
   disabled?: boolean;
 }
@@ -30,7 +30,7 @@ export const DatePicker = forwardRef<
     {
       className,
       value,
-      onChange = () => {},
+      onValueChange = () => {},
       onBlur,
       disabled,
       min,
@@ -47,7 +47,7 @@ export const DatePicker = forwardRef<
             variant={"outline"}
             disabled={disabled}
             className={cn(
-              "min-w-[280px] justify-start text-left font-normal flex w-full",
+              "min-w-[240px] justify-start text-left font-normal flex w-full",
               !value && "text-muted-foreground",
               className
             )}
@@ -62,7 +62,7 @@ export const DatePicker = forwardRef<
           <Calendar
             mode="single"
             selected={value}
-            onSelect={onChange}
+            onSelect={onValueChange}
             disabled={(date) =>
               (min !== undefined && isBefore(date, min)) ||
               (max !== undefined && isAfter(date, max))

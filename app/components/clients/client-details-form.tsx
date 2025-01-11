@@ -192,7 +192,7 @@ export default function ClientDetailsForm({
         <FormField
           control={form.control}
           name="startedOn"
-          render={({ field }) => (
+          render={({ field: { onChange, ...field } }) => (
             <FormItem>
               <FormLabel>
                 {!field.value || isAfter(field.value, new Date())
@@ -200,7 +200,7 @@ export default function ClientDetailsForm({
                   : "Started On"}
               </FormLabel>
               <FormControl>
-                <DatePicker {...field} />
+                <DatePicker {...field} onValueChange={onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>

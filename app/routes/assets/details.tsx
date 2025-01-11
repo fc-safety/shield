@@ -1,5 +1,5 @@
 import { type PropsWithChildren } from "react";
-import { redirect } from "react-router";
+import { redirect, type UIMatch } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
@@ -14,7 +14,11 @@ import { cn } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
-  breadcrumb: ({ data }: Route.MetaArgs) => ({ label: data.name || "Details" }),
+  breadcrumb: ({
+    data,
+  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+    label: data?.name || "Details",
+  }),
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
