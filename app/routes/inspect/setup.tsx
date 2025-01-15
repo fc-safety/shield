@@ -217,7 +217,9 @@ export default function InspectSetup({
                 onSubmit={form.handleSubmit}
               >
                 <Input type="hidden" {...form.register("id")} hidden />
-                <Input type="hidden" {...form.register("setupOn")} hidden />
+                {isSetup && (
+                  <Input type="hidden" {...form.register("setupOn")} hidden />
+                )}
                 {[
                   ...updateQuestionFields.map(({ id, data }) => ({
                     key: id,
