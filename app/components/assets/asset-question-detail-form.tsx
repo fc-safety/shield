@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { isValid, parseISO } from "date-fns";
 import { Plus, Trash } from "lucide-react";
 import { useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
@@ -43,7 +42,7 @@ import {
   type updateAssetQuestionSchema,
 } from "~/lib/schema";
 import { cn } from "~/lib/utils";
-import { DatePicker } from "../date-picker";
+import AssetQuestionResponseTypeInput from "./asset-question-response-input";
 
 type TForm = z.infer<
   typeof updateAssetQuestionSchema | typeof createAssetQuestionSchema
@@ -490,7 +489,7 @@ function AlertTriggerInput({
     });
   };
 
-  const handleChangeOperand = (newOperand: string) => {
+  const handleChangeOperand = (newOperand: string | number) => {
     onValueChange({
       value: {
         [operator]: cleanOperand(operator, newOperand),
@@ -519,46 +518,14 @@ function AlertTriggerInput({
             ))}
           </SelectContent>
         </Select>
-        {(typeof operand === "string" || typeof operand === "number") &&
-          (["BINARY", "INDETERMINATE_BINARY"].includes(valueType as string) ? (
-            <Select value={String(operand)} onValueChange={handleChangeOperand}>
-              <SelectTrigger onBlur={onBlur}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[
-                  "Yes",
-                  "No",
-                  ...(valueType === "INDETERMINATE_BINARY" ? ["N/A"] : []),
-                ].map((operand) => (
-                  <SelectItem key={operand} value={operand}>
-                    {operand}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : valueType === "DATE" ? (
-            <DatePicker
-              value={
-                isValid(parseISO(String(operand)))
-                  ? parseISO(String(operand))
-                  : undefined
-              }
-              onValueChange={(date) => {
-                if (date) {
-                  handleChangeOperand(date.toISOString());
-                } else {
-                  handleChangeOperand("");
-                }
-              }}
-            />
-          ) : (
-            <Input
-              value={operand}
-              type={valueType === "NUMBER" ? "number" : "text"}
-              onChange={(e) => handleChangeOperand(e.target.value)}
-            />
-          ))}
+        {(typeof operand === "string" || typeof operand === "number") && (
+          <AssetQuestionResponseTypeInput
+            valueType={valueType ?? "BINARY"}
+            onValueChange={handleChangeOperand}
+            onBlur={onBlur}
+            value={operand}
+          />
+        )}
       </div>
     </div>
   );

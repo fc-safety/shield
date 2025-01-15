@@ -4,6 +4,7 @@ import {
   AssetQuestionResponseTypes,
   AssetQuestionTypes,
   ClientStatuses,
+  InspectionStatuses,
   ProductTypes,
 } from "./models";
 
@@ -311,6 +312,53 @@ export const updateAssetQuestionSchema = createAssetQuestionSchema
 export const updateAssetQuestionSchemaResolver = zodResolver(
   updateAssetQuestionSchema
 );
+
+export const createAssetQuestionResponseSchema = z.object({
+  id: z.string().optional(),
+  value: z.union([z.string().nonempty(), z.number().safe()]),
+  assetQuestionId: z.string().nonempty(),
+});
+export const createAssetQuestionResponseSchemaResolver = zodResolver(
+  createAssetQuestionResponseSchema
+);
+
+export const createInspectionSchema = z.object({
+  asset: z.object({
+    connect: z.object({
+      id: z.string().nonempty(),
+    }),
+  }),
+  status: z.enum(InspectionStatuses),
+  latitude: z.number().safe(),
+  longitude: z.number().safe(),
+  locationAccuracy: z.number().optional(),
+  comments: z.string().optional(),
+  responses: z.object({
+    createMany: z.object({
+      data: z.array(createAssetQuestionResponseSchema),
+    }),
+  }),
+});
+export const createInspectionSchemaResolver = zodResolver(
+  createInspectionSchema
+);
+
+export const setupAssetSchema = z.object({
+  id: z.string().nonempty(),
+  setupOn: z.coerce.date().optional(),
+  setupQuestionResponses: z.object({
+    createMany: z.object({
+      data: z.array(createAssetQuestionResponseSchema),
+    }),
+    updateMany: z.array(
+      z.object({
+        where: z.object({ id: z.string() }),
+        data: createAssetQuestionResponseSchema,
+      })
+    ),
+  }),
+});
+export const setupAssetSchemaResolver = zodResolver(setupAssetSchema);
 
 // TODO: Below is old code, may need to be updated
 export const buildReportSchema = z.object({

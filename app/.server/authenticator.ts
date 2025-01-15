@@ -30,7 +30,8 @@ export const buildUser = async (
   tokens: {
     accessToken: string | (() => string);
     refreshToken: string | (() => string);
-  }
+  },
+  onFailedTokenRefresh: () => Promise<void>
 ): Promise<User> => {
   const retrieve = (value: string | (() => string)) =>
     typeof value === "string" ? value : value();
@@ -55,7 +56,7 @@ export const buildUser = async (
       refreshToken = refreshedTokens.refreshToken();
     } catch (e) {
       console.error("Token refresh failed", e);
-      throw await authenticator.authenticate("oauth2", request);
+      await onFailedTokenRefresh();
     }
     response = await getUserInfo(accessToken);
   }

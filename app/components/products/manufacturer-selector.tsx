@@ -14,7 +14,7 @@ import { DialogClose } from "@radix-ui/react-dialog";
 import { Loader2, Pencil, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import type { Manufacturer } from "~/lib/models";
+import type { Manufacturer, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 
 interface ManufacturerSelectorProps {
@@ -35,7 +35,7 @@ export default function ManufacturerSelector({
   const opened = useRef(false);
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
-  const fetcher = useFetcher({ key: "manufacturers" });
+  const fetcher = useFetcher<ResultsPage<Manufacturer>>();
 
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
 
@@ -120,6 +120,7 @@ export default function ManufacturerSelector({
             value={tempValue ?? ""}
           >
             {manufacturers
+              .filter((m) => m.active || m.id === value)
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((manufacturer) => (
                 <div key={manufacturer.id}>
@@ -127,6 +128,7 @@ export default function ManufacturerSelector({
                     value={manufacturer.id}
                     id={manufacturer.id}
                     className="peer sr-only"
+                    disabled={!manufacturer.active}
                   />
                   <Label
                     htmlFor={manufacturer.id}

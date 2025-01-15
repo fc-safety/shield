@@ -1,7 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { PhoneCall, Star } from "lucide-react";
-import { Link, redirect, useRouteLoaderData } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
+import { Link, useRouteLoaderData } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ClientDetailsForm from "~/components/clients/client-details-form";
@@ -20,28 +19,24 @@ import {
   updateClientSchemaResolver,
   type updateClientSchema,
 } from "~/lib/schema";
-import { beautifyPhone } from "~/lib/utils";
+import {
+  beautifyPhone,
+  getValidatedFormDataOrThrow,
+  validateParam,
+} from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-  const { id } = params;
-  if (!id) {
-    throw new Response("No Client ID", { status: 400 });
-  }
+  const id = validateParam(params, "id");
 
   if (request.method === "POST" || request.method === "PATCH") {
-    const { data, errors } = await getValidatedFormData<
+    const { data } = await getValidatedFormDataOrThrow<
       z.infer<typeof updateClientSchema>
     >(request, updateClientSchemaResolver);
 
-    if (errors) {
-      throw Response.json({ errors }, { status: 400 });
-    }
-
     return api.clients.update(request, id, data);
   } else if (request.method === "DELETE") {
-    const { init } = await api.clients.delete(request, id);
-    return redirect("/admin/clients", init ?? undefined);
+    return api.clients.deleteAndRedirect(request, id, "/admin/clients");
   }
 
   throw new Response("Invalid method", { status: 405 });

@@ -2,7 +2,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import NewTagButton from "~/components/assets/new-tag-button";
@@ -10,16 +9,13 @@ import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import type { Tag } from "~/lib/models";
 import { createTagSchemaResolver, type createTagSchema } from "~/lib/schema";
+import { getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const { data, errors } = await getValidatedFormData<
+  const { data } = await getValidatedFormDataOrThrow<
     z.infer<typeof createTagSchema>
   >(request, createTagSchemaResolver);
-
-  if (errors) {
-    throw Response.json({ errors }, { status: 400 });
-  }
 
   return api.tags.create(request, data);
 };
@@ -46,7 +42,7 @@ export default function AdminTagsIndex({
         ),
       },
       {
-        accessorKey: "setupOn",
+        accessorKey: "asset.setupOn",
         id: "setup on",
         header: ({ column }) => (
           <DataTableColumnHeader column={column} title="Setup On" />

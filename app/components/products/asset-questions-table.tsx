@@ -10,11 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Pencil, Power, PowerOff, Trash } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { useState } from "react";
 import { useFetcher } from "react-router";
 import { useImmer } from "use-immer";
 import type { AssetQuestion } from "~/lib/models";
+import ActiveIndicator2 from "../active-indicator-2";
 import AssetQuestionDetailForm from "../assets/asset-question-detail-form";
 import ConfirmationDialog from "../confirmation-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
@@ -50,21 +51,12 @@ export default function AssetQuestionsTable({
   const columns: ColumnDef<AssetQuestion>[] = [
     {
       accessorKey: "active",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Active" />
-      ),
-      cell: ({ getValue }) =>
-        getValue() ? (
-          <Power className="size-4 text-primary" />
-        ) : (
-          <PowerOff className="size-4 text-muted-foreground" />
-        ),
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
     },
     {
       accessorKey: "type",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Type" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       cell: ({ getValue }) => (
         <span className="capitalize">
           {(getValue() as string).toLowerCase()}
@@ -73,16 +65,12 @@ export default function AssetQuestionsTable({
     },
     {
       accessorKey: "required",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Required" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       cell: ({ getValue }) => (getValue() ? "Yes" : "No"),
     },
     {
       accessorKey: "prompt",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Prompt" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       cell: ({ getValue }) => (
         <span className="line-clamp-2">{getValue() as string}</span>
       ),
@@ -90,9 +78,7 @@ export default function AssetQuestionsTable({
     {
       accessorKey: "valueType",
       id: "answer type",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Answer Type" />
-      ),
+      header: ({ column }) => <DataTableColumnHeader column={column} />,
       cell: ({ getValue }) => (
         <span className="capitalize">
           {(getValue() as string).replace("_", " ").toLowerCase()}

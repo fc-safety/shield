@@ -9,6 +9,9 @@ const notEmpty = (value: string | undefined, errorMessage?: string) => {
 const getNotEmptyVar = (name: string) =>
   notEmpty(process.env[name], `Environment variable ${name} is required`);
 
+// General
+export const APP_HOST = getNotEmptyVar("APP_HOST");
+
 // Authentication
 export const CLIENT_ID = getNotEmptyVar("CLIENT_ID");
 export const CLIENT_SECRET = getNotEmptyVar("CLIENT_SECRET");
@@ -26,3 +29,6 @@ export const COOKIE_SECRET = getNotEmptyVar("COOKIE_SECRET");
 
 // Address Support
 export const ZIPCODESTACK_API_KEY = getNotEmptyVar("ZIPCODESTACK_API_KEY");
+
+// Google Maps
+export const GOOGLE_MAPS_API_KEY = getNotEmptyVar("GOOGLE_MAPS_API_KEY");

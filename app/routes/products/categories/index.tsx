@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { api } from "~/.server/api";
+import ActiveIndicator2 from "~/components/active-indicator-2";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import NewProductCategoryButton from "~/components/products/new-product-category-button";
@@ -17,6 +18,11 @@ export default function ProductCategories({
 }: Route.ComponentProps) {
   const columns: ColumnDef<ProductCategory>[] = useMemo(
     () => [
+      {
+        accessorKey: "active",
+        header: ({ column }) => <DataTableColumnHeader column={column} />,
+        cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
+      },
       {
         accessorKey: "name",
         cell: ({ row, getValue }) => (

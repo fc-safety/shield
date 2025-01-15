@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -10,11 +11,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { DialogClose } from "@radix-ui/react-dialog";
 import { Loader2, Pencil, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import type { ProductCategory } from "~/lib/models";
+import type { ProductCategory, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 
 interface ProductCategorySelectorProps {
@@ -35,7 +35,7 @@ export default function ProductCategorySelector({
   const opened = useRef(false);
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
-  const fetcher = useFetcher({ key: "product-categories" });
+  const fetcher = useFetcher<ResultsPage<ProductCategory>>();
 
   const [categories, setCategories] = useState<ProductCategory[]>([]);
 
@@ -120,6 +120,7 @@ export default function ProductCategorySelector({
             value={tempValue ?? ""}
           >
             {categories
+              .filter((c) => c.active || c.id === value)
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((productCategory) => (
                 <div key={productCategory.id}>
@@ -127,6 +128,7 @@ export default function ProductCategorySelector({
                     value={productCategory.id}
                     id={productCategory.id}
                     className="peer sr-only"
+                    disabled={!productCategory.active}
                   />
                   <Label
                     htmlFor={productCategory.id}

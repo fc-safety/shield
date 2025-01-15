@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import { authenticator, type Tokens } from "~/.server/authenticator";
-import { setSessionTokens } from "~/.server/sessions";
+import { userSessionStorage } from "~/.server/sessions";
 import type { Route } from "./+types/callback";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -10,9 +10,18 @@ export async function loader({ request }: Route.LoaderArgs) {
   } catch (e) {
     return redirect("/login");
   }
+
+  const session = await userSessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+  session.set("tokens", tokens);
+
+  const returnTo = session.get("returnTo") ?? "/";
+  session.unset("returnTo");
+
   const headers = new Headers({
-    "Set-Cookie": await setSessionTokens(request, tokens),
+    "Set-Cookie": await userSessionStorage.commitSession(session),
   });
 
-  return redirect("/", { headers });
+  return redirect(returnTo, { headers });
 }

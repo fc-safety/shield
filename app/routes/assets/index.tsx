@@ -2,10 +2,10 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
 import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import ActiveIndicator2 from "~/components/active-indicator-2";
 import NewAssetButton from "~/components/assets/new-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
@@ -20,7 +20,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import type { Asset, ProductCategory } from "~/lib/models";
 import { createAssetSchema, createAssetSchemaResolver } from "~/lib/schema";
-import { dedupById } from "~/lib/utils";
+import { dedupById, getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const loader = ({ request }: Route.LoaderArgs) => {
@@ -28,13 +28,9 @@ export const loader = ({ request }: Route.LoaderArgs) => {
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const { data, errors } = await getValidatedFormData<
+  const { data } = await getValidatedFormDataOrThrow<
     z.infer<typeof createAssetSchema>
   >(request, createAssetSchemaResolver);
-
-  if (errors) {
-    throw Response.json({ errors }, { status: 400 });
-  }
 
   return api.assets.create(request, data);
 };
@@ -68,6 +64,11 @@ export default function AssetsIndex({
 
   const columns: ColumnDef<Asset>[] = useMemo(
     () => [
+      {
+        accessorKey: "active",
+        header: ({ column }) => <DataTableColumnHeader column={column} />,
+        cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
+      },
       {
         accessorKey: "name",
         cell: ({ row, getValue }) => (

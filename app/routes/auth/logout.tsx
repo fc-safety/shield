@@ -1,8 +1,8 @@
 import { redirect } from "react-router";
 import { strategy } from "~/.server/authenticator";
-import { CLIENT_ID, LOGOUT_URL } from "~/.server/config";
+import { APP_HOST, CLIENT_ID, LOGOUT_URL } from "~/.server/config";
 import { userSessionStorage } from "~/.server/sessions";
-import type { Route } from "./+types/_auth.logout";
+import type { Route } from "./+types/logout";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const session = await userSessionStorage.getSession(
@@ -16,7 +16,11 @@ export async function loader({ request }: Route.LoaderArgs) {
     logoutUrl = URL.parse(LOGOUT_URL);
     logoutUrl?.searchParams.set("client_id", CLIENT_ID);
 
-    const postLogoutUrl = URL.parse(request.url)?.origin ?? "";
+    const postLogoutUrl =
+      URL.parse(
+        URL.parse(request.url)?.pathname ?? "/",
+        APP_HOST
+      )?.toString() ?? "";
     logoutUrl?.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
   }
 

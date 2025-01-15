@@ -40,10 +40,10 @@ export default function TagDetailsForm({
     values: tag
       ? {
           ...tag,
-          asset: tag.assetId
+          asset: tag.asset?.id
             ? {
                 connect: {
-                  id: tag.assetId,
+                  id: tag.asset.id,
                 },
               }
             : undefined,

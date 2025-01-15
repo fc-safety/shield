@@ -6,49 +6,27 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useMatches,
   useRouteLoaderData,
 } from "react-router";
 
-import { AppSidebar } from "@/components/app-sidebar";
-import { BreadcrumbResponsive } from "@/components/breadcrumb-responsive";
-import { ModeToggle } from "@/components/mode-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
-import { Toaster } from "@/components/ui/sonner";
-import { AlertCircle, Home } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { type PropsWithChildren } from "react";
 import {
   PreventFlashOnWrongTheme,
   ThemeProvider,
   useTheme,
 } from "remix-themes";
-import { requireUserSession, themeSessionResolver } from "~/.server/sessions";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "~/components/ui/sidebar";
-import { cn, validateBreadcrumb } from "~/lib/utils";
+import { themeSessionResolver } from "~/.server/sessions";
+import { cn } from "~/lib/utils";
 import "~/tailwind.css";
 import type { Route } from "./+types/root";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
-
-  const { user, sessionToken } = await requireUserSession(request);
-
-  return data(
-    {
-      theme: getTheme(),
-      user,
-    },
-    {
-      headers: {
-        "Set-Cookie": sessionToken,
-      },
-    }
-  );
+  return data({
+    theme: getTheme(),
+  });
 }
 
 export const links: Route.LinksFunction = () => [
@@ -70,17 +48,8 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
-export const meta: Route.MetaFunction = ({ matches }) => {
-  let title = "Shield | FC Safety";
-
-  const breadcrumb = matches
-    .filter(validateBreadcrumb)
-    .map((m) => m.handle.breadcrumb(m))
-    .at(-1);
-  if (breadcrumb?.label) {
-    title = `${breadcrumb.label} | ${title}`;
-  }
-  return [{ title }];
+export const meta: Route.MetaFunction = () => {
+  return [{ title: "Shield | FC Safety" }];
 };
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
@@ -120,7 +89,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 function BaseLayout({ children }: PropsWithChildren) {
   const data = useRouteLoaderData<typeof loader>("root");
   const [theme] = useTheme();
-  const matches = useMatches();
 
   return (
     <html lang="en" className={cn(theme)}>
@@ -131,45 +99,8 @@ function BaseLayout({ children }: PropsWithChildren) {
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
         <Links />
       </head>
-      <body>
-        <SidebarProvider>
-          <AppSidebar user={data?.user} />
-          <SidebarInset>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-              <div className="flex items-center gap-2 px-2 sm:px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-                <BreadcrumbResponsive
-                  items={[
-                    {
-                      to: "/",
-                      label: <Home size={16} />,
-                      id: "home",
-                    },
-                    ...matches.filter(validateBreadcrumb).map((match) => ({
-                      id: match.id,
-                      label: match.handle.breadcrumb(match).label,
-                      to: match.pathname,
-                    })),
-                  ]}
-                />
-              </div>
-              <div className="flex-1" />
-              <div className="flex items-center gap-2 px-2 sm:px-4">
-                <ModeToggle />
-              </div>
-            </header>
-            <div className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow">
-              {children}
-            </div>
-            <footer className="px-2 py-6 sm:px-4 sm:py-12 grid grid-cols-1 md:grid-cols-3 bg-secondary text-secondary-foreground">
-              <div className="col-span-full text-center">
-                Copyright &copy; {new Date().getFullYear()} FC Safety
-              </div>
-            </footer>
-            <Toaster position="top-right" />
-          </SidebarInset>
-        </SidebarProvider>
+      <body className="bg-background">
+        {children}
         <ScrollRestoration />
         <Scripts />
       </body>

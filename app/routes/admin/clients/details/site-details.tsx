@@ -1,10 +1,15 @@
-import { redirect, type UIMatch } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
+import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import SiteDetailsForm from "~/components/clients/site-details-form";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { updateSiteSchema, updateSiteSchemaResolver } from "~/lib/schema";
+import {
+  buildTitleFromBreadcrumb,
+  getValidatedFormDataOrThrow,
+  validateParam,
+  validateParams,
+} from "~/lib/utils";
 import type { Route } from "./+types/site-details";
 
 export const handle = {
@@ -15,36 +20,28 @@ export const handle = {
   }),
 };
 
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
+
 export const action = async ({ request, params }: Route.ActionArgs) => {
-  const { id, siteId } = params;
-  if (!id || !siteId) {
-    throw new Response("No Client and/or Site IDs", { status: 400 });
-  }
+  const { id, siteId } = validateParams(params, ["id", "siteId"]);
 
   if (request.method === "POST" || request.method === "PATCH") {
-    const { data, errors } = await getValidatedFormData<
+    const { data } = await getValidatedFormDataOrThrow<
       z.infer<typeof updateSiteSchema>
     >(request, updateSiteSchemaResolver);
 
-    if (errors) {
-      throw Response.json({ errors }, { status: 400 });
-    }
-
     return api.sites.update(request, siteId, data);
   } else if (request.method === "DELETE") {
-    await api.sites.delete(request, siteId);
-    return redirect(`/admin/clients/${id}`);
+    return api.sites.deleteAndRedirect(request, siteId, `/admin/clients/${id}`);
   }
 
   throw new Response("Invalid method", { status: 405 });
 };
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const { siteId } = params;
-  if (!siteId) {
-    throw new Response("No Site ID", { status: 400 });
-  }
-
+  const siteId = validateParam(params, "siteId");
   return api.sites.get(request, siteId);
 };
 

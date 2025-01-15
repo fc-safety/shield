@@ -1,5 +1,6 @@
 import {
   index,
+  layout,
   prefix,
   route,
   type RouteConfig,
@@ -12,58 +13,67 @@ export default [
   route("callback", "./routes/auth/callback.tsx"),
 
   // App Routes
-  index("./routes/index.tsx"),
-  route("dashboard", "./routes/dashboard.tsx"),
-  route("assets", "./routes/assets/layout.tsx", [
-    index("./routes/assets/index.tsx"),
-    route(":id", "./routes/assets/details.tsx"),
-  ]),
-  route("reports", "./routes/reports/layout.tsx", [
-    index("./routes/reports/index.tsx"),
-    route(":id", "./routes/reports/details.tsx"),
-    route("build/(:id)", "./routes/reports/build.tsx"),
-  ]),
-  route("settings", "./routes/settings.tsx"),
+  layout("./routes/layout.tsx", [
+    index("./routes/index.tsx"),
+    route("dashboard", "./routes/dashboard.tsx"),
+    route("assets", "./routes/assets/layout.tsx", [
+      index("./routes/assets/index.tsx"),
+      route(":id", "./routes/assets/details.tsx"),
+    ]),
+    route("reports", "./routes/reports/layout.tsx", [
+      index("./routes/reports/index.tsx"),
+      route(":id", "./routes/reports/details.tsx"),
+      route("build/(:id)", "./routes/reports/build.tsx"),
+    ]),
+    route("settings", "./routes/settings.tsx"),
 
-  // Product Routes
-  route("products", "./routes/products/layout.tsx", [
-    index("./routes/products/index.tsx"),
-    route("all", "./routes/products/all-products/layout.tsx", [
-      index("./routes/products/all-products/index.tsx"),
-      route(":id", "./routes/products/all-products/details.tsx"),
-    ]),
-    route("categories", "./routes/products/categories/layout.tsx", [
-      index("./routes/products/categories/index.tsx"),
-      route(":id", "./routes/products/categories/details.tsx"),
-    ]),
-    route("manufacturers", "./routes/products/manufacturers/layout.tsx", [
-      index("./routes/products/manufacturers/index.tsx"),
-      route(":id", "./routes/products/manufacturers/details.tsx"),
-    ]),
-  ]),
-
-  // Admin Routes
-  route("admin", "./routes/admin/layout.tsx", [
-    index("./routes/admin/index.tsx"),
-    route("clients", "./routes/admin/clients/layout.tsx", [
-      index("./routes/admin/clients/index.tsx"),
-      route(":id", "./routes/admin/clients/details/layout.tsx", [
-        index("./routes/admin/clients/details/index.tsx"),
-        route(
-          "sites/:siteId",
-          "./routes/admin/clients/details/site-details.tsx"
-        ),
+    // Product Routes
+    route("products", "./routes/products/layout.tsx", [
+      index("./routes/products/index.tsx"),
+      route("all", "./routes/products/all-products/layout.tsx", [
+        index("./routes/products/all-products/index.tsx"),
+        route(":id", "./routes/products/all-products/details.tsx"),
+      ]),
+      route("categories", "./routes/products/categories/layout.tsx", [
+        index("./routes/products/categories/index.tsx"),
+        route(":id", "./routes/products/categories/details.tsx"),
+      ]),
+      route("manufacturers", "./routes/products/manufacturers/layout.tsx", [
+        index("./routes/products/manufacturers/index.tsx"),
+        route(":id", "./routes/products/manufacturers/details.tsx"),
       ]),
     ]),
-    route("tags", "./routes/admin/tags/layout.tsx", [
-      index("./routes/admin/tags/index.tsx"),
-      route(":id", "./routes/admin/tags/details.tsx"),
+
+    // Admin Routes
+    route("admin", "./routes/admin/layout.tsx", [
+      index("./routes/admin/index.tsx"),
+      route("clients", "./routes/admin/clients/layout.tsx", [
+        index("./routes/admin/clients/index.tsx"),
+        route(":id", "./routes/admin/clients/details/layout.tsx", [
+          index("./routes/admin/clients/details/index.tsx"),
+          route(
+            "sites/:siteId",
+            "./routes/admin/clients/details/site-details.tsx"
+          ),
+        ]),
+      ]),
+      route("tags", "./routes/admin/tags/layout.tsx", [
+        index("./routes/admin/tags/index.tsx"),
+        route(":id", "./routes/admin/tags/details.tsx"),
+      ]),
     ]),
+
+    // Help routes
+    route("faqs", "./routes/faqs.tsx"),
+    route("contact", "./routes/contact.tsx"),
   ]),
 
-  // Help routes
-  route("faqs", "./routes/faqs.tsx"),
-  route("contact", "./routes/contact.tsx"),
+  // Inspect routes
+  route("inspect", "./routes/inspect/layout.tsx", [
+    index("./routes/inspect/index.tsx"),
+    route("setup", "./routes/inspect/setup.tsx"),
+    route("next", "./routes/inspect/next.tsx"),
+  ]),
 
   // Action Routes
   ...prefix("action", [route("set-theme", "./routes/actions/set-theme.tsx")]),
@@ -75,5 +85,8 @@ export default [
     route("product-categories", "./routes/api/product-categories.ts"),
     route("manufacturers", "./routes/api/manufacturers.ts"),
     route("products", "./routes/api/products.ts"),
+    route("tags", "./routes/api/tags.ts"),
+    route("inspections/:id", "./routes/api/inspections.ts"),
+    route("assets/:assetId/alerts", "./routes/api/alerts.ts"),
   ]),
 ] satisfies RouteConfig;

@@ -1,14 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { redirect, type UIMatch } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
+import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import ActiveIndicator from "~/components/active-indicator";
 import ManufacturerDetailsForm from "~/components/products/manufacturer-details-form";
 import ProductCard from "~/components/products/product-card";
 import {
   updateManufacturerSchemaResolver,
   type updateManufacturerSchema,
 } from "~/lib/schema";
+import {
+  buildTitleFromBreadcrumb,
+  getValidatedFormDataOrThrow,
+  validateParam,
+} from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
@@ -19,36 +24,32 @@ export const handle = {
   }),
 };
 
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
+
 export const action = async ({ request, params }: Route.ActionArgs) => {
-  const { id } = params;
-  if (!id) {
-    throw new Response("No Manufacturer ID", { status: 400 });
-  }
+  const id = validateParam(params, "id");
 
   if (request.method === "POST" || request.method === "PATCH") {
-    const { data, errors } = await getValidatedFormData<
+    const { data } = await getValidatedFormDataOrThrow<
       z.infer<typeof updateManufacturerSchema>
     >(request, updateManufacturerSchemaResolver);
 
-    if (errors) {
-      throw Response.json({ errors }, { status: 400 });
-    }
-
     return api.manufacturers.update(request, id, data);
   } else if (request.method === "DELETE") {
-    const { init } = await api.manufacturers.delete(request, id);
-    return redirect("/products/manufacturers", init ?? undefined);
+    return api.manufacturers.deleteAndRedirect(
+      request,
+      id,
+      "/products/manufacturers"
+    );
   }
 
   throw new Response("Invalid method", { status: 405 });
 };
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const { id } = params;
-  if (!id) {
-    throw new Response("No Manufacturer ID", { status: 400 });
-  }
-
+  const id = validateParam(params, "id");
   return api.manufacturers.get(request, id);
 };
 
@@ -59,7 +60,10 @@ export default function ProductManufacturerDetails({
     <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
         <CardHeader>
-          <CardTitle>Manufacturer Details</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            Manufacturer Details
+            <ActiveIndicator active={manufacturer.active} />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <ManufacturerDetailsForm manufacturer={manufacturer} />

@@ -21,6 +21,7 @@ import {
   Form as FormProvider,
 } from "../ui/form";
 import { Input } from "../ui/input";
+import TagSelector from "./tag-selector";
 
 type TForm = z.infer<typeof updateAssetSchema | typeof createAssetSchema>;
 interface AssetDetailsFormProps {
@@ -115,6 +116,7 @@ export default function AssetDetailsForm({
                     onChange(id ? { connect: { id } } : undefined)
                   }
                   disabled={disabled}
+                  readOnly={!!asset?.setupOn}
                   className="flex"
                 />
               </FormControl>
@@ -138,11 +140,11 @@ export default function AssetDetailsForm({
         <FormField
           control={form.control}
           name="tag"
-          render={({ field: { onChange, value, ...field } }) => (
+          render={({ field: { onChange, value, onBlur, disabled } }) => (
             <FormItem>
-              <FormLabel>Tag ID</FormLabel>
+              <FormLabel>Tag</FormLabel>
               <FormControl>
-                <Input
+                {/* <Input
                   {...field}
                   value={value?.connect.id ?? ""}
                   onChange={(e) =>
@@ -156,11 +158,18 @@ export default function AssetDetailsForm({
                         : undefined
                     )
                   }
+                /> */}
+                <TagSelector
+                  value={value?.connect.id ?? ""}
+                  onValueChange={(id) =>
+                    onChange(id ? { connect: { id } } : undefined)
+                  }
+                  onBlur={onBlur}
+                  disabled={disabled}
+                  className="flex"
                 />
               </FormControl>
-              <FormDescription>
-                This is the number on the NFC tag.
-              </FormDescription>
+              <FormDescription></FormDescription>
               <FormMessage />
             </FormItem>
           )}

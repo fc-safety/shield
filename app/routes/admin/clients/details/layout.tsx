@@ -1,8 +1,12 @@
 import { Outlet, type UIMatch } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { createSiteSchemaResolver, type createSiteSchema } from "~/lib/schema";
+import {
+  buildTitleFromBreadcrumb,
+  getValidatedFormDataOrThrow,
+  validateParam,
+} from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
 export const handle = {
@@ -11,23 +15,20 @@ export const handle = {
   }),
 };
 
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
+
 export async function action({ request }: Route.ActionArgs) {
-  const { data, errors } = await getValidatedFormData<
+  const { data } = await getValidatedFormDataOrThrow<
     z.infer<typeof createSiteSchema>
   >(request, createSiteSchemaResolver);
-
-  if (errors) {
-    throw Response.json({ errors }, { status: 400 });
-  }
 
   return api.sites.create(request, data);
 }
 
 export function loader({ params, request }: Route.LoaderArgs) {
-  const { id } = params;
-  if (!id) {
-    throw new Response("No Client ID", { status: 400 });
-  }
+  const id = validateParam(params, "id");
 
   return api.clients.get(request, id);
 }

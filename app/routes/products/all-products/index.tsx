@@ -10,7 +10,6 @@ import {
 } from "@tanstack/react-table";
 import { ChevronRight, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getValidatedFormData } from "remix-hook-form";
 import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
@@ -37,6 +36,10 @@ import {
   type createProductSchema,
   createProductSchemaResolver,
 } from "~/lib/schema";
+import {
+  buildTitleFromBreadcrumb,
+  getValidatedFormDataOrThrow,
+} from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const handle = {
@@ -45,14 +48,14 @@ export const handle = {
   }),
 };
 
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
+
 export const action = async ({ request }: Route.ActionArgs) => {
-  const { data, errors } = await getValidatedFormData<
+  const { data } = await getValidatedFormDataOrThrow<
     z.infer<typeof createProductSchema>
   >(request, createProductSchemaResolver);
-
-  if (errors) {
-    throw Response.json({ errors }, { status: 400 });
-  }
 
   return api.products.create(request, data);
 };
@@ -157,7 +160,7 @@ export default function AllProducts({
               >
                 <CollapsibleTrigger asChild>
                   <Button
-                    className="text-xl col-span-full"
+                    className="text-xl col-span-full px-2"
                     variant="ghost"
                     size="lg"
                   >
@@ -168,7 +171,7 @@ export default function AllProducts({
                     ) : (
                       ""
                     )}
-                    <ChevronRight className="inline ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent asChild>

@@ -10,6 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "~/components/ui/dropdown-menu";
+import { formatColumnId } from "./utils";
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
@@ -47,7 +48,7 @@ export function DataTableViewOptions<TData>({
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {column.id}
+                {formatColumnId(column.id)}
               </DropdownMenuCheckboxItem>
             );
           })}

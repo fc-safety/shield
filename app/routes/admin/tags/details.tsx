@@ -1,10 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { redirect, type UIMatch } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
+import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import TagDetailsForm from "~/components/assets/tag-details-form";
 import { updateTagSchema, updateTagSchemaResolver } from "~/lib/schema";
+import {
+  buildTitleFromBreadcrumb,
+  getValidatedFormDataOrThrow,
+  validateParam,
+} from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
@@ -15,36 +19,28 @@ export const handle = {
   }),
 };
 
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
+
 export const action = async ({ request, params }: Route.ActionArgs) => {
-  const { id } = params;
-  if (!id) {
-    throw new Response("No Tag ID", { status: 400 });
-  }
+  const id = validateParam(params, "id");
 
   if (request.method === "POST" || request.method === "PATCH") {
-    const { data, errors } = await getValidatedFormData<
+    const { data } = await getValidatedFormDataOrThrow<
       z.infer<typeof updateTagSchema>
     >(request, updateTagSchemaResolver);
 
-    if (errors) {
-      throw Response.json({ errors }, { status: 400 });
-    }
-
     return api.tags.update(request, id, data);
   } else if (request.method === "DELETE") {
-    const { init } = await api.tags.delete(request, id);
-    return redirect("/admin/tags/", init ?? undefined);
+    return api.tags.deleteAndRedirect(request, id, "/admin/tags");
   }
 
   throw new Response("Invalid method", { status: 405 });
 };
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const { id } = params;
-  if (!id) {
-    throw new Response("No Tag ID", { status: 400 });
-  }
-
+  const id = validateParam(params, "id");
   return api.tags.get(request, id);
 };
 

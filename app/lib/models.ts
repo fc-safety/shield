@@ -12,6 +12,7 @@ export interface BaseModel {
 }
 
 export interface Asset extends BaseModel {
+  setupOn: Date | null;
   active: boolean;
   name: string;
   product: Product;
@@ -24,6 +25,9 @@ export interface Asset extends BaseModel {
   siteId: string;
   clientId: string;
   inspections?: Inspection[];
+  setupQuestionResponses?: AssetQuestionResponse[];
+  consumables?: Consumable[];
+  alerts?: Alert[];
 
   // TODO: remove this
   status: string;
@@ -39,11 +43,15 @@ export interface Consumable extends BaseModel {
   clientId: string;
 }
 
+export interface AssetQuestionResponse extends BaseModel {
+  value: string | number;
+  assetQuestion?: AssetQuestion;
+  assetQuestionId: string;
+}
+
 export interface Tag extends BaseModel {
-  setupOn: Date;
   serialNumber: string;
   asset?: Asset | null;
-  assetId?: string | null;
   siteId?: string;
   clientId?: string;
 }
@@ -52,18 +60,18 @@ export interface Inspection extends BaseModel {
   asset: Asset;
   inspector?: Person;
   status: InspectionStatus;
-  userAgent?: string;
+  useragent?: string;
   ipv4?: string;
   ipv6?: string;
   latitude?: number;
   longitude?: number;
+  locationAccuracy?: number;
   comments?: string;
+  responses?: AssetQuestionResponse[];
 }
 
-enum InspectionStatus {
-  PENDING,
-  COMPLETE,
-}
+export const InspectionStatuses = ["PENDING", "COMPLETE"] as const;
+export type InspectionStatus = (typeof InspectionStatuses)[number];
 
 export interface Address {
   id: string;
@@ -138,6 +146,25 @@ export interface AssetQuestion extends BaseModel {
   productCategoryId: string | null;
   product?: Product | null;
   productId: string | null;
+}
+
+export interface Alert extends BaseModel {
+  alertLevel: AlertLevel;
+  message: string;
+  asset?: Asset;
+  assetId: string;
+  inspection?: Inspection;
+  inspectionId: string;
+  assetQuestionResponse?: AssetQuestionResponse;
+  assetQuestionResponseId: string;
+  assetAlertCriterion?: AssetAlertCriterion;
+  assetAlertCriterionId: string;
+  resolved: boolean;
+  resolutionNote: string | null;
+  site?: Site;
+  siteId: string;
+  client?: Client;
+  clientId: string;
 }
 
 export const AlertLevels = ["URGENT", "INFO"] as const;

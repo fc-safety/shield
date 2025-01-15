@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useFetcher } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
 import { useImmer } from "use-immer";
 import { z } from "zod";
 import { api } from "~/.server/api";
@@ -30,7 +29,7 @@ import {
 } from "~/components/ui/hover-card";
 import type { Client } from "~/lib/models";
 import { createClientSchema, createClientSchemaResolver } from "~/lib/schema";
-import { beautifyPhone } from "~/lib/utils";
+import { beautifyPhone, getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export function loader({ request }: Route.LoaderArgs) {
@@ -38,13 +37,9 @@ export function loader({ request }: Route.LoaderArgs) {
 }
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const { data, errors } = await getValidatedFormData<
+  const { data } = await getValidatedFormDataOrThrow<
     z.infer<typeof createClientSchema>
   >(request, createClientSchemaResolver);
-
-  if (errors) {
-    throw Response.json({ errors }, { status: 400 });
-  }
 
   return api.clients.create(request, data);
 };

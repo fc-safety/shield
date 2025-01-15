@@ -27,10 +27,15 @@ import {
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { buildReportSchema, buildReportSchemaResolver } from "~/lib/schema";
+import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/build";
 
 export const handle = {
   breadcrumb: () => ({ label: "Build" }),
+};
+
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
 const reportTypes = ["asset", "inspection", "user", "location"] as const;

@@ -24,7 +24,12 @@ import {
 import { Await, useFetcher } from "react-router";
 import { useImmer } from "use-immer";
 import { create } from "zustand";
-import type { Manufacturer, Product, ProductCategory } from "~/lib/models";
+import type {
+  Manufacturer,
+  Product,
+  ProductCategory,
+  ResultsPage,
+} from "~/lib/models";
 import { cn, dedupById } from "~/lib/utils";
 import ProductCard from "./product-card";
 
@@ -34,6 +39,7 @@ interface ProductSelectorProps {
   onBlur?: () => void;
   disabled?: boolean;
   className?: string;
+  readOnly?: boolean;
 }
 
 interface StepsState {
@@ -93,10 +99,11 @@ export default function ProductSelector({
   onBlur,
   disabled = false,
   className,
+  readOnly = false,
 }: ProductSelectorProps) {
   const opened = useRef(false);
   const [open, setOpen] = useState(false);
-  const fetcher = useFetcher({ key: "products" });
+  const fetcher = useFetcher<ResultsPage<Product>>();
 
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -293,25 +300,27 @@ export default function ProductSelector({
       {value ? (
         <ProductCard
           product={defaultProduct}
-          renderEditButton={() => (
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={disabled}
-              >
-                <Pencil />
-              </Button>
-            </DialogTrigger>
-          )}
+          renderEditButton={() =>
+            readOnly ? null : (
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={disabled}
+                >
+                  <Pencil />
+                </Button>
+              </DialogTrigger>
+            )
+          }
         />
       ) : (
         <DialogTrigger asChild>
           <Button
             type="button"
             size="sm"
-            disabled={disabled}
+            disabled={disabled || readOnly}
             className={cn(className)}
             onMouseEnter={handlePreload}
           >
@@ -381,6 +390,7 @@ function StepSelectProductCategory({
               value={productCategoryId ?? ""}
             >
               {value
+                .filter((c) => c.active || c.id === productCategoryId)
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((productCategory) => (
                   <div key={productCategory.id}>
@@ -388,6 +398,7 @@ function StepSelectProductCategory({
                       value={productCategory.id}
                       id={productCategory.id}
                       className="peer sr-only"
+                      disabled={!productCategory.active}
                     />
                     <Label
                       htmlFor={productCategory.id}
@@ -437,6 +448,7 @@ function StepSelectManufacturer({
               value={manufacturerId ?? ""}
             >
               {value
+                .filter((m) => m.active || m.id === manufacturerId)
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((manufacturer) => (
                   <div key={manufacturer.id}>
@@ -444,6 +456,7 @@ function StepSelectManufacturer({
                       value={manufacturer.id}
                       id={manufacturer.id}
                       className="peer sr-only"
+                      disabled={!manufacturer.active}
                     />
                     <Label
                       htmlFor={manufacturer.id}
@@ -485,6 +498,7 @@ function StepSelectProduct({
               value={productId ?? ""}
             >
               {value
+                .filter((p) => p.active || p.id === productId)
                 .sort((a, b) => a.name.localeCompare(b.name))
                 .map((product) => (
                   <div key={product.id}>
@@ -492,6 +506,7 @@ function StepSelectProduct({
                       value={product.id}
                       id={product.id}
                       className="peer sr-only"
+                      disabled={!product.active}
                     />
                     <Label
                       htmlFor={product.id}

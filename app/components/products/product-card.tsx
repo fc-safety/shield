@@ -1,10 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageOff, Loader2 } from "lucide-react";
-import { Suspense } from "react";
-import { Await, Link, type To } from "react-router";
-import { getImageWithBackgroundFillColor } from "~/lib/beta-utils";
+import { useEffect, useState } from "react";
+import { Link, type To } from "react-router";
+import { getImageWithBackgroundFillColor } from "~/.client/image-utils";
 import type { Product } from "~/lib/models";
+import { cn } from "~/lib/utils";
+import ActiveIndicator2 from "../active-indicator-2";
 
 interface ProductCardProps {
   product: Product | undefined;
@@ -26,7 +28,7 @@ export default function ProductCard({
       {product ? (
         <>
           <ProductImage name={product.name} imageUrl={product.imageUrl} />
-          <div>
+          <div className="grow flex flex-col">
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
                 <div className="grid gap-2">
@@ -35,30 +37,33 @@ export default function ProductCard({
                       {product.manufacturer.name}
                     </span>
                   )}
-                  <span>
-                    {navigateTo ? (
-                      <Link to={navigateTo} className="hover:underline">
-                        {product.name}
-                      </Link>
-                    ) : (
-                      <span>{product.name}</span>
-                    )}
-                    {displayCategory && (
-                      <Badge
-                        className="text-xs uppercase w-max ml-2"
-                        variant="secondary"
-                      >
-                        {product.productCategory.shortName ??
-                          product.productCategory.name}
-                      </Badge>
-                    )}
-                  </span>
+                  {navigateTo ? (
+                    <Link to={navigateTo} className="hover:underline">
+                      {product.name}
+                    </Link>
+                  ) : (
+                    <span>{product.name}</span>
+                  )}
                 </div>
                 {renderEditButton?.()}
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 flex flex-col gap-2 justify-between">
               <p>{product.description ?? <>&mdash;</>}</p>
+              <div className="flex gap-2 items-center">
+                <Badge
+                  className={cn(
+                    "text-sm uppercase w-max",
+                    !displayCategory && "hidden"
+                  )}
+                  variant="secondary"
+                >
+                  {product.productCategory.shortName ??
+                    product.productCategory.name}
+                </Badge>
+                <div className="flex-1"></div>
+                <ActiveIndicator2 active={product.active} />
+              </div>
             </CardContent>
           </div>
         </>
@@ -80,28 +85,43 @@ function ProductImage({
   name: string;
   imageUrl?: string | null;
 }) {
+  const [imageContext, setImageContext] = useState<{
+    dataUrl: string;
+    backgroundColor: string;
+  }>();
+  const [getDataUrlFailed, setGetDataUrlFailed] = useState(false);
+
+  useEffect(() => {
+    if (imageUrl) {
+      getImageWithBackgroundFillColor(imageUrl)
+        .then(({ dataUrl, backgroundColor }) => {
+          setImageContext({ dataUrl, backgroundColor });
+        })
+        .catch(() => setGetDataUrlFailed(true));
+    }
+  }, [imageUrl]);
+
   return (
-    <div className="rounded-l-xl h-48 aspect-square shrink-0 overflow-hidden">
-      {imageUrl ? (
-        <Suspense
-          fallback={<div className="h-full w-full bg-muted animate-pulse" />}
-        >
-          <Await
-            resolve={getImageWithBackgroundFillColor(imageUrl)}
-            errorElement={<DefaultProductImage />}
-          >
-            {({ dataUrl, backgroundColor }) => (
-              <div
-                className="h-full w-full flex justify-center"
-                style={{
-                  backgroundColor,
-                }}
-              >
-                <img src={dataUrl} alt={name} className="object-contain" />
-              </div>
-            )}
-          </Await>
-        </Suspense>
+    <div className="rounded-l-xl h-48 aspect-square shrink-0 overflow-hidden border-r">
+      {imageUrl && !getDataUrlFailed ? (
+        <>
+          {imageContext ? (
+            <div
+              className="h-full w-full flex justify-center"
+              style={{
+                backgroundColor: imageContext.backgroundColor,
+              }}
+            >
+              <img
+                src={imageContext.dataUrl}
+                alt={name}
+                className="object-contain"
+              />
+            </div>
+          ) : (
+            <div className="h-full w-full bg-muted animate-pulse" />
+          )}
+        </>
       ) : (
         <DefaultProductImage />
       )}

@@ -1,13 +1,17 @@
 import { InspectionSummaryChart } from "~/components/dashboard/inspection-summary-chart";
 import { LocationReadinessChart } from "~/components/dashboard/location-readiness-chart";
 import type { Asset } from "~/lib/models";
-import { countBy } from "~/lib/utils";
+import { buildTitleFromBreadcrumb, countBy } from "~/lib/utils";
 import type { Route } from "./+types/dashboard";
 
 export const handle = {
   breadcrumb: () => ({
     label: "Dashboard",
   }),
+};
+
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
 const demoAssets: Asset[] = [];

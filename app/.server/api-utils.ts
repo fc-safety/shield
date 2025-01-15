@@ -1,4 +1,4 @@
-import { data } from "react-router";
+import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { ResultsPage } from "~/lib/models";
 import { API_BASE_URL } from "./config";
@@ -219,7 +219,13 @@ interface AllCrudActions<
     request: Request,
     id: string
   ) => Promise<ReturnType<typeof data<unknown>>>;
+  deleteAndRedirect: (
+    request: Request,
+    id: string,
+    to: string
+  ) => Promise<Response>;
 }
+
 type CrudActionName = keyof AllCrudActions<unknown, z.ZodTypeAny, z.ZodTypeAny>;
 const CrudActionNames: CrudActionName[] = [
   "list",
@@ -227,6 +233,7 @@ const CrudActionNames: CrudActionName[] = [
   "create",
   "update",
   "delete",
+  "deleteAndRedirect",
 ];
 
 function buildCrud<
@@ -277,6 +284,13 @@ function buildCrud<
           return authenticatedData(request, [
             FetchOptions.url(`${path}/:id`, { id }).delete().build(),
           ]);
+        };
+        break;
+      case "deleteAndRedirect":
+        acc[action] = async (request: Request, id: string, to: string) => {
+          return authenticatedData(request, [
+            FetchOptions.url(`${path}/:id`, { id }).delete().build(),
+          ]).then(({ init }) => redirect(to, init ?? undefined));
         };
         break;
       default:
