@@ -129,7 +129,7 @@ export default function AssetDetailsForm({
           name="serialNumber"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Product Serial Number</FormLabel>
+              <FormLabel>Serial Number</FormLabel>
               <FormControl>
                 <Input {...field} />
               </FormControl>
@@ -139,31 +139,14 @@ export default function AssetDetailsForm({
         />
         <FormField
           control={form.control}
-          name="tag"
+          name="tag.connect.id"
           render={({ field: { onChange, value, onBlur, disabled } }) => (
             <FormItem>
               <FormLabel>Tag</FormLabel>
               <FormControl>
-                {/* <Input
-                  {...field}
-                  value={value?.connect.id ?? ""}
-                  onChange={(e) =>
-                    onChange(
-                      e.target.value
-                        ? {
-                            connect: {
-                              id: e.target.value,
-                            },
-                          }
-                        : undefined
-                    )
-                  }
-                /> */}
                 <TagSelector
-                  value={value?.connect.id ?? ""}
-                  onValueChange={(id) =>
-                    onChange(id ? { connect: { id } } : undefined)
-                  }
+                  value={value}
+                  onValueChange={onChange}
                   onBlur={onBlur}
                   disabled={disabled}
                   className="flex"
@@ -214,6 +197,7 @@ export default function AssetDetailsForm({
           )}
         />
         <Button
+          className="w-full"
           type="submit"
           disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
         >

@@ -1,6 +1,7 @@
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  type ColumnOrderState,
   type InitialTableState,
   type SortingState,
   type VisibilityState,
@@ -53,6 +54,9 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>(
     initialState?.sorting ?? []
   );
+  const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(
+    initialState?.columnOrder ?? []
+  );
 
   const table = useReactTable({
     data,
@@ -62,6 +66,7 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+      columnOrder,
     },
     initialState,
     enableRowSelection: true,
@@ -69,6 +74,7 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  type Alert,
   type Asset,
   type AssetQuestion,
   type Client,
@@ -12,6 +13,7 @@ import {
 } from "~/lib/models";
 import {
   createInspectionSchema,
+  resolveAlertSchema,
   type createAssetQuestionSchema,
   type createAssetSchema,
   type createClientSchema,
@@ -70,17 +72,24 @@ export const api = {
     },
 
     // Alerts
-    listAlerts: async (
-      request: Request,
-      assetId: string,
-      query: Record<string, string | number> = {}
-    ) => {
-      return authenticatedData<Asset>(request, [
-        FetchOptions.url("/assets/:assetId/alerts", { assetId, ...query })
-          .get()
-          .build(),
-      ]);
-    },
+    alerts: (assetId: string) => ({
+      ...CRUD.for<Alert, never, never>(`/assets/${assetId}/alerts`).only([
+        "get",
+        "list",
+      ]),
+      resolve: async (
+        request: Request,
+        alertId: string,
+        input: z.infer<typeof resolveAlertSchema>
+      ) => {
+        return authenticatedData<Alert>(request, [
+          FetchOptions.url(`/assets/${assetId}/alerts/${alertId}/resolve`)
+            .post()
+            .json(input)
+            .build(),
+        ]);
+      },
+    }),
   },
   tags: {
     ...CRUD.for<Tag, typeof createTagSchema, typeof updateTagSchema>(

@@ -48,10 +48,19 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* CUSTOM */
-    --chart-status-ok: 141 98% 38%;
-    --chart-status-warning: 55 92% 60%;
-    --chart-status-error: 6 92% 60%;
-    /* --chart-status-never: 0 0% 88%; */
+    --status-ok: 142.1 76.2% 36.3%;
+    --status-ok-foreground: 355.7 100% 97.3%;
+    --status-overdue: 50.7 95.1% 47.8%;
+    --status-overdue-foreground: 0 0% 37.6%;
+    --status-expired: 0 100% 60.6%;
+    --status-expired-foreground: 0 0% 98%;
+    --status-never: 0 0% 88%;
+    --status-never-foreground: 0 0% 37.6%;
+
+    --urgent: 0 100% 60.6%;
+    --urgent-foreground: 0 0% 98%;
+    --important: 50.7 95.1% 47.8%;
+    --important-foreground: 0 0% 37.6%;
   }
   .dark,
   :root[class~="dark"] {
@@ -89,10 +98,19 @@ body {
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* CUSTOM */
-    --chart-status-ok: 142 88% 38%;
-    --chart-status-warning: 50 92% 50%;
-    --chart-status-error: 6 92% 40%;
-    /* --chart-status-never: 0 0% 24%; */
+    --status-ok: 142.1 70.6% 45.3%;
+    --status-ok-foreground: 144.9 80.4% 10%;
+    --status-overdue: 44.8 100% 48.8%;
+    --status-overdue-foreground: 0 0% 36.9%;
+    --status-expired: 0 100% 60.6%;
+    --status-expired-foreground: 0 85.7% 97.3%;
+    --status-never: 0 0% 24%;
+    --status-never-foreground: 0 0% 90.2%;
+
+    --urgent: 0 60.6% 51.2%;
+    --urgent-foreground: 0 85.7% 97.3%;
+    --important: 44.8 100% 48.8%;
+    --important-foreground: 0 0% 36.9%;
   }
 }
 

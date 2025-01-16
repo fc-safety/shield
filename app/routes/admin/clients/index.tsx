@@ -62,9 +62,10 @@ export default function ClientsIndex({
     () => [
       {
         accessorKey: "name",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
+
         cell: ({ row, getValue }) => (
           <Link to={row.original.id} className="hover:underline">
             {getValue() as string}
@@ -73,9 +74,10 @@ export default function ClientsIndex({
       },
       {
         accessorKey: "status",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Status" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
+
         cell: ({ getValue }) => (
           <span className="capitalize">{String(getValue()).toLowerCase()}</span>
         ),
@@ -83,16 +85,17 @@ export default function ClientsIndex({
       {
         accessorFn: (data) => `${data.address.city}, ${data.address.state}`,
         id: "city",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="City" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
       },
       {
         accessorFn: (data) => beautifyPhone(data.phoneNumber),
         id: "phone",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Phone" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
+
         cell: ({ row, getValue }) => (
           <HoverCard>
             <HoverCardTrigger>{getValue() as string}</HoverCardTrigger>

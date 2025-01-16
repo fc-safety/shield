@@ -20,7 +20,9 @@ export default function ProductCategories({
     () => [
       {
         accessorKey: "active",
-        header: ({ column }) => <DataTableColumnHeader column={column} />,
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
         cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
       },
       {
@@ -30,22 +32,23 @@ export default function ProductCategories({
             {getValue() as string}
           </Link>
         ),
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
       },
       {
         accessorKey: "shortName",
         id: "code",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Code" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
       },
       {
         accessorKey: "description",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Description" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
+
         cell: ({ getValue }) => (
           <span className="line-clamp-2">
             {(getValue() as string) || <>&mdash;</>}

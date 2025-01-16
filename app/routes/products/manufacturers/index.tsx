@@ -35,7 +35,9 @@ export default function ProductManufacturers({
     () => [
       {
         accessorKey: "active",
-        header: ({ column }) => <DataTableColumnHeader column={column} />,
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
         cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
       },
       {
@@ -45,15 +47,16 @@ export default function ProductManufacturers({
             {getValue() as string}
           </Link>
         ),
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
       },
       {
         accessorKey: "homeUrl",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Home URL" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
+
         cell: ({ getValue }) => {
           const value = getValue() as string;
           return value ? (

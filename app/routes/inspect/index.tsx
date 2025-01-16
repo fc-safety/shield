@@ -249,11 +249,14 @@ export default function InspectIndex({
           {tag.asset?.product && (
             <div>
               <div className="mb-2 text-sm font-bold">Product</div>
-              <ProductCard product={tag.asset.product} />
+              <ProductCard
+                product={tag.asset.product}
+                displayActiveIndicator={false}
+              />
             </div>
           )}
 
-          {tag.asset && questions.length > 0 && (
+          {tag.asset && (
             <FormProvider {...form}>
               <Form
                 className="space-y-4"
@@ -289,6 +292,15 @@ export default function InspectIndex({
                     />
                   );
                 })}
+                {questionFields.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    No questions available for this asset. Please contact your
+                    administrator.
+                    <br />
+                    <br />
+                    You can still leave comments and submit the inspection.
+                  </p>
+                )}
                 <FormField
                   control={form.control}
                   name="comments"
@@ -319,12 +331,11 @@ export default function InspectIndex({
           <AlertDialogHeader>
             <AlertDialogTitle>Enable Location</AlertDialogTitle>
           </AlertDialogHeader>
-          <p>
+          <p className="text-sm text-muted-foreground">
             Information about your location is required before you can continue
             completing the inspection.
-          </p>
-
-          <p>
+            <br />
+            <br />
             If you can no longer see the prompt to enable location, please
             refresh the page.
           </p>

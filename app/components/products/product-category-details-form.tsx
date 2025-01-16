@@ -20,6 +20,7 @@ import {
   type createProductCategorySchema,
   type updateProductCategorySchema,
 } from "~/lib/schema";
+import IconSelector from "../icons/icon-selector";
 
 type TForm = z.infer<
   typeof createProductCategorySchema | typeof updateProductCategorySchema
@@ -129,6 +130,23 @@ export default function ProductCategoryDetailsForm({
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="icon"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Icon</FormLabel>
+              <FormControl>
+                <IconSelector
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

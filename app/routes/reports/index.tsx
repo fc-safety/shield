@@ -40,21 +40,23 @@ const columns: ColumnDef<Report>[] = [
         {getValue() as string}
       </Link>
     ),
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Title" />
+    header: ({ column, table }) => (
+      <DataTableColumnHeader column={column} table={table} />
     ),
   },
   {
     accessorKey: "description",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Description" />
+    header: ({ column, table }) => (
+      <DataTableColumnHeader column={column} table={table} />
     ),
   },
   {
     accessorKey: "createdAt",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Created On" />
+    id: "created on",
+    header: ({ column, table }) => (
+      <DataTableColumnHeader column={column} table={table} />
     ),
+
     cell: ({ getValue }) => (
       <span title={format(getValue() as string, "PPpp")}>
         {formatDistanceToNow(getValue() as string, {
@@ -66,8 +68,8 @@ const columns: ColumnDef<Report>[] = [
   },
   {
     accessorKey: "status",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
+    header: ({ column, table }) => (
+      <DataTableColumnHeader column={column} table={table} />
     ),
   },
   {

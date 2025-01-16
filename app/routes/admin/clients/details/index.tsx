@@ -80,9 +80,10 @@ function ClientSitesTable({ sites, clientId }: ClientSitesTableProps) {
   const columns: ColumnDef<Site>[] = [
     {
       accessorKey: "name",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Name" />
+      header: ({ column, table }) => (
+        <DataTableColumnHeader column={column} table={table} />
       ),
+
       cell: ({ row, getValue }) => (
         <Link
           to={"sites/" + row.original.id}
@@ -98,16 +99,17 @@ function ClientSitesTable({ sites, clientId }: ClientSitesTableProps) {
     {
       accessorFn: (data) => `${data.address.city}, ${data.address.state}`,
       id: "city",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="City" />
+      header: ({ column, table }) => (
+        <DataTableColumnHeader column={column} table={table} />
       ),
     },
     {
       accessorFn: (data) => beautifyPhone(data.phoneNumber),
       id: "phone",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Phone" />
+      header: ({ column, table }) => (
+        <DataTableColumnHeader column={column} table={table} />
       ),
+
       cell: ({ row, getValue }) => (
         <HoverCard>
           <HoverCardTrigger>{getValue() as string}</HoverCardTrigger>

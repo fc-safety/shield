@@ -13,6 +13,7 @@ interface ProductCardProps {
   renderEditButton?: () => React.ReactNode;
   displayCategory?: boolean;
   displayManufacturer?: boolean;
+  displayActiveIndicator?: boolean;
   navigateTo?: To;
 }
 
@@ -21,6 +22,7 @@ export default function ProductCard({
   renderEditButton,
   displayCategory = true,
   displayManufacturer = true,
+  displayActiveIndicator = true,
   navigateTo,
 }: ProductCardProps) {
   return (
@@ -48,8 +50,10 @@ export default function ProductCard({
                 {renderEditButton?.()}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col gap-2 justify-between">
-              <p>{product.description ?? <>&mdash;</>}</p>
+            <CardContent className="flex-1 flex flex-col gap-4 justify-between">
+              <p className="text-sm text-muted-foreground">
+                {product.description ?? <>&mdash;</>}
+              </p>
               <div className="flex gap-2 items-center">
                 <Badge
                   className={cn(
@@ -62,7 +66,10 @@ export default function ProductCard({
                     product.productCategory.name}
                 </Badge>
                 <div className="flex-1"></div>
-                <ActiveIndicator2 active={product.active} />
+                <ActiveIndicator2
+                  active={product.active}
+                  className={cn(!displayActiveIndicator && "hidden")}
+                />
               </div>
             </CardContent>
           </div>
@@ -102,7 +109,7 @@ function ProductImage({
   }, [imageUrl]);
 
   return (
-    <div className="rounded-l-xl h-48 aspect-square shrink-0 overflow-hidden border-r">
+    <div className="rounded-l-xl w-48 min-h-48 shrink-0 overflow-hidden border-r">
       {imageUrl && !getDataUrlFailed ? (
         <>
           {imageContext ? (

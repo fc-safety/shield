@@ -11,13 +11,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Nfc, Pencil, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useFetcher } from "react-router";
-import type { ResultsPage, Tag } from "~/lib/models";
+import { Loader2, Pencil, Search } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useDebounceValue } from "usehooks-ts";
+import { searchIcons } from "~/lib/fontawesome";
 import { cn } from "~/lib/utils";
+import { Input } from "../ui/input";
 
-interface TagSelectorProps {
+interface IconSelectorProps {
   value?: string;
   onValueChange?: (value: string) => void;
   onBlur?: () => void;
@@ -25,24 +26,20 @@ interface TagSelectorProps {
   className?: string;
 }
 
-export default function TagSelector({
+type TIcon = Awaited<ReturnType<typeof searchIcons>>[number];
+
+export default function IconSelector({
   value,
   onValueChange,
   onBlur,
   disabled,
   className,
-}: TagSelectorProps) {
+}: IconSelectorProps) {
   const opened = useRef(false);
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
-  const fetcher = useFetcher<ResultsPage<Tag>>();
-
-  const [tags, setTags] = useState<Tag[]>([]);
-
-  const defaultTag = useMemo(
-    () => tags.find((c) => c.id === value),
-    [tags, value]
-  );
+  const [icons, setIcons] = useState<TIcon[]>([]);
+  const [query, setQuery] = useDebounceValue("", 300);
 
   // Trigger onBlur when the dialog is closed.
   useEffect(() => {
@@ -55,32 +52,15 @@ export default function TagSelector({
     }
   }, [open, onBlur]);
 
-  // Preload all tags lazily.
-  const handlePreload = useCallback(() => {
-    if (fetcher.state === "idle" && fetcher.data === undefined) {
-      fetcher.load("/api/tags");
-    }
-  }, [fetcher]);
-
-  // Set the tags when they are loaded from the fetcher.
   useEffect(() => {
-    if (fetcher.data) {
-      setTags(fetcher.data.results);
-    }
-  }, [fetcher.data]);
-
-  // Preload the tags when a value is set.
-  useEffect(() => {
-    if (value) {
-      handlePreload();
-    }
-  }, [value, handlePreload]);
+    searchIcons(query).then(setIcons);
+  }, [query]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {value ? (
-        <TagCard
-          tag={defaultTag}
+        <IconCard
+          icon={{ id: value, label: value }}
           renderEditButton={() => (
             <DialogTrigger asChild>
               <Button
@@ -101,51 +81,46 @@ export default function TagSelector({
             size="sm"
             disabled={disabled}
             className={cn(className)}
-            onMouseEnter={handlePreload}
           >
             <Search />
-            Select Tag
+            Select Icon
           </Button>
         </DialogTrigger>
       )}
       <DialogContent className="px-0">
         <DialogHeader className="px-6">
-          <DialogTitle>Find Tag by Serial No.</DialogTitle>
+          <DialogTitle>Find an icon</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-96 border-b border-t px-6 self-stretch">
+          <div className="relative overflow-visible my-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4" />
+            <Input
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search..."
+              className="pl-10"
+            />
+          </div>
           <RadioGroup
             defaultValue="card"
             className="grid grid-cols-2 gap-4 py-2"
             onValueChange={setTempValue}
             value={tempValue ?? ""}
           >
-            {tags
-              .sort((a, b) =>
-                b.asset ? -1 : a.serialNumber.localeCompare(b.serialNumber)
-              )
-              .map((tag) => (
-                <div key={tag.id}>
-                  <RadioGroupItem
-                    value={tag.id}
-                    id={tag.id}
-                    className="peer sr-only"
-                    disabled={!!tag.asset && tag.id !== value}
-                  />
-                  <Label
-                    htmlFor={tag.id}
-                    className="font-semibold h-full flex flex-col gap-2 items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                  >
-                    <span className="text-xs text-center">
-                      {tag.serialNumber}
-                    </span>
-                    {tag.asset && (
-                      <span className="font-light text-xs text-center">
-                        assigned to {tag.asset.name}
-                      </span>
-                    )}
-                  </Label>
-                </div>
-              ))}
+            {icons.map((icon) => (
+              <div key={icon.id}>
+                <RadioGroupItem
+                  value={icon.id}
+                  id={"fa-icon-" + icon.id}
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor={"fa-icon-" + icon.id}
+                  className="font-semibold h-full flex flex-col gap-2 items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                >
+                  {icon.label}
+                </Label>
+              </div>
+            ))}
           </RadioGroup>
         </ScrollArea>
         <div className="flex justify-end gap-2 px-6">
@@ -169,25 +144,22 @@ export default function TagSelector({
   );
 }
 
-interface TagCardProps {
-  tag: Tag | undefined;
+interface IconCardProps {
+  icon: TIcon | undefined;
   renderEditButton?: () => React.ReactNode;
 }
 
-export function TagCard({ tag, renderEditButton }: TagCardProps) {
+export function IconCard({ icon, renderEditButton }: IconCardProps) {
   return (
     <Card>
-      {tag ? (
+      {icon ? (
         <>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Nfc className="size-6 text-primary" />
                 <div className="grid gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    Serial Number
-                  </span>
-                  {tag?.serialNumber}
+                  <span className="text-xs text-muted-foreground">ID</span>
+                  {icon.id}
                 </div>
               </div>
               {renderEditButton?.()}

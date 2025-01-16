@@ -1,6 +1,6 @@
 import {
   data,
-  isRouteErrorResponse,
+  Link,
   Links,
   Meta,
   Outlet,
@@ -9,8 +9,6 @@ import {
   useRouteLoaderData,
 } from "react-router";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
 import { type PropsWithChildren } from "react";
 import {
   PreventFlashOnWrongTheme,
@@ -19,8 +17,12 @@ import {
 } from "remix-themes";
 import { themeSessionResolver } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
-import "~/tailwind.css";
 import type { Route } from "./+types/root";
+import DefaultErrorBoundary from "./components/default-error-boundary";
+import Footer from "./components/footer";
+import Header from "./components/header";
+import { Button } from "./components/ui/button";
+import styles from "./tailwind.css?url";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
@@ -40,6 +42,7 @@ export const links: Route.LinksFunction = () => [
   //   rel: "stylesheet",
   //   href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   // },
+  { rel: "stylesheet", href: styles },
   {
     rel: "icon",
     type: "image/png",
@@ -53,25 +56,23 @@ export const meta: Route.MetaFunction = () => {
 };
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  if (isRouteErrorResponse(error)) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>
-          {error.status} {error.statusText}
-        </AlertTitle>
-        <AlertDescription>{error.data}</AlertDescription>
-      </Alert>
-    );
-  } else {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>Oops! Something went wrong.</AlertDescription>
-      </Alert>
-    );
-  }
+  return (
+    <div className="w-full h-full min-h-svh flex flex-col">
+      <Header
+        rightSlot={
+          <>
+            <Button variant="secondary" asChild>
+              <Link to={"/logout"}>Logout</Link>
+            </Button>
+          </>
+        }
+      />
+      <main className="grid grow place-items-center px-6 py-24 sm:py-32 lg:px-8">
+        <DefaultErrorBoundary error={error} />
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {

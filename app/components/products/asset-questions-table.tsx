@@ -51,12 +51,16 @@ export default function AssetQuestionsTable({
   const columns: ColumnDef<AssetQuestion>[] = [
     {
       accessorKey: "active",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: ({ column, table }) => (
+        <DataTableColumnHeader column={column} table={table} />
+      ),
       cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
     },
     {
       accessorKey: "type",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: ({ column, table }) => (
+        <DataTableColumnHeader column={column} table={table} />
+      ),
       cell: ({ getValue }) => (
         <span className="capitalize">
           {(getValue() as string).toLowerCase()}
@@ -65,12 +69,16 @@ export default function AssetQuestionsTable({
     },
     {
       accessorKey: "required",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: ({ column, table }) => (
+        <DataTableColumnHeader column={column} table={table} />
+      ),
       cell: ({ getValue }) => (getValue() ? "Yes" : "No"),
     },
     {
       accessorKey: "prompt",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: ({ column, table }) => (
+        <DataTableColumnHeader column={column} table={table} />
+      ),
       cell: ({ getValue }) => (
         <span className="line-clamp-2">{getValue() as string}</span>
       ),
@@ -78,7 +86,9 @@ export default function AssetQuestionsTable({
     {
       accessorKey: "valueType",
       id: "answer type",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: ({ column, table }) => (
+        <DataTableColumnHeader column={column} table={table} />
+      ),
       cell: ({ getValue }) => (
         <span className="capitalize">
           {(getValue() as string).replace("_", " ").toLowerCase()}

@@ -320,7 +320,7 @@ export class CRUD<
     return buildCrud<T, TCreateSchema, TUpdateSchema>(this.path);
   }
 
-  public some<TActions extends CrudActionName[]>(actions: TActions) {
+  public only<TActions extends CrudActionName[]>(actions: TActions) {
     return Object.fromEntries(
       Object.entries(this.all()).filter(([action]) =>
         actions.includes(action as CrudActionName)

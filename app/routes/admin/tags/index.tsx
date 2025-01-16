@@ -31,21 +31,20 @@ export default function AdminTagsIndex({
     () => [
       {
         accessorKey: "serialNumber",
-        id: "serial number",
         cell: ({ row, getValue }) => (
           <Link to={row.original.id} className="hover:underline">
             {getValue() as string}
           </Link>
         ),
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Serial Number" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
       },
       {
         accessorKey: "asset.setupOn",
         id: "setup on",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Setup On" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
         cell: ({ getValue }) => {
           const value = getValue() as Date;

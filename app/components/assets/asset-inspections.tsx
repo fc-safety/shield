@@ -40,33 +40,31 @@ export default function AssetInspections({
       {
         accessorKey: "createdOn",
         id: "date",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Date" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
-        cell: ({ getValue, row }) => (
-          <button
-            title={format(getValue() as string, "PPpp")}
-            className="hover:underline cursor-pointer"
-            type="button"
-            onMouseEnter={() => handlePreloadInspectionDetails(row.original.id)}
-            onClick={() => setInspectionDetailsOpen(true)}
-          >
+        cell: ({ getValue }) => (
+          <span title={format(getValue() as string, "PPpp")}>
             {formatDistanceToNow(getValue() as string, {
               addSuffix: true,
               includeSeconds: true,
             })}
-          </button>
+          </span>
         ),
       },
       {
         id: "inspector",
         accessorFn: (row) =>
           `${row.inspector?.firstName} ${row.inspector?.lastName}`,
-        header: ({ column }) => <DataTableColumnHeader column={column} />,
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
       },
       {
         accessorKey: "comments",
-        header: ({ column }) => <DataTableColumnHeader column={column} />,
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
       },
       {
         id: "details",

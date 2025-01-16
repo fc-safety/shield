@@ -73,6 +73,33 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+
+        // Custom colors
+        ["status-ok"]: {
+          DEFAULT: "hsl(var(--status-ok))",
+          foreground: "hsl(var(--status-ok-foreground))",
+        },
+        ["status-overdue"]: {
+          DEFAULT: "hsl(var(--status-overdue))",
+          foreground: "hsl(var(--status-overdue-foreground))",
+        },
+        ["status-expired"]: {
+          DEFAULT: "hsl(var(--status-expired))",
+          foreground: "hsl(var(--status-expired-foreground))",
+        },
+        ["status-never"]: {
+          DEFAULT: "hsl(var(--status-never))",
+          foreground: "hsl(var(--status-never-foreground))",
+        },
+
+        urgent: {
+          DEFAULT: "hsl(var(--urgent))",
+          foreground: "hsl(var(--urgent-foreground))",
+        },
+        important: {
+          DEFAULT: "hsl(var(--important))",
+          foreground: "hsl(var(--important-foreground))",
+        },
       },
     },
     screens: {

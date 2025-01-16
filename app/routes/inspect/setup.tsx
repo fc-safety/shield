@@ -205,7 +205,10 @@ export default function InspectSetup({
           {tag.asset?.product && (
             <div>
               <div className="mb-2 text-sm font-bold">Product</div>
-              <ProductCard product={tag.asset.product} />
+              <ProductCard
+                product={tag.asset.product}
+                displayActiveIndicator={false}
+              />
             </div>
           )}
 
@@ -274,7 +277,7 @@ export default function InspectSetup({
                 })}
                 {createQuestionFields.length === 0 &&
                   updateQuestionFields.length === 0 && (
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-sm text-center">
                       No setup questions found.{" "}
                       {isSetup ? (
                         <>There is nothing to update.</>

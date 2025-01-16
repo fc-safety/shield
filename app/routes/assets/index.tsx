@@ -6,7 +6,7 @@ import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator2 from "~/components/active-indicator-2";
-import NewAssetButton from "~/components/assets/new-asset-button";
+import EditAssetButton from "~/components/assets/edit-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -66,7 +66,9 @@ export default function AssetsIndex({
     () => [
       {
         accessorKey: "active",
-        header: ({ column }) => <DataTableColumnHeader column={column} />,
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
         cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
       },
       {
@@ -80,15 +82,19 @@ export default function AssetsIndex({
               }`}
           </Link>
         ),
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Name" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
       },
       {
         accessorKey: "tag.serialNumber",
         id: "tag",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Tag" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader
+            column={column}
+            table={table}
+            title="Tag Serial No."
+          />
         ),
       },
       {
@@ -96,27 +102,33 @@ export default function AssetsIndex({
           row.product?.productCategory?.shortName ??
           row.product?.productCategory?.name,
         id: "category",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Category" />
-        ),
-      },
-      {
-        accessorKey: "location",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Location" />
-        ),
-      },
-      {
-        accessorKey: "placement",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Placement" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
       },
       {
         accessorKey: "product.manufacturer.name",
         id: "manufacturer",
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title="Manufacturer" />
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
+        accessorKey: "product.name",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
+        accessorKey: "location",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
+        accessorKey: "placement",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
         ),
       },
       // {
@@ -205,6 +217,16 @@ export default function AssetsIndex({
         searchPlaceholder="Search assets..."
         initialState={{
           columnFilters,
+          columnVisibility: {
+            active: true,
+            name: true,
+            tag: true,
+            category: true,
+            manufacturer: true,
+            product_name: false,
+            location: true,
+            placement: false,
+          },
         }}
         filters={({ table }) => [
           {
@@ -241,7 +263,7 @@ export default function AssetsIndex({
           //   },
         ]}
         actions={[
-          <NewAssetButton key="add" />,
+          <EditAssetButton key="add" />,
           // TODO: If bulk actions are needed, make sure to add select column.
           //   <DropdownMenu key="bulk-actions">
           //     <DropdownMenuTrigger asChild>

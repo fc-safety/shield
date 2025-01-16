@@ -66,6 +66,8 @@ export default [
     // Help routes
     route("faqs", "./routes/faqs.tsx"),
     route("contact", "./routes/contact.tsx"),
+
+    route("*", "./routes/404.tsx"),
   ]),
 
   // Inspect routes
@@ -87,6 +89,10 @@ export default [
     route("products", "./routes/api/products.ts"),
     route("tags", "./routes/api/tags.ts"),
     route("inspections/:id", "./routes/api/inspections.ts"),
-    route("assets/:assetId/alerts", "./routes/api/alerts.ts"),
+    ...prefix("assets/:assetId/alerts", [
+      index("./routes/api/alerts/list.ts"),
+      route(":id", "./routes/api/alerts/get.ts"),
+      route(":id/resolve", "./routes/api/alerts/resolve.ts"),
+    ]),
   ]),
 ] satisfies RouteConfig;

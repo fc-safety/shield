@@ -200,10 +200,11 @@ export const createAssetSchema = z.object({
   tag: z
     .object({
       connect: z.object({
-        id: z.string(),
+        id: z.string().optional(),
       }),
     })
-    .optional(),
+    .optional()
+    .transform((tag) => (tag?.connect.id ? tag : undefined)),
   site: z
     .object({
       connect: z.object({
@@ -342,6 +343,11 @@ export const createInspectionSchema = z.object({
 export const createInspectionSchemaResolver = zodResolver(
   createInspectionSchema
 );
+
+export const resolveAlertSchema = z.object({
+  resolutionNote: z.string().nonempty(),
+});
+export const resolveAlertSchemaResolver = zodResolver(resolveAlertSchema);
 
 export const setupAssetSchema = z.object({
   id: z.string().nonempty(),

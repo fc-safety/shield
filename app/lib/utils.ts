@@ -168,7 +168,9 @@ export const validateSearchParam = (
 ) => {
   const value = getSearchParams(request).get(key);
   if (!value) {
-    throw new Error(message ?? `Query parameter '${key}' is required`);
+    throw new Response(message ?? `Query parameter '${key}' is required`, {
+      status: 400,
+    });
   }
   return value;
 };
@@ -180,7 +182,9 @@ export const validateParam = (
 ) => {
   const value = params[key];
   if (!value) {
-    throw new Error(message ?? `URL parameter '${key}' is required`);
+    throw new Response(message ?? `URL parameter '${key}' is required`, {
+      status: 400,
+    });
   }
   return value;
 };
@@ -195,7 +199,9 @@ export const validateParams = <TKey extends string>(
   for (const key of keys) {
     const value = params[key];
     if (!value) {
-      throw new Error(message ?? `URL parameter '${key}' is required`);
+      throw new Response(message ?? `URL parameter '${key}' is required`, {
+        status: 400,
+      });
     }
     validated[key] = value;
   }
