@@ -6,10 +6,15 @@ import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator2 from "~/components/active-indicator-2";
+import {
+  AlertsStatusBadge,
+  InspectionStatusBadge,
+} from "~/components/assets/asset-status-badge";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import Icon from "~/components/icons/icon";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -18,6 +23,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import type { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
+import {
+  getAssetAlertsStatus,
+  getAssetInspectionStatus,
+} from "~/lib/model-utils";
 import type { Asset, ProductCategory } from "~/lib/models";
 import { createAssetSchema, createAssetSchemaResolver } from "~/lib/schema";
 import { dedupById, getValidatedFormDataOrThrow } from "~/lib/utils";
@@ -105,6 +115,21 @@ export default function AssetsIndex({
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
+        cell: ({ row, getValue }) => {
+          const category = getValue() as string;
+          return (
+            <span className="flex items-center gap-2">
+              {row.original.product?.productCategory?.icon && (
+                <Icon
+                  iconId={row.original.product.productCategory.icon}
+                  color={row.original.product.productCategory.color}
+                  className="text-lg"
+                />
+              )}
+              {category ?? <>&mdash;</>}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "product.manufacturer.name",
@@ -129,6 +154,33 @@ export default function AssetsIndex({
         accessorKey: "placement",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
+        accessorFn: ({ alerts }) => getAssetAlertsStatus(alerts ?? []),
+        id: "alertsStatus",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ row, getValue }) => (
+          <Link to={`${row.original.id}?tab=alerts`}>
+            <AlertsStatusBadge status={getValue() as AlertsStatus} />
+          </Link>
+        ),
+      },
+      {
+        accessorFn: ({ inspections }) =>
+          inspections && getAssetInspectionStatus(inspections),
+        id: "inspectionsStatus",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ row, getValue }) => (
+          <Link to={`${row.original.id}#inspections`}>
+            <InspectionStatusBadge
+              status={getValue() as AssetInspectionsStatus}
+            />
+          </Link>
         ),
       },
       // {

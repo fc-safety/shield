@@ -94,6 +94,7 @@ export interface Client extends BaseModel {
   phoneNumber: string;
   homeUrl?: string;
   sites?: Site[];
+  _count?: { sites: number };
 }
 
 export interface Site extends BaseModel {
@@ -182,6 +183,10 @@ interface RuleMatch {
   gte?: string | number;
   lt?: string | number;
   lte?: string | number;
+  beforeDaysPast?: number;
+  afterDaysPast?: number;
+  beforeDaysFuture?: number;
+  afterDaysFuture?: number;
 }
 
 interface BaseAssetAlertCriterionRule {

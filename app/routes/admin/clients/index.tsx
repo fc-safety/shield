@@ -73,6 +73,13 @@ export default function ClientsIndex({
         ),
       },
       {
+        accessorKey: "_count.sites",
+        id: "sites",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
         accessorKey: "status",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />

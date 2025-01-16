@@ -27,6 +27,7 @@ export function getImageWithBackgroundFillColor(
       const rValues: number[] = [];
       const gValues: number[] = [];
       const bValues: number[] = [];
+      const aValues: number[] = [];
       const imageData = tempCtx.getImageData(
         0,
         0,
@@ -41,12 +42,14 @@ export function getImageWithBackgroundFillColor(
         rValues.push(imageData[topIndex]);
         gValues.push(imageData[topIndex + 1]);
         bValues.push(imageData[topIndex + 2]);
+        aValues.push(imageData[topIndex + 3]);
 
         // Bottom border
         const bottomIndex = ((originalHeight - 1) * originalWidth + x) * 4;
         rValues.push(imageData[bottomIndex]);
         gValues.push(imageData[bottomIndex + 1]);
         bValues.push(imageData[bottomIndex + 2]);
+        aValues.push(imageData[bottomIndex + 3]);
       }
 
       // Left and right border pixels
@@ -56,12 +59,14 @@ export function getImageWithBackgroundFillColor(
         rValues.push(imageData[leftIndex]);
         gValues.push(imageData[leftIndex + 1]);
         bValues.push(imageData[leftIndex + 2]);
+        aValues.push(imageData[leftIndex + 3]);
 
         // Right border
         const rightIndex = (y * originalWidth + originalWidth - 1) * 4;
         rValues.push(imageData[rightIndex]);
         gValues.push(imageData[rightIndex + 1]);
         bValues.push(imageData[rightIndex + 2]);
+        aValues.push(imageData[rightIndex + 3]);
       }
 
       // Helper function to calculate the median of an array
@@ -77,12 +82,13 @@ export function getImageWithBackgroundFillColor(
       const rMedian = calculateMedian(rValues);
       const gMedian = calculateMedian(gValues);
       const bMedian = calculateMedian(bValues);
+      const aMedian = calculateMedian(aValues);
 
       // Convert the canvas to a data URL
       const dataUrl = tempCanvas.toDataURL("image/png");
       resolve({
         dataUrl,
-        backgroundColor: `rgb(${rMedian}, ${gMedian}, ${bMedian})`,
+        backgroundColor: `rgba(${rMedian}, ${gMedian}, ${bMedian}, ${aMedian})`,
       });
     };
 

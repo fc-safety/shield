@@ -8,9 +8,10 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Frown, Nfc } from "lucide-react";
 import { isIPv4, isIPv6 } from "net";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray } from "react-hook-form";
 import { Form, isRouteErrorResponse, redirect } from "react-router";
 import { useRemixForm } from "remix-hook-form";
@@ -36,8 +37,8 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import type { AssetQuestion } from "~/lib/models";
 import {
-  createInspectionSchemaResolver,
-  type createInspectionSchema,
+  buildInspectionSchemaResolver,
+  createInspectionSchema,
 } from "~/lib/schema";
 import {
   buildTitle,
@@ -51,7 +52,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const tagNo = validateSearchParam(request, "tagNo");
   const { data } = await getValidatedFormDataOrThrow<
     z.infer<typeof createInspectionSchema>
-  >(request, createInspectionSchemaResolver);
+  >(request, zodResolver(createInspectionSchema));
 
   const ipAddress = getClientIPAddress(request);
 
@@ -121,12 +122,19 @@ const onlyInspectionQuestions = (questions: AssetQuestion[] | undefined) =>
 export default function InspectIndex({
   loaderData: tag,
 }: Route.ComponentProps) {
-  const questions = [
-    ...onlyInspectionQuestions(tag.asset?.product.assetQuestions),
-    ...onlyInspectionQuestions(
-      tag.asset?.product.productCategory.assetQuestions
-    ),
-  ];
+  const questions = useMemo(
+    () => [
+      ...onlyInspectionQuestions(tag.asset?.product.assetQuestions),
+      ...onlyInspectionQuestions(
+        tag.asset?.product.productCategory.assetQuestions
+      ),
+    ],
+    [tag]
+  );
+
+  const createInspectionSchemaResolver = useMemo(() => {
+    return buildInspectionSchemaResolver(questions);
+  }, [questions]);
 
   const form = useRemixForm<TForm>({
     resolver: createInspectionSchemaResolver,
@@ -280,7 +288,7 @@ export default function InspectIndex({
                           <FormLabel>{question?.prompt}</FormLabel>
                           <FormControl>
                             <AssetQuestionResponseTypeInput
-                              value={value}
+                              value={value ?? ""}
                               onValueChange={onChange}
                               onBlur={onBlur}
                               valueType={question?.valueType ?? "BINARY"}

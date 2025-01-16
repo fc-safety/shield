@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 
 interface DatePickerProps {
   className?: string;
@@ -40,8 +40,22 @@ export const DatePicker = forwardRef<
     },
     ref
   ) => {
+    const opened = useRef(false);
+    const [open, setOpen] = useState(false);
+
+    // Trigger onBlur when the popover is closed.
+    useEffect(() => {
+      if (opened.current && !open) {
+        onBlur?.();
+      }
+
+      if (open) {
+        opened.current = true;
+      }
+    }, [open, onBlur]);
+
     return (
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant={"outline"}
@@ -58,7 +72,7 @@ export const DatePicker = forwardRef<
             {value ? format(value, displayFormat) : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" onBlur={onBlur}>
+        <PopoverContent className="w-auto p-0">
           <Calendar
             mode="single"
             selected={value}

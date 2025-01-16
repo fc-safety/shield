@@ -1,0 +1,95 @@
+import {
+  CircleAlert,
+  CircleCheck,
+  CircleHelp,
+  CircleX,
+  Clock,
+  ShieldAlert,
+  ShieldCheck,
+  ShieldX,
+} from "lucide-react";
+import { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
+import { cn } from "~/lib/utils";
+import { Badge } from "../ui/badge";
+
+function StatusBadge({
+  icon: IconComponent,
+  status,
+  className,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  status: string;
+  className?: string;
+}) {
+  return (
+    <Badge
+      className={cn(
+        "bg-primary text-primary-foreground hover:bg-primary py-1",
+        className
+      )}
+    >
+      <IconComponent className="mr-1 size-4" />
+      {status}
+    </Badge>
+  );
+}
+
+export function InspectionStatusBadge({
+  status,
+}: {
+  status: AssetInspectionsStatus | undefined | null;
+}) {
+  return status === AssetInspectionsStatus.READY ? (
+    <StatusBadge
+      icon={CircleCheck}
+      status="Ready"
+      className="bg-status-ok text-status-ok-foreground hover:bg-status-ok"
+    />
+  ) : status === AssetInspectionsStatus.OVERDUE ? (
+    <StatusBadge
+      icon={CircleAlert}
+      status="Overdue"
+      className="bg-status-overdue text-status-overdue-foreground hover:bg-status-overdue"
+    />
+  ) : status === AssetInspectionsStatus.EXPIRED ? (
+    <StatusBadge
+      icon={CircleX}
+      status="Expired"
+      className="bg-status-expired text-status-expired-foreground hover:bg-status-expired"
+    />
+  ) : status === AssetInspectionsStatus.NEVER ? (
+    <StatusBadge
+      icon={Clock}
+      status="Never Inspected"
+      className="bg-status-never text-status-never-foreground hover:bg-status-never"
+    />
+  ) : (
+    <StatusBadge
+      icon={CircleHelp}
+      status="Unknown"
+      className="bg-secondary-never text-secondary-never-foreground hover:bg-secondary-never"
+    />
+  );
+}
+
+export function AlertsStatusBadge({ status }: { status: AlertsStatus }) {
+  return status === AlertsStatus.URGENT ? (
+    <StatusBadge
+      icon={ShieldX}
+      status="Urgent Alerts Present"
+      className="bg-urgent text-urgent-foreground hover:bg-urgent"
+    />
+  ) : status === AlertsStatus.INFO ? (
+    <StatusBadge
+      icon={ShieldAlert}
+      status="Alerts Present"
+      className="bg-important text-important-foreground hover:bg-important"
+    />
+  ) : (
+    <StatusBadge
+      icon={ShieldCheck}
+      status="No Alerts"
+      className="bg-status-ok text-status-ok-foreground hover:bg-status-ok"
+    />
+  );
+}

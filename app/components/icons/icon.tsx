@@ -6,7 +6,7 @@ export default function Icon({
   className,
 }: {
   iconId: string;
-  color?: string;
+  color?: string | null;
   className?: string;
 }) {
   return (

@@ -61,7 +61,7 @@ export default function ProductCard({
                     {product.productCategory.icon && (
                       <Icon
                         iconId={product.productCategory.icon}
-                        color={product.productCategory.color ?? undefined}
+                        color={product.productCategory.color}
                         className="text-xl"
                       />
                     )}
@@ -123,7 +123,7 @@ function ProductImage({
         <>
           {imageContext ? (
             <div
-              className="h-full w-full flex justify-center"
+              className="h-full w-full flex justify-center items-center p-2"
               style={{
                 backgroundColor: imageContext.backgroundColor,
               }}
@@ -131,7 +131,7 @@ function ProductImage({
               <img
                 src={imageContext.dataUrl}
                 alt={name}
-                className="object-contain"
+                className="object-contain max-h-44"
               />
             </div>
           ) : (

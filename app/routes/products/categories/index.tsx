@@ -31,7 +31,7 @@ export default function ProductCategories({
           return icon ? (
             <Icon
               iconId={icon}
-              color={row.original.color ?? undefined}
+              color={row.original.color}
               className="text-lg"
             />
           ) : (

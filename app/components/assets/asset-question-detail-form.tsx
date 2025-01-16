@@ -447,7 +447,7 @@ function AlertTriggerInput({
   );
 
   const [rawOperator, rawOperand] = useMemo((): [
-    keyof typeof ruleOperatorsSchema.shape,
+    RuleOperator,
     string | number | true
   ] => {
     if (value?.value !== undefined) {
@@ -459,17 +459,16 @@ function AlertTriggerInput({
         ([, v]) => v !== undefined
       );
       if (result) {
-        return result as [
-          keyof typeof ruleOperatorsSchema.shape,
-          string | number | true
-        ];
+        return result as [RuleOperator, string | number | true];
       }
     }
 
     return ["equals", ""];
   }, [value]);
 
-  const [operator, operand] = useMemo(() => {
+  const [operator, operand] = useMemo<
+    [RuleOperator, string | number | true]
+  >(() => {
     if (allowedOperators.includes(rawOperator)) {
       return [rawOperator, rawOperand];
     }
@@ -518,23 +517,25 @@ function AlertTriggerInput({
             ))}
           </SelectContent>
         </Select>
-        {(typeof operand === "string" || typeof operand === "number") && (
-          <AssetQuestionResponseTypeInput
-            valueType={valueType ?? "BINARY"}
-            onValueChange={handleChangeOperand}
-            onBlur={onBlur}
-            value={operand}
-          />
-        )}
       </div>
+      {(typeof operand === "string" || typeof operand === "number") && (
+        <AssetQuestionResponseTypeInput
+          valueType={determineValueTypeFromOperator(
+            operator,
+            valueType ?? "BINARY"
+          )}
+          onValueChange={handleChangeOperand}
+          onBlur={onBlur}
+          value={operand}
+        />
+      )}
     </div>
   );
 }
 
-const ruleOperatorLabels: Record<
-  keyof typeof ruleOperatorsSchema.shape,
-  string
-> = {
+type RuleOperator = keyof typeof ruleOperatorsSchema.shape;
+
+const ruleOperatorLabels: Record<RuleOperator, string> = {
   empty: "is empty",
   notEmpty: "is not empty",
   equals: "is",
@@ -547,11 +548,15 @@ const ruleOperatorLabels: Record<
   gte: "is greater than or equal to",
   lt: "is less than",
   lte: "is less than or equal to",
+  beforeDaysPast: "is before # days in the past",
+  afterDaysPast: "is after # days in the past",
+  beforeDaysFuture: "is before # days in the future",
+  afterDaysFuture: "is after # days in the future",
 };
 
 const allowedOperatorsForValueType: Record<
   AssetQuestionResponseType,
-  (keyof typeof ruleOperatorsSchema.shape)[]
+  RuleOperator[]
 > = {
   BINARY: ["equals", "not"],
   INDETERMINATE_BINARY: ["equals", "not"],
@@ -575,7 +580,20 @@ const allowedOperatorsForValueType: Record<
     "startsWith",
     "endsWith",
   ],
-  DATE: ["empty", "notEmpty", "equals", "not", "gt", "gte", "lt", "lte"],
+  DATE: [
+    "empty",
+    "notEmpty",
+    "equals",
+    "not",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+    "beforeDaysPast",
+    "afterDaysPast",
+    "beforeDaysFuture",
+    "afterDaysFuture",
+  ],
   NUMBER: ["empty", "notEmpty", "equals", "not", "gt", "gte", "lt", "lte"],
   IMAGE: ["empty", "notEmpty"],
 };
@@ -590,4 +608,22 @@ const cleanOperand = (opr: string, opd: string | number | true) => {
   }
 
   return opd === true ? "" : String(opd);
+};
+
+const determineValueTypeFromOperator = (
+  operator: RuleOperator,
+  valueType: AssetQuestionResponseType
+) => {
+  if (
+    [
+      "beforeDaysPast",
+      "afterDaysPast",
+      "beforeDaysFuture",
+      "afterDaysFuture",
+    ].includes(operator)
+  ) {
+    return "NUMBER";
+  }
+
+  return valueType;
 };

@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import type { ProductCategory, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
+import Icon from "../icons/icon";
 
 interface ProductCategorySelectorProps {
   value?: string;
@@ -134,11 +135,20 @@ export default function ProductCategorySelector({
                     htmlFor={productCategory.id}
                     className="font-semibold h-full flex flex-col gap-2 items-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                   >
-                    {productCategory.shortName && (
-                      <span className="uppercase">
-                        {productCategory.shortName}
-                      </span>
-                    )}
+                    <div className="flex gap-2 items-center">
+                      {productCategory.icon && (
+                        <Icon
+                          iconId={productCategory.icon}
+                          color={productCategory.color}
+                          className="text-lg"
+                        />
+                      )}
+                      {productCategory.shortName && (
+                        <span className="uppercase">
+                          {productCategory.shortName}
+                        </span>
+                      )}
+                    </div>
                     <span className="font-regular text-xs text-center">
                       {productCategory.name}
                     </span>
@@ -184,7 +194,16 @@ function ProductCategoryCard({
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <div className="grid gap-2">
-                {productCategory?.name}
+                <div className="flex gap-2 items-center">
+                  {productCategory.icon && (
+                    <Icon
+                      iconId={productCategory.icon}
+                      color={productCategory.color}
+                      className="text-lg"
+                    />
+                  )}
+                  {productCategory?.name}
+                </div>
                 <span className="text-xs text-muted-foreground">
                   {productCategory?.description || <>&mdash;</>}
                 </span>

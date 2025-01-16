@@ -9,7 +9,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronRight, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { data, useNavigate } from "react-router";
 import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
@@ -39,6 +40,7 @@ import {
 } from "~/lib/schema";
 import {
   buildTitleFromBreadcrumb,
+  getSearchParam,
   getValidatedFormDataOrThrow,
 } from "~/lib/utils";
 import type { Route } from "./+types/index";
@@ -61,14 +63,32 @@ export const action = async ({ request }: Route.ActionArgs) => {
   return api.products.create(request, data);
 };
 
-export const loader = ({ request }: Route.LoaderArgs) => {
-  return api.products.list(request, { limit: 10000 });
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const grouping = getSearchParam(request, "grp")?.split(",") ?? ["category"];
+  return api.products
+    .list(request, { limit: 10000 })
+    .then(({ data: rData, init }) =>
+      data(
+        {
+          products: rData.results,
+          grouping,
+        },
+        init ?? undefined
+      )
+    );
 };
 
 export default function AllProducts({
-  loaderData: { results: products },
+  loaderData: { products, grouping },
 }: Route.ComponentProps) {
-  const [grouping, setGrouping] = useState<GroupingState>(["category"]);
+  const navigate = useNavigate();
+  const setGrouping = (
+    value: GroupingState | ((prev: GroupingState) => GroupingState)
+  ) => {
+    const newValue = typeof value === "function" ? value(grouping) : value;
+    navigate(`?grp=${newValue.join(",")}`);
+  };
+
   const [sorting, setSorting] = useImmer<SortingState>([
     {
       id: grouping[0],
@@ -199,9 +219,7 @@ export default function AllProducts({
 function CategoryLabel({ category }: { category: ProductCategory }) {
   return (
     <span className="flex items-center gap-2">
-      {category.icon && (
-        <Icon iconId={category.icon} color={category.color ?? undefined} />
-      )}
+      {category.icon && <Icon iconId={category.icon} color={category.color} />}
       {category.name}
       {category.shortName && (
         <Badge className="text-sm uppercase w-max" variant="secondary">

@@ -1,23 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  differenceInDays,
-  format,
-  formatDistanceToNow,
-  isAfter,
-} from "date-fns";
-import {
-  Check,
-  CircleAlert,
-  CircleCheck,
-  CircleX,
-  ClipboardCheck,
-  Clock,
-  Pencil,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldX,
-  X,
-} from "lucide-react";
+import { format, formatDistanceToNow, isAfter } from "date-fns";
+import { Check, ClipboardCheck, Pencil, ShieldAlert, X } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
 import { data, type UIMatch } from "react-router";
 import type { z } from "zod";
@@ -27,6 +10,10 @@ import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
 import AssetOrderRequests from "~/components/assets/asset-order-requests";
+import {
+  AlertsStatusBadge,
+  InspectionStatusBadge,
+} from "~/components/assets/asset-status-badge";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import { TagCard } from "~/components/assets/tag-selector";
 import DataList from "~/components/data-list";
@@ -34,17 +21,19 @@ import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import ProductCard from "~/components/products/product-card";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
-import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import {
+  getAssetAlertsStatus,
+  getAssetInspectionStatus,
+} from "~/lib/model-utils";
 import type { Alert, Asset, Consumable } from "~/lib/models";
 import { updateAssetSchema, updateAssetSchemaResolver } from "~/lib/schema";
 import {
   buildTitleFromBreadcrumb,
-  cn,
-  countBy,
+  getSearchParam,
   getValidatedFormDataOrThrow,
   validateParam,
 } from "~/lib/utils";
@@ -85,13 +74,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     {
       asset,
       googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+      defaultTab: getSearchParam(request, "tab") ?? "consumables",
     },
     init ?? undefined
   );
 };
 
 export default function AssetDetails({
-  loaderData: { asset, googleMapsApiKey },
+  loaderData: { asset, googleMapsApiKey, defaultTab },
 }: Route.ComponentProps) {
   return (
     <div className="grid gap-y-4 gap-x-2 sm:gap-x-4">
@@ -202,7 +192,7 @@ export default function AssetDetails({
             {/* <AssetDetailsForm asset={asset} /> */}
           </CardContent>
         </Card>
-        <Tabs defaultValue="consumables">
+        <Tabs defaultValue={defaultTab} id="tabs">
           <TabsList className="grid w-full grid-cols-[1fr_1fr]">
             <TabsTrigger value="consumables">Consumables</TabsTrigger>
             <TabsTrigger value="alerts">
@@ -232,9 +222,9 @@ export default function AssetDetails({
           </TabsContent>
         </Tabs>
       </div>
-      <Card>
+      <Card id="inspections">
         <CardHeader>
-          <CardTitle>Inspections</CardTitle>
+          <CardTitle>Inspection History</CardTitle>
         </CardHeader>
         <CardContent>
           <AssetInspections
@@ -262,50 +252,7 @@ function BasicCard({
   );
 }
 
-function StatusBadge({
-  icon: IconComponent,
-  status,
-  className,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  status: string;
-  className?: string;
-}) {
-  return (
-    <Badge
-      className={cn(
-        "bg-primary text-primary-foreground hover:bg-primary py-1",
-        className
-      )}
-    >
-      <IconComponent className="mr-1 size-4" />
-      {status}
-    </Badge>
-  );
-}
-
 function StatusCard({ asset }: { asset: Asset }) {
-  const inspectionStatus = useMemo(() => {
-    const mostRecentInspection = asset.inspections
-      ?.sort((a, b) => (isAfter(a.createdOn, b.createdOn) ? -1 : 1))
-      .at(0);
-    if (!mostRecentInspection) return "never";
-    const daysSinceInspection = differenceInDays(
-      Date.now(),
-      mostRecentInspection.createdOn
-    );
-    if (daysSinceInspection < 30) return "current";
-    if (daysSinceInspection < 90) return "overdue";
-    return "expired";
-  }, [asset.inspections]);
-
-  const groupedActiveAlerts = useMemo(() => {
-    return countBy(
-      asset.alerts?.filter((a) => !a.resolved) ?? [],
-      "alertLevel"
-    );
-  }, [asset]);
-
   return (
     <BasicCard title="Status">
       <div className="grid gap-3">
@@ -314,56 +261,20 @@ function StatusCard({ asset }: { asset: Asset }) {
             <ClipboardCheck className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm font-medium">Inspection Status</span>
           </div>
-          {inspectionStatus === "current" ? (
-            <StatusBadge
-              icon={CircleCheck}
-              status="Ready"
-              className="bg-status-ok text-status-ok-foreground hover:bg-status-ok"
-            />
-          ) : inspectionStatus === "overdue" ? (
-            <StatusBadge
-              icon={CircleAlert}
-              status="Overdue"
-              className="bg-status-overdue text-status-overdue-foreground hover:bg-status-overdue"
-            />
-          ) : inspectionStatus === "expired" ? (
-            <StatusBadge
-              icon={CircleX}
-              status="Expired"
-              className="bg-status-expired text-status-expired-foreground hover:bg-status-expired"
-            />
-          ) : (
-            <StatusBadge
-              icon={Clock}
-              status="Never Inspected"
-              className="bg-status-never text-status-never-foreground hover:bg-status-never"
-            />
-          )}
+          <InspectionStatusBadge
+            status={
+              asset.inspections && getAssetInspectionStatus(asset.inspections)
+            }
+          />
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <ShieldAlert className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm font-medium">Alerts</span>
           </div>
-          {groupedActiveAlerts.some((g) => g.alertLevel === "URGENT") ? (
-            <StatusBadge
-              icon={ShieldX}
-              status="Urgent Alerts Present"
-              className="bg-urgent text-urgent-foreground hover:bg-urgent"
-            />
-          ) : groupedActiveAlerts.some((g) => g.alertLevel === "INFO") ? (
-            <StatusBadge
-              icon={ShieldAlert}
-              status="Alerts Present"
-              className="bg-important text-important-foreground hover:bg-important"
-            />
-          ) : (
-            <StatusBadge
-              icon={ShieldCheck}
-              status="No Alerts"
-              className="bg-status-ok text-status-ok-foreground hover:bg-status-ok"
-            />
-          )}
+          <AlertsStatusBadge
+            status={getAssetAlertsStatus(asset.alerts ?? [])}
+          />
         </div>
       </div>
     </BasicCard>

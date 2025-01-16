@@ -6,6 +6,7 @@ import {
   ClientStatuses,
   InspectionStatuses,
   ProductTypes,
+  type AssetQuestion,
 } from "./models";
 
 export const addressSchema = z.object({
@@ -241,6 +242,10 @@ export const ruleOperatorsSchema = z
     gte: z.union([z.string(), z.number()]),
     lt: z.union([z.string(), z.number()]),
     lte: z.union([z.string(), z.number()]),
+    beforeDaysPast: z.coerce.number(),
+    afterDaysPast: z.coerce.number(),
+    beforeDaysFuture: z.coerce.number(),
+    afterDaysFuture: z.coerce.number(),
   })
   .partial();
 
@@ -316,7 +321,7 @@ export const updateAssetQuestionSchemaResolver = zodResolver(
 
 export const createAssetQuestionResponseSchema = z.object({
   id: z.string().optional(),
-  value: z.union([z.string().nonempty(), z.number().safe()]),
+  value: z.union([z.string(), z.number().safe()]),
   assetQuestionId: z.string().nonempty(),
 });
 export const createAssetQuestionResponseSchemaResolver = zodResolver(
@@ -340,9 +345,34 @@ export const createInspectionSchema = z.object({
     }),
   }),
 });
-export const createInspectionSchemaResolver = zodResolver(
-  createInspectionSchema
-);
+
+const buildZodTypeFromQuestion = (question: AssetQuestion) => {
+  if (question.required) {
+    return z.union([
+      z.string().nonempty("This question is required"),
+      z.number().safe(),
+    ]);
+  }
+
+  return z.union([z.string(), z.number().safe()]);
+};
+
+export const buildInspectionSchemaResolver = (questions: AssetQuestion[]) =>
+  zodResolver(
+    createInspectionSchema.extend({
+      responses: z.object({
+        createMany: z.object({
+          data: z.tuple(
+            questions.map((q) =>
+              createAssetQuestionResponseSchema.extend({
+                value: buildZodTypeFromQuestion(q),
+              })
+            ) as unknown as [z.ZodTypeAny, ...z.ZodTypeAny[]]
+          ),
+        }),
+      }),
+    })
+  );
 
 export const resolveAlertSchema = z.object({
   resolutionNote: z.string().nonempty(),
