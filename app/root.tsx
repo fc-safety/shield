@@ -22,6 +22,7 @@ import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
 import { Button } from "./components/ui/button";
+import { FONT_AWESOME_VERSION } from "./lib/constants";
 import styles from "./tailwind.css?url";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -48,6 +49,22 @@ export const links: Route.LinksFunction = () => [
     type: "image/png",
     // sizes: "32x32",
     href: "https://fc-safety.com/wp-content/uploads/2017/08/favicon.png",
+  },
+  {
+    rel: "stylesheet",
+    href: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/${FONT_AWESOME_VERSION}/css/all.min.css`,
+    integrity:
+      "sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==",
+    crossOrigin: "anonymous",
+    referrerPolicy: "no-referrer",
+  },
+  {
+    rel: "stylesheet",
+    href: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/${FONT_AWESOME_VERSION}/css/solid.min.css`,
+    integrity:
+      "sha512-CEvJpnAxszIPE6CPJO2tWRwI1d4zp+XbRC4LO4k/zyL8UI3VUZ0H3Vftot3zGO9W87ZWuBtuYJrECbNrELSapA==",
+    crossOrigin: "anonymous",
+    referrerPolicy: "no-referrer",
   },
 ];
 

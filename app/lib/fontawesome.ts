@@ -1,4 +1,4 @@
-const FONT_AWESOME_VERSION = "6.7.2";
+import { FONT_AWESOME_VERSION } from "./constants";
 
 export const searchIcons = async (query: string) => {
   return fetch(`https://api.fontawesome.com/`, {
@@ -7,14 +7,24 @@ export const searchIcons = async (query: string) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      query: `query { search (version: "${FONT_AWESOME_VERSION}", query: "${query}") { id, label }}`,
+      query: `query { search (version: "${FONT_AWESOME_VERSION}", query: "${query}", first: 20) { id, label, familyStylesByLicense { free { style } } }}`,
     }),
   })
     .then(
       (response) =>
         response.json() as Promise<{
-          data: { search: { id: string; label: string }[] };
+          data: {
+            search: {
+              id: string;
+              label: string;
+              familyStylesByLicense: { free: { style: string }[] };
+            }[];
+          };
         }>
     )
-    .then((data) => data.data.search);
+    .then((data) =>
+      data.data.search.filter(
+        ({ familyStylesByLicense }) => familyStylesByLicense.free.length > 0
+      )
+    );
 };

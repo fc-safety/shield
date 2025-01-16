@@ -5,6 +5,7 @@ import { api } from "~/.server/api";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import Icon from "~/components/icons/icon";
 import NewProductCategoryButton from "~/components/products/new-product-category-button";
 import type { ProductCategory } from "~/lib/models";
 import type { Route } from "./+types/index";
@@ -54,6 +55,19 @@ export default function ProductCategories({
             {(getValue() as string) || <>&mdash;</>}
           </span>
         ),
+      },
+      {
+        id: "icon",
+        cell: ({ row }) =>
+          row.original.icon ? (
+            <Icon
+              iconId={row.original.icon}
+              color={row.original.color ?? undefined}
+              className="text-lg"
+            />
+          ) : (
+            <>&mdash;</>
+          ),
       },
     ],
     []

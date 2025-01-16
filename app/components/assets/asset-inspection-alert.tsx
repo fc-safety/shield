@@ -2,6 +2,7 @@ import { ResponsiveDialog } from "@/components/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -87,11 +88,11 @@ function InspectionAlert({
     <div className="grid gap-8">
       <div className="flex gap-2 items-center">
         {alert.resolved ? (
-          <ShieldCheck className="text-primary size-8" />
+          <ShieldCheck className="text-primary size-10" />
         ) : alert.alertLevel === "URGENT" ? (
-          <ShieldX className="text-urgent size-8" />
+          <ShieldX className="text-urgent size-10" />
         ) : (
-          <ShieldAlert className="text-important size-8" />
+          <ShieldAlert className="text-important size-10" />
         )}
         <div>
           <p className="text-xs text-muted-foreground">
@@ -113,7 +114,10 @@ function InspectionAlert({
               </span>
             ),
           },
-          { label: "Reason", value: alert.message },
+          {
+            label: "Reason",
+            value: alert.message.replace(/^./, (c) => c.toUpperCase()),
+          },
           {
             label: "Question",
             value: alert.assetQuestionResponse?.assetQuestion?.prompt,
@@ -177,6 +181,9 @@ function InspectionAlert({
                 <FormControl>
                   <Textarea {...field} readOnly={alert.resolved} />
                 </FormControl>
+                <FormDescription>
+                  Make note of action taken to resolve this alert.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}

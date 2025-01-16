@@ -17,6 +17,7 @@ import { useDebounceValue } from "usehooks-ts";
 import { searchIcons } from "~/lib/fontawesome";
 import { cn } from "~/lib/utils";
 import { Input } from "../ui/input";
+import Icon from "./icon";
 
 interface IconSelectorProps {
   value?: string;
@@ -24,6 +25,7 @@ interface IconSelectorProps {
   onBlur?: () => void;
   disabled?: boolean;
   className?: string;
+  color?: string;
 }
 
 type TIcon = Awaited<ReturnType<typeof searchIcons>>[number];
@@ -34,6 +36,7 @@ export default function IconSelector({
   onBlur,
   disabled,
   className,
+  color,
 }: IconSelectorProps) {
   const opened = useRef(false);
   const [open, setOpen] = useState(false);
@@ -60,7 +63,12 @@ export default function IconSelector({
     <Dialog open={open} onOpenChange={setOpen}>
       {value ? (
         <IconCard
-          icon={{ id: value, label: value }}
+          icon={{
+            id: value,
+            label: value,
+            familyStylesByLicense: { free: [] },
+          }}
+          color={color}
           renderEditButton={() => (
             <DialogTrigger asChild>
               <Button
@@ -92,7 +100,7 @@ export default function IconSelector({
           <DialogTitle>Find an icon</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-96 border-b border-t px-6 self-stretch">
-          <div className="relative overflow-visible my-4">
+          <div className="relative overflow-visible my-4 p-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4" />
             <Input
               onChange={(e) => setQuery(e.target.value)}
@@ -117,7 +125,7 @@ export default function IconSelector({
                   htmlFor={"fa-icon-" + icon.id}
                   className="font-semibold h-full flex flex-col gap-2 items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                 >
-                  {icon.label}
+                  <Icon iconId={icon.id} color={color} />
                 </Label>
               </div>
             ))}
@@ -147,21 +155,17 @@ export default function IconSelector({
 interface IconCardProps {
   icon: TIcon | undefined;
   renderEditButton?: () => React.ReactNode;
+  color?: string;
 }
 
-export function IconCard({ icon, renderEditButton }: IconCardProps) {
+export function IconCard({ icon, color, renderEditButton }: IconCardProps) {
   return (
     <Card>
       {icon ? (
         <>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div className="grid gap-2">
-                  <span className="text-xs text-muted-foreground">ID</span>
-                  {icon.id}
-                </div>
-              </div>
+              <Icon iconId={icon.id} color={color} />
               {renderEditButton?.()}
             </CardTitle>
           </CardHeader>

@@ -64,7 +64,10 @@ export default function ProductCategoryDetailsForm({
 
   const {
     formState: { isDirty, isValid, isSubmitting },
+    watch,
   } = form;
+
+  const color = watch("color");
 
   return (
     <FormProvider {...form}>
@@ -137,6 +140,19 @@ export default function ProductCategoryDetailsForm({
         />
         <FormField
           control={form.control}
+          name="color"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Color</FormLabel>
+              <FormControl>
+                <Input {...field} type="color" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="icon"
           render={({ field }) => (
             <FormItem>
@@ -146,6 +162,8 @@ export default function ProductCategoryDetailsForm({
                   value={field.value}
                   onValueChange={field.onChange}
                   onBlur={field.onBlur}
+                  color={color}
+                  className="flex"
                 />
               </FormControl>
               <FormMessage />
