@@ -7,6 +7,7 @@ import { getImageWithBackgroundFillColor } from "~/.client/image-utils";
 import type { Product } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
+import Icon from "../icons/icon";
 
 interface ProductCardProps {
   product: Product | undefined;
@@ -55,16 +56,24 @@ export default function ProductCard({
                 {product.description ?? <>&mdash;</>}
               </p>
               <div className="flex gap-2 items-center">
-                <Badge
-                  className={cn(
-                    "text-sm uppercase w-max",
-                    !displayCategory && "hidden"
-                  )}
-                  variant="secondary"
-                >
-                  {product.productCategory.shortName ??
-                    product.productCategory.name}
-                </Badge>
+                {displayCategory && (
+                  <>
+                    {product.productCategory.icon && (
+                      <Icon
+                        iconId={product.productCategory.icon}
+                        color={product.productCategory.color ?? undefined}
+                        className="text-xl"
+                      />
+                    )}
+                    <Badge
+                      className={cn("text-sm uppercase w-max")}
+                      variant="secondary"
+                    >
+                      {product.productCategory.shortName ??
+                        product.productCategory.name}
+                    </Badge>
+                  </>
+                )}
                 <div className="flex-1"></div>
                 <ActiveIndicator2
                   active={product.active}

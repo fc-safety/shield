@@ -33,9 +33,9 @@ export function DataTableColumnHeader<TData, TValue>({
   table,
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
-  if (!column.getCanSort()) {
-    return <div className={cn(className)}>{title}</div>;
-  }
+  // if (!column.getCanSort()) {
+  //   return <div className={cn(className)}>{title}</div>;
+  // }
 
   const moveColumn = <TData extends RowData>(
     movingColumnId: Column<TData>["id"],
@@ -81,21 +81,21 @@ export function DataTableColumnHeader<TData, TValue>({
         <DropdownMenuContent align="start">
           <DropdownMenuItem
             onClick={() => column.toggleSorting(false)}
-            disabled={column.getIsSorted() === "asc"}
+            disabled={!column.getCanSort() || column.getIsSorted() === "asc"}
           >
             <ArrowUp className="h-3.5 w-3.5 text-muted-foreground/70" />
             Asc
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => column.toggleSorting(true)}
-            disabled={column.getIsSorted() === "desc"}
+            disabled={!column.getCanSort() || column.getIsSorted() === "desc"}
           >
             <ArrowDown className="h-3.5 w-3.5 text-muted-foreground/70" />
             Desc
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => column.clearSorting()}
-            disabled={!column.getIsSorted()}
+            disabled={!column.getCanSort() || !column.getIsSorted()}
           >
             <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground/70" />
             Clear

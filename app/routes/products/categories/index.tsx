@@ -20,6 +20,26 @@ export default function ProductCategories({
   const columns: ColumnDef<ProductCategory>[] = useMemo(
     () => [
       {
+        id: "icon",
+        accessorFn: ({ icon }) => icon,
+        enableSorting: false,
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} title="Icon" />
+        ),
+        cell: ({ row, getValue }) => {
+          const icon = getValue() as string;
+          return icon ? (
+            <Icon
+              iconId={icon}
+              color={row.original.color ?? undefined}
+              className="text-lg"
+            />
+          ) : (
+            <>&mdash;</>
+          );
+        },
+      },
+      {
         accessorKey: "active",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
@@ -55,19 +75,6 @@ export default function ProductCategories({
             {(getValue() as string) || <>&mdash;</>}
           </span>
         ),
-      },
-      {
-        id: "icon",
-        cell: ({ row }) =>
-          row.original.icon ? (
-            <Icon
-              iconId={row.original.icon}
-              color={row.original.color ?? undefined}
-              className="text-lg"
-            />
-          ) : (
-            <>&mdash;</>
-          ),
       },
     ],
     []

@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import Icon from "~/components/icons/icon";
 import NewProductButton from "~/components/products/new-product-button";
 import ProductCard from "~/components/products/product-card";
 import { Badge } from "~/components/ui/badge";
@@ -197,10 +198,13 @@ export default function AllProducts({
 
 function CategoryLabel({ category }: { category: ProductCategory }) {
   return (
-    <span>
+    <span className="flex items-center gap-2">
+      {category.icon && (
+        <Icon iconId={category.icon} color={category.color ?? undefined} />
+      )}
       {category.name}
       {category.shortName && (
-        <Badge className="text-sm uppercase w-max ml-2" variant="secondary">
+        <Badge className="text-sm uppercase w-max" variant="secondary">
           {category.shortName}
         </Badge>
       )}
