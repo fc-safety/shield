@@ -7,6 +7,7 @@ import {
   FormMessage,
   Form as FormProvider,
 } from "@/components/ui/form";
+import { parseISO } from "date-fns";
 import { Frown, Nfc } from "lucide-react";
 import { useFieldArray } from "react-hook-form";
 import { Form, isRouteErrorResponse, Link } from "react-router";
@@ -108,7 +109,7 @@ export default function InspectSetup({
     resolver: setupAssetSchemaResolver,
     values: {
       id: tag.asset?.id ?? "",
-      setupOn: tag.asset?.setupOn ?? undefined,
+      setupOn: tag.asset?.setupOn ? parseISO(tag.asset.setupOn) : undefined,
       setupQuestionResponses: isSetup
         ? questions.reduce(
             (acc, question) => {

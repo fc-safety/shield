@@ -146,7 +146,7 @@ export default function ProductDetailsForm({
           name="type"
           render={({ field: { onChange, ...field } }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>
+              <FormLabel>Type</FormLabel>
               <FormControl>
                 <RadioGroup
                   {...field}

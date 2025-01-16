@@ -15,7 +15,7 @@ import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import Icon from "~/components/icons/icon";
-import NewProductButton from "~/components/products/new-product-button";
+import EditProductButton from "~/components/products/edit-product-button";
 import ProductCard from "~/components/products/product-card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -165,7 +165,7 @@ export default function AllProducts({
           </Select>
         </div>
         <div className="flex items-center space-x-2">
-          <NewProductButton />
+          <EditProductButton />
         </div>
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4 sm:gap-8">

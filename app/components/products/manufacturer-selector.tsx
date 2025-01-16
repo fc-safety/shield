@@ -11,11 +11,12 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DialogClose } from "@radix-ui/react-dialog";
-import { Loader2, Pencil, Search } from "lucide-react";
+import { Link2, Loader2, Pencil, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Manufacturer, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
+import LinkPreview from "../link-preview";
 
 interface ManufacturerSelectorProps {
   value?: string;
@@ -166,7 +167,7 @@ interface ManufacturerCardProps {
   renderEditButton?: () => React.ReactNode;
 }
 
-function ManufacturerCard({
+export function ManufacturerCard({
   manufacturer,
   renderEditButton,
 }: ManufacturerCardProps) {
@@ -175,8 +176,16 @@ function ManufacturerCard({
       {manufacturer ? (
         <>
           <CardHeader>
-            <CardTitle className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
               {manufacturer?.name}
+              {manufacturer.homeUrl && (
+                <LinkPreview url={manufacturer.homeUrl}>
+                  <Button size="icon" variant="ghost">
+                    <Link2 />
+                  </Button>
+                </LinkPreview>
+              )}
+              <div className="flex-1"></div>
               {renderEditButton?.()}
             </CardTitle>
           </CardHeader>

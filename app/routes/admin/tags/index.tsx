@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Link } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
-import NewTagButton from "~/components/assets/new-tag-button";
+import NewTagButton from "~/components/assets/edit-tag-button";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import type { Tag } from "~/lib/models";

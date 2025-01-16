@@ -12,6 +12,7 @@ import {
 } from "~/components/assets/asset-status-badge";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
+import { CopyableText } from "~/components/copyable-text";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
@@ -105,6 +106,9 @@ export default function AssetsIndex({
             table={table}
             title="Tag Serial No."
           />
+        ),
+        cell: ({ getValue }) => (
+          <CopyableText text={getValue() as string} hoverOnly />
         ),
       },
       {

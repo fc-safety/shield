@@ -8,7 +8,7 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { isAfter } from "date-fns";
+import { isAfter, parseISO } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { Form } from "react-router";
 import { useRemixForm } from "remix-hook-form";
@@ -68,6 +68,7 @@ export default function ClientDetailsForm({
               street2: client.address.street2 || undefined,
             },
           },
+          startedOn: parseISO(client.startedOn),
         }
       : FORM_DEFAULTS,
     mode: "onBlur",

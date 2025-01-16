@@ -16,7 +16,7 @@ export default function DataList({
   return (
     <div className="grid gap-4">
       {title && <Label>{title}</Label>}
-      <dl className="grid grid-cols-2 gap-y-1 gap-x-2">
+      <dl className="grid grid-cols-2 gap-y-2 gap-x-2">
         {details.map(({ label, value }) => (
           <Fragment key={String(label)}>
             <dt className="text-muted-foreground text-sm">{label}</dt>

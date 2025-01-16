@@ -17,6 +17,7 @@ import { useFetcher } from "react-router";
 import type { ProductCategory, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import Icon from "../icons/icon";
+import { Badge } from "../ui/badge";
 
 interface ProductCategorySelectorProps {
   value?: string;
@@ -183,7 +184,7 @@ interface ProductCategoryCardProps {
   renderEditButton?: () => React.ReactNode;
 }
 
-function ProductCategoryCard({
+export function ProductCategoryCard({
   productCategory,
   renderEditButton,
 }: ProductCategoryCardProps) {
@@ -203,6 +204,14 @@ function ProductCategoryCard({
                     />
                   )}
                   {productCategory?.name}
+                  {productCategory.shortName && (
+                    <Badge
+                      className={cn("text-sm uppercase w-max")}
+                      variant="secondary"
+                    >
+                      {productCategory.shortName}
+                    </Badge>
+                  )}
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {productCategory?.description || <>&mdash;</>}

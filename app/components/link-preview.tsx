@@ -4,15 +4,21 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type PropsWithChildren } from "react";
 import { Link } from "react-router";
 
-interface LinkPreviewProps {
+interface LinkPreviewProps extends PropsWithChildren {
   url: string;
   className?: string;
+  asChild?: boolean;
 }
 
-export default function LinkPreview({ url, className }: LinkPreviewProps) {
+export default function LinkPreview({
+  url,
+  className,
+  asChild,
+  children,
+}: LinkPreviewProps) {
   const [open, setOpen] = useState(false);
   const [metadata, setMetadata] = useState<{
     title: string;
@@ -42,7 +48,9 @@ export default function LinkPreview({ url, className }: LinkPreviewProps) {
 
   return (
     <HoverCard open={open} onOpenChange={setOpen} openDelay={300}>
-      <HoverCardTrigger className={className}>{url}</HoverCardTrigger>
+      <HoverCardTrigger className={className} asChild={asChild}>
+        {children ?? url}
+      </HoverCardTrigger>
       <HoverCardContent>
         {metadata ? (
           <div className="space-y-2">

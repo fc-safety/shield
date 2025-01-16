@@ -1,10 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { Pencil } from "lucide-react";
 import { redirect, type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator from "~/components/active-indicator";
+import DataList from "~/components/data-list";
+import Icon from "~/components/icons/icon";
 import AssetQuestionsTable from "~/components/products/asset-questions-table";
-import ProductCategoryDetailsForm from "~/components/products/product-category-details-form";
+import EditProductCategoryButton from "~/components/products/edit-product-category-button";
+import ProductCard from "~/components/products/product-card";
+import { Button } from "~/components/ui/button";
+import { Label } from "~/components/ui/label";
 import {
   createAssetQuestionSchema,
   createAssetQuestionSchemaResolver,
@@ -95,26 +102,110 @@ export default function ProductCategoryDetails({
   loaderData: productCategory,
 }: Route.ComponentProps) {
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
-      <Card className="h-max">
+    <div className="grid gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="inline-flex items-center gap-4">
+                Product Category Details
+                <div className="flex gap-2">
+                  <EditProductCategoryButton
+                    productCategory={productCategory}
+                    trigger={
+                      <Button variant="secondary" size="icon" type="button">
+                        <Pencil />
+                      </Button>
+                    }
+                  />
+                </div>
+              </div>
+              <ActiveIndicator active={productCategory.active} />
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-8">
+            <div className="grid gap-4">
+              <Label>Properties</Label>
+              <DataList
+                details={[
+                  {
+                    label: "Name",
+                    value: productCategory.name,
+                  },
+                  {
+                    label: "Code",
+                    value: productCategory.shortName,
+                  },
+                  {
+                    label: "Description",
+                    value: productCategory.description,
+                  },
+                  {
+                    label: "Icon",
+                    value: productCategory.icon && (
+                      <Icon
+                        iconId={productCategory.icon}
+                        color={productCategory.color}
+                      />
+                    ),
+                  },
+                ]}
+                defaultValue={<>&mdash;</>}
+              />
+            </div>
+            <div className="grid gap-4">
+              <Label>Other</Label>
+              <DataList
+                details={[
+                  {
+                    label: "Created",
+                    value: format(productCategory.createdOn, "PPpp"),
+                  },
+                  {
+                    label: "Last Updated",
+                    value: format(productCategory.modifiedOn, "PPpp"),
+                  },
+                ]}
+                defaultValue={<>&mdash;</>}
+              />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Questions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AssetQuestionsTable
+              questions={productCategory.assetQuestions ?? []}
+            />
+          </CardContent>
+        </Card>
+      </div>
+      <Card className="col-span-full">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            Product Category Details
-            <ActiveIndicator active={productCategory.active} />
-          </CardTitle>
+          <CardTitle>Products</CardTitle>
         </CardHeader>
         <CardContent>
-          <ProductCategoryDetailsForm productCategory={productCategory} />
-        </CardContent>
-      </Card>
-      <Card className="h-max">
-        <CardHeader>
-          <CardTitle>Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AssetQuestionsTable
-            questions={productCategory.assetQuestions ?? []}
-          />
+          <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">
+            {productCategory?.products?.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={{
+                  ...product,
+                  productCategoryId: productCategory.id,
+                  productCategory: productCategory,
+                }}
+                navigateTo={`/products/all/${product.id}`}
+                displayCategory={false}
+              />
+            ))}
+            {!productCategory?.products?.length && (
+              <span className="text-sm text-muted-foreground col-span-full text-center">
+                No products found.
+              </span>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

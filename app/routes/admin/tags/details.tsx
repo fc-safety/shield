@@ -1,8 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { Pencil } from "lucide-react";
 import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
-import TagDetailsForm from "~/components/assets/tag-details-form";
+import EditTagButton from "~/components/assets/edit-tag-button";
+import { CopyableText } from "~/components/copyable-text";
+import DataList from "~/components/data-list";
+import { Button } from "~/components/ui/button";
+import { Label } from "~/components/ui/label";
 import { updateTagSchema, updateTagSchemaResolver } from "~/lib/schema";
 import {
   buildTitleFromBreadcrumb,
@@ -51,10 +57,50 @@ export default function ProductDetails({
     <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
         <CardHeader>
-          <CardTitle>Tag Details</CardTitle>
+          <CardTitle>
+            <div className="inline-flex items-center gap-4">
+              Tag Details
+              <div className="flex gap-2">
+                <EditTagButton
+                  tag={tag}
+                  trigger={
+                    <Button variant="secondary" size="icon" type="button">
+                      <Pencil />
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <TagDetailsForm tag={tag} />
+        <CardContent className="grid gap-8">
+          <div className="grid gap-4">
+            <Label>Properties</Label>
+            <DataList
+              details={[
+                {
+                  label: "Serial No.",
+                  value: <CopyableText text={tag.serialNumber} />,
+                },
+              ]}
+            />
+          </div>
+          <div className="grid gap-4">
+            <Label>Other</Label>
+            <DataList
+              details={[
+                {
+                  label: "Created",
+                  value: format(tag.createdOn, "PPpp"),
+                },
+                {
+                  label: "Last Updated",
+                  value: format(tag.modifiedOn, "PPpp"),
+                },
+              ]}
+              defaultValue={<>&mdash;</>}
+            />
+          </div>
         </CardContent>
       </Card>
       <Card className="h-max">

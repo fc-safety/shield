@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import type { ResultsPage, Tag } from "~/lib/models";
 import { cn } from "~/lib/utils";
+import { CopyableText } from "../copyable-text";
 
 interface TagSelectorProps {
   value?: string;
@@ -183,11 +184,11 @@ export function TagCard({ tag, renderEditButton }: TagCardProps) {
             <CardTitle className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <Nfc className="size-6 text-primary" />
-                <div className="grid gap-2">
+                <div className="grid gap-0">
                   <span className="text-xs text-muted-foreground">
                     Serial Number
                   </span>
-                  {tag?.serialNumber}
+                  <CopyableText text={tag?.serialNumber ?? ""} />
                 </div>
               </div>
               {renderEditButton?.()}

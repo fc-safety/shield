@@ -1,10 +1,13 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { PhoneCall, Star } from "lucide-react";
+import { format, isAfter } from "date-fns";
+import { Pencil, PhoneCall, Star } from "lucide-react";
 import { Link, useRouteLoaderData } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
-import ClientDetailsForm from "~/components/clients/client-details-form";
-import NewSiteButton from "~/components/clients/new-site-button";
+import EditClientButton from "~/components/clients/edit-client-button";
+import EditSiteButton from "~/components/clients/edit-site-button";
+import { CopyableText } from "~/components/copyable-text";
+import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import { Button } from "~/components/ui/button";
@@ -14,6 +17,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "~/components/ui/hover-card";
+import { Label } from "~/components/ui/label";
+import { Skeleton } from "~/components/ui/skeleton";
 import type { Client, Site } from "~/lib/models";
 import {
   updateClientSchemaResolver,
@@ -50,10 +55,98 @@ export default function ClientDetails() {
     <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
         <CardHeader>
-          <CardTitle>Client Details</CardTitle>
+          <CardTitle>
+            <div className="inline-flex items-center gap-4">
+              Client Details
+              <div className="flex gap-2">
+                <EditClientButton
+                  client={client}
+                  trigger={
+                    <Button variant="secondary" size="icon" type="button">
+                      <Pencil />
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ClientDetailsForm client={client} />
+        {/* <CardContent>
+          <ClientDetailsForm client={client} /> */}
+        <CardContent className="grid gap-8">
+          {client ? (
+            <>
+              <div className="grid gap-4">
+                <Label>Properties</Label>
+                <DataList
+                  details={[
+                    {
+                      label: "Name",
+                      value: client.name,
+                    },
+                    {
+                      label: "External ID",
+                      value: <CopyableText text={client.externalId} />,
+                    },
+                    {
+                      label: isAfter(client.startedOn, new Date())
+                        ? "Starts On"
+                        : "Started On",
+                      value: format(client.startedOn, "PPpp"),
+                    },
+                  ]}
+                  defaultValue={<>&mdash;</>}
+                />
+              </div>
+              <div className="grid gap-4">
+                <Label>Contact</Label>
+                <DataList
+                  details={[
+                    {
+                      label: "Address",
+                      value: (
+                        <span>
+                          {client.address.street1}
+                          <br />
+                          {client.address.street2 && (
+                            <>
+                              {client.address.street2}
+                              <br />
+                            </>
+                          )}
+                          {client.address.city}, {client.address.state}{" "}
+                          {client.address.zip}
+                        </span>
+                      ),
+                    },
+                    {
+                      label: "Phone Number",
+                      value: beautifyPhone(client.phoneNumber),
+                    },
+                  ]}
+                  defaultValue={<>&mdash;</>}
+                />
+              </div>
+              <div className="grid gap-4">
+                <Label>Other</Label>
+                <DataList
+                  details={[
+                    {
+                      label: "Created",
+                      value: format(client.createdOn, "PPpp"),
+                    },
+                    {
+                      label: "Last Updated",
+                      value: format(client.modifiedOn, "PPpp"),
+                    },
+                  ]}
+                  defaultValue={<>&mdash;</>}
+                />
+              </div>
+            </>
+          ) : (
+            <Skeleton className="h-64 w-full rounded" />
+          )}
         </CardContent>
       </Card>
       <Card className="h-max">
@@ -131,7 +224,7 @@ function ClientSitesTable({ sites, clientId }: ClientSitesTableProps) {
         data={sites}
         columns={columns}
         searchPlaceholder="Search sites..."
-        actions={[<NewSiteButton key="add" clientId={clientId} />]}
+        actions={[<EditSiteButton key="add" clientId={clientId} />]}
       />
     </>
   );

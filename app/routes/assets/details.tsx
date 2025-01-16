@@ -189,7 +189,22 @@ export default function AssetDetails({
                 </span>
               )}
             </div>
-            {/* <AssetDetailsForm asset={asset} /> */}
+            <div className="grid gap-4">
+              <Label>Other</Label>
+              <DataList
+                details={[
+                  {
+                    label: "Created",
+                    value: format(asset.createdOn, "PPpp"),
+                  },
+                  {
+                    label: "Last Updated",
+                    value: format(asset.modifiedOn, "PPpp"),
+                  },
+                ]}
+                defaultValue={<>&mdash;</>}
+              />
+            </div>
           </CardContent>
         </Card>
         <Tabs defaultValue={defaultTab} id="tabs">

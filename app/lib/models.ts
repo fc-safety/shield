@@ -7,12 +7,12 @@ export interface ResultsPage<T> {
 
 export interface BaseModel {
   id: string;
-  createdOn: Date;
-  modifiedOn: Date;
+  createdOn: string;
+  modifiedOn: string;
 }
 
 export interface Asset extends BaseModel {
-  setupOn: Date | null;
+  setupOn: string | null;
   active: boolean;
   name: string;
   product: Product;
@@ -38,7 +38,7 @@ export interface Consumable extends BaseModel {
   assetId?: string;
   product: Product;
   productId: string;
-  expiresOn?: Date;
+  expiresOn?: string;
   siteId: string;
   clientId: string;
 }
@@ -87,7 +87,7 @@ export const ClientStatuses = ["PENDING", "ACTIVE", "INACTIVE"] as const;
 export interface Client extends BaseModel {
   externalId: string;
   status: (typeof ClientStatuses)[number];
-  startedOn: Date;
+  startedOn: string;
   name: string;
   address: Address;
   addressId: string;
@@ -211,6 +211,8 @@ export interface ProductCategory extends BaseModel {
   icon?: string | null;
   color?: string | null;
   assetQuestions?: AssetQuestion[];
+  _count?: { products: number };
+  products?: Omit<Product, "productCategory">[];
 }
 
 export interface Manufacturer extends BaseModel {
@@ -218,6 +220,7 @@ export interface Manufacturer extends BaseModel {
   name: string;
   homeUrl?: string | null;
   products?: Omit<Product, "manufacturer">[];
+  _count?: { products: number };
 }
 
 export const ProductTypes = ["CONSUMABLE", "PRIMARY"] as const;

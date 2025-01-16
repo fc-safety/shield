@@ -94,12 +94,14 @@ export default function ProductCard({
   );
 }
 
-function ProductImage({
+export function ProductImage({
   name,
   imageUrl,
+  className,
 }: {
   name: string;
   imageUrl?: string | null;
+  className?: string;
 }) {
   const [imageContext, setImageContext] = useState<{
     dataUrl: string;
@@ -118,7 +120,12 @@ function ProductImage({
   }, [imageUrl]);
 
   return (
-    <div className="rounded-l-xl w-48 min-h-48 shrink-0 overflow-hidden border-r">
+    <div
+      className={cn(
+        "rounded-l-xl w-48 min-h-48 shrink-0 overflow-hidden border-r",
+        className
+      )}
+    >
       {imageUrl && !getDataUrlFailed ? (
         <>
           {imageContext ? (

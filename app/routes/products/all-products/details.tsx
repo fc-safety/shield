@@ -1,11 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { Pencil } from "lucide-react";
 import { Link, redirect, type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator from "~/components/active-indicator";
+import DataList from "~/components/data-list";
 import AssetQuestionsTable from "~/components/products/asset-questions-table";
-import ProductDetailsForm from "~/components/products/product-details-form";
+import EditProductButton from "~/components/products/edit-product-button";
+import { ManufacturerCard } from "~/components/products/manufacturer-selector";
+import { ProductImage } from "~/components/products/product-card";
+import { ProductCategoryCard } from "~/components/products/product-category-selector";
 import { Button } from "~/components/ui/button";
+import { Label } from "~/components/ui/label";
 import {
   createAssetQuestionSchemaResolver,
   updateAssetQuestionSchemaResolver,
@@ -96,12 +103,87 @@ export default function ProductDetails({
       <Card className="h-max">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            Product Details
+            <div className="inline-flex items-center gap-4">
+              Product Details
+              <div className="flex gap-2">
+                <EditProductButton
+                  product={product}
+                  trigger={
+                    <Button variant="secondary" size="icon" type="button">
+                      <Pencil />
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
             <ActiveIndicator active={product.active} />
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ProductDetailsForm product={product} />
+        <CardContent className="grid gap-8">
+          <div className="grid gap-4">
+            <Label>Properties</Label>
+            <DataList
+              details={[
+                {
+                  label: "Name",
+                  value: product.name,
+                },
+                {
+                  label: "Description",
+                  value: product.description,
+                },
+                {
+                  label: "Type",
+                  value: (
+                    <span className="capitalize">
+                      {product.type.toLowerCase()}
+                    </span>
+                  ),
+                },
+                {
+                  label: "SKU",
+                  value: product.sku,
+                },
+                {
+                  label: "Product URL",
+                  value: product.productUrl,
+                },
+              ]}
+              defaultValue={<>&mdash;</>}
+            />
+          </div>
+          <div className="grid gap-4">
+            <Label>Image</Label>
+            <ProductImage
+              name={product.name}
+              imageUrl={product.imageUrl}
+              className="w-full rounded-lg border"
+            />
+          </div>
+          <div className="grid gap-4">
+            <Label>Category</Label>
+            <ProductCategoryCard productCategory={product.productCategory} />
+          </div>
+          <div className="grid gap-4">
+            <Label>Manufacturer</Label>
+            <ManufacturerCard manufacturer={product.manufacturer} />
+          </div>
+          <div className="grid gap-4">
+            <Label>Other</Label>
+            <DataList
+              details={[
+                {
+                  label: "Created",
+                  value: format(product.createdOn, "PPpp"),
+                },
+                {
+                  label: "Last Updated",
+                  value: format(product.modifiedOn, "PPpp"),
+                },
+              ]}
+              defaultValue={<>&mdash;</>}
+            />
+          </div>
         </CardContent>
       </Card>
       <div className="h-max grid grid-cols-1 gap-2 sm:gap-4">

@@ -12,7 +12,7 @@ import { Link, useFetcher } from "react-router";
 import { useImmer } from "use-immer";
 import { z } from "zod";
 import { api } from "~/.server/api";
-import NewClientButton from "~/components/clients/new-client-button";
+import EditClientButton from "~/components/clients/edit-client-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { Button } from "~/components/ui/button";
 import {
@@ -178,7 +178,7 @@ export default function ClientsIndex({
         columns={columns}
         data={clients.results}
         searchPlaceholder="Search clients..."
-        actions={[<NewClientButton key="add" />]}
+        actions={[<EditClientButton key="add" />]}
       />
       <ConfirmationDialog
         open={deleteAction.open}

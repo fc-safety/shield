@@ -3,6 +3,7 @@ import {
   type ColumnFiltersState,
   type ColumnOrderState,
   type InitialTableState,
+  type RowData,
   type SortingState,
   type VisibilityState,
   flexRender,
@@ -31,6 +32,15 @@ import {
   DataTableToolbar,
   type DataTableToolbarProps,
 } from "./data-table-toolbar";
+
+import "@tanstack/react-table";
+
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    align?: "left" | "right" | "center";
+  }
+}
 
 interface DataTableProps<TData, TValue>
   extends Omit<DataTableToolbarProps<TData>, "table"> {
@@ -100,7 +110,14 @@ export function DataTable<TData, TValue>({
                         idx === 0 ? "pl-4" : "",
                         idx === table.getVisibleFlatColumns().length - 1
                           ? "pr-4"
-                          : ""
+                          : "",
+                        header.column.columnDef.meta?.align === "center"
+                          ? "text-center"
+                          : header.column.columnDef.meta?.align === "right"
+                          ? "text-right"
+                          : header.column.columnDef.meta?.align === "left"
+                          ? "text-left"
+                          : null
                       )}
                     >
                       {header.isPlaceholder
@@ -127,7 +144,14 @@ export function DataTable<TData, TValue>({
                       key={cell.id}
                       className={cn(
                         idx === 0 ? "pl-4" : "",
-                        idx === row.getVisibleCells().length - 1 ? "pr-4" : ""
+                        idx === row.getVisibleCells().length - 1 ? "pr-4" : "",
+                        cell.column.columnDef.meta?.align === "center"
+                          ? "text-center"
+                          : cell.column.columnDef.meta?.align === "right"
+                          ? "text-right"
+                          : cell.column.columnDef.meta?.align === "left"
+                          ? "text-left"
+                          : null
                       )}
                     >
                       {flexRender(

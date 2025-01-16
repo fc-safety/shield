@@ -1,13 +1,26 @@
 import { parse } from "node-html-parser";
 import { logger } from "~/.server/logger";
+import { validateSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/link-preview-metadata";
 
+function parseURL(input: string): URL | null {
+  try {
+    // If the input already includes a protocol, try to parse it directly
+    const hasProtocol = /^[a-z][a-z\d+\-.]*:\/\//i.test(input);
+    const url = new URL(hasProtocol ? input : `http://${input}`);
+    return url;
+  } catch (error) {
+    // If parsing fails, return null to indicate an invalid URL
+    return null;
+  }
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
-  const requestUrl = URL.parse(request.url);
-  const url = requestUrl?.searchParams.get("url");
+  const rawUrl = validateSearchParam(request, "url");
+  const url = parseURL(rawUrl);
 
   if (!url) {
-    throw new Response("Query parameter 'url' is required", { status: 400 });
+    throw new Response(`URL "${url}" is invalid`, { status: 400 });
   }
 
   const response = await fetch(url, {

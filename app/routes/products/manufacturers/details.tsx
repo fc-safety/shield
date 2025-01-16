@@ -1,10 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { format } from "date-fns";
+import { Pencil } from "lucide-react";
 import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator from "~/components/active-indicator";
-import ManufacturerDetailsForm from "~/components/products/manufacturer-details-form";
+import DataList from "~/components/data-list";
+import LinkPreview from "~/components/link-preview";
+import EditManufacturerButton from "~/components/products/edit-manufacturer-button";
 import ProductCard from "~/components/products/product-card";
+import { Button } from "~/components/ui/button";
+import { Label } from "~/components/ui/label";
 import {
   updateManufacturerSchemaResolver,
   type updateManufacturerSchema,
@@ -57,24 +63,69 @@ export default function ProductManufacturerDetails({
   loaderData: manufacturer,
 }: Route.ComponentProps) {
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
-      <Card className="h-max">
+    <div className="grid gap-4">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            Manufacturer Details
+            <div className="inline-flex items-center gap-4">
+              Manufacturer Details
+              <div className="flex gap-2">
+                <EditManufacturerButton
+                  manufacturer={manufacturer}
+                  trigger={
+                    <Button variant="secondary" size="icon" type="button">
+                      <Pencil />
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
             <ActiveIndicator active={manufacturer.active} />
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <ManufacturerDetailsForm manufacturer={manufacturer} />
+        <CardContent className="grid gap-8">
+          <div className="grid gap-4">
+            <Label>Properties</Label>
+            <DataList
+              details={[
+                {
+                  label: "Name",
+                  value: manufacturer.name,
+                },
+                {
+                  label: "Home URL",
+                  value: manufacturer.homeUrl && (
+                    <LinkPreview url={manufacturer.homeUrl} />
+                  ),
+                },
+              ]}
+              defaultValue={<>&mdash;</>}
+            />
+          </div>
+          <div className="grid gap-4">
+            <Label>Other</Label>
+            <DataList
+              details={[
+                {
+                  label: "Created",
+                  value: format(manufacturer.createdOn, "PPpp"),
+                },
+                {
+                  label: "Last Updated",
+                  value: format(manufacturer.modifiedOn, "PPpp"),
+                },
+              ]}
+              defaultValue={<>&mdash;</>}
+            />
+          </div>
         </CardContent>
       </Card>
-      <Card className="h-max">
+      <Card>
         <CardHeader>
           <CardTitle>Products</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-2">
+          <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">
             {manufacturer?.products?.map((product) => (
               <ProductCard
                 key={product.id}
@@ -84,6 +135,7 @@ export default function ProductManufacturerDetails({
                   manufacturer: manufacturer,
                 }}
                 navigateTo={`/products/all/${product.id}`}
+                displayManufacturer={false}
               />
             ))}
           </div>

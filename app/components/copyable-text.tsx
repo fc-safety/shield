@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -7,31 +6,35 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Clipboard } from "lucide-react";
-import type React from "react";
-import { forwardRef } from "react";
 import { toast } from "sonner";
+import { cn } from "~/lib/utils";
 
-export const CopyableInput = forwardRef<
-  HTMLInputElement,
-  React.ComponentProps<typeof Input>
->((props, ref) => {
+export const CopyableText = ({
+  text,
+  hoverOnly = false,
+}: {
+  text: string;
+  hoverOnly?: boolean;
+}) => {
   const handleCopy = () => {
-    /* eslint-disable react/prop-types */
-    navigator.clipboard.writeText(props.value as string).then(() => {
+    navigator.clipboard.writeText(text).then(() => {
       toast.success("Copied to clipboard!");
     });
   };
 
   return (
-    <div className="relative">
-      <Input {...props} ref={ref} />
+    <div className="flex items-center gap-2 group">
+      {text}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 t"
               variant="ghost"
               size="icon"
+              className={cn(
+                "h-7 w-7 text-muted-foreground",
+                hoverOnly && "opacity-0 group-hover:opacity-100"
+              )}
               onClick={handleCopy}
               type="button"
             >
@@ -45,5 +48,4 @@ export const CopyableInput = forwardRef<
       </TooltipProvider>
     </div>
   );
-});
-CopyableInput.displayName = "CopyableInput";
+};
