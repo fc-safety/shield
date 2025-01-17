@@ -91,6 +91,8 @@ export default function AssetQuestionDetailForm({
     watch,
   } = form;
 
+  const type = watch("type");
+
   const atomicCounter = useRef(0);
 
   const createAlertTriggers = watch("assetAlertCriteria.createMany.data");
@@ -298,36 +300,39 @@ export default function AssetQuestionDetailForm({
           )}
         />
 
-        <div>
-          <h3 className="mb-4 text-lg font-medium">Alert Triggers</h3>
-          <div className="divide-y divide-y-border">
-            {alertTriggers.map(({ idx, key, action, data }) => (
-              <AlertTrigger
-                key={key}
-                idx={idx}
-                action={action}
-                className="py-4"
-                onRemove={
-                  action === "create"
-                    ? () => handleCancelAddAlertTrigger(idx)
-                    : () =>
-                        handleDeleteAlertTrigger(
-                          (data as z.infer<typeof updateAssetQuestionSchema>).id
-                        )
-                }
-              />
-            ))}
+        {type === "INSPECTION" && (
+          <div>
+            <h3 className="mb-4 text-lg font-medium">Alert Triggers</h3>
+            <div className="divide-y divide-y-border">
+              {alertTriggers.map(({ idx, key, action, data }) => (
+                <AlertTrigger
+                  key={key}
+                  idx={idx}
+                  action={action}
+                  className="py-4"
+                  onRemove={
+                    action === "create"
+                      ? () => handleCancelAddAlertTrigger(idx)
+                      : () =>
+                          handleDeleteAlertTrigger(
+                            (data as z.infer<typeof updateAssetQuestionSchema>)
+                              .id
+                          )
+                  }
+                />
+              ))}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              className="mt-4 w-full"
+              onClick={handleAddAlertTrigger}
+            >
+              <Plus /> Add Alert Trigger
+            </Button>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            type="button"
-            className="mt-4 w-full"
-            onClick={handleAddAlertTrigger}
-          >
-            <Plus /> Add Alert Trigger
-          </Button>
-        </div>
+        )}
         <Button
           type="submit"
           disabled={isSubmitting || (!isNew && !isDirty) || !isValid}

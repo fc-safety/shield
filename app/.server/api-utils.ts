@@ -1,3 +1,4 @@
+import qs from "qs";
 import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { ResultsPage } from "~/lib/models";
@@ -38,7 +39,7 @@ export class FetchOptions {
 
   public static url<TPath extends string>(
     path: TPath,
-    params?: Record<string, string | number> & PathParams<TPath>
+    params?: QueryParams & PathParams<TPath>
   ) {
     return new FetchOptions(buildUrl(path, params));
   }
@@ -162,6 +163,9 @@ type PathParams<TPath extends string> = {
   [Key in ExtractPathParams<TPath>]: string | number;
 };
 
+type BaseQueryParams = Record<string, string | number>;
+type QueryParams = BaseQueryParams | Record<string, BaseQueryParams>;
+
 /**
  * Given a path and params, build a full URL by replacing path params and adding any
  * remaining params as query string parameters.
@@ -175,7 +179,7 @@ type PathParams<TPath extends string> = {
  */
 export const buildUrl = <TPath extends string>(
   path: TPath,
-  params?: Record<string, string | number> & PathParams<TPath>
+  params?: QueryParams & PathParams<TPath>
 ) => {
   const paramsMap = new Map(
     Object.entries(params ?? {}).map(([key, value]) => [key, String(value)])
@@ -189,9 +193,7 @@ export const buildUrl = <TPath extends string>(
 
   const url = new URL(`${API_BASE_URL}/${cleanedPath}`);
 
-  for (const [key, value] of paramsMap) {
-    url.searchParams.set(key, value);
-  }
+  url.search = qs.stringify(params);
 
   return url;
 };
@@ -250,7 +252,12 @@ function buildCrud<
           query: Record<string, string | number> = {}
         ) => {
           return authenticatedData<ResultsPage<T>>(request, [
-            FetchOptions.url(path, query).build(),
+            FetchOptions.url(path, {
+              order: {
+                createdOn: "desc",
+              },
+              ...query,
+            }).build(),
           ]);
         };
         break;

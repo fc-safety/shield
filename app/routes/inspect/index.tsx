@@ -36,10 +36,7 @@ import {
 } from "~/components/ui/card";
 import { Textarea } from "~/components/ui/textarea";
 import type { AssetQuestion } from "~/lib/models";
-import {
-  buildInspectionSchemaResolver,
-  createInspectionSchema,
-} from "~/lib/schema";
+import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import {
   buildTitle,
   getValidatedFormDataOrThrow,
@@ -123,22 +120,23 @@ export default function InspectIndex({
   loaderData: tag,
 }: Route.ComponentProps) {
   const questions = useMemo(
-    () => [
-      ...onlyInspectionQuestions(tag.asset?.product.assetQuestions),
-      ...onlyInspectionQuestions(
-        tag.asset?.product.productCategory.assetQuestions
-      ),
-    ],
+    () =>
+      [
+        ...onlyInspectionQuestions(tag.asset?.product.assetQuestions),
+        ...onlyInspectionQuestions(
+          tag.asset?.product.productCategory.assetQuestions
+        ),
+      ].sort((a, b) => (a.order ?? 0) - (b.order ?? 1)),
     [tag]
   );
 
-  const createInspectionSchemaResolver = useMemo(() => {
-    return buildInspectionSchemaResolver(questions);
+  const narrowedCreateInspectionSchema = useMemo(() => {
+    return buildInspectionSchema(questions);
   }, [questions]);
 
   const form = useRemixForm<TForm>({
-    resolver: createInspectionSchemaResolver,
-    defaultValues: {
+    resolver: zodResolver(narrowedCreateInspectionSchema),
+    values: {
       asset: {
         connect: {
           id: tag.asset?.id ?? "",
@@ -153,7 +151,9 @@ export default function InspectIndex({
           })),
         },
       },
-    } satisfies Omit<TForm, "latitude" | "longitude" | "locationAccuracy">,
+      longitude: 0,
+      latitude: 0,
+    } satisfies TForm,
     mode: "onBlur",
   });
 

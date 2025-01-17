@@ -41,6 +41,14 @@ export default function AdminTagsIndex({
         ),
       },
       {
+        accessorKey: "asset.name",
+        id: "assigned asset",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => getValue() ?? <>&mdash;</>,
+      },
+      {
         accessorKey: "asset.setupOn",
         id: "setup on",
         header: ({ column, table }) => (

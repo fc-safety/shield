@@ -7,8 +7,10 @@ import {
   FormMessage,
   Form as FormProvider,
 } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { parseISO } from "date-fns";
 import { Frown, Nfc } from "lucide-react";
+import { useMemo } from "react";
 import { useFieldArray } from "react-hook-form";
 import { Form, isRouteErrorResponse, Link } from "react-router";
 import { useRemixForm } from "remix-hook-form";
@@ -26,7 +28,7 @@ import {
 } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import type { AssetQuestion } from "~/lib/models";
-import { setupAssetSchemaResolver, type setupAssetSchema } from "~/lib/schema";
+import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
 import {
   buildTitle,
   cn,
@@ -39,7 +41,7 @@ import type { Route } from "./+types/index";
 export const action = async ({ request }: Route.ActionArgs) => {
   const { data } = await getValidatedFormDataOrThrow<
     z.infer<typeof setupAssetSchema>
-  >(request, setupAssetSchemaResolver);
+  >(request, zodResolver(setupAssetSchema));
 
   if (data.setupOn) {
     return api.assets.updateSetup(request, data);
@@ -100,13 +102,26 @@ export default function InspectSetup({
 }: Route.ComponentProps) {
   const isSetup = !!tag.asset?.setupOn;
 
-  const questions = [
-    ...onlySetupQuestions(tag.asset?.product.assetQuestions),
-    ...onlySetupQuestions(tag.asset?.product.productCategory.assetQuestions),
-  ];
+  const questions = useMemo(
+    () =>
+      [
+        ...onlySetupQuestions(tag.asset?.product.assetQuestions),
+        ...onlySetupQuestions(
+          tag.asset?.product.productCategory.assetQuestions
+        ),
+      ].sort((a, b) => (a.order ?? 0) - (b.order ?? 1)),
+    [tag]
+  );
+
+  const narrowedSetupAssetSchema = useMemo(() => {
+    return buildSetupAssetSchema(
+      questions,
+      tag.asset?.setupQuestionResponses ?? []
+    );
+  }, [questions, tag]);
 
   const form = useRemixForm<TForm>({
-    resolver: setupAssetSchemaResolver,
+    resolver: zodResolver(narrowedSetupAssetSchema),
     values: {
       id: tag.asset?.id ?? "",
       setupOn: tag.asset?.setupOn ? parseISO(tag.asset.setupOn) : undefined,

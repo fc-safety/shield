@@ -111,6 +111,7 @@ export function ProductImage({
 
   useEffect(() => {
     if (imageUrl) {
+      setGetDataUrlFailed(false);
       getImageWithBackgroundFillColor(imageUrl)
         .then(({ dataUrl, backgroundColor }) => {
           setImageContext({ dataUrl, backgroundColor });

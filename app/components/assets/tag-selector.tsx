@@ -122,7 +122,11 @@ export default function TagSelector({
           >
             {tags
               .sort((a, b) =>
-                b.asset ? -1 : a.serialNumber.localeCompare(b.serialNumber)
+                !a.asset !== !b.asset
+                  ? !a.asset
+                    ? -1
+                    : 1
+                  : a.serialNumber.localeCompare(b.serialNumber)
               )
               .map((tag) => (
                 <div key={tag.id}>

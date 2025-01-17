@@ -7,6 +7,7 @@ import {
   InspectionStatuses,
   ProductTypes,
   type AssetQuestion,
+  type AssetQuestionResponse,
 } from "./models";
 
 export const addressSchema = z.object({
@@ -279,7 +280,7 @@ export const createAssetQuestionSchema = z.object({
   active: z.boolean().default(true),
   type: z.enum(AssetQuestionTypes),
   required: z.boolean().default(false),
-  order: z.number().optional(),
+  order: z.coerce.number().optional(),
   prompt: z.string().nonempty(),
   valueType: z.enum(AssetQuestionResponseTypes),
   assetAlertCriteria: z
@@ -357,22 +358,20 @@ const buildZodTypeFromQuestion = (question: AssetQuestion) => {
   return z.union([z.string(), z.number().safe()]);
 };
 
-export const buildInspectionSchemaResolver = (questions: AssetQuestion[]) =>
-  zodResolver(
-    createInspectionSchema.extend({
-      responses: z.object({
-        createMany: z.object({
-          data: z.tuple(
-            questions.map((q) =>
-              createAssetQuestionResponseSchema.extend({
-                value: buildZodTypeFromQuestion(q),
-              })
-            ) as unknown as [z.ZodTypeAny, ...z.ZodTypeAny[]]
-          ),
-        }),
+export const buildInspectionSchema = (questions: AssetQuestion[]) =>
+  createInspectionSchema.extend({
+    responses: z.object({
+      createMany: z.object({
+        data: z.tuple(
+          questions.map((q) =>
+            createAssetQuestionResponseSchema.extend({
+              value: buildZodTypeFromQuestion(q),
+            })
+          ) as unknown as [z.ZodTypeAny, ...z.ZodTypeAny[]]
+        ),
       }),
-    })
-  );
+    }),
+  });
 
 export const resolveAlertSchema = z.object({
   resolutionNote: z.string().nonempty(),
@@ -394,7 +393,49 @@ export const setupAssetSchema = z.object({
     ),
   }),
 });
-export const setupAssetSchemaResolver = zodResolver(setupAssetSchema);
+
+export const buildSetupAssetSchema = (
+  questions: AssetQuestion[],
+  questionResponses: AssetQuestionResponse[]
+) => {
+  return setupAssetSchema.extend({
+    setupQuestionResponses: z.object({
+      createMany: z.object({
+        data: z.tuple(
+          questions
+            .filter(
+              (q) =>
+                !questionResponses.find((qr) => qr.assetQuestionId === q.id)
+            )
+            .map((q) =>
+              createAssetQuestionResponseSchema.extend({
+                value: buildZodTypeFromQuestion(q),
+              })
+            ) as unknown as [z.ZodTypeAny, ...z.ZodTypeAny[]]
+        ),
+      }),
+      updateMany: z.tuple(
+        questions
+          .map((q) => [
+            q,
+            questionResponses.find((qr) => qr.assetQuestionId === q.id),
+          ])
+          .filter(
+            (el): el is [AssetQuestion, AssetQuestionResponse] =>
+              el[1] !== undefined
+          )
+          .map(([q, qr]) =>
+            z.object({
+              where: z.object({ id: z.literal(qr.id) }),
+              data: createAssetQuestionResponseSchema.extend({
+                value: buildZodTypeFromQuestion(q),
+              }),
+            })
+          ) as unknown as [z.ZodTypeAny, ...z.ZodTypeAny[]]
+      ),
+    }),
+  });
+};
 
 // TODO: Below is old code, may need to be updated
 export const buildReportSchema = z.object({
