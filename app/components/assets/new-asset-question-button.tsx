@@ -10,7 +10,13 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import AssetQuestionDetailForm from "./asset-question-detail-form";
 
-export default function NewAssetQuestionButton() {
+export default function NewAssetQuestionButton({
+  existingSetupQuestionsCount,
+  existingInspectionQuestionsCount,
+}: {
+  existingSetupQuestionsCount?: number;
+  existingInspectionQuestionsCount?: number;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -24,7 +30,11 @@ export default function NewAssetQuestionButton() {
         <DialogHeader>
           <DialogTitle>Add Question</DialogTitle>
         </DialogHeader>
-        <AssetQuestionDetailForm onSubmitted={() => setOpen(false)} />
+        <AssetQuestionDetailForm
+          onSubmitted={() => setOpen(false)}
+          existingSetupQuestionsCount={existingSetupQuestionsCount}
+          existingInspectionQuestionsCount={existingInspectionQuestionsCount}
+        />
       </DialogContent>
     </Dialog>
   );

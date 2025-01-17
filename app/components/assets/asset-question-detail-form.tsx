@@ -20,7 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash } from "lucide-react";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFormContext } from "react-hook-form";
 import { Form } from "react-router";
 import { useRemixForm } from "remix-hook-form";
@@ -51,6 +51,8 @@ type TForm = z.infer<
 export interface AssetQuestionDetailFormProps {
   assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
+  existingSetupQuestionsCount?: number;
+  existingInspectionQuestionsCount?: number;
 }
 
 const FORM_DEFAULTS = {
@@ -64,6 +66,8 @@ const FORM_DEFAULTS = {
 export default function AssetQuestionDetailForm({
   assetQuestion,
   onSubmitted,
+  existingSetupQuestionsCount = 0,
+  existingInspectionQuestionsCount = 0,
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
 
@@ -74,7 +78,11 @@ export default function AssetQuestionDetailForm({
     values: assetQuestion
       ? {
           ...assetQuestion,
-          order: assetQuestion.order || undefined,
+          order:
+            assetQuestion.order ||
+            (assetQuestion.type === "SETUP"
+              ? existingSetupQuestionsCount
+              : existingInspectionQuestionsCount),
           assetAlertCriteria: {
             updateMany: assetQuestion.assetAlertCriteria?.map((c) => ({
               where: { id: c.id },
@@ -82,16 +90,39 @@ export default function AssetQuestionDetailForm({
             })),
           },
         }
-      : FORM_DEFAULTS,
+      : {
+          ...FORM_DEFAULTS,
+          order: existingInspectionQuestionsCount,
+        },
     mode: "onChange",
   });
 
   const {
     formState: { isDirty, isValid, isSubmitting },
     watch,
+    setValue,
   } = form;
 
   const type = watch("type");
+  const order = watch("order");
+
+  useEffect(() => {
+    if (!isNew) return;
+    const defaultOrder =
+      type === "SETUP"
+        ? existingSetupQuestionsCount
+        : existingInspectionQuestionsCount;
+    if (defaultOrder !== order) {
+      setValue("order", defaultOrder, { shouldTouch: false });
+    }
+  }, [
+    isNew,
+    existingInspectionQuestionsCount,
+    existingSetupQuestionsCount,
+    order,
+    setValue,
+    type,
+  ]);
 
   const atomicCounter = useRef(0);
 

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import { useImmer } from "use-immer";
 import type { AssetQuestion } from "~/lib/models";
@@ -47,6 +47,15 @@ export default function AssetQuestionsTable({
     setSelectedQuestion(question);
     setEditOpen(true);
   };
+
+  const existingSetupQuestionsCount = useMemo(
+    () => questions.filter((q) => q.type === "SETUP").length,
+    [questions]
+  );
+  const existingInspectionQuestionsCount = useMemo(
+    () => questions.filter((q) => q.type === "INSPECTION").length,
+    [questions]
+  );
 
   const columns: ColumnDef<AssetQuestion>[] = [
     {
@@ -154,7 +163,19 @@ export default function AssetQuestionsTable({
             actions: !readOnly,
           },
         }}
-        actions={readOnly ? [] : [<NewAssetQuestionButton key="add" />]}
+        actions={
+          readOnly
+            ? []
+            : [
+                <NewAssetQuestionButton
+                  key="add"
+                  existingSetupQuestionsCount={existingSetupQuestionsCount}
+                  existingInspectionQuestionsCount={
+                    existingInspectionQuestionsCount
+                  }
+                />,
+              ]
+        }
       />
       <ConfirmationDialog
         open={deleteAction.open}
@@ -179,6 +200,8 @@ export default function AssetQuestionsTable({
           <AssetQuestionDetailForm
             assetQuestion={selectedQuestion}
             onSubmitted={() => setEditOpen(false)}
+            existingSetupQuestionsCount={existingSetupQuestionsCount}
+            existingInspectionQuestionsCount={existingInspectionQuestionsCount}
           />
         </DialogContent>
       </Dialog>
