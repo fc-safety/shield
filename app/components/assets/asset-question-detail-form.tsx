@@ -56,9 +56,9 @@ export interface AssetQuestionDetailFormProps {
 const FORM_DEFAULTS = {
   active: true,
   type: "INSPECTION",
-  required: false,
+  required: true,
   prompt: "",
-  valueType: "TEXT",
+  valueType: "BINARY",
 } satisfies TForm;
 
 export default function AssetQuestionDetailForm({
