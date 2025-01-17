@@ -151,8 +151,9 @@ export default function InspectIndex({
           })),
         },
       },
-      longitude: 0,
-      latitude: 0,
+      longitude: -999,
+      latitude: -999,
+      comments: "",
     } satisfies TForm,
     mode: "onBlur",
   });
@@ -184,9 +185,15 @@ export default function InspectIndex({
       if (locationAlertTimeout.current) {
         clearTimeout(locationAlertTimeout.current);
       }
-      setValue("latitude", geolocationPosition.coords.latitude);
-      setValue("longitude", geolocationPosition.coords.longitude);
-      setValue("locationAccuracy", geolocationPosition.coords.accuracy);
+      setValue("latitude", geolocationPosition.coords.latitude, {
+        shouldValidate: true,
+      });
+      setValue("longitude", geolocationPosition.coords.longitude, {
+        shouldValidate: true,
+      });
+      setValue("locationAccuracy", geolocationPosition.coords.accuracy, {
+        shouldValidate: true,
+      });
       setLocationAlertOpen(false);
     }
   }, [geolocationPosition, setValue]);

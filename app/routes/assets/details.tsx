@@ -1,5 +1,11 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { format, formatDistanceToNow, isAfter } from "date-fns";
+import {
+  format,
+  formatDistanceToNow,
+  isAfter,
+  isValid,
+  parseISO,
+} from "date-fns";
 import { Check, ClipboardCheck, Pencil, ShieldAlert, X } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
 import { data, type UIMatch } from "react-router";
@@ -159,7 +165,9 @@ export default function AssetDetails({
                             available.
                           </span>
                         ),
-                        value: r.value,
+                        value: isValid(parseISO(String(r.value)))
+                          ? format(String(r.value), "PPpp")
+                          : r.value,
                       })) ?? []
                     }
                   />
