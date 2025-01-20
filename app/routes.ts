@@ -94,5 +94,6 @@ export default [
       route(":id", "./routes/api/alerts/get.ts"),
       route(":id/resolve", "./routes/api/alerts/resolve.ts"),
     ]),
+    route("proxy/*", "./routes/api/proxy.ts"),
   ]),
 ] satisfies RouteConfig;

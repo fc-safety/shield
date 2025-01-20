@@ -18,6 +18,7 @@ import type { ProductCategory, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import Icon from "../icons/icon";
 import { Badge } from "../ui/badge";
+import CustomTag from "./custom-tag";
 
 interface ProductCategorySelectorProps {
   value?: string;
@@ -212,6 +213,7 @@ export function ProductCategoryCard({
                       {productCategory.shortName}
                     </Badge>
                   )}
+                  {productCategory.client && <CustomTag />}
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {productCategory?.description || <>&mdash;</>}

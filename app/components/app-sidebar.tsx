@@ -43,6 +43,7 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "~/components/ui/sidebar";
+import { isGlobalAdmin } from "~/lib/users";
 
 interface AppSidebarProps {
   user?: User;
@@ -51,6 +52,7 @@ interface AppSidebarProps {
 interface SidebarGroup {
   groupTitle: string;
   items: SidebarMenuItem[];
+  hide?: boolean;
 }
 
 interface SidebarMenuItem {
@@ -59,15 +61,17 @@ interface SidebarMenuItem {
   icon: React.ComponentType;
   children?: SidebarMenuSubItem[];
   defaultOpen?: boolean;
+  hide?: boolean;
 }
 
 interface SidebarMenuSubItem {
   title: string;
   url: string;
+  hide?: boolean;
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
-  const items: SidebarGroup[] = [
+  const groups: SidebarGroup[] = [
     {
       groupTitle: "Application",
       items: [
@@ -127,6 +131,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           icon: Nfc,
         },
       ],
+      hide: !user || !isGlobalAdmin(user),
     },
     {
       groupTitle: "Support",
@@ -166,93 +171,101 @@ export function AppSidebar({ user }: AppSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {items.map(({ groupTitle, items }) => (
-          <SidebarGroup key={groupTitle}>
-            <SidebarGroupLabel>{groupTitle}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {items.map((item) =>
-                  item.children?.length ? (
-                    <Collapsible
-                      key={item.title}
-                      asChild
-                      defaultOpen={
-                        item.defaultOpen ||
-                        matches.some((m) =>
-                          item.children?.some(
-                            (r) =>
-                              m.pathname === r.url || m.pathname === `/${r.url}`
-                          )
-                        )
-                      }
-                      className="group/collapsible"
-                    >
-                      <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton>
-                            {item.icon && <item.icon />}
-                            <span>{item.title}</span>
-                            <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <SidebarMenuSub>
-                            {item.children.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.title}>
-                                <NavLink to={subItem.url}>
-                                  {({ isActive }) => (
-                                    <SidebarMenuSubButton
-                                      asChild
-                                      isActive={
-                                        isActive ||
-                                        matches.some(
-                                          (m) =>
-                                            m.pathname === subItem.url ||
-                                            m.pathname === `/${subItem.url}`
-                                        )
-                                      }
-                                    >
-                                      <span>{subItem.title}</span>
-                                    </SidebarMenuSubButton>
-                                  )}
-                                </NavLink>
-                              </SidebarMenuSubItem>
-                            ))}
-                          </SidebarMenuSub>
-                        </CollapsibleContent>
-                      </SidebarMenuItem>
-                    </Collapsible>
-                  ) : item.url ? (
-                    <SidebarMenuItem key={item.title}>
-                      <NavLink to={item.url}>
-                        {({ isActive }) => (
-                          <SidebarMenuButton
-                            asChild
-                            isActive={
-                              isActive ||
-                              matches.some(
-                                (m) =>
-                                  m.pathname === item.url ||
-                                  m.pathname === `/${item.url}`
+        {groups
+          .filter((g) => !g.hide)
+          .map(({ groupTitle, items }) => (
+            <SidebarGroup key={groupTitle}>
+              <SidebarGroupLabel>{groupTitle}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {items
+                    .filter((i) => !i.hide)
+                    .map((item) =>
+                      item.children?.length ? (
+                        <Collapsible
+                          key={item.title}
+                          asChild
+                          defaultOpen={
+                            item.defaultOpen ||
+                            matches.some((m) =>
+                              item.children?.some(
+                                (r) =>
+                                  m.pathname === r.url ||
+                                  m.pathname === `/${r.url}`
                               )
-                            }
-                          >
-                            <span>
-                              {item.icon && <item.icon />}
-                              <span>{item.title}</span>
-                            </span>
-                          </SidebarMenuButton>
-                        )}
-                      </NavLink>
-                    </SidebarMenuItem>
-                  ) : (
-                    <></>
-                  )
-                )}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                            )
+                          }
+                          className="group/collapsible"
+                        >
+                          <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton>
+                                {item.icon && <item.icon />}
+                                <span>{item.title}</span>
+                                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <SidebarMenuSub>
+                                {item.children
+                                  .filter((c) => !c.hide)
+                                  .map((subItem) => (
+                                    <SidebarMenuSubItem key={subItem.title}>
+                                      <NavLink to={subItem.url}>
+                                        {({ isActive }) => (
+                                          <SidebarMenuSubButton
+                                            asChild
+                                            isActive={
+                                              isActive ||
+                                              matches.some(
+                                                (m) =>
+                                                  m.pathname === subItem.url ||
+                                                  m.pathname ===
+                                                    `/${subItem.url}`
+                                              )
+                                            }
+                                          >
+                                            <span>{subItem.title}</span>
+                                          </SidebarMenuSubButton>
+                                        )}
+                                      </NavLink>
+                                    </SidebarMenuSubItem>
+                                  ))}
+                              </SidebarMenuSub>
+                            </CollapsibleContent>
+                          </SidebarMenuItem>
+                        </Collapsible>
+                      ) : item.url ? (
+                        <SidebarMenuItem key={item.title}>
+                          <NavLink to={item.url}>
+                            {({ isActive }) => (
+                              <SidebarMenuButton
+                                asChild
+                                isActive={
+                                  isActive ||
+                                  matches.some(
+                                    (m) =>
+                                      m.pathname === item.url ||
+                                      m.pathname === `/${item.url}`
+                                  )
+                                }
+                              >
+                                <span>
+                                  {item.icon && <item.icon />}
+                                  <span>{item.title}</span>
+                                </span>
+                              </SidebarMenuButton>
+                            )}
+                          </NavLink>
+                        </SidebarMenuItem>
+                      ) : (
+                        <></>
+                      )
+                    )}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>

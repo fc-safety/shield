@@ -54,7 +54,8 @@ export const updateClientSchema = createClientSchema
   .partial();
 export const updateClientSchemaResolver = zodResolver(updateClientSchema);
 
-export const createSiteSchema = z.object({
+export const baseSiteSchema = z.object({
+  id: z.string().optional(),
   externalId: z
     .string()
     .length(24)
@@ -62,9 +63,12 @@ export const createSiteSchema = z.object({
     .transform((id) => id || undefined),
   primary: z.boolean().default(false),
   name: z.string(),
-  address: z.object({
-    create: addressSchema,
-  }),
+  address: z
+    .object({
+      create: addressSchema,
+      update: addressSchema.partial(),
+    })
+    .partial(),
   phoneNumber: z
     .string()
     .regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number."),
@@ -80,17 +84,55 @@ export const createSiteSchema = z.object({
       }),
     })
     .optional(),
+  subsites: z
+    .object({
+      connect: z.array(z.object({ id: z.string() })).min(1),
+      set: z.array(z.object({ id: z.string() })).min(1),
+    })
+    .partial()
+    .optional(),
 });
-export const createSiteSchemaResolver = zodResolver(createSiteSchema);
 
-export const updateSiteSchema = createSiteSchema
-  .omit({ externalId: true })
-  .extend({
-    id: z.string(),
-    address: z.object({ update: addressSchema.partial() }),
-  })
-  .partial();
-export const updateSiteSchemaResolver = zodResolver(updateSiteSchema);
+export const getSiteSchemaResolver = ({
+  create,
+  isSiteGroup = false,
+}: {
+  create: boolean;
+  isSiteGroup?: boolean;
+}) => {
+  let schema: z.AnyZodObject = baseSiteSchema;
+  if (isSiteGroup) {
+    if (create) {
+      schema = schema.extend({
+        subsites: baseSiteSchema.shape.subsites
+          .unwrap()
+          .required({ connect: true }),
+      });
+    } else {
+      schema = schema.extend({
+        subsites: baseSiteSchema.shape.subsites
+          .unwrap()
+          .required({ set: true }),
+      });
+    }
+  }
+
+  if (create) {
+    schema = schema.extend({
+      address: baseSiteSchema.shape.address.required({ create: true }),
+    });
+  } else {
+    schema = schema
+      .omit({ externalId: true })
+      .extend({
+        id: z.string(),
+        address: baseSiteSchema.shape.address.required({ update: true }),
+      })
+      .partial();
+  }
+
+  return zodResolver(schema);
+};
 
 export const createProductCategorySchema = z.object({
   id: z.string().optional(),

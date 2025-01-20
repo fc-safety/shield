@@ -17,6 +17,7 @@ import { useFetcher } from "react-router";
 import type { Manufacturer, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import LinkPreview from "../link-preview";
+import CustomTag from "./custom-tag";
 
 interface ManufacturerSelectorProps {
   value?: string;
@@ -180,11 +181,12 @@ export function ManufacturerCard({
               {manufacturer?.name}
               {manufacturer.homeUrl && (
                 <LinkPreview url={manufacturer.homeUrl}>
-                  <Button size="icon" variant="ghost">
+                  <Button size="icon" variant="ghost" type="button">
                     <Link2 />
                   </Button>
                 </LinkPreview>
               )}
+              {manufacturer.client && <CustomTag />}
               <div className="flex-1"></div>
               {renderEditButton?.()}
             </CardTitle>

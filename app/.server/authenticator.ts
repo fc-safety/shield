@@ -1,78 +1,42 @@
 import { Authenticator } from "remix-auth";
 import { OAuth2Strategy } from "remix-auth-oauth2";
-import {
-  CLIENT_ID,
-  CLIENT_SECRET,
-  ISSUER_URL,
-  REDIRECT_URL,
-  USERINFO_URL,
-} from "./config";
+import { z } from "zod";
+import { isValidPermission, type TPermission } from "../lib/permissions";
+import { CLIENT_ID, CLIENT_SECRET, ISSUER_URL, REDIRECT_URL } from "./config";
 
 export interface Tokens {
   accessToken: string;
   refreshToken: string;
 }
 
-export interface User {
-  sub: string;
-  name: string;
-  preferred_username: string;
-  given_name: string;
-  family_name: string;
+export type User = {
+  idpId: string;
   email: string;
+  username: string;
+  name?: string;
+  givenName?: string;
+  familyName?: string;
+  picture?: string;
+  permissions?: TPermission[];
+  clientId: string;
+  siteId: string;
   tokens: Tokens;
-}
+};
 
 export const authenticator = new Authenticator<Tokens>();
 
-export const buildUser = async (
-  request: Request,
-  tokens: {
-    accessToken: string | (() => string);
-    refreshToken: string | (() => string);
-  },
-  onFailedTokenRefresh: () => Promise<void>
-): Promise<User> => {
+export const buildUser = async (tokens: {
+  accessToken: string | (() => string);
+  refreshToken: string | (() => string);
+}): Promise<User> => {
   const retrieve = (value: string | (() => string)) =>
     typeof value === "string" ? value : value();
-  let accessToken = retrieve(tokens.accessToken);
-  let refreshToken = retrieve(tokens.refreshToken);
+  const accessToken = retrieve(tokens.accessToken);
+  const refreshToken = retrieve(tokens.refreshToken);
 
-  const getUserInfo = async (_accessToken: string) =>
-    fetch(USERINFO_URL, {
-      headers: {
-        Authorization: `Bearer ${_accessToken}`,
-      },
-    });
+  const parsedToken = JSON.parse(atob(accessToken.split(".")[1]));
 
-  let response = await getUserInfo(accessToken);
-
-  if (response.status === 401) {
-    try {
-      const refreshedTokens = await strategy.then((s) =>
-        s.refreshToken(refreshToken)
-      );
-      accessToken = refreshedTokens.accessToken();
-      refreshToken = refreshedTokens.refreshToken();
-    } catch (e) {
-      console.error("Token refresh failed", e);
-      await onFailedTokenRefresh();
-    }
-    response = await getUserInfo(accessToken);
-  }
-
-  if (!response.ok) {
-    throw new Error(response.statusText);
-  }
-
-  const user = await response.json();
-  return {
-    ...user,
-    tokens: {
-      accessToken,
-      refreshToken,
-    },
-  } satisfies User;
+  return buildUserFromToken(parsedToken, { accessToken, refreshToken });
 };
 
 export const strategy = OAuth2Strategy.discover<Tokens>(
@@ -92,3 +56,42 @@ export const strategy = OAuth2Strategy.discover<Tokens>(
 );
 
 strategy.then((s) => authenticator.use(s, "oauth2"));
+
+const keycloakTokenPayloadSchema = z.object({
+  sub: z.string(),
+  email: z.string(),
+  preferred_username: z.string(),
+  name: z.string().optional(),
+  given_name: z.string().optional(),
+  family_name: z.string().optional(),
+  picture: z.string().optional(),
+  resource_access: z
+    .record(
+      z.string(),
+      z.object({
+        roles: z
+          .array(z.string())
+          .transform((roles) => roles.filter(isValidPermission)),
+      })
+    )
+    .optional(),
+  client_id: z.string().default("unknown"),
+  site_id: z.string().default("unknown"),
+});
+
+const buildUserFromToken = (input: unknown, tokens: Tokens): User => {
+  const payload = keycloakTokenPayloadSchema.parse(input);
+  return {
+    idpId: payload.sub,
+    email: payload.email,
+    username: payload.preferred_username,
+    name: payload.name,
+    givenName: payload.given_name,
+    familyName: payload.family_name,
+    picture: payload.picture,
+    permissions: payload.resource_access?.["shield-api"]?.roles,
+    clientId: payload.client_id,
+    siteId: payload.site_id,
+    tokens,
+  };
+};

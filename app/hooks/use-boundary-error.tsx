@@ -3,11 +3,11 @@ import { isRouteErrorResponse } from "react-router";
 
 export default function useBoundaryError({ error }: { error: unknown }) {
   const errorDisplay = useMemo(() => {
-    if (isRouteErrorResponse(error)) {
+    if (isRouteErrorResponse(error) || error instanceof Response) {
       return {
         title: error.status,
         subtitle: error.statusText,
-        message: error.data,
+        message: error instanceof Response ? "" : error.data,
       };
     }
 

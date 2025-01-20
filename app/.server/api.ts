@@ -14,13 +14,13 @@ import {
 import {
   createInspectionSchema,
   resolveAlertSchema,
+  type baseSiteSchema,
   type createAssetQuestionSchema,
   type createAssetSchema,
   type createClientSchema,
   type createManufacturerSchema,
   type createProductCategorySchema,
   type createProductSchema,
-  type createSiteSchema,
   type createTagSchema,
   type setupAssetSchema,
   type updateAssetQuestionSchema,
@@ -29,7 +29,6 @@ import {
   type updateManufacturerSchema,
   type updateProductCategorySchema,
   type updateProductSchema,
-  type updateSiteSchema,
   type updateTagSchema,
 } from "~/lib/schema";
 import { authenticatedData, CRUD, FetchOptions } from "./api-utils";
@@ -48,10 +47,7 @@ export const api = {
     ).all(),
 
     // Asset setup questions
-    setup: async (
-      request: Request,
-      input: z.infer<typeof setupAssetSchema>
-    ) => {
+    setup: (request: Request, input: z.infer<typeof setupAssetSchema>) => {
       return authenticatedData<Asset>(request, [
         FetchOptions.url("/assets/:id/setup", { id: input.id })
           .post()
@@ -59,7 +55,7 @@ export const api = {
           .build(),
       ]);
     },
-    updateSetup: async (
+    updateSetup: (
       request: Request,
       input: z.infer<typeof setupAssetSchema>
     ) => {
@@ -77,7 +73,7 @@ export const api = {
         "get",
         "list",
       ]),
-      resolve: async (
+      resolve: (
         request: Request,
         alertId: string,
         input: z.infer<typeof resolveAlertSchema>
@@ -95,7 +91,7 @@ export const api = {
     ...CRUD.for<Tag, typeof createTagSchema, typeof updateTagSchema>(
       "/tags"
     ).all(),
-    getBySerial: async (request: Request, serialNumber: string) =>
+    getBySerial: (request: Request, serialNumber: string) =>
       authenticatedData<Tag>(request, [
         FetchOptions.url("/tags/serial/:serialNumber", { serialNumber })
           .get()
@@ -115,7 +111,7 @@ export const api = {
       typeof createProductSchema,
       typeof updateProductSchema
     >("/products").all(),
-    addQuestion: async (
+    addQuestion: (
       request: Request,
       productId: string,
       input: z.infer<typeof createAssetQuestionSchema>
@@ -126,7 +122,7 @@ export const api = {
           .json(input)
           .build(),
       ]),
-    updateQuestion: async (
+    updateQuestion: (
       request: Request,
       productId: string,
       questionId: string,
@@ -141,11 +137,7 @@ export const api = {
           .json(input)
           .build(),
       ]),
-    deleteQuestion: async (
-      request: Request,
-      productId: string,
-      questionId: string
-    ) =>
+    deleteQuestion: (request: Request, productId: string, questionId: string) =>
       authenticatedData<AssetQuestion>(request, [
         FetchOptions.url("/products/:id/questions/:questionId", {
           id: productId,
@@ -166,7 +158,7 @@ export const api = {
       typeof createProductCategorySchema,
       typeof updateProductCategorySchema
     >("/product-categories").all(),
-    addQuestion: async (
+    addQuestion: (
       request: Request,
       categoryId: string,
       input: z.infer<typeof createAssetQuestionSchema>
@@ -179,7 +171,7 @@ export const api = {
           .json(input)
           .build(),
       ]),
-    updateQuestion: async (
+    updateQuestion: (
       request: Request,
       categoryId: string,
       questionId: string,
@@ -194,11 +186,7 @@ export const api = {
           .json(input)
           .build(),
       ]),
-    deleteQuestion: async (
-      request: Request,
-      productId: string,
-      questionId: string
-    ) =>
+    deleteQuestion: (request: Request, productId: string, questionId: string) =>
       authenticatedData<AssetQuestion>(request, [
         FetchOptions.url("/product-categories/:id/questions/:questionId", {
           id: productId,
@@ -215,7 +203,7 @@ export const api = {
     typeof createClientSchema,
     typeof updateClientSchema
   >("/clients").all(),
-  sites: CRUD.for<Site, typeof createSiteSchema, typeof updateSiteSchema>(
+  sites: CRUD.for<Site, typeof baseSiteSchema, typeof baseSiteSchema>(
     "/sites"
   ).except(["list"]),
 };

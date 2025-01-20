@@ -8,38 +8,40 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Form } from "react-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Form, useFetcher } from "react-router";
 import { useRemixForm } from "remix-hook-form";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
-import { type Site } from "~/lib/models";
-import {
-  createSiteSchema,
-  createSiteSchemaResolver,
-  updateSiteSchema,
-  updateSiteSchemaResolver,
-} from "~/lib/schema";
+import { type ResultsPage, type Site } from "~/lib/models";
+import { baseSiteSchema, getSiteSchemaResolver } from "~/lib/schema";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
+import { Skeleton } from "../ui/skeleton";
 
-type TForm = z.infer<typeof createSiteSchema | typeof updateSiteSchema>;
+type TForm = z.infer<typeof baseSiteSchema>;
 interface SiteDetailsFormProps {
   site?: Site;
   clientId: string;
+  parentSiteId?: string;
   onSubmitted?: () => void;
+  isSiteGroup?: boolean;
 }
 
 export default function SiteDetailsForm({
   site,
   clientId,
+  parentSiteId,
   onSubmitted,
+  isSiteGroup = false,
 }: SiteDetailsFormProps) {
   const isNew = !site;
   const currentlyPopulatedZip = useRef<string | null>(null);
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
+  const subsitesFetcher = useFetcher<ResultsPage<Site>>();
+  const [subsites, setSubsites] = useState<Site[] | undefined>();
 
   const FORM_DEFAULTS = useMemo(
     () =>
@@ -60,12 +62,19 @@ export default function SiteDetailsForm({
             id: clientId,
           },
         },
-      } satisfies z.infer<typeof createSiteSchema>),
-    [clientId]
+        parentSite: parentSiteId
+          ? {
+              connect: {
+                id: parentSiteId,
+              },
+            }
+          : undefined,
+      } satisfies z.infer<typeof baseSiteSchema>),
+    [clientId, parentSiteId]
   );
 
   const form = useRemixForm<TForm>({
-    resolver: site ? updateSiteSchemaResolver : createSiteSchemaResolver,
+    resolver: getSiteSchemaResolver({ create: !site, isSiteGroup }),
     values: site
       ? {
           ...site,
@@ -85,6 +94,11 @@ export default function SiteDetailsForm({
                 connect: {
                   id: site.parentSiteId,
                 },
+              }
+            : undefined,
+          subsites: site.subsites
+            ? {
+                set: site.subsites.map((s) => ({ id: s.id })),
               }
             : undefined,
         }
@@ -136,45 +150,71 @@ export default function SiteDetailsForm({
     }
   }, [debouncedZip, site, setValue]);
 
+  const handleSubsitesLoad = useCallback(() => {
+    if (subsitesFetcher.state === "idle" && !subsitesFetcher.data) {
+      subsitesFetcher.load(
+        `/api/proxy/sites?${
+          site?.id
+            ? `OR[0][parentSiteId]=${site?.id}&OR[1][parentSiteId]=null`
+            : "parentSiteId=null"
+        }`
+      );
+    }
+  }, [site, subsitesFetcher]);
+
+  useEffect(() => {
+    handleSubsitesLoad();
+  }, [handleSubsitesLoad]);
+
+  useEffect(() => {
+    if (!subsitesFetcher.data) return;
+    setSubsites(
+      subsitesFetcher.data.results.filter((s) => !s._count?.subsites)
+    );
+  }, [subsitesFetcher.data]);
+
   return (
     <FormProvider {...form}>
       <Form
         className="space-y-4"
         method="post"
-        action={isNew ? "?action=create-site" : undefined}
+        action={isNew ? "?action=create-site" : "?action=update-site"}
         onSubmit={(e) => {
           form.handleSubmit(e).then(() => {
             onSubmitted?.();
           });
         }}
+        onMouseOver={isSiteGroup ? handleSubsitesLoad : () => {}}
       >
         <Input type="hidden" {...form.register("id")} hidden />
         <Input type="hidden" {...form.register("client.connect.id")} hidden />
-        <FormField
-          control={form.control}
-          name="primary"
-          render={({ field: { onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <FormControl>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="primarySite"
-                    checked={field.value}
-                    onCheckedChange={onChange}
-                  />
-                  <Label
-                    htmlFor="primarySite"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Primary site
-                  </Label>
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!isSiteGroup && (
+          <FormField
+            control={form.control}
+            name="primary"
+            render={({ field: { onChange, ...field } }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="primarySite"
+                      checked={field.value}
+                      onCheckedChange={onChange}
+                    />
+                    <Label
+                      htmlFor="primarySite"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Primary site
+                    </Label>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="externalId"
@@ -309,6 +349,59 @@ export default function SiteDetailsForm({
             </FormItem>
           )}
         />
+        {isSiteGroup && (
+          <FormField
+            control={form.control}
+            name={isNew ? "subsites.connect" : "subsites.set"}
+            render={({ field: { value, onChange } }) => (
+              <FormItem>
+                <FormLabel>Subsites</FormLabel>
+                <FormControl>
+                  <div className="space-y-4">
+                    {subsitesFetcher.state === "loading" &&
+                      Array.from({ length: site?.subsites?.length ?? 1 }).map(
+                        (_, i) => <Skeleton key={i} className="w-full h-6" />
+                      )}
+                    {subsites && subsites.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No available subsites found. If you are looking to add a
+                        site that belongs to another group, remove the site from
+                        that group first.
+                      </p>
+                    )}
+                    {subsites?.map((subsite) => (
+                      <FormItem
+                        key={subsite.id}
+                        className="flex items-center space-x-2 space-y-0"
+                      >
+                        <Checkbox
+                          id={`subsite-${subsite.id}`}
+                          checked={!!value?.find((v) => v.id === subsite.id)}
+                          onCheckedChange={(checked) =>
+                            onChange(
+                              checked
+                                ? [...(value ?? []), { id: subsite.id }]
+                                : value
+                                ? value.filter((v) => v.id !== subsite.id)
+                                : []
+                            )
+                          }
+                        />
+                        <Label
+                          htmlFor={`subsite-${subsite.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {subsite.name}
+                        </Label>
+                      </FormItem>
+                    ))}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <Button
           type="submit"
           disabled={isSubmitting || (!isNew && !isDirty) || !isValid}

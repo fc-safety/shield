@@ -2,9 +2,10 @@ import qs from "qs";
 import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { ResultsPage } from "~/lib/models";
+import { strategy } from "./authenticator";
 import { API_BASE_URL } from "./config";
 import { logger } from "./logger";
-import { requireUserSession } from "./sessions";
+import { getLoginRedirect, requireUserSession } from "./sessions";
 
 type NativeFetchParameters = Parameters<typeof fetch>;
 type FetchArguments = {
@@ -79,6 +80,18 @@ export class FetchOptions {
   }
 }
 
+export class DataResponse<T> extends Promise<ReturnType<typeof data<T>>> {
+  public mapTo<U>(fn: (initData: T) => U) {
+    return this.then(({ data: initData, init }) =>
+      data(fn(initData), init ?? undefined)
+    ) as DataResponse<U>;
+  }
+
+  public async asRedirect(url: string) {
+    return this.then(({ init }) => redirect(url, init ?? undefined));
+  }
+}
+
 type AtLeastOneFetch = [FetchArguments, ...FetchArguments[]];
 type AtLeastOneAwaitableResponse = [Promise<Response>, ...Promise<Response>[]];
 export const fetchAuthenticated = async (
@@ -86,15 +99,48 @@ export const fetchAuthenticated = async (
   setSessionCookie: (cookie: string) => void,
   ...fetchArgs: AtLeastOneFetch
 ) => {
-  const { user, sessionToken } = await requireUserSession(request);
-  setSessionCookie(sessionToken);
+  const { user, session, getSessionToken } = await requireUserSession(request);
 
-  return fetchArgs.map(async ({ url, options = {} }) => {
-    options.headers = new Headers(options?.headers);
-    options.headers.set("Authorization", `Bearer ${user.tokens.accessToken}`);
+  const getResponses = (accessToken: string) => {
+    return fetchArgs.map(async ({ url, options = {} }) => {
+      options.headers = new Headers(options?.headers);
+      options.headers.set("Authorization", `Bearer ${accessToken}`);
 
-    return fetch(url, options);
-  }) as AtLeastOneAwaitableResponse;
+      return fetch(url, options);
+    }) as AtLeastOneAwaitableResponse;
+  };
+
+  let awaitableResponses = getResponses(user.tokens.accessToken);
+
+  // Peek at the first response returned to see if it's a 401.
+  // This is the most efficient way to find out if the token is still active.
+  // For the majority of requests, the status will be 200, and we can bypass
+  // any other token validation. Only on a 401 do we take the time to refresh
+  // or reinitiate login.
+  const testResponse = await Promise.any(awaitableResponses);
+  if (testResponse.status === 401) {
+    try {
+      const refreshedTokens = await strategy.then((s) =>
+        s.refreshToken(user.tokens.refreshToken)
+      );
+      user.tokens.accessToken = refreshedTokens.accessToken();
+      user.tokens.refreshToken = refreshedTokens.refreshToken();
+
+      session.set("tokens", {
+        accessToken: user.tokens.accessToken,
+        refreshToken: user.tokens.refreshToken,
+      });
+
+      setSessionCookie(await getSessionToken(session));
+
+      awaitableResponses = getResponses(user.tokens.accessToken);
+    } catch (e) {
+      console.error("Token refresh failed", e);
+      throw await getLoginRedirect(request, session);
+    }
+  }
+
+  return awaitableResponses;
 };
 
 export const authenticatedResolver = async (
@@ -138,18 +184,22 @@ export const defaultDataGetter = async (
   });
 };
 
-export const authenticatedData = async <T>(
+export const authenticatedData = <T>(
   request: Request,
   fetchArgs: AtLeastOneFetch,
   getData: (
     responses: AtLeastOneAwaitableResponse
   ) => Promise<T> = defaultDataGetter
 ) => {
-  const { responses, headers } = await authenticatedResolver(
-    request,
-    ...fetchArgs
-  );
-  return data(await getData(responses), { headers });
+  const initData = (async () => {
+    const { responses, headers } = await authenticatedResolver(
+      request,
+      ...fetchArgs
+    );
+    return data(await getData(responses), { headers });
+  })();
+
+  return new DataResponse<T>((resolve) => resolve(initData));
 };
 
 type ExtractPathParams<TPath extends string> =
@@ -163,8 +213,8 @@ type PathParams<TPath extends string> = {
   [Key in ExtractPathParams<TPath>]: string | number;
 };
 
-type BaseQueryParams = Record<string, string | number>;
-type QueryParams = BaseQueryParams | Record<string, BaseQueryParams>;
+type BaseQueryParams = Record<string, string | number | null>;
+export type QueryParams = BaseQueryParams | Record<string, BaseQueryParams>;
 
 /**
  * Given a path and params, build a full URL by replacing path params and adding any
@@ -203,24 +253,15 @@ interface AllCrudActions<
   TCreateSchema extends z.ZodType,
   TUpdateSchema extends z.ZodType
 > {
-  list: (
-    request: Request,
-    query: Record<string, string | number>
-  ) => Promise<ReturnType<typeof data<ResultsPage<T>>>>;
-  get: (request: Request, id: string) => Promise<ReturnType<typeof data<T>>>;
-  create: (
-    request: Request,
-    input: z.infer<TCreateSchema>
-  ) => Promise<ReturnType<typeof data<T>>>;
+  list: (request: Request, query: QueryParams) => DataResponse<ResultsPage<T>>;
+  get: (request: Request, id: string) => DataResponse<T>;
+  create: (request: Request, input: z.infer<TCreateSchema>) => DataResponse<T>;
   update: (
     request: Request,
     id: string,
     input: z.infer<TUpdateSchema>
-  ) => Promise<ReturnType<typeof data<T>>>;
-  delete: (
-    request: Request,
-    id: string
-  ) => Promise<ReturnType<typeof data<unknown>>>;
+  ) => DataResponse<T>;
+  delete: (request: Request, id: string) => DataResponse<unknown>;
   deleteAndRedirect: (
     request: Request,
     id: string,
@@ -247,10 +288,7 @@ function buildCrud<
   return actions.reduce((acc, action) => {
     switch (action) {
       case "list":
-        acc[action] = (
-          request: Request,
-          query: Record<string, string | number> = {}
-        ) => {
+        acc[action] = (request: Request, query: QueryParams = {}) => {
           return authenticatedData<ResultsPage<T>>(request, [
             FetchOptions.url(path, {
               order: {
@@ -294,10 +332,10 @@ function buildCrud<
         };
         break;
       case "deleteAndRedirect":
-        acc[action] = async (request: Request, id: string, to: string) => {
+        acc[action] = (request: Request, id: string, to: string) => {
           return authenticatedData(request, [
             FetchOptions.url(`${path}/:id`, { id }).delete().build(),
-          ]).then(({ init }) => redirect(to, init ?? undefined));
+          ]).asRedirect(to);
         };
         break;
       default:

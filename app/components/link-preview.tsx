@@ -53,7 +53,7 @@ export default function LinkPreview({
       </HoverCardTrigger>
       <HoverCardContent>
         {metadata ? (
-          <div className="space-y-2">
+          <div className="space-y-2 text-sm whitespace-normal text-start">
             <Link
               to={url}
               className="hover:underline flex items-center gap-2"

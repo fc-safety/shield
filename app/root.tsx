@@ -58,14 +58,6 @@ export const links: Route.LinksFunction = () => [
     crossOrigin: "anonymous",
     referrerPolicy: "no-referrer",
   },
-  {
-    rel: "stylesheet",
-    href: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/${FONT_AWESOME_VERSION}/css/solid.min.css`,
-    integrity:
-      "sha512-DzC7h7+bDlpXPDQsX/0fShhf1dLxXlHuhPBkBo/5wJWRoTU6YL7moeiNoej6q3wh5ti78C57Tu1JwTNlcgHSjg==",
-    crossOrigin: "anonymous",
-    referrerPolicy: "no-referrer",
-  },
 ];
 
 export const meta: Route.MetaFunction = () => {

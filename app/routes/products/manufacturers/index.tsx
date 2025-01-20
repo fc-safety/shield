@@ -1,15 +1,18 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useFetcher } from "react-router";
+import { Link, useFetcher, useNavigate } from "react-router";
 import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import type { QueryParams } from "~/.server/api-utils";
+import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import LinkPreview from "~/components/link-preview";
+import CustomTag from "~/components/products/custom-tag";
 import NewManufacturerButton from "~/components/products/edit-manufacturer-button";
 import { Button } from "~/components/ui/button";
 import {
@@ -19,12 +22,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { Label } from "~/components/ui/label";
+import { Switch } from "~/components/ui/switch";
 import type { Manufacturer } from "~/lib/models";
 import {
   createManufacturerSchemaResolver,
   type createManufacturerSchema,
 } from "~/lib/schema";
-import { getValidatedFormDataOrThrow } from "~/lib/utils";
+import { isGlobalAdmin } from "~/lib/users";
+import { getSearchParam, getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -35,14 +41,36 @@ export const action = async ({ request }: Route.ActionArgs) => {
   return api.manufacturers.create(request, data);
 };
 
-export function loader({ request }: Route.LoaderArgs) {
-  return api.manufacturers.list(request, { limit: 10000 });
+export async function loader({ request }: Route.LoaderArgs) {
+  const { user } = await requireUserSession(request);
+
+  const showAllProducts = getSearchParam(request, "show-all");
+
+  let onlyMyManufacturers = showAllProducts !== "true";
+  if (showAllProducts === undefined && isGlobalAdmin(user)) {
+    onlyMyManufacturers = false;
+  }
+
+  const query = { limit: 10000 } as QueryParams;
+
+  if (onlyMyManufacturers) {
+    query.client = {
+      externalId: user.clientId,
+    };
+  }
+  return api.manufacturers
+    .list(request, query)
+    .mapTo((manufacturersResponse) => ({
+      manufacturers: manufacturersResponse.results,
+      onlyMyManufacturers,
+    }));
 }
 
 export default function ProductManufacturers({
-  loaderData: manufacturers,
+  loaderData: { manufacturers, onlyMyManufacturers },
 }: Route.ComponentProps) {
   const fetcher = useFetcher();
+  const navigate = useNavigate();
 
   const [deleteAction, setDeleteAction] = useImmer({
     open: false,
@@ -52,6 +80,10 @@ export default function ProductManufacturers({
     message: "",
     requiredUserInput: "",
   });
+
+  const setOnlyMyManufacturers = (value: boolean) => {
+    navigate(`?show-all=${!value}`);
+  };
 
   const columns: ColumnDef<Manufacturer>[] = useMemo(
     () => [
@@ -94,6 +126,15 @@ export default function ProductManufacturers({
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
+      },
+      {
+        accessorKey: "client.name",
+        id: "owner",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) =>
+          getValue() ? <CustomTag text={getValue() as string} /> : <>&mdash;</>,
       },
       {
         id: "actions",
@@ -154,8 +195,21 @@ export default function ProductManufacturers({
     <>
       <DataTable
         columns={columns}
-        data={manufacturers.results}
+        data={manufacturers}
         searchPlaceholder="Search manufacturers..."
+        externalFilters={[
+          <div
+            key="onlyMyManufacturers"
+            className="flex items-center space-x-2"
+          >
+            <Switch
+              id="onlyMyProducts"
+              checked={onlyMyManufacturers}
+              onCheckedChange={(checked) => setOnlyMyManufacturers(checked)}
+            />
+            <Label htmlFor="onlyMyProducts">Only My Products</Label>
+          </div>,
+        ]}
         actions={[<NewManufacturerButton key="add" />]}
       />
       <ConfirmationDialog

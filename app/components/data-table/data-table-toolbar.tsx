@@ -17,6 +17,7 @@ export interface DataTableToolbarProps<TData> {
     | ((props: {
         table: Table<TData>;
       }) => DataTableFacetedFilterProps<TData, unknown>[]);
+  externalFilters?: React.ReactNode[];
   actions?:
     | React.ReactNode[]
     | ((props: { table: Table<TData> }) => React.ReactNode[]);
@@ -26,6 +27,7 @@ export interface DataTableToolbarProps<TData> {
 export function DataTableToolbar<TData>({
   table,
   filters = [],
+  externalFilters = [],
   actions = [],
   searchPlaceholder = "Search...",
 }: DataTableToolbarProps<TData>) {
@@ -58,6 +60,7 @@ export function DataTableToolbar<TData>({
             <X />
           </Button>
         )}
+        {externalFilters}
       </div>
       <div className="flex items-center space-x-2">
         {typeof actions === "function" ? actions({ table }) : actions}

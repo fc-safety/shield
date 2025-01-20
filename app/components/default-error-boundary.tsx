@@ -16,7 +16,10 @@ export default function DefaultErrorBoundary({ error }: { error: unknown }) {
       </p>
       {errorDisplay.message && (
         <p className="mt-6 text-sm text-muted-foreground">
-          Message: {errorDisplay.message}
+          Message:{" "}
+          {typeof errorDisplay.message === "string"
+            ? errorDisplay.message
+            : JSON.stringify(errorDisplay.message)}
         </p>
       )}
       <div className="mt-10 flex items-center justify-center gap-2 flex-wrap">

@@ -8,7 +8,7 @@ import {
 } from "date-fns";
 import { Check, ClipboardCheck, Pencil, ShieldAlert, X } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
-import { data, type UIMatch } from "react-router";
+import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { GOOGLE_MAPS_API_KEY } from "~/.server/config";
@@ -75,15 +75,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
-  const { data: asset, init } = await api.assets.get(request, id);
-  return data(
-    {
-      asset,
-      googleMapsApiKey: GOOGLE_MAPS_API_KEY,
-      defaultTab: getSearchParam(request, "tab") ?? "consumables",
-    },
-    init ?? undefined
-  );
+  return api.assets.get(request, id).mapTo((asset) => ({
+    asset,
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    defaultTab: getSearchParam(request, "tab") ?? "consumables",
+  }));
 };
 
 export default function AssetDetails({

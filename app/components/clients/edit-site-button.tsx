@@ -13,14 +13,18 @@ import SiteDetailsForm from "./site-details-form";
 
 interface NewSiteButtonProps {
   clientId: string;
+  parentSiteId?: string;
   site?: Site;
   trigger?: ReactNode;
+  isSiteGroup?: boolean;
 }
 
 export default function EditSiteButton({
   clientId,
+  parentSiteId,
   site,
   trigger,
+  isSiteGroup,
 }: NewSiteButtonProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -29,18 +33,22 @@ export default function EditSiteButton({
         {trigger ?? (
           <Button type="button" size="sm">
             {site ? <Pencil /> : <Plus />}
-            {site ? "Edit" : "Add"} Site
+            {site ? "Edit" : "Add"} Site {isSiteGroup ? "Group" : ""}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{site ? "Edit" : "Add New"} Site</DialogTitle>
+          <DialogTitle>
+            {site ? "Edit" : "Add New"} Site {isSiteGroup ? "Group" : ""}
+          </DialogTitle>
         </DialogHeader>
         <SiteDetailsForm
           onSubmitted={() => setOpen(false)}
           clientId={clientId}
+          parentSiteId={parentSiteId}
           site={site}
+          isSiteGroup={isSiteGroup}
         />
       </DialogContent>
     </Dialog>

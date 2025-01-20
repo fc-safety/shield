@@ -53,14 +53,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const ipAddress = getClientIPAddress(request);
 
-  const { init } = await api.inspections.create(request, {
-    ...data,
-    useragent: request.headers.get("user-agent") ?? "",
-    ipv4: ipAddress && isIPv4(ipAddress) ? ipAddress : undefined,
-    ipv6: ipAddress && isIPv6(ipAddress) ? ipAddress : undefined,
-  });
-
-  return redirect(`next?tagNo=${tagNo}`, init ?? undefined);
+  return api.inspections
+    .create(request, {
+      ...data,
+      useragent: request.headers.get("user-agent") ?? "",
+      ipv4: ipAddress && isIPv4(ipAddress) ? ipAddress : undefined,
+      ipv6: ipAddress && isIPv6(ipAddress) ? ipAddress : undefined,
+    })
+    .asRedirect(`next?tagNo=${tagNo}`);
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {

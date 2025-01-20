@@ -108,6 +108,10 @@ export interface Site extends BaseModel {
   parentSiteId?: string | null;
   client?: Client;
   clientId: string;
+  subsites?: Site[];
+  _count?: {
+    subsites: number;
+  };
 }
 
 export interface Person extends BaseModel {
@@ -213,6 +217,7 @@ export interface ProductCategory extends BaseModel {
   assetQuestions?: AssetQuestion[];
   _count?: { products: number };
   products?: Omit<Product, "productCategory">[];
+  client?: Client;
 }
 
 export interface Manufacturer extends BaseModel {
@@ -221,6 +226,7 @@ export interface Manufacturer extends BaseModel {
   homeUrl?: string | null;
   products?: Omit<Product, "manufacturer">[];
   _count?: { products: number };
+  client?: Client;
 }
 
 export const ProductTypes = ["CONSUMABLE", "PRIMARY"] as const;
@@ -238,6 +244,7 @@ export interface Product extends BaseModel {
   productCategory: ProductCategory;
   productCategoryId: string;
   assetQuestions?: AssetQuestion[];
+  client?: Client | null;
 
   // TODO: Add consumable support
 }

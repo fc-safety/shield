@@ -98,6 +98,14 @@ export default function ProductManufacturerDetails({
                     <LinkPreview url={manufacturer.homeUrl} />
                   ),
                 },
+                {
+                  label: "Owner",
+                  value: manufacturer.client ? (
+                    manufacturer.client.name
+                  ) : (
+                    <>&mdash;</>
+                  ),
+                },
               ]}
               defaultValue={<>&mdash;</>}
             />

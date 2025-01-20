@@ -30,7 +30,11 @@ export default function ProductCard({
     <Card className="flex">
       {product ? (
         <>
-          <ProductImage name={product.name} imageUrl={product.imageUrl} />
+          <ProductImage
+            name={product.name}
+            imageUrl={product.imageUrl}
+            custom={!!product.client}
+          />
           <div className="grow flex flex-col">
             <CardHeader>
               <CardTitle className="flex justify-between items-center">
@@ -54,6 +58,11 @@ export default function ProductCard({
             <CardContent className="flex-1 flex flex-col gap-4 justify-between">
               <p className="text-sm text-muted-foreground">
                 {product.description ?? <>&mdash;</>}
+                {product.client && (
+                  <span className="mt-2 text-xs text-muted-foreground">
+                    Client: {product.client.name}
+                  </span>
+                )}
               </p>
               <div className="flex gap-2 items-center">
                 {displayCategory && (
@@ -98,10 +107,12 @@ export function ProductImage({
   name,
   imageUrl,
   className,
+  custom = false,
 }: {
   name: string;
   imageUrl?: string | null;
   className?: string;
+  custom?: boolean;
 }) {
   const [imageContext, setImageContext] = useState<{
     dataUrl: string;
@@ -123,15 +134,25 @@ export function ProductImage({
   return (
     <div
       className={cn(
-        "rounded-l-xl w-48 min-h-48 shrink-0 overflow-hidden border-r",
+        "rounded-l-xl w-48 min-h-48 shrink-0 overflow-hidden border-r flex flex-col",
         className
       )}
     >
+      {custom && (
+        <div
+          className={cn(
+            "p-0.5 text-xs text-center",
+            "bg-important text-important-foreground"
+          )}
+        >
+          Custom
+        </div>
+      )}
       {imageUrl && !getDataUrlFailed ? (
         <>
           {imageContext ? (
             <div
-              className="h-full w-full flex justify-center items-center p-2"
+              className="flex-1 w-full flex justify-center items-center p-2"
               style={{
                 backgroundColor: imageContext.backgroundColor,
               }}

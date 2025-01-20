@@ -8,13 +8,16 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronRight, Search } from "lucide-react";
-import { useEffect } from "react";
-import { data, useNavigate } from "react-router";
+import { ChevronRight, Link2, Search } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import type { QueryParams } from "~/.server/api-utils";
+import { requireUserSession } from "~/.server/sessions";
 import Icon from "~/components/icons/icon";
+import LinkPreview from "~/components/link-preview";
+import CustomTag from "~/components/products/custom-tag";
 import EditProductButton from "~/components/products/edit-product-button";
 import ProductCard from "~/components/products/product-card";
 import { Badge } from "~/components/ui/badge";
@@ -25,6 +28,7 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -33,11 +37,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import type { ProductCategory } from "~/lib/models";
+import { Switch } from "~/components/ui/switch";
+import { useQueryNavigate } from "~/hooks/useQueryNavigate";
+import type { Manufacturer, ProductCategory } from "~/lib/models";
 import {
   type createProductSchema,
   createProductSchemaResolver,
 } from "~/lib/schema";
+import { isGlobalAdmin } from "~/lib/users";
 import {
   buildTitleFromBreadcrumb,
   getSearchParam,
@@ -64,29 +71,57 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const grouping = getSearchParam(request, "grp")?.split(",") ?? ["category"];
-  return api.products
-    .list(request, { limit: 10000 })
-    .then(({ data: rData, init }) =>
-      data(
-        {
-          products: rData.results,
-          grouping,
-        },
-        init ?? undefined
-      )
-    );
+  const { user } = await requireUserSession(request);
+
+  const showAllProducts = getSearchParam(request, "show-all");
+
+  let onlyMyProducts = showAllProducts !== "true";
+  if (showAllProducts === undefined && isGlobalAdmin(user)) {
+    onlyMyProducts = false;
+  }
+
+  const query = { limit: 10000 } as QueryParams;
+
+  if (onlyMyProducts) {
+    query.client = {
+      externalId: user.clientId,
+    };
+  }
+
+  return api.products.list(request, query).mapTo((r) => ({
+    products: r.results,
+  }));
 };
 
 export default function AllProducts({
-  loaderData: { products, grouping },
+  loaderData: { products },
 }: Route.ComponentProps) {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
+  const { setQuery, query } = useQueryNavigate();
+
+  const grouping = useMemo(
+    () => query.get("grp")?.split(",") || ["category"],
+    [query]
+  );
   const setGrouping = (
     value: GroupingState | ((prev: GroupingState) => GroupingState)
   ) => {
     const newValue = typeof value === "function" ? value(grouping) : value;
-    navigate(`?grp=${newValue.join(",")}`);
+    setQuery((prev) => {
+      prev.set("grp", newValue.join(","));
+      return prev;
+    });
+  };
+
+  const onlyMyProducts = useMemo(
+    () => query.get("show-all") !== "true",
+    [query]
+  );
+  const setOnlyMyProducts = (value: boolean) => {
+    setQuery((prev) => {
+      prev.set("show-all", String(!value));
+      return prev;
+    });
   };
 
   const [sorting, setSorting] = useImmer<SortingState>([
@@ -163,6 +198,14 @@ export default function AllProducts({
               </SelectGroup>
             </SelectContent>
           </Select>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="onlyMyProducts"
+              checked={onlyMyProducts}
+              onCheckedChange={(checked) => setOnlyMyProducts(checked)}
+            />
+            <Label htmlFor="onlyMyProducts">Only My Products</Label>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
           <EditProductButton />
@@ -187,6 +230,8 @@ export default function AllProducts({
                   >
                     {groupingColumnId === "category" ? (
                       <CategoryLabel category={original.productCategory} />
+                    ) : groupingColumnId === "manufacturer" ? (
+                      <ManufacturerLabel manufacturer={original.manufacturer} />
                     ) : groupingColumnId ? (
                       (groupingValue as string)
                     ) : (
@@ -211,6 +256,29 @@ export default function AllProducts({
               </Collapsible>
             );
           })}
+        {table.getRowModel().rows.filter((row) => row.getIsGrouped()).length ===
+          0 && (
+          <div className="py-6 flex flex-col items-center gap-4">
+            No products found
+            {table.getState().globalFilter ? (
+              <Button
+                variant="outline"
+                onClick={() => table.setGlobalFilter("")}
+              >
+                Clear Search
+              </Button>
+            ) : onlyMyProducts ? (
+              <Button
+                variant="outline"
+                onClick={() => setOnlyMyProducts(false)}
+              >
+                Show All Products
+              </Button>
+            ) : (
+              <></>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -226,6 +294,23 @@ function CategoryLabel({ category }: { category: ProductCategory }) {
           {category.shortName}
         </Badge>
       )}
+      {category.client && <CustomTag />}
+    </span>
+  );
+}
+
+function ManufacturerLabel({ manufacturer }: { manufacturer: Manufacturer }) {
+  return (
+    <span className="flex items-center gap-2">
+      {manufacturer.name}
+      {manufacturer.homeUrl && (
+        <LinkPreview url={manufacturer.homeUrl}>
+          <Button size="icon" variant="ghost" type="button">
+            <Link2 />
+          </Button>
+        </LinkPreview>
+      )}
+      {manufacturer.client && <CustomTag />}
     </span>
   );
 }

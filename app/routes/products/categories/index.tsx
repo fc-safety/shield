@@ -1,15 +1,18 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useFetcher } from "react-router";
+import { Link, useFetcher, useNavigate } from "react-router";
 import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import type { QueryParams } from "~/.server/api-utils";
+import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
+import CustomTag from "~/components/products/custom-tag";
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
 import { Button } from "~/components/ui/button";
 import {
@@ -19,12 +22,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { Label } from "~/components/ui/label";
+import { Switch } from "~/components/ui/switch";
 import type { ProductCategory } from "~/lib/models";
 import {
   createProductCategorySchemaResolver,
   type createProductCategorySchema,
 } from "~/lib/schema";
-import { getValidatedFormDataOrThrow } from "~/lib/utils";
+import { isGlobalAdmin } from "~/lib/users";
+import { getSearchParam, getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -35,14 +41,39 @@ export const action = async ({ request }: Route.ActionArgs) => {
   return api.productCategories.create(request, data);
 };
 
-export function loader({ request }: Route.LoaderArgs) {
-  return api.productCategories.list(request, { limit: 10000 });
+export async function loader({ request }: Route.LoaderArgs) {
+  const { user } = await requireUserSession(request);
+
+  const showAllProducts = getSearchParam(request, "show-all");
+
+  let onlyMyProductCategories = showAllProducts !== "true";
+  if (showAllProducts === undefined && isGlobalAdmin(user)) {
+    onlyMyProductCategories = false;
+  }
+
+  const query = { limit: 10000 } as QueryParams;
+
+  if (onlyMyProductCategories) {
+    query.client = {
+      externalId: user.clientId,
+    };
+  }
+
+  return api.productCategories.list(request, query).mapTo((r) => ({
+    productCategories: r.results,
+    onlyMyProductCategories,
+  }));
 }
 
 export default function ProductCategories({
-  loaderData: productCategories,
+  loaderData: { productCategories, onlyMyProductCategories },
 }: Route.ComponentProps) {
   const fetcher = useFetcher();
+  const navigate = useNavigate();
+
+  const setOnlyMyProductCategories = (value: boolean) => {
+    navigate(`?show-all=${!value}`);
+  };
 
   const [deleteAction, setDeleteAction] = useImmer({
     open: false,
@@ -120,6 +151,15 @@ export default function ProductCategories({
         ),
       },
       {
+        accessorKey: "client.name",
+        id: "owner",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) =>
+          getValue() ? <CustomTag text={getValue() as string} /> : <>&mdash;</>,
+      },
+      {
         id: "actions",
         cell: ({ row }) => {
           const category = row.original;
@@ -177,9 +217,22 @@ export default function ProductCategories({
     <>
       <DataTable
         columns={columns}
-        data={productCategories.results}
+        data={productCategories}
         searchPlaceholder="Search categories..."
         actions={[<EditProductCategoryButton key="add" />]}
+        externalFilters={[
+          <div
+            key="onlyMyProductCategories"
+            className="flex items-center space-x-2"
+          >
+            <Switch
+              id="onlyMyProductCategories"
+              checked={onlyMyProductCategories}
+              onCheckedChange={(checked) => setOnlyMyProductCategories(checked)}
+            />
+            <Label htmlFor="onlyMyProductCategories">Only My Categories</Label>
+          </div>,
+        ]}
       />
       <ConfirmationDialog
         open={deleteAction.open}

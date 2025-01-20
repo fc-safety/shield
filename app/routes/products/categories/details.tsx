@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Pencil } from "lucide-react";
-import { redirect, type UIMatch } from "react-router";
+import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator from "~/components/active-indicator";
@@ -53,8 +53,9 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       z.infer<typeof createAssetQuestionSchema>
     >(request, createAssetQuestionSchemaResolver);
 
-    const { init } = await api.productCategories.addQuestion(request, id, data);
-    return redirect(`/products/categories/${id}`, init ?? undefined);
+    return api.productCategories
+      .addQuestion(request, id, data)
+      .asRedirect(`/products/categories/${id}`);
   } else if (action === "update-asset-question") {
     const questionId = validateSearchParam(request, "questionId");
 
@@ -62,18 +63,15 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       z.infer<typeof updateAssetQuestionSchema>
     >(request, updateAssetQuestionSchemaResolver);
 
-    const { init } = await api.productCategories.updateQuestion(
-      request,
-      id,
-      questionId,
-      data
-    );
-    return redirect(`/products/categories/${id}`, init ?? undefined);
+    return api.productCategories
+      .updateQuestion(request, id, questionId, data)
+      .asRedirect(`/products/categories/${id}`);
   } else if (action === "delete-asset-question") {
     const questionId = validateSearchParam(request, "questionId");
 
-    const { init } = await api.products.deleteQuestion(request, id, questionId);
-    return redirect(`/products/categories/${id}`, init ?? undefined);
+    return api.products
+      .deleteQuestion(request, id, questionId)
+      .asRedirect(`/products/categories/${id}`);
   }
 
   if (request.method === "POST" || request.method === "PATCH") {
@@ -147,6 +145,14 @@ export default function ProductCategoryDetails({
                         iconId={productCategory.icon}
                         color={productCategory.color}
                       />
+                    ),
+                  },
+                  {
+                    label: "Owner",
+                    value: productCategory.client ? (
+                      productCategory.client.name
+                    ) : (
+                      <>&mdash;</>
                     ),
                   },
                 ]}
