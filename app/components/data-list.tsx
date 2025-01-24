@@ -1,6 +1,7 @@
 import { Label } from "@/components/ui/label";
 import type { ReactNode } from "react";
 import { Fragment } from "react/jsx-runtime";
+import { cn } from "~/lib/utils";
 
 interface DataListProps {
   title?: string;
@@ -10,17 +11,19 @@ interface DataListProps {
     hidden?: boolean;
   }[];
   defaultValue?: React.ReactNode;
+  className?: string;
 }
 
 export default function DataList({
   title,
   details,
   defaultValue = "",
+  className,
 }: DataListProps) {
   return (
-    <div className="grid gap-4">
+    <div className={cn("grid gap-4", className)}>
       {title && <Label>{title}</Label>}
-      <dl className="grid grid-cols-2 gap-y-2 gap-x-2">
+      <dl className="grid grid-cols-2 gap-y-2 gap-x-4 sm:gap-x-8">
         {details
           .filter(({ hidden }) => !hidden)
           .map(({ label, value }) => (

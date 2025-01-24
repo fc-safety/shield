@@ -14,10 +14,10 @@ import {
   LayoutDashboard,
   MessageCircleQuestion,
   Nfc,
-  Settings,
   Shapes,
   Shield,
   User2,
+  Users,
 } from "lucide-react";
 import { Link, NavLink, useMatches } from "react-router";
 import type { User } from "~/.server/authenticator";
@@ -90,11 +90,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
           url: "reports",
           icon: FileSpreadsheet,
         },
-        {
-          title: "Settings",
-          url: "settings",
-          icon: Settings,
-        },
       ],
     },
     {
@@ -129,6 +124,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
           title: "Tags",
           url: "admin/tags",
           icon: Nfc,
+        },
+        {
+          title: "Roles",
+          url: "admin/roles",
+          icon: Users,
+          hide: !user || !isGlobalAdmin(user),
         },
       ],
       hide: !user || !isGlobalAdmin(user),
@@ -281,11 +282,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 side="top"
                 className="w-[--radix-popper-anchor-width]"
               >
-                <DropdownMenuItem>
-                  <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Billing</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/account">Account</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/logout">

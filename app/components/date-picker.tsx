@@ -9,7 +9,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useState } from "react";
+import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 
 interface DatePickerProps {
   className?: string;
@@ -40,19 +41,11 @@ export const DatePicker = forwardRef<
     },
     ref
   ) => {
-    const opened = useRef(false);
     const [open, setOpen] = useState(false);
-
-    // Trigger onBlur when the popover is closed.
-    useEffect(() => {
-      if (opened.current && !open) {
-        onBlur?.();
-      }
-
-      if (open) {
-        opened.current = true;
-      }
-    }, [open, onBlur]);
+    useBlurOnClose({
+      onBlur,
+      open,
+    });
 
     return (
       <Popover open={open} onOpenChange={setOpen}>

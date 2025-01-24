@@ -25,7 +25,6 @@ export default [
       route(":id", "./routes/reports/details.tsx"),
       route("build/(:id)", "./routes/reports/build.tsx"),
     ]),
-    route("settings", "./routes/settings.tsx"),
 
     // Product Routes
     route("products", "./routes/products/layout.tsx", [
@@ -61,11 +60,18 @@ export default [
         index("./routes/admin/tags/index.tsx"),
         route(":id", "./routes/admin/tags/details.tsx"),
       ]),
+      route("roles", "./routes/admin/roles/layout.tsx", [
+        index("./routes/admin/roles/index.tsx"),
+        route(":id", "./routes/admin/roles/details.tsx"),
+      ]),
     ]),
 
     // Help routes
     route("faqs", "./routes/faqs.tsx"),
     route("contact", "./routes/contact.tsx"),
+
+    // User routes
+    route("account", "./routes/account.tsx"),
 
     route("*", "./routes/404.tsx"),
   ]),

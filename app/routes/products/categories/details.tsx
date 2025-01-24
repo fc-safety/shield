@@ -2,38 +2,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { Pencil } from "lucide-react";
 import { type UIMatch } from "react-router";
-import type { z } from "zod";
 import { api } from "~/.server/api";
+import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
 import Icon from "~/components/icons/icon";
 import AssetQuestionsTable from "~/components/products/asset-questions-table";
+import CustomTag from "~/components/products/custom-tag";
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
 import ProductCard from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
-import {
-  createAssetQuestionSchema,
-  createAssetQuestionSchemaResolver,
-  updateAssetQuestionSchema,
-  updateAssetQuestionSchemaResolver,
-  updateProductCategorySchemaResolver,
-  type updateProductCategorySchema,
-} from "~/lib/schema";
-import {
-  buildTitleFromBreadcrumb,
-  getSearchParams,
-  getValidatedFormDataOrThrow,
-  validateParam,
-  validateSearchParam,
-} from "~/lib/utils";
+import { isGlobalAdmin } from "~/lib/users";
+import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
   breadcrumb: ({
     data,
   }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
-    label: data?.name || "Details",
+    label: data?.productCategory.name || "Details",
   }),
 };
 
@@ -41,63 +29,23 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
-export const action = async ({ request, params }: Route.ActionArgs) => {
-  const id = validateParam(params, "id");
-
-  const searchParams = getSearchParams(request);
-
-  // Handle asset questions actions.
-  const action = searchParams.get("action");
-  if (action === "add-asset-question") {
-    const { data } = await getValidatedFormDataOrThrow<
-      z.infer<typeof createAssetQuestionSchema>
-    >(request, createAssetQuestionSchemaResolver);
-
-    return api.productCategories
-      .addQuestion(request, id, data)
-      .asRedirect(`/products/categories/${id}`);
-  } else if (action === "update-asset-question") {
-    const questionId = validateSearchParam(request, "questionId");
-
-    const { data } = await getValidatedFormDataOrThrow<
-      z.infer<typeof updateAssetQuestionSchema>
-    >(request, updateAssetQuestionSchemaResolver);
-
-    return api.productCategories
-      .updateQuestion(request, id, questionId, data)
-      .asRedirect(`/products/categories/${id}`);
-  } else if (action === "delete-asset-question") {
-    const questionId = validateSearchParam(request, "questionId");
-
-    return api.products
-      .deleteQuestion(request, id, questionId)
-      .asRedirect(`/products/categories/${id}`);
-  }
-
-  if (request.method === "POST" || request.method === "PATCH") {
-    const { data } = await getValidatedFormDataOrThrow<
-      z.infer<typeof updateProductCategorySchema>
-    >(request, updateProductCategorySchemaResolver);
-
-    return api.productCategories.update(request, id, data);
-  } else if (request.method === "DELETE") {
-    return api.productCategories.deleteAndRedirect(
-      request,
-      id,
-      "/products/categories"
-    );
-  }
-
-  throw new Response("Invalid method", { status: 405 });
-};
-
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
-  return api.productCategories.get(request, id);
+
+  const { user } = await requireUserSession(request);
+
+  return api.productCategories.get(request, id).mapTo((productCategory) => {
+    return {
+      productCategory,
+      canEdit:
+        isGlobalAdmin(user) ||
+        productCategory.client?.externalId === user.clientId,
+    };
+  });
 };
 
 export default function ProductCategoryDetails({
-  loaderData: productCategory,
+  loaderData: { productCategory, canEdit },
 }: Route.ComponentProps) {
   return (
     <div className="grid gap-4">
@@ -108,14 +56,16 @@ export default function ProductCategoryDetails({
               <div className="inline-flex items-center gap-4">
                 Product Category Details
                 <div className="flex gap-2">
-                  <EditProductCategoryButton
-                    productCategory={productCategory}
-                    trigger={
-                      <Button variant="secondary" size="icon" type="button">
-                        <Pencil />
-                      </Button>
-                    }
-                  />
+                  {canEdit && (
+                    <EditProductCategoryButton
+                      productCategory={productCategory}
+                      trigger={
+                        <Button variant="secondary" size="icon" type="button">
+                          <Pencil />
+                        </Button>
+                      }
+                    />
+                  )}
                 </div>
               </div>
               <ActiveIndicator active={productCategory.active} />
@@ -150,7 +100,7 @@ export default function ProductCategoryDetails({
                   {
                     label: "Owner",
                     value: productCategory.client ? (
-                      productCategory.client.name
+                      <CustomTag text={productCategory.client.name} />
                     ) : (
                       <>&mdash;</>
                     ),
@@ -184,6 +134,9 @@ export default function ProductCategoryDetails({
           <CardContent>
             <AssetQuestionsTable
               questions={productCategory.assetQuestions ?? []}
+              readOnly={!canEdit}
+              parentType="productCategory"
+              parentId={productCategory.id}
             />
           </CardContent>
         </Card>

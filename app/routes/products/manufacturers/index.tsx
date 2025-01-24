@@ -1,11 +1,9 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useFetcher, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useImmer } from "use-immer";
-import type { z } from "zod";
 import { api } from "~/.server/api";
-import type { QueryParams } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -24,22 +22,12 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Manufacturer } from "~/lib/models";
-import {
-  createManufacturerSchemaResolver,
-  type createManufacturerSchema,
-} from "~/lib/schema";
+import type { QueryParams } from "~/lib/urls";
 import { isGlobalAdmin } from "~/lib/users";
-import { getSearchParam, getValidatedFormDataOrThrow } from "~/lib/utils";
+import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
-
-export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow<
-    z.infer<typeof createManufacturerSchema>
-  >(request, createManufacturerSchemaResolver);
-
-  return api.manufacturers.create(request, data);
-};
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUserSession(request);
@@ -47,7 +35,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const showAllProducts = getSearchParam(request, "show-all");
 
   let onlyMyManufacturers = showAllProducts !== "true";
-  if (showAllProducts === undefined && isGlobalAdmin(user)) {
+  if (!showAllProducts && isGlobalAdmin(user)) {
     onlyMyManufacturers = false;
   }
 
@@ -69,7 +57,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function ProductManufacturers({
   loaderData: { manufacturers, onlyMyManufacturers },
 }: Route.ComponentProps) {
-  const fetcher = useFetcher();
+  const { submit: submitDelete } = useModalSubmit({
+    defaultErrorMessage: "Error: Failed to delete manufacturer",
+  });
   const navigate = useNavigate();
 
   const [deleteAction, setDeleteAction] = useImmer({
@@ -169,11 +159,11 @@ export default function ProductManufacturers({
                       draft.requiredUserInput =
                         manufacturer.name || manufacturer.id;
                       draft.action = () => {
-                        fetcher.submit(
+                        submitDelete(
                           {},
                           {
                             method: "delete",
-                            action: `/products/manufacturers/${manufacturer.id}`,
+                            action: `/api/proxy/manufacturers/${manufacturer.id}?_throw=false`,
                           }
                         );
                       };
@@ -189,7 +179,7 @@ export default function ProductManufacturers({
         },
       },
     ],
-    [fetcher, setDeleteAction]
+    [submitDelete, setDeleteAction]
   );
   return (
     <>

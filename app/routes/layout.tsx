@@ -1,6 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator";
-import { Toaster } from "@/components/ui/sonner";
 import { data, Outlet } from "react-router";
 import { requireUserSession } from "~/.server/sessions";
 import Footer from "~/components/footer";
@@ -44,7 +43,6 @@ export default function Layout({ loaderData: { user } }: Route.ComponentProps) {
           <Outlet />
         </main>
         <Footer />
-        <Toaster position="top-right" />
       </SidebarInset>
     </SidebarProvider>
   );

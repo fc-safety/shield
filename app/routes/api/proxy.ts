@@ -1,24 +1,45 @@
-import { authenticatedData, buildUrl } from "~/.server/api-utils";
+import { authenticatedData } from "~/.server/api-utils";
+import { API_BASE_URL } from "~/.server/config";
+import { buildUrl } from "~/lib/urls";
 import { getSearchParams, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/proxy";
 
-const proxy = ({ request, params }: Route.ActionArgs | Route.LoaderArgs) => {
+const proxy = async ({
+  request,
+  params,
+}: Route.ActionArgs | Route.LoaderArgs) => {
   const pathSplat = validateParam(params, "*");
   const query = getSearchParams(request);
   const headers = new Headers(request.headers);
 
   headers.delete("cookie");
 
-  return authenticatedData(request, [
+  const method = (query.get("_method") ?? request.method).toUpperCase();
+  query.delete("_method");
+
+  const doThrow = query.get("_throw") !== "false";
+  query.delete("_throw");
+
+  const awaitableData = authenticatedData(request, [
     {
-      url: buildUrl(pathSplat, Object.fromEntries(query.entries())),
+      url: buildUrl(
+        pathSplat,
+        API_BASE_URL,
+        Object.fromEntries(query.entries())
+      ),
       options: {
-        method: request.method,
-        body: request.method !== "GET" ? request.body : undefined,
+        method: method,
+        body: method !== "GET" ? await request.text() : undefined,
         headers,
       },
     },
   ]);
+
+  if (doThrow) {
+    return awaitableData;
+  }
+
+  return awaitableData.catchResponse();
 };
 
 export const action = proxy;

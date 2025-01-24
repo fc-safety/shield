@@ -1,11 +1,9 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useFetcher, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useImmer } from "use-immer";
-import type { z } from "zod";
 import { api } from "~/.server/api";
-import type { QueryParams } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -24,22 +22,12 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { ProductCategory } from "~/lib/models";
-import {
-  createProductCategorySchemaResolver,
-  type createProductCategorySchema,
-} from "~/lib/schema";
+import type { QueryParams } from "~/lib/urls";
 import { isGlobalAdmin } from "~/lib/users";
-import { getSearchParam, getValidatedFormDataOrThrow } from "~/lib/utils";
+import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
-
-export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow<
-    z.infer<typeof createProductCategorySchema>
-  >(request, createProductCategorySchemaResolver);
-
-  return api.productCategories.create(request, data);
-};
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUserSession(request);
@@ -47,7 +35,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const showAllProducts = getSearchParam(request, "show-all");
 
   let onlyMyProductCategories = showAllProducts !== "true";
-  if (showAllProducts === undefined && isGlobalAdmin(user)) {
+  if (!showAllProducts && isGlobalAdmin(user)) {
     onlyMyProductCategories = false;
   }
 
@@ -68,7 +56,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function ProductCategories({
   loaderData: { productCategories, onlyMyProductCategories },
 }: Route.ComponentProps) {
-  const fetcher = useFetcher();
+  const { submit: submitDelete } = useModalSubmit({
+    defaultErrorMessage: "Error: Failed to delete product category",
+  });
   const navigate = useNavigate();
 
   const setOnlyMyProductCategories = (value: boolean) => {
@@ -191,11 +181,11 @@ export default function ProductCategories({
                       }?`;
                       draft.requiredUserInput = category.name || category.id;
                       draft.action = () => {
-                        fetcher.submit(
+                        submitDelete(
                           {},
                           {
                             method: "delete",
-                            action: `/products/categories/${category.id}`,
+                            action: `/api/proxy/product-categories/${category.id}`,
                           }
                         );
                       };
@@ -211,7 +201,7 @@ export default function ProductCategories({
         },
       },
     ],
-    [fetcher, setDeleteAction]
+    [submitDelete, setDeleteAction]
   );
   return (
     <>

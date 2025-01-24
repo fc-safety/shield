@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Pencil, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
+import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import type { ProductCategory, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import Icon from "../icons/icon";
@@ -35,7 +36,6 @@ export default function ProductCategorySelector({
   disabled,
   className,
 }: ProductCategorySelectorProps) {
-  const opened = useRef(false);
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
   const fetcher = useFetcher<ResultsPage<ProductCategory>>();
@@ -47,16 +47,10 @@ export default function ProductCategorySelector({
     [categories, value]
   );
 
-  // Trigger onBlur when the dialog is closed.
-  useEffect(() => {
-    if (opened.current && !open) {
-      onBlur?.();
-    }
-
-    if (open) {
-      opened.current = true;
-    }
-  }, [open, onBlur]);
+  useBlurOnClose({
+    onBlur,
+    open,
+  });
 
   // Preload the product categories lazily.
   const handlePreload = useCallback(() => {
@@ -183,20 +177,22 @@ export default function ProductCategorySelector({
 interface ProductCategoryCardProps {
   productCategory: ProductCategory | undefined;
   renderEditButton?: () => React.ReactNode;
+  className?: string;
 }
 
 export function ProductCategoryCard({
   productCategory,
   renderEditButton,
+  className,
 }: ProductCategoryCardProps) {
   return (
-    <Card>
+    <Card className={className}>
       {productCategory ? (
         <>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <div className="grid gap-2">
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center flex-wrap">
                   {productCategory.icon && (
                     <Icon
                       iconId={productCategory.icon}
@@ -204,7 +200,9 @@ export function ProductCategoryCard({
                       className="text-lg"
                     />
                   )}
-                  {productCategory?.name}
+                  <span className="min-w-min flex-1">
+                    {productCategory?.name}
+                  </span>
                   {productCategory.shortName && (
                     <Badge
                       className={cn("text-sm uppercase w-max")}

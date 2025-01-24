@@ -10,9 +10,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Form } from "react-router";
-import { useRemixForm } from "remix-hook-form";
+import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { ProductCategory } from "~/lib/models";
 import {
   createProductCategorySchemaResolver,
@@ -46,7 +46,7 @@ export default function ProductCategoryDetailsForm({
 }: ProductCategoryDetailsFormProps) {
   const isNew = !productCategory;
 
-  const form = useRemixForm<TForm>({
+  const form = useForm<TForm>({
     resolver: isNew
       ? createProductCategorySchemaResolver
       : updateProductCategorySchemaResolver,
@@ -57,28 +57,41 @@ export default function ProductCategoryDetailsForm({
           description: productCategory.description ?? "",
           icon: productCategory.icon ?? "",
           color: productCategory.color ?? "",
+          client: productCategory.client
+            ? { connect: { id: productCategory.client.id } }
+            : undefined,
         }
       : FORM_DEFAULTS,
     mode: "onBlur",
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid },
     watch,
   } = form;
 
   const color = watch("color");
 
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+    onSubmitted,
+  });
+
+  const handleSubmit = (data: TForm) => {
+    submit(data, {
+      path: "/api/proxy/product-categories",
+      id: productCategory?.id,
+      query: {
+        _throw: "false",
+      },
+    });
+  };
+
   return (
     <FormProvider {...form}>
-      <Form
+      <form
         className="space-y-4"
         method="post"
-        onSubmit={(e) => {
-          form.handleSubmit(e).then(() => {
-            onSubmitted?.();
-          });
-        }}
+        onSubmit={form.handleSubmit(handleSubmit)}
       >
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
@@ -176,7 +189,7 @@ export default function ProductCategoryDetailsForm({
         >
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
-      </Form>
+      </form>
     </FormProvider>
   );
 }

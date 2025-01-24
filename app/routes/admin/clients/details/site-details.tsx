@@ -1,8 +1,8 @@
 import { format } from "date-fns";
-import { Pencil } from "lucide-react";
+import { Boxes, Pencil, Users, Warehouse } from "lucide-react";
 import { Link, type UIMatch } from "react-router";
-import type { z } from "zod";
 import { api } from "~/.server/api";
+import ClientUsersTable from "~/components/clients/client-users-table";
 import EditSiteButton from "~/components/clients/edit-site-button";
 import SitesTable from "~/components/clients/sites-table";
 import { CopyableText } from "~/components/copyable-text";
@@ -10,14 +10,10 @@ import DataList from "~/components/data-list";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
-import { baseSiteSchema, getSiteSchemaResolver } from "~/lib/schema";
 import {
   beautifyPhone,
   buildTitleFromBreadcrumb,
-  getValidatedFormDataOrThrow,
   validateParam,
-  validateParams,
-  validateSearchParam,
 } from "~/lib/utils";
 import type { Route } from "./+types/site-details";
 
@@ -25,7 +21,7 @@ export const handle = {
   breadcrumb: ({
     data,
   }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
-    label: data?.name || "Site Details",
+    label: data?.site.name || "Site Details",
   }),
 };
 
@@ -33,34 +29,33 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
-export const action = async ({ request, params }: Route.ActionArgs) => {
-  const { id, siteId } = validateParams(params, ["id", "siteId"]);
-  const action = validateSearchParam(request, "action");
-
-  const create = action === "create-site";
-
-  if (request.method === "POST" || request.method === "PATCH") {
-    const { data } = await getValidatedFormDataOrThrow<
-      z.infer<typeof baseSiteSchema>
-    >(request, getSiteSchemaResolver({ create }));
-
-    return create
-      ? api.sites.create(request, data)
-      : api.sites.update(request, siteId, data);
-  } else if (request.method === "DELETE") {
-    return api.sites.deleteAndRedirect(request, siteId, `/admin/clients/${id}`);
-  }
-
-  throw new Response("Invalid method", { status: 405 });
-};
-
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const siteId = validateParam(params, "siteId");
-  return api.sites.get(request, siteId);
+  return api.sites.get(request, siteId).mapWith((site) =>
+    api.clients
+      .users(site.clientId)
+      .list(request, { siteId: site.externalId, limit: 10000 })
+      .catchResponse()
+      .mapTo((dataOrError) => {
+        // Catch 403s from the API. If access is forbidden, only hide the users part and not the entire page.
+        if (
+          dataOrError.error &&
+          dataOrError.error instanceof Response &&
+          dataOrError.error.status !== 403
+        ) {
+          throw dataOrError.error;
+        }
+
+        return {
+          site,
+          users: dataOrError.data?.results,
+        };
+      })
+  );
 };
 
 export default function SiteDetails({
-  loaderData: site,
+  loaderData: { site, users },
 }: Route.ComponentProps) {
   const isSiteGroup = site?.subsites && site.subsites.length > 0;
 
@@ -68,21 +63,24 @@ export default function SiteDetails({
     <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
         <CardHeader>
-          <div className="inline-flex items-center gap-4">
-            Site {isSiteGroup ? "Group " : ""}Details
-            <div className="flex gap-2">
-              <EditSiteButton
-                site={site}
-                clientId={site.clientId}
-                trigger={
-                  <Button variant="secondary" size="icon" type="button">
-                    <Pencil />
-                  </Button>
-                }
-                isSiteGroup={isSiteGroup}
-              />
+          <CardTitle>
+            {isSiteGroup ? <Boxes /> : <Warehouse />}
+            <div className="inline-flex items-center gap-4">
+              Site {isSiteGroup ? "Group " : ""}Details
+              <div className="flex gap-2">
+                <EditSiteButton
+                  site={site}
+                  clientId={site.clientId}
+                  trigger={
+                    <Button variant="secondary" size="icon" type="button">
+                      <Pencil />
+                    </Button>
+                  }
+                  isSiteGroup={isSiteGroup}
+                />
+              </div>
             </div>
-          </div>
+          </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-8">
           {/* <SiteDetailsForm clientId={site.clientId} site={site} /> */}
@@ -168,7 +166,9 @@ export default function SiteDetails({
         {site.subsites && site.subsites.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Subsites</CardTitle>
+              <CardTitle>
+                <Warehouse /> Subsites
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <SitesTable
@@ -181,6 +181,22 @@ export default function SiteDetails({
           </Card>
         )}
       </div>
+      {users && (
+        <Card className="col-span-full">
+          <CardHeader>
+            <CardTitle>
+              <Users /> Users
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ClientUsersTable
+              users={users}
+              clientId={site.clientId}
+              siteExternalId={site.externalId}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

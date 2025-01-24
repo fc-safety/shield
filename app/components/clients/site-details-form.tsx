@@ -8,13 +8,15 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Form, useFetcher } from "react-router";
-import { useRemixForm } from "remix-hook-form";
+import { useForm } from "react-hook-form";
+import { useFetcher } from "react-router";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { type ResultsPage, type Site } from "~/lib/models";
-import { baseSiteSchema, getSiteSchemaResolver } from "~/lib/schema";
+import { baseSiteSchema, getSiteSchema } from "~/lib/schema";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
 import { Checkbox } from "../ui/checkbox";
@@ -73,8 +75,8 @@ export default function SiteDetailsForm({
     [clientId, parentSiteId]
   );
 
-  const form = useRemixForm<TForm>({
-    resolver: getSiteSchemaResolver({ create: !site, isSiteGroup }),
+  const form = useForm<TForm>({
+    resolver: zodResolver(getSiteSchema({ create: !site, isSiteGroup })),
     values: site
       ? {
           ...site,
@@ -96,18 +98,19 @@ export default function SiteDetailsForm({
                 },
               }
             : undefined,
-          subsites: site.subsites
-            ? {
-                set: site.subsites.map((s) => ({ id: s.id })),
-              }
-            : undefined,
+          subsites:
+            isSiteGroup && site.subsites
+              ? {
+                  set: site.subsites.map((s) => ({ id: s.id })),
+                }
+              : undefined,
         }
       : FORM_DEFAULTS,
     mode: "onBlur",
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid },
     watch,
     setValue,
   } = form;
@@ -173,19 +176,23 @@ export default function SiteDetailsForm({
     );
   }, [subsitesFetcher.data]);
 
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+    onSubmitted,
+  });
+
+  const handleSubmit = (data: TForm) => {
+    submit(data, {
+      path: "/api/proxy/sites",
+      id: site?.id,
+      query: {
+        _throw: "false",
+      },
+    });
+  };
+
   return (
     <FormProvider {...form}>
-      <Form
-        className="space-y-4"
-        method="post"
-        action={isNew ? "?action=create-site" : "?action=update-site"}
-        onSubmit={(e) => {
-          form.handleSubmit(e).then(() => {
-            onSubmitted?.();
-          });
-        }}
-        onMouseOver={isSiteGroup ? handleSubsitesLoad : () => {}}
-      >
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
         <Input type="hidden" {...form.register("client.connect.id")} hidden />
         {!isSiteGroup && (
@@ -408,7 +415,7 @@ export default function SiteDetailsForm({
         >
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
-      </Form>
+      </form>
     </FormProvider>
   );
 }

@@ -9,17 +9,18 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Frown, Nfc } from "lucide-react";
+import { Nfc } from "lucide-react";
 import { isIPv4, isIPv6 } from "net";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray } from "react-hook-form";
-import { Form, isRouteErrorResponse, redirect } from "react-router";
+import { Form, redirect } from "react-router";
 import { useRemixForm } from "remix-hook-form";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import DataList from "~/components/data-list";
+import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import ProductCard from "~/components/products/product-card";
 import {
   AlertDialog,
@@ -40,7 +41,6 @@ import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import {
   buildTitle,
   getValidatedFormDataOrThrow,
-  isNil,
   validateSearchParam,
 } from "~/lib/utils";
 import type { Route } from "./+types/index";
@@ -87,28 +87,7 @@ export const meta: Route.MetaFunction = ({ data, matches }) => {
 };
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  return (
-    <Card className="max-w-lg w-full">
-      <CardHeader className="text-center">
-        <CardTitle className="text-4xl">
-          Oops <Frown className="inline size-8" />
-        </CardTitle>
-        <CardDescription>No asset found.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center gap-2">
-        <p className="text-center text-sm">
-          Try scanning another tag
-          <Nfc className="inline size-4 text-primary" />
-        </p>
-
-        {!isNil(error) && isRouteErrorResponse(error) && (
-          <p className="mt-6 text-muted-foreground text-sm">
-            Error details: {error.data}
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
+  return <InspectErrorBoundary error={error} />;
 }
 
 type TForm = z.infer<typeof createInspectionSchema>;

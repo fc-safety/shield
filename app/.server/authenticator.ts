@@ -1,6 +1,7 @@
 import { Authenticator } from "remix-auth";
 import { OAuth2Strategy } from "remix-auth-oauth2";
 import { z } from "zod";
+import { getSearchParams } from "~/lib/utils";
 import { isValidPermission, type TPermission } from "../lib/permissions";
 import { CLIENT_ID, CLIENT_SECRET, ISSUER_URL, REDIRECT_URL } from "./config";
 
@@ -23,8 +24,6 @@ export type User = {
   tokens: Tokens;
 };
 
-export const authenticator = new Authenticator<Tokens>();
-
 export const buildUser = async (tokens: {
   accessToken: string | (() => string);
   refreshToken: string | (() => string);
@@ -39,7 +38,25 @@ export const buildUser = async (tokens: {
   return buildUserFromToken(parsedToken, { accessToken, refreshToken });
 };
 
-export const strategy = OAuth2Strategy.discover<Tokens>(
+class KeycloakOAuth2Strategy<User> extends OAuth2Strategy<User> {
+  override name = "keycloak-oauth2";
+
+  protected authorizationParams(
+    params: URLSearchParams,
+    request: Request
+  ): URLSearchParams {
+    const newParams = super.authorizationParams(params, request);
+
+    const queryParams = getSearchParams(request);
+    if (queryParams.has("action")) {
+      newParams.set("kc_action", queryParams.get("action")!.toUpperCase());
+    }
+
+    return newParams;
+  }
+}
+
+export const strategy = KeycloakOAuth2Strategy.discover<Tokens>(
   ISSUER_URL,
   {
     clientId: CLIENT_ID,
@@ -55,7 +72,11 @@ export const strategy = OAuth2Strategy.discover<Tokens>(
   }
 );
 
-strategy.then((s) => authenticator.use(s, "oauth2"));
+export const authenticator = strategy.then((s) => {
+  const authn = new Authenticator<Tokens>();
+  authn.use(s, "oauth2");
+  return authn;
+});
 
 const keycloakTokenPayloadSchema = z.object({
   sub: z.string(),

@@ -16,6 +16,7 @@ interface ProductCardProps {
   displayManufacturer?: boolean;
   displayActiveIndicator?: boolean;
   navigateTo?: To;
+  className?: string;
 }
 
 export default function ProductCard({
@@ -25,9 +26,10 @@ export default function ProductCard({
   displayManufacturer = true,
   displayActiveIndicator = true,
   navigateTo,
+  className,
 }: ProductCardProps) {
   return (
-    <Card className="flex">
+    <Card className={cn("flex", className)}>
       {product ? (
         <>
           <ProductImage
@@ -56,7 +58,7 @@ export default function ProductCard({
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col gap-4 justify-between">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground inline-flex flex-col justify-between gap-2">
                 {product.description ?? <>&mdash;</>}
                 {product.client && (
                   <span className="mt-2 text-xs text-muted-foreground">

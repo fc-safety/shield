@@ -13,17 +13,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Pencil, Search } from "lucide-react";
 import type React from "react";
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Await, useFetcher } from "react-router";
 import { useImmer } from "use-immer";
 import { create } from "zustand";
+import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import type {
   Manufacturer,
   Product,
@@ -31,7 +25,9 @@ import type {
   ResultsPage,
 } from "~/lib/models";
 import { cn, dedupById } from "~/lib/utils";
+import { ManufacturerCard } from "./manufacturer-selector";
 import ProductCard from "./product-card";
+import { ProductCategoryCard } from "./product-category-selector";
 
 interface ProductSelectorProps {
   value?: string;
@@ -101,7 +97,6 @@ export default function ProductSelector({
   className,
   readOnly = false,
 }: ProductSelectorProps) {
-  const opened = useRef(false);
   const [open, setOpen] = useState(false);
   const fetcher = useFetcher<ResultsPage<Product>>();
 
@@ -173,16 +168,10 @@ export default function ProductSelector({
     open && handleReset();
   }, [open, handleReset]);
 
-  // Trigger onBlur when the dialog is closed.
-  useEffect(() => {
-    if (opened.current && !open) {
-      onBlur?.();
-    }
-
-    if (open) {
-      opened.current = true;
-    }
-  }, [open, onBlur]);
+  useBlurOnClose({
+    onBlur,
+    open,
+  });
 
   // Preload the products lazily.
   const handlePreload = useCallback(() => {
@@ -402,16 +391,12 @@ function StepSelectProductCategory({
                     />
                     <Label
                       htmlFor={productCategory.id}
-                      className="font-semibold h-full flex flex-col gap-2 items-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      className="font-semibold h-full block overflow-hidden rounded-md border-2 border-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                     >
-                      {productCategory.shortName && (
-                        <span className="uppercase">
-                          {productCategory.shortName}
-                        </span>
-                      )}
-                      <span className="font-regular text-xs text-center">
-                        {productCategory.name}
-                      </span>
+                      <ProductCategoryCard
+                        productCategory={productCategory}
+                        className="w-full h-full rounded-none border-none bg-popover hover:bg-accent hover:text-accent-foreground"
+                      />
                     </Label>
                   </div>
                 ))}
@@ -460,9 +445,12 @@ function StepSelectManufacturer({
                     />
                     <Label
                       htmlFor={manufacturer.id}
-                      className="font-semibold h-full flex flex-col gap-2 items-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      className="font-semibold h-full block overflow-hidden rounded-md border-2 border-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                     >
-                      {manufacturer.name}
+                      <ManufacturerCard
+                        manufacturer={manufacturer}
+                        className="w-full h-full rounded-none border-none bg-popover hover:bg-accent hover:text-accent-foreground"
+                      />
                     </Label>
                   </div>
                 ))}
@@ -493,7 +481,7 @@ function StepSelectProduct({
           {(value) => (
             <RadioGroup
               defaultValue="card"
-              className="grid grid-cols-2 gap-4"
+              className="grid gap-4"
               onValueChange={setProductId}
               value={productId ?? ""}
             >
@@ -510,14 +498,12 @@ function StepSelectProduct({
                     />
                     <Label
                       htmlFor={product.id}
-                      className="font-semibold text-center h-full flex flex-col gap-2 items-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      className="font-semibold h-full block overflow-hidden rounded-xl border-2 border-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                     >
-                      {product.name}
-                      {product.description && (
-                        <span className="font-light text-xs text-muted-foreground">
-                          {product.description}
-                        </span>
-                      )}
+                      <ProductCard
+                        product={product}
+                        className="w-full h-full rounded-none border-none hover:opacity-80 transition-opacity"
+                      />
                     </Label>
                   </div>
                 ))}

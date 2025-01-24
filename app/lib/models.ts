@@ -54,6 +54,8 @@ export interface Tag extends BaseModel {
   asset?: Asset | null;
   siteId?: string;
   clientId?: string;
+  client?: Client | null;
+  site?: Site | null;
 }
 
 export interface Inspection extends BaseModel {

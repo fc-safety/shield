@@ -23,11 +23,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 interface AssetQuestionsTableProps {
   questions: AssetQuestion[];
   readOnly?: boolean;
+  parentType: "product" | "productCategory";
+  parentId: string;
 }
 
 export default function AssetQuestionsTable({
   questions,
   readOnly = false,
+  parentType,
+  parentId,
 }: AssetQuestionsTableProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<AssetQuestion>();
@@ -173,6 +177,8 @@ export default function AssetQuestionsTable({
                   existingInspectionQuestionsCount={
                     existingInspectionQuestionsCount
                   }
+                  parentType={parentType}
+                  parentId={parentId}
                 />,
               ]
         }
@@ -202,6 +208,8 @@ export default function AssetQuestionsTable({
             onSubmitted={() => setEditOpen(false)}
             existingSetupQuestionsCount={existingSetupQuestionsCount}
             existingInspectionQuestionsCount={existingInspectionQuestionsCount}
+            parentType={parentType}
+            parentId={parentId}
           />
         </DialogContent>
       </Dialog>

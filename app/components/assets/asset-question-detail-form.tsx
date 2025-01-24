@@ -21,10 +21,9 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
-import { useFormContext } from "react-hook-form";
-import { Form } from "react-router";
-import { useRemixForm } from "remix-hook-form";
+import { useForm, useFormContext } from "react-hook-form";
 import type { z } from "zod";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import {
   AlertLevels,
   AssetQuestionResponseTypes,
@@ -53,6 +52,8 @@ export interface AssetQuestionDetailFormProps {
   onSubmitted?: () => void;
   existingSetupQuestionsCount?: number;
   existingInspectionQuestionsCount?: number;
+  parentType: "product" | "productCategory";
+  parentId: string;
 }
 
 const FORM_DEFAULTS = {
@@ -68,10 +69,12 @@ export default function AssetQuestionDetailForm({
   onSubmitted,
   existingSetupQuestionsCount = 0,
   existingInspectionQuestionsCount = 0,
+  parentType,
+  parentId,
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
 
-  const form = useRemixForm<TForm>({
+  const form = useForm<TForm>({
     resolver: assetQuestion
       ? updateAssetQuestionSchemaResolver
       : createAssetQuestionSchemaResolver,
@@ -98,7 +101,7 @@ export default function AssetQuestionDetailForm({
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid },
     watch,
     setValue,
   } = form;
@@ -189,22 +192,25 @@ export default function AssetQuestionDetailForm({
     );
   };
 
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+    onSubmitted,
+  });
+
+  const handleSubmit = (data: TForm) => {
+    const resourceName =
+      parentType === "product" ? "products" : "product-categories";
+    submit(data, {
+      path: `/api/proxy/${resourceName}/${parentId}/questions`,
+      id: assetQuestion?.id,
+      query: {
+        _throw: "false",
+      },
+    });
+  };
+
   return (
     <FormProvider {...form}>
-      <Form
-        className="space-y-4"
-        method={"post"}
-        action={
-          isNew
-            ? "?action=add-asset-question"
-            : "?action=update-asset-question&questionId=" + assetQuestion?.id
-        }
-        onSubmit={(e) => {
-          form.handleSubmit(e).then(() => {
-            onSubmitted?.();
-          });
-        }}
-      >
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}
@@ -370,7 +376,7 @@ export default function AssetQuestionDetailForm({
         >
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
-      </Form>
+      </form>
     </FormProvider>
   );
 }

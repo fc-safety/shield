@@ -13,7 +13,9 @@ import {
 } from "~/lib/models";
 import {
   createInspectionSchema,
+  createRoleSchema,
   resolveAlertSchema,
+  updateRoleSchema,
   type baseSiteSchema,
   type createAssetQuestionSchema,
   type createAssetSchema,
@@ -31,6 +33,7 @@ import {
   type updateProductSchema,
   type updateTagSchema,
 } from "~/lib/schema";
+import type { ClientUser, Role } from "~/lib/types";
 import { authenticatedData, CRUD, FetchOptions } from "./api-utils";
 
 const backendCreateInspectionSchema = createInspectionSchema.extend({
@@ -198,12 +201,19 @@ export const api = {
   },
 
   // CLIENTS & SITES
-  clients: CRUD.for<
-    Client,
-    typeof createClientSchema,
-    typeof updateClientSchema
-  >("/clients").all(),
+  clients: {
+    ...CRUD.for<Client, typeof createClientSchema, typeof updateClientSchema>(
+      "/clients"
+    ).all(),
+    users: (clientId: string) =>
+      CRUD.for<ClientUser, never, never>(`/clients/${clientId}/users`).all(),
+  },
   sites: CRUD.for<Site, typeof baseSiteSchema, typeof baseSiteSchema>(
     "/sites"
   ).except(["list"]),
+
+  // Other ADMIN
+  roles: CRUD.for<Role, typeof createRoleSchema, typeof updateRoleSchema>(
+    "/roles"
+  ).all(),
 };

@@ -1,13 +1,6 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Outlet, type UIMatch } from "react-router";
-import type { z } from "zod";
 import { api } from "~/.server/api";
-import { baseSiteSchema } from "~/lib/schema";
-import {
-  buildTitleFromBreadcrumb,
-  getValidatedFormDataOrThrow,
-  validateParam,
-} from "~/lib/utils";
+import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
 export const handle = {
@@ -19,14 +12,6 @@ export const handle = {
 export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
-
-export async function action({ request }: Route.ActionArgs) {
-  const { data } = await getValidatedFormDataOrThrow<
-    z.infer<typeof baseSiteSchema>
-  >(request, zodResolver(baseSiteSchema));
-
-  return api.sites.create(request, data);
-}
 
 export function loader({ params, request }: Route.LoaderArgs) {
   const id = validateParam(params, "id");

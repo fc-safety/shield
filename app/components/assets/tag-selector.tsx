@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Nfc, Pencil, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
+import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import type { ResultsPage, Tag } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import { CopyableText } from "../copyable-text";
@@ -33,10 +34,14 @@ export default function TagSelector({
   disabled,
   className,
 }: TagSelectorProps) {
-  const opened = useRef(false);
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
   const fetcher = useFetcher<ResultsPage<Tag>>();
+
+  useBlurOnClose({
+    onBlur,
+    open,
+  });
 
   const [tags, setTags] = useState<Tag[]>([]);
 
@@ -44,17 +49,6 @@ export default function TagSelector({
     () => tags.find((c) => c.id === value),
     [tags, value]
   );
-
-  // Trigger onBlur when the dialog is closed.
-  useEffect(() => {
-    if (opened.current && !open) {
-      onBlur?.();
-    }
-
-    if (open) {
-      opened.current = true;
-    }
-  }, [open, onBlur]);
 
   // Preload all tags lazily.
   const handlePreload = useCallback(() => {
@@ -114,6 +108,11 @@ export default function TagSelector({
           <DialogTitle>Find Tag by Serial No.</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-96 border-b border-t px-6 self-stretch">
+          {tags.length === 0 && (
+            <div className="text-sm flex flex-col items-center p-4 mt-2">
+              No tags found.
+            </div>
+          )}
           <RadioGroup
             defaultValue="card"
             className="grid grid-cols-2 gap-4 py-2"

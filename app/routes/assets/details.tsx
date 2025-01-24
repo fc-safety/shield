@@ -6,7 +6,20 @@ import {
   isValid,
   parseISO,
 } from "date-fns";
-import { Check, ClipboardCheck, Pencil, ShieldAlert, X } from "lucide-react";
+import {
+  BellRing,
+  Check,
+  ClipboardCheck,
+  Package,
+  Pencil,
+  Route as RouteIcon,
+  SearchCheck,
+  Shield,
+  ShieldAlert,
+  SquareStack,
+  Thermometer,
+  X,
+} from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
 import { type UIMatch } from "react-router";
 import type { z } from "zod";
@@ -89,7 +102,7 @@ export default function AssetDetails({
     <div className="grid gap-y-4 gap-x-2 sm:gap-x-4">
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(250px,_1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
         <StatusCard asset={asset} />
-        <BasicCard title="Inspection Route">
+        <BasicCard title="Inspection Route" icon={RouteIcon}>
           <div className="space-y-4">
             <p className="text-muted-foreground text-xs">
               No route has been configured yet for this asset.
@@ -103,7 +116,8 @@ export default function AssetDetails({
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
         <Card className="h-max">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle>
+              <Shield />
               <div className="inline-flex items-center gap-4">
                 Asset Details
                 <div className="flex gap-2">
@@ -117,6 +131,7 @@ export default function AssetDetails({
                   />
                 </div>
               </div>
+              <div className="flex-1"></div>
               <ActiveIndicator active={asset.active} />
             </CardTitle>
           </CardHeader>
@@ -224,18 +239,34 @@ export default function AssetDetails({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="consumables">
-            <BasicCard title="Requests" className="rounded-b-none">
+            <BasicCard
+              title="Requests"
+              className="rounded-b-none"
+              icon={Package}
+            >
               <AssetOrderRequests />
             </BasicCard>
-            <BasicCard title="Consumables" className="rounded-t-none">
+            <BasicCard
+              title="Consumables"
+              className="rounded-t-none"
+              icon={SquareStack}
+            >
               <ConsumablesTable consumables={asset.consumables ?? []} />
             </BasicCard>
           </TabsContent>
           <TabsContent value="alerts">
-            <BasicCard title="Notifications" className="rounded-b-none">
+            <BasicCard
+              title="Notifications"
+              className="rounded-b-none"
+              icon={BellRing}
+            >
               <SendNotificationsForm />
             </BasicCard>
-            <BasicCard title="History" className="rounded-t-none">
+            <BasicCard
+              title="Alert History"
+              className="rounded-t-none"
+              icon={ShieldAlert}
+            >
               <AlertsTable alerts={asset.alerts ?? []} />
             </BasicCard>
           </TabsContent>
@@ -243,7 +274,9 @@ export default function AssetDetails({
       </div>
       <Card id="inspections">
         <CardHeader>
-          <CardTitle>Inspection History</CardTitle>
+          <CardTitle>
+            <SearchCheck /> Inspection History
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <AssetInspections
@@ -258,13 +291,20 @@ export default function AssetDetails({
 
 function BasicCard({
   title,
+  icon: IconComponent,
   className,
   children,
-}: PropsWithChildren<{ title: string; className?: string }>) {
+}: PropsWithChildren<{
+  title: string;
+  icon?: React.ComponentType;
+  className?: string;
+}>) {
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>
+          {IconComponent && <IconComponent />} {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
@@ -273,7 +313,7 @@ function BasicCard({
 
 function StatusCard({ asset }: { asset: Asset }) {
   return (
-    <BasicCard title="Status">
+    <BasicCard title="Status" icon={Thermometer}>
       <div className="grid gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">

@@ -12,16 +12,17 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Form } from "react-router";
-import { useRemixForm } from "remix-hook-form";
+import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { ProductTypes, type Product } from "~/lib/models";
 import {
+  createProductSchema,
   createProductSchemaResolver,
   updateProductSchemaResolver,
-  type createProductSchema,
   type updateProductSchema,
 } from "~/lib/schema";
+import ClientCombobox from "../clients/client-combobox";
 import ManufacturerSelector from "./manufacturer-selector";
 import ProductCategorySelector from "./product-category-selector";
 
@@ -29,6 +30,7 @@ type TForm = z.infer<typeof createProductSchema | typeof updateProductSchema>;
 interface ProductDetailsFormProps {
   product?: Product;
   onSubmitted?: () => void;
+  canAssignOwnership?: boolean;
 }
 
 const FORM_DEFAULTS = {
@@ -44,10 +46,11 @@ const FORM_DEFAULTS = {
 export default function ProductDetailsForm({
   product,
   onSubmitted,
+  canAssignOwnership = false,
 }: ProductDetailsFormProps) {
   const isNew = !product;
 
-  const form = useRemixForm<TForm>({
+  const form = useForm<TForm>({
     resolver: isNew ? createProductSchemaResolver : updateProductSchemaResolver,
     values: product
       ? {
@@ -66,26 +69,35 @@ export default function ProductDetailsForm({
           sku: product.sku ?? "",
           productUrl: product.productUrl ?? "",
           imageUrl: product.imageUrl ?? "",
+          client: product.client
+            ? { connect: { id: product.client.id } }
+            : undefined,
         }
       : FORM_DEFAULTS,
     mode: "onBlur",
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid },
   } = form;
+
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+    onSubmitted,
+  });
+
+  const handleSubmit = (data: TForm) => {
+    submit(data, {
+      path: "/api/proxy/products",
+      id: product?.id,
+      query: {
+        _throw: "false",
+      },
+    });
+  };
 
   return (
     <FormProvider {...form}>
-      <Form
-        className="space-y-4"
-        method="post"
-        onSubmit={(e) => {
-          form.handleSubmit(e).then(() => {
-            onSubmitted?.();
-          });
-        }}
-      >
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}
@@ -232,13 +244,32 @@ export default function ProductDetailsForm({
             </FormItem>
           )}
         />
+        {canAssignOwnership && (
+          <FormField
+            control={form.control}
+            name="client.connect.id"
+            render={({ field: { value, onChange } }) => (
+              <FormItem>
+                <FormLabel>Owner</FormLabel>
+                <FormControl>
+                  <ClientCombobox
+                    value={value}
+                    onValueChange={onChange}
+                    className="w-full"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <Button
           type="submit"
           disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
         >
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
-      </Form>
+      </form>
     </FormProvider>
   );
 }

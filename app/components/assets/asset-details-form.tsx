@@ -1,8 +1,8 @@
-import { Form } from "react-router";
-import { useRemixForm } from "remix-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Asset } from "~/lib/models";
 import {
   createAssetSchema,
@@ -43,7 +43,7 @@ export default function AssetDetailsForm({
 }: AssetDetailsFormProps) {
   const isNew = !asset;
 
-  const form = useRemixForm<TForm>({
+  const form = useForm<TForm>({
     resolver: asset ? updateAssetSchemaResolver : createAssetSchemaResolver,
     values: asset
       ? {
@@ -68,20 +68,26 @@ export default function AssetDetailsForm({
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid },
   } = form;
+
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+    onSubmitted,
+  });
+
+  const handleSubmit = (data: TForm) => {
+    submit(data, {
+      path: "/api/proxy/assets",
+      id: asset?.id,
+      query: {
+        _throw: "false",
+      },
+    });
+  };
 
   return (
     <FormProvider {...form}>
-      <Form
-        className="space-y-4"
-        method={"post"}
-        onSubmit={(e) => {
-          form.handleSubmit(e).then(() => {
-            onSubmitted?.();
-          });
-        }}
-      >
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}
@@ -203,7 +209,7 @@ export default function AssetDetailsForm({
         >
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
-      </Form>
+      </form>
     </FormProvider>
   );
 }

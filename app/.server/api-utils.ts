@@ -1,7 +1,7 @@
-import qs from "qs";
 import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { ResultsPage } from "~/lib/models";
+import { buildUrl, type PathParams, type QueryParams } from "~/lib/urls";
 import { strategy } from "./authenticator";
 import { API_BASE_URL } from "./config";
 import { logger } from "./logger";
@@ -42,7 +42,7 @@ export class FetchOptions {
     path: TPath,
     params?: QueryParams & PathParams<TPath>
   ) {
-    return new FetchOptions(buildUrl(path, params));
+    return new FetchOptions(buildUrl(path, API_BASE_URL, params));
   }
 
   public get() {
@@ -80,15 +80,54 @@ export class FetchOptions {
   }
 }
 
+export const tryJson = async <T = unknown>(
+  response: Response
+): Promise<{
+  body: T | string;
+  isJson: boolean;
+}> => {
+  const contentType = response.headers.get("Content-Type");
+  if (contentType && /^application\/json(;|$)/i.test(contentType)) {
+    return { body: await response.json(), isJson: true };
+  }
+  return { body: await response.text(), isJson: false };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type DataOrError<T> = { data?: T; error?: any };
+
 export class DataResponse<T> extends Promise<ReturnType<typeof data<T>>> {
   public mapTo<U>(fn: (initData: T) => U) {
-    return this.then(({ data: initData, init }) =>
-      data(fn(initData), init ?? undefined)
-    ) as DataResponse<U>;
+    return this.then(async ({ data: initData, init }) =>
+      data(await fn(initData), init ?? undefined)
+    ) as DataResponse<Awaited<U>>;
+  }
+
+  public mapWith<U>(fn: (initData: T) => DataResponse<U>) {
+    return this.mapTo((initData) => fn(initData).then(({ data }) => data));
   }
 
   public async asRedirect(url: string) {
     return this.then(({ init }) => redirect(url, init ?? undefined));
+  }
+
+  public catchResponse(): DataResponse<DataOrError<T>> {
+    return (
+      this.then(({ data: initData, init }) =>
+        data({ data: initData }, init ?? undefined)
+      ) as DataResponse<DataOrError<T>>
+    ).catch(async (errorOrResponse) => {
+      if (errorOrResponse instanceof Response) {
+        return data(
+          {
+            error: await tryJson(errorOrResponse).then(({ body }) => body),
+          },
+          { status: errorOrResponse.status }
+        );
+      }
+      logger.error(errorOrResponse);
+      return data({ error: errorOrResponse.message }, { status: 500 });
+    }) as DataResponse<DataOrError<T>>;
   }
 }
 
@@ -160,27 +199,31 @@ export const authenticatedResolver = async (
   };
 };
 
-export const defaultDataGetter = async (
+export const defaultDataGetter = async <T = unknown>(
   responses: Promise<Response> | AtLeastOneAwaitableResponse
 ) => {
   const response = Array.isArray(responses) ? responses[0] : responses;
   return response.then(async (r) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { body, isJson } = await tryJson<T>(r);
+
     if (r.ok) {
-      const contentType = r.headers.get("Content-Type");
-      if (contentType && /^application\/json(;|$)/i.test(contentType)) {
-        return r.json();
-      }
-      return r.text();
+      return body as T;
     }
     logger.error(
       {
         status: r.status,
         url: r.url,
-        data: await r.json().catch(() => r.text().catch(() => null)),
+        data: body,
       },
       "Request failed with code: " + r.status
     );
-    throw new Response(r.statusText, { status: r.status });
+
+    if (isJson) {
+      throw Response.json(body, { status: r.status });
+    }
+
+    throw new Response((body as string) ?? r.statusText, { status: r.status });
   });
 };
 
@@ -202,58 +245,12 @@ export const authenticatedData = <T>(
   return new DataResponse<T>((resolve) => resolve(initData));
 };
 
-type ExtractPathParams<TPath extends string> =
-  TPath extends `${string}:${infer Param}/${infer Rest}`
-    ? Param | ExtractPathParams<`/${Rest}`>
-    : TPath extends `${string}:${infer Param}`
-    ? Param
-    : never;
-
-type PathParams<TPath extends string> = {
-  [Key in ExtractPathParams<TPath>]: string | number;
-};
-
-type BaseQueryParams = Record<string, string | number | null>;
-export type QueryParams = BaseQueryParams | Record<string, BaseQueryParams>;
-
-/**
- * Given a path and params, build a full URL by replacing path params and adding any
- * remaining params as query string parameters.
- *
- * @example
- * buildUrl("/users/:id", { id: 5 }) // "https://example.com/users/5"
- * buildUrl("/users/:id", { id: 5, sort: "name" }) // "https://example.com/users/5?sort=name"
- * @param path the path to build the URL from
- * @param params the params to replace path params and add as query string params
- * @returns the full URL
- */
-export const buildUrl = <TPath extends string>(
-  path: TPath,
-  params?: QueryParams & PathParams<TPath>
-) => {
-  const paramsMap = new Map(
-    Object.entries(params ?? {}).map(([key, value]) => [key, String(value)])
-  );
-
-  const cleanedPath = path.replace(/^\/+/, "").replace(/:(\w+)/g, (_, key) => {
-    const value = paramsMap.get(key);
-    paramsMap.delete(key);
-    return value ?? key;
-  });
-
-  const url = new URL(`${API_BASE_URL}/${cleanedPath}`);
-
-  url.search = qs.stringify(params);
-
-  return url;
-};
-
 interface AllCrudActions<
   T,
   TCreateSchema extends z.ZodType,
   TUpdateSchema extends z.ZodType
 > {
-  list: (request: Request, query: QueryParams) => DataResponse<ResultsPage<T>>;
+  list: (request: Request, query?: QueryParams) => DataResponse<ResultsPage<T>>;
   get: (request: Request, id: string) => DataResponse<T>;
   create: (request: Request, input: z.infer<TCreateSchema>) => DataResponse<T>;
   update: (

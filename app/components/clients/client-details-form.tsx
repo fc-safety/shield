@@ -10,10 +10,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { isAfter, parseISO } from "date-fns";
 import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Form } from "react-router";
-import { useRemixForm } from "remix-hook-form";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { ClientStatuses, type Client } from "~/lib/models";
 import {
   createClientSchemaResolver,
@@ -36,7 +37,7 @@ interface ClientDetailsFormProps {
 const FORM_DEFAULTS = {
   id: "",
   name: "",
-  startedOn: new Date(),
+  startedOn: new Date().toISOString(),
   address: {
     create: {
       street1: "",
@@ -57,7 +58,7 @@ export default function ClientDetailsForm({
   const currentlyPopulatedZip = useRef<string | null>(null);
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
 
-  const form = useRemixForm<TForm>({
+  const form = useForm<TForm>({
     resolver: client ? updateClientSchemaResolver : createClientSchemaResolver,
     values: client
       ? {
@@ -68,14 +69,13 @@ export default function ClientDetailsForm({
               street2: client.address.street2 || undefined,
             },
           },
-          startedOn: parseISO(client.startedOn),
         }
       : FORM_DEFAULTS,
     mode: "onBlur",
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid },
     watch,
     setValue,
   } = form;
@@ -118,16 +118,26 @@ export default function ClientDetailsForm({
     }
   }, [debouncedZip, client, setValue]);
 
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+    onSubmitted,
+  });
+
+  const handleSubmit = (data: TForm) => {
+    submit(data, {
+      path: "/api/proxy/clients",
+      id: client?.id,
+      query: {
+        _throw: "false",
+      },
+    });
+  };
+
   return (
     <FormProvider {...form}>
       <Form
         className="space-y-4"
         method="post"
-        onSubmit={(e) => {
-          form.handleSubmit(e).then(() => {
-            onSubmitted?.();
-          });
-        }}
+        onSubmit={form.handleSubmit(handleSubmit)}
       >
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
@@ -193,15 +203,19 @@ export default function ClientDetailsForm({
         <FormField
           control={form.control}
           name="startedOn"
-          render={({ field: { onChange, ...field } }) => (
+          render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
               <FormLabel>
-                {!field.value || isAfter(field.value, new Date())
+                {!value || isAfter(value, new Date())
                   ? "Starts On"
                   : "Started On"}
               </FormLabel>
               <FormControl>
-                <DatePicker {...field} onValueChange={onChange} />
+                <DatePicker
+                  {...field}
+                  value={parseISO(value ?? "")}
+                  onValueChange={(d) => onChange(d?.toISOString())}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

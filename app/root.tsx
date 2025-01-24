@@ -22,6 +22,7 @@ import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
 import { Button } from "./components/ui/button";
+import { Toaster } from "./components/ui/sonner";
 import { FONT_AWESOME_VERSION } from "./lib/constants";
 import styles from "./tailwind.css?url";
 
@@ -113,6 +114,8 @@ function BaseLayout({ children }: PropsWithChildren) {
         {children}
         <ScrollRestoration />
         <Scripts />
+        <div id="dialog-portal"></div>
+        <Toaster position="top-right" className="pointer-events-auto" />
       </body>
     </html>
   );

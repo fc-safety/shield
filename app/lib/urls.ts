@@ -1,0 +1,55 @@
+import qs from "qs";
+
+type ExtractPathParams<TPath extends string> =
+  TPath extends `${string}:${infer Param}/${infer Rest}`
+    ? Param | ExtractPathParams<`/${Rest}`>
+    : TPath extends `${string}:${infer Param}`
+    ? Param
+    : never;
+
+export type PathParams<TPath extends string> = {
+  [Key in ExtractPathParams<TPath>]: string | number;
+};
+
+type BaseQueryParams = Record<string, string | number | null>;
+export type QueryParams = BaseQueryParams | Record<string, BaseQueryParams>;
+
+export const buildPath = <TPath extends string>(
+  path: TPath,
+  params?: QueryParams & PathParams<TPath>,
+  basePath = ""
+) => {
+  const paramsMap = new Map(Object.entries(params ?? {}));
+
+  const cleanedBasePath = basePath.replace(/\/+$/, "");
+  const cleanedPath = path.replace(/^\/+/, "").replace(/:(\w+)/g, (_, key) => {
+    const value = paramsMap.get(key);
+    paramsMap.delete(key);
+    return String(value) ?? key;
+  });
+  const searchString = paramsMap.size
+    ? `?${qs.stringify(Object.fromEntries(paramsMap))}`
+    : "";
+
+  return `${cleanedBasePath}/${cleanedPath}${searchString}`;
+};
+
+/**
+ * Given a path and params, build a full URL by replacing path params and adding any
+ * remaining params as query string parameters.
+ *
+ * @example
+ * buildUrl("/users/:id", { id: 5 }) // "https://example.com/users/5"
+ * buildUrl("/users/:id", { id: 5, sort: "name" }) // "https://example.com/users/5?sort=name"
+ * @param path the path to build the URL from
+ * @param params the params to replace path params and add as query string params
+ * @param baseUrl the base URL to use
+ * @returns the full URL
+ */
+export const buildUrl = <TPath extends string>(
+  path: TPath,
+  baseUrl: string,
+  params?: QueryParams & PathParams<TPath>
+) => {
+  return new URL(buildPath<TPath>(path, params, baseUrl));
+};

@@ -12,8 +12,9 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Pencil, Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDebounceValue } from "usehooks-ts";
+import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { searchIcons } from "~/lib/fontawesome";
 import { cn } from "~/lib/utils";
 import { Input } from "../ui/input";
@@ -38,22 +39,15 @@ export default function IconSelector({
   className,
   color,
 }: IconSelectorProps) {
-  const opened = useRef(false);
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
   const [icons, setIcons] = useState<TIcon[]>([]);
   const [query, setQuery] = useDebounceValue("", 300);
 
-  // Trigger onBlur when the dialog is closed.
-  useEffect(() => {
-    if (opened.current && !open) {
-      onBlur?.();
-    }
-
-    if (open) {
-      opened.current = true;
-    }
-  }, [open, onBlur]);
+  useBlurOnClose({
+    onBlur,
+    open,
+  });
 
   useEffect(() => {
     searchIcons(query).then(setIcons);

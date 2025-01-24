@@ -23,6 +23,15 @@ export const addressSchema = z.object({
 });
 export const addressSchemaResolver = zodResolver(addressSchema);
 
+export const optionalConnectSchema = z
+  .object({
+    connect: z.object({
+      id: z.string().optional(),
+    }),
+  })
+  .optional()
+  .transform((v) => (v?.connect.id ? v : undefined));
+
 export const createClientSchema = z.object({
   externalId: z
     .string()
@@ -30,7 +39,7 @@ export const createClientSchema = z.object({
     .optional()
     .transform((id) => id || undefined),
   name: z.string().nonempty(),
-  startedOn: z.coerce.date(),
+  startedOn: z.string().datetime(),
   address: z.object({
     create: addressSchema,
   }),
@@ -77,13 +86,7 @@ export const baseSiteSchema = z.object({
       id: z.string(),
     }),
   }),
-  parentSite: z
-    .object({
-      connect: z.object({
-        id: z.string(),
-      }),
-    })
-    .optional(),
+  parentSite: optionalConnectSchema,
   subsites: z
     .object({
       connect: z.array(z.object({ id: z.string() })).min(1),
@@ -93,7 +96,7 @@ export const baseSiteSchema = z.object({
     .optional(),
 });
 
-export const getSiteSchemaResolver = ({
+export const getSiteSchema = ({
   create,
   isSiteGroup = false,
 }: {
@@ -131,8 +134,24 @@ export const getSiteSchemaResolver = ({
       .partial();
   }
 
-  return zodResolver(schema);
+  return schema;
 };
+
+export const createUserSchema = z.object({
+  firstName: z.string().nonempty(),
+  lastName: z.string().nonempty(),
+  email: z.string().email(),
+  siteExternalId: z.string().nonempty(),
+});
+export const createUserSchemaResolver = zodResolver(createUserSchema);
+
+export const updateUserSchema = createUserSchema.partial();
+export const updateUserSchemaResolver = zodResolver(updateUserSchema);
+
+export const assignUserRoleSchema = z.object({
+  roleId: z.string().nonempty(),
+});
+export const assignUserRoleSchemaResolver = zodResolver(assignUserRoleSchema);
 
 export const createProductCategorySchema = z.object({
   id: z.string().optional(),
@@ -142,6 +161,7 @@ export const createProductCategorySchema = z.object({
   description: z.string().optional(),
   icon: z.string().optional(),
   color: z.string().optional(),
+  client: optionalConnectSchema,
 });
 export const createProductCategorySchemaResolver = zodResolver(
   createProductCategorySchema
@@ -159,6 +179,7 @@ export const createManufacturerSchema = z.object({
   active: z.boolean(),
   name: z.string().nonempty(),
   homeUrl: z.string().optional(),
+  client: optionalConnectSchema,
 });
 export const createManufacturerSchemaResolver = zodResolver(
   createManufacturerSchema
@@ -190,6 +211,7 @@ export const createProductSchema = z.object({
       id: z.string(),
     }),
   }),
+  client: optionalConnectSchema,
 });
 export const createProductSchemaResolver = zodResolver(createProductSchema);
 
@@ -200,28 +222,10 @@ export const updateProductSchemaResolver = zodResolver(updateProductSchema);
 
 export const createTagSchema = z.object({
   id: z.string().optional(),
-  serialNumber: z.string(),
-  asset: z
-    .object({
-      connect: z.object({
-        id: z.string(),
-      }),
-    })
-    .optional(),
-  site: z
-    .object({
-      connect: z.object({
-        id: z.string(),
-      }),
-    })
-    .optional(),
-  client: z
-    .object({
-      connect: z.object({
-        id: z.string(),
-      }),
-    })
-    .optional(),
+  serialNumber: z.string().min(10),
+  asset: optionalConnectSchema,
+  site: optionalConnectSchema,
+  client: optionalConnectSchema,
 });
 export const createTagSchemaResolver = zodResolver(createTagSchema);
 
@@ -241,28 +245,9 @@ export const createAssetSchema = z.object({
       id: z.string(),
     }),
   }),
-  tag: z
-    .object({
-      connect: z.object({
-        id: z.string().optional(),
-      }),
-    })
-    .optional()
-    .transform((tag) => (tag?.connect.id ? tag : undefined)),
-  site: z
-    .object({
-      connect: z.object({
-        id: z.string(),
-      }),
-    })
-    .optional(),
-  client: z
-    .object({
-      connect: z.object({
-        id: z.string(),
-      }),
-    })
-    .optional(),
+  tag: optionalConnectSchema,
+  site: optionalConnectSchema,
+  client: optionalConnectSchema,
 });
 export const createAssetSchemaResolver = zodResolver(createAssetSchema);
 
@@ -478,6 +463,29 @@ export const buildSetupAssetSchema = (
     }),
   });
 };
+
+// Admin interactions
+export const createRoleSchema = z.object({
+  name: z.string().nonempty(),
+  description: z.string().optional(),
+});
+export const createRoleSchemaResolver = zodResolver(createRoleSchema);
+
+export const updateRoleSchema = createRoleSchema.partial();
+export const updateRoleSchemaResolver = zodResolver(updateRoleSchema);
+
+const permissionToUpdateSchema = z.object({
+  id: z.string().nonempty(),
+  name: z.string().nonempty(),
+});
+
+export const updatePermissionMappingSchema = z.object({
+  grant: z.array(permissionToUpdateSchema),
+  revoke: z.array(permissionToUpdateSchema),
+});
+export const updatePermissionMappingSchemaResolver = zodResolver(
+  updatePermissionMappingSchema
+);
 
 // TODO: Below is old code, may need to be updated
 export const buildReportSchema = z.object({

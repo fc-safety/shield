@@ -12,8 +12,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { Link2, Loader2, Pencil, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
+import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import type { Manufacturer, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import LinkPreview from "../link-preview";
@@ -34,7 +35,6 @@ export default function ManufacturerSelector({
   disabled,
   className,
 }: ManufacturerSelectorProps) {
-  const opened = useRef(false);
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
   const fetcher = useFetcher<ResultsPage<Manufacturer>>();
@@ -46,16 +46,10 @@ export default function ManufacturerSelector({
     [manufacturers, value]
   );
 
-  // Trigger onBlur when the dialog is closed.
-  useEffect(() => {
-    if (opened.current && !open) {
-      onBlur?.();
-    }
-
-    if (open) {
-      opened.current = true;
-    }
-  }, [open, onBlur]);
+  useBlurOnClose({
+    onBlur,
+    open,
+  });
 
   // Preload the manufacturers lazily.
   const handlePreload = useCallback(() => {
@@ -166,14 +160,16 @@ export default function ManufacturerSelector({
 interface ManufacturerCardProps {
   manufacturer: Manufacturer | undefined;
   renderEditButton?: () => React.ReactNode;
+  className?: string;
 }
 
 export function ManufacturerCard({
   manufacturer,
   renderEditButton,
+  className,
 }: ManufacturerCardProps) {
   return (
-    <Card>
+    <Card className={className}>
       {manufacturer ? (
         <>
           <CardHeader>

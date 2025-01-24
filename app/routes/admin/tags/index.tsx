@@ -1,24 +1,15 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { Nfc } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
-import type { z } from "zod";
 import { api } from "~/.server/api";
 import NewTagButton from "~/components/assets/edit-tag-button";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Tag } from "~/lib/models";
-import { createTagSchemaResolver, type createTagSchema } from "~/lib/schema";
-import { getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
-
-export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow<
-    z.infer<typeof createTagSchema>
-  >(request, createTagSchemaResolver);
-
-  return api.tags.create(request, data);
-};
 
 export function loader({ request }: Route.LoaderArgs) {
   return api.tags.list(request, { limit: 10000 });
@@ -59,18 +50,41 @@ export default function AdminTagsIndex({
           return value ? format(value, "PPpp") : <>&mdash;</>;
         },
       },
+      {
+        accessorKey: "client.name",
+        id: "assigned client",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => getValue() ?? <>&mdash;</>,
+      },
+      {
+        accessorKey: "site.name",
+        id: "assigned site",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => getValue() ?? <>&mdash;</>,
+      },
     ],
     []
   );
 
   return (
-    <>
-      <DataTable
-        columns={columns}
-        data={tags.results}
-        searchPlaceholder="Search tags..."
-        actions={[<NewTagButton key="add" />]}
-      />
-    </>
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <Nfc /> Tags
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <DataTable
+          columns={columns}
+          data={tags.results}
+          searchPlaceholder="Search tags..."
+          actions={[<NewTagButton key="add" />]}
+        />
+      </CardContent>
+    </Card>
   );
 }

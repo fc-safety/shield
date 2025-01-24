@@ -11,9 +11,7 @@ import {
 import { ChevronRight, Link2, Search } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useImmer } from "use-immer";
-import type { z } from "zod";
 import { api } from "~/.server/api";
-import type { QueryParams } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/sessions";
 import Icon from "~/components/icons/icon";
 import LinkPreview from "~/components/link-preview";
@@ -40,16 +38,9 @@ import {
 import { Switch } from "~/components/ui/switch";
 import { useQueryNavigate } from "~/hooks/useQueryNavigate";
 import type { Manufacturer, ProductCategory } from "~/lib/models";
-import {
-  type createProductSchema,
-  createProductSchemaResolver,
-} from "~/lib/schema";
-import { isGlobalAdmin } from "~/lib/users";
-import {
-  buildTitleFromBreadcrumb,
-  getSearchParam,
-  getValidatedFormDataOrThrow,
-} from "~/lib/utils";
+import type { QueryParams } from "~/lib/urls";
+import { isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
+import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const handle = {
@@ -62,21 +53,14 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
-export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow<
-    z.infer<typeof createProductSchema>
-  >(request, createProductSchemaResolver);
-
-  return api.products.create(request, data);
-};
-
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
+  const isGlobalAdmin = isGlobalAdminFn(user);
 
   const showAllProducts = getSearchParam(request, "show-all");
 
   let onlyMyProducts = showAllProducts !== "true";
-  if (showAllProducts === undefined && isGlobalAdmin(user)) {
+  if (!showAllProducts && isGlobalAdmin) {
     onlyMyProducts = false;
   }
 
@@ -90,11 +74,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return api.products.list(request, query).mapTo((r) => ({
     products: r.results,
+    isGlobalAdmin,
   }));
 };
 
 export default function AllProducts({
-  loaderData: { products },
+  loaderData: { products, isGlobalAdmin },
 }: Route.ComponentProps) {
   // const navigate = useNavigate();
   const { setQuery, query } = useQueryNavigate();
@@ -208,7 +193,7 @@ export default function AllProducts({
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <EditProductButton />
+          <EditProductButton canAssignOwnership={isGlobalAdmin} />
         </div>
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4 sm:gap-8">
@@ -259,7 +244,7 @@ export default function AllProducts({
         {table.getRowModel().rows.filter((row) => row.getIsGrouped()).length ===
           0 && (
           <div className="py-6 flex flex-col items-center gap-4">
-            No products found
+            No products found.
             {table.getState().globalFilter ? (
               <Button
                 variant="outline"

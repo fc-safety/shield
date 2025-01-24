@@ -14,11 +14,13 @@ import ProductDetailsForm from "./product-details-form";
 interface EditProductButtonProps {
   product?: Product;
   trigger?: React.ReactNode;
+  canAssignOwnership?: boolean;
 }
 
 export default function EditProductButton({
   product,
   trigger,
+  canAssignOwnership,
 }: EditProductButtonProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -38,6 +40,7 @@ export default function EditProductButton({
         <ProductDetailsForm
           onSubmitted={() => setOpen(false)}
           product={product}
+          canAssignOwnership={canAssignOwnership}
         />
       </DialogContent>
     </Dialog>

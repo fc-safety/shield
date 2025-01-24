@@ -13,9 +13,13 @@ import AssetQuestionDetailForm from "./asset-question-detail-form";
 export default function NewAssetQuestionButton({
   existingSetupQuestionsCount,
   existingInspectionQuestionsCount,
+  parentType,
+  parentId,
 }: {
   existingSetupQuestionsCount?: number;
   existingInspectionQuestionsCount?: number;
+  parentType: "product" | "productCategory";
+  parentId: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -34,6 +38,8 @@ export default function NewAssetQuestionButton({
           onSubmitted={() => setOpen(false)}
           existingSetupQuestionsCount={existingSetupQuestionsCount}
           existingInspectionQuestionsCount={existingInspectionQuestionsCount}
+          parentType={parentType}
+          parentId={parentId}
         />
       </DialogContent>
     </Dialog>

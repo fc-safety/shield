@@ -6,7 +6,7 @@ import type { Route } from "./+types/callback";
 export async function loader({ request }: Route.LoaderArgs) {
   let tokens: Tokens;
   try {
-    tokens = await authenticator.authenticate("oauth2", request);
+    tokens = await authenticator.then((a) => a.authenticate("oauth2", request));
   } catch (e) {
     return redirect("/login");
   }

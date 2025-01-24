@@ -9,9 +9,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Form } from "react-router";
-import { useRemixForm } from "remix-hook-form";
+import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Manufacturer } from "~/lib/models";
 import {
   createManufacturerSchemaResolver,
@@ -41,7 +41,7 @@ export default function ManufacturerDetailsForm({
 }: ManufacturerDetailsFormProps) {
   const isNew = !manufacturer;
 
-  const form = useRemixForm<TForm>({
+  const form = useForm<TForm>({
     resolver: isNew
       ? createManufacturerSchemaResolver
       : updateManufacturerSchemaResolver,
@@ -49,26 +49,35 @@ export default function ManufacturerDetailsForm({
       ? {
           ...manufacturer,
           homeUrl: manufacturer.homeUrl ?? "",
+          client: manufacturer.client
+            ? { connect: { id: manufacturer.client.id } }
+            : undefined,
         }
       : FORM_DEFAULTS,
     mode: "onBlur",
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid },
   } = form;
+
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+    onSubmitted,
+  });
+
+  const handleSubmit = (data: TForm) => {
+    submit(data, {
+      path: "/api/proxy/manufacturers",
+      id: manufacturer?.id,
+      query: {
+        _throw: "false",
+      },
+    });
+  };
 
   return (
     <FormProvider {...form}>
-      <Form
-        className="space-y-4"
-        method="post"
-        onSubmit={(e) => {
-          form.handleSubmit(e).then(() => {
-            onSubmitted?.();
-          });
-        }}
-      >
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}
@@ -120,7 +129,7 @@ export default function ManufacturerDetailsForm({
         >
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
-      </Form>
+      </form>
     </FormProvider>
   );
 }

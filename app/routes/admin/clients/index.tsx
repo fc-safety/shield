@@ -2,19 +2,20 @@ import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
+  Building2,
   CornerDownRight,
   MoreHorizontal,
   PhoneCall,
   Trash,
 } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useFetcher } from "react-router";
+import { Link } from "react-router";
 import { useImmer } from "use-immer";
-import { z } from "zod";
 import { api } from "~/.server/api";
 import EditClientButton from "~/components/clients/edit-client-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,27 +28,21 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "~/components/ui/hover-card";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Client } from "~/lib/models";
-import { createClientSchema, createClientSchemaResolver } from "~/lib/schema";
-import { beautifyPhone, getValidatedFormDataOrThrow } from "~/lib/utils";
+import { beautifyPhone } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export function loader({ request }: Route.LoaderArgs) {
   return api.clients.list(request, { limit: 10000 });
 }
 
-export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow<
-    z.infer<typeof createClientSchema>
-  >(request, createClientSchemaResolver);
-
-  return api.clients.create(request, data);
-};
-
 export default function ClientsIndex({
   loaderData: clients,
 }: Route.ComponentProps) {
-  const fetcher = useFetcher();
+  const { submit: submitDelete } = useModalSubmit({
+    defaultErrorMessage: "Error: Failed to delete client",
+  });
 
   const [deleteAction, setDeleteAction] = useImmer({
     open: false,
@@ -149,11 +144,11 @@ export default function ClientsIndex({
                       }?`;
                       draft.requiredUserInput = client.name || client.id;
                       draft.action = () => {
-                        fetcher.submit(
+                        submitDelete(
                           {},
                           {
                             method: "delete",
-                            action: client.id,
+                            action: `/api/proxy/clients/${client.id}?_throw=false`,
                           }
                         );
                       };
@@ -169,17 +164,26 @@ export default function ClientsIndex({
         },
       },
     ],
-    [fetcher, setDeleteAction]
+    [setDeleteAction, submitDelete]
   );
 
   return (
     <>
-      <DataTable
-        columns={columns}
-        data={clients.results}
-        searchPlaceholder="Search clients..."
-        actions={[<EditClientButton key="add" />]}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <Building2 /> Clients
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={clients.results}
+            searchPlaceholder="Search clients..."
+            actions={[<EditClientButton key="add" />]}
+          />
+        </CardContent>
+      </Card>
       <ConfirmationDialog
         open={deleteAction.open}
         onOpenChange={(open) =>
