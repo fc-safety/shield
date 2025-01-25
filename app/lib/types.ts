@@ -40,6 +40,7 @@ export interface GetPermissionsResponse {
 export interface ClientUser {
   id: string;
   idpId: string;
+  active: boolean;
   firstName: string;
   lastName: string;
   name: string;

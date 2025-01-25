@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
+import { CornerDownRight, Factory, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { useImmer } from "use-immer";
@@ -13,6 +13,7 @@ import LinkPreview from "~/components/link-preview";
 import CustomTag from "~/components/products/custom-tag";
 import NewManufacturerButton from "~/components/products/edit-manufacturer-button";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,25 +184,34 @@ export default function ProductManufacturers({
   );
   return (
     <>
-      <DataTable
-        columns={columns}
-        data={manufacturers}
-        searchPlaceholder="Search manufacturers..."
-        externalFilters={[
-          <div
-            key="onlyMyManufacturers"
-            className="flex items-center space-x-2"
-          >
-            <Switch
-              id="onlyMyProducts"
-              checked={onlyMyManufacturers}
-              onCheckedChange={(checked) => setOnlyMyManufacturers(checked)}
-            />
-            <Label htmlFor="onlyMyProducts">Only My Products</Label>
-          </div>,
-        ]}
-        actions={[<NewManufacturerButton key="add" />]}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <Factory /> Manufacturers
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={manufacturers}
+            searchPlaceholder="Search manufacturers..."
+            externalFilters={[
+              <div
+                key="onlyMyManufacturers"
+                className="flex items-center space-x-2"
+              >
+                <Switch
+                  id="onlyMyProducts"
+                  checked={onlyMyManufacturers}
+                  onCheckedChange={(checked) => setOnlyMyManufacturers(checked)}
+                />
+                <Label htmlFor="onlyMyProducts">Only My Products</Label>
+              </div>,
+            ]}
+            actions={[<NewManufacturerButton key="add" />]}
+          />
+        </CardContent>
+      </Card>
       <ConfirmationDialog
         open={deleteAction.open}
         onOpenChange={(open) =>

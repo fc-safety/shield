@@ -8,14 +8,12 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
-import { ProductTypes, type Product } from "~/lib/models";
+import { type Product } from "~/lib/models";
 import {
   createProductSchema,
   createProductSchemaResolver,
@@ -31,24 +29,43 @@ interface ProductDetailsFormProps {
   product?: Product;
   onSubmitted?: () => void;
   canAssignOwnership?: boolean;
+  parentProduct?: Product;
 }
-
-const FORM_DEFAULTS = {
-  id: "",
-  active: true,
-  type: "PRIMARY",
-  name: "",
-  description: "",
-  sku: "",
-  productUrl: "",
-} satisfies TForm;
 
 export default function ProductDetailsForm({
   product,
   onSubmitted,
   canAssignOwnership = false,
+  parentProduct,
 }: ProductDetailsFormProps) {
   const isNew = !product;
+
+  const FORM_DEFAULTS = {
+    id: "",
+    active: true,
+    type: parentProduct ? "CONSUMABLE" : "PRIMARY",
+    productCategory: {
+      connect: {
+        id: parentProduct?.productCategoryId ?? "",
+      },
+    },
+    manufacturer: {
+      connect: {
+        id: parentProduct?.manufacturerId ?? "",
+      },
+    },
+    name: "",
+    description: "",
+    sku: "",
+    productUrl: "",
+    parentProduct: parentProduct
+      ? {
+          connect: {
+            id: parentProduct.id,
+          },
+        }
+      : undefined,
+  } satisfies TForm;
 
   const form = useForm<TForm>({
     resolver: isNew ? createProductSchemaResolver : updateProductSchemaResolver,
@@ -71,6 +88,9 @@ export default function ProductDetailsForm({
           imageUrl: product.imageUrl ?? "",
           client: product.client
             ? { connect: { id: product.client.id } }
+            : undefined,
+          parentProduct: parentProduct
+            ? { connect: { id: parentProduct.id } }
             : undefined,
         }
       : FORM_DEFAULTS,
@@ -117,68 +137,46 @@ export default function ProductDetailsForm({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="productCategory"
-          render={({ field: { value, onChange, onBlur } }) => (
-            <FormItem>
-              <FormLabel>Category</FormLabel>
-              <FormControl>
-                <ProductCategorySelector
-                  value={value?.connect.id}
-                  onValueChange={(id) => onChange({ connect: { id } })}
-                  onBlur={onBlur}
-                  className="flex"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="manufacturer"
-          render={({ field: { value, onChange, onBlur } }) => (
-            <FormItem>
-              <FormLabel>Manufacturer</FormLabel>
-              <FormControl>
-                <ManufacturerSelector
-                  value={value?.connect.id}
-                  onValueChange={(id) => onChange({ connect: { id } })}
-                  onBlur={onBlur}
-                  className="flex"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="type"
-          render={({ field: { onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Type</FormLabel>
-              <FormControl>
-                <RadioGroup
-                  {...field}
-                  onValueChange={onChange}
-                  className="flex gap-4"
-                >
-                  {ProductTypes.map((type, idx) => (
-                    <div key={type} className="flex items-center space-x-2">
-                      <RadioGroupItem value={type} id={"status" + idx} />
-                      <Label className="capitalize" htmlFor={"status" + idx}>
-                        {type.toLowerCase()}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {!parentProduct && (
+          <>
+            <FormField
+              control={form.control}
+              name="productCategory"
+              render={({ field: { value, onChange, onBlur } }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <ProductCategorySelector
+                      value={value?.connect.id}
+                      onValueChange={(id) => onChange({ connect: { id } })}
+                      onBlur={onBlur}
+                      className="flex"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="manufacturer"
+              render={({ field: { value, onChange, onBlur } }) => (
+                <FormItem>
+                  <FormLabel>Manufacturer</FormLabel>
+                  <FormControl>
+                    <ManufacturerSelector
+                      value={value?.connect.id}
+                      onValueChange={(id) => onChange({ connect: { id } })}
+                      onBlur={onBlur}
+                      className="flex"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
         <FormField
           control={form.control}
           name="name"

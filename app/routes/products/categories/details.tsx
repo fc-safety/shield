@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Pencil } from "lucide-react";
+import { FireExtinguisher, Pencil, Shapes, ShieldQuestion } from "lucide-react";
 import { type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
@@ -52,7 +52,8 @@ export default function ProductCategoryDetails({
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle>
+              <Shapes />
               <div className="inline-flex items-center gap-4">
                 Product Category Details
                 <div className="flex gap-2">
@@ -68,6 +69,7 @@ export default function ProductCategoryDetails({
                   )}
                 </div>
               </div>
+              <div className="flex-1"></div>
               <ActiveIndicator active={productCategory.active} />
             </CardTitle>
           </CardHeader>
@@ -129,7 +131,9 @@ export default function ProductCategoryDetails({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Questions</CardTitle>
+            <CardTitle>
+              <ShieldQuestion /> Questions
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <AssetQuestionsTable
@@ -143,7 +147,9 @@ export default function ProductCategoryDetails({
       </div>
       <Card className="col-span-full">
         <CardHeader>
-          <CardTitle>Products</CardTitle>
+          <CardTitle>
+            <FireExtinguisher /> Products
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">

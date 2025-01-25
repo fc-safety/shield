@@ -56,6 +56,10 @@ export default [
           ),
         ]),
       ]),
+      route("order-requests", "./routes/admin/order-requests/layout.tsx", [
+        index("./routes/admin/order-requests/index.tsx"),
+        route(":id", "./routes/admin/order-requests/details.tsx"),
+      ]),
       route("tags", "./routes/admin/tags/layout.tsx", [
         index("./routes/admin/tags/index.tsx"),
         route(":id", "./routes/admin/tags/details.tsx"),

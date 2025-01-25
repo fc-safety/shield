@@ -1,5 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
+import { CornerDownRight, MoreHorizontal, Shield, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
 import { useImmer } from "use-immer";
@@ -17,6 +17,7 @@ import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -267,83 +268,94 @@ export default function AssetsIndex({
 
   return (
     <>
-      <DataTable
-        columns={columns}
-        data={assets.results}
-        searchPlaceholder="Search assets..."
-        initialState={{
-          columnFilters,
-          columnVisibility: {
-            active: true,
-            name: true,
-            tag: true,
-            category: true,
-            manufacturer: true,
-            product_name: false,
-            location: true,
-            placement: false,
-          },
-        }}
-        filters={({ table }) => [
-          {
-            column: table.getColumn("category"),
-            options: allCategories.map(getCategoryName).map((categoryName) => ({
-              label: categoryName,
-              value: categoryName,
-            })),
-            title: "Category",
-          },
-          {
-            column: table.getColumn("manufacturer"),
-            options: allManufacturers
-              .map((m) => m.name)
-              .map((name) => ({
-                label: name,
-                value: name,
-              })),
-            title: "Manufacturer",
-          },
-          //   {
-          //     column: table.getColumn("status"),
-          //     options: assetStatuses.map((type) => ({
-          //       label: type,
-          //       value: type,
-          //       icon:
-          //         type === "ok"
-          //           ? CheckCircle2
-          //           : type === "warning"
-          //           ? TriangleAlert
-          //           : XCircle,
-          //     })),
-          //     title: "Status",
-          //   },
-        ]}
-        actions={[
-          <EditAssetButton key="add" />,
-          // TODO: If bulk actions are needed, make sure to add select column.
-          //   <DropdownMenu key="bulk-actions">
-          //     <DropdownMenuTrigger asChild>
-          //       <Button
-          //         variant="outline"
-          //         size="sm"
-          //         disabled={
-          //           !table.getIsSomeRowsSelected() &&
-          //           !table.getIsAllRowsSelected()
-          //         }
-          //       >
-          //         Actions ({table.getSelectedRowModel().rows.length})
-          //         <ChevronDown className="h-4 w-4" />
-          //       </Button>
-          //     </DropdownMenuTrigger>
-          //     <DropdownMenuContent align="end">
-          //       <DropdownMenuItem>
-          //         <Trash />
-          //         Some Bulk Action
-          //       </DropdownMenuItem>
-          //     </DropdownMenuContent>
-          //   </DropdownMenu>,
-        ]}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <Shield /> Assets
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={assets.results}
+            searchPlaceholder="Search assets..."
+            initialState={{
+              columnFilters,
+              columnVisibility: {
+                active: true,
+                name: true,
+                tag: true,
+                category: true,
+                manufacturer: true,
+                product_name: false,
+                location: true,
+                placement: false,
+              },
+            }}
+            filters={({ table }) => [
+              {
+                column: table.getColumn("category"),
+                options: allCategories
+                  .map(getCategoryName)
+                  .map((categoryName) => ({
+                    label: categoryName,
+                    value: categoryName,
+                  })),
+                title: "Category",
+              },
+              {
+                column: table.getColumn("manufacturer"),
+                options: allManufacturers
+                  .map((m) => m.name)
+                  .map((name) => ({
+                    label: name,
+                    value: name,
+                  })),
+                title: "Manufacturer",
+              },
+              //   {
+              //     column: table.getColumn("status"),
+              //     options: assetStatuses.map((type) => ({
+              //       label: type,
+              //       value: type,
+              //       icon:
+              //         type === "ok"
+              //           ? CheckCircle2
+              //           : type === "warning"
+              //           ? TriangleAlert
+              //           : XCircle,
+              //     })),
+              //     title: "Status",
+              //   },
+            ]}
+            actions={[
+              <EditAssetButton key="add" />,
+              // TODO: If bulk actions are needed, make sure to add select column.
+              //   <DropdownMenu key="bulk-actions">
+              //     <DropdownMenuTrigger asChild>
+              //       <Button
+              //         variant="outline"
+              //         size="sm"
+              //         disabled={
+              //           !table.getIsSomeRowsSelected() &&
+              //           !table.getIsAllRowsSelected()
+              //         }
+              //       >
+              //         Actions ({table.getSelectedRowModel().rows.length})
+              //         <ChevronDown className="h-4 w-4" />
+              //       </Button>
+              //     </DropdownMenuTrigger>
+              //     <DropdownMenuContent align="end">
+              //       <DropdownMenuItem>
+              //         <Trash />
+              //         Some Bulk Action
+              //       </DropdownMenuItem>
+              //     </DropdownMenuContent>
+              //   </DropdownMenu>,
+            ]}
+          />
+        </CardContent>
+      </Card>
       <ConfirmationDialog
         open={deleteAction.open}
         onOpenChange={(open) =>

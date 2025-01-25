@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { CornerDownRight, MoreHorizontal, Trash } from "lucide-react";
+import { CornerDownRight, MoreHorizontal, Shapes, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { useImmer } from "use-immer";
@@ -13,6 +13,7 @@ import Icon from "~/components/icons/icon";
 import CustomTag from "~/components/products/custom-tag";
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -205,25 +206,38 @@ export default function ProductCategories({
   );
   return (
     <>
-      <DataTable
-        columns={columns}
-        data={productCategories}
-        searchPlaceholder="Search categories..."
-        actions={[<EditProductCategoryButton key="add" />]}
-        externalFilters={[
-          <div
-            key="onlyMyProductCategories"
-            className="flex items-center space-x-2"
-          >
-            <Switch
-              id="onlyMyProductCategories"
-              checked={onlyMyProductCategories}
-              onCheckedChange={(checked) => setOnlyMyProductCategories(checked)}
-            />
-            <Label htmlFor="onlyMyProductCategories">Only My Categories</Label>
-          </div>,
-        ]}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <Shapes /> Product Categories
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={productCategories}
+            searchPlaceholder="Search categories..."
+            actions={[<EditProductCategoryButton key="add" />]}
+            externalFilters={[
+              <div
+                key="onlyMyProductCategories"
+                className="flex items-center space-x-2"
+              >
+                <Switch
+                  id="onlyMyProductCategories"
+                  checked={onlyMyProductCategories}
+                  onCheckedChange={(checked) =>
+                    setOnlyMyProductCategories(checked)
+                  }
+                />
+                <Label htmlFor="onlyMyProductCategories">
+                  Only My Categories
+                </Label>
+              </div>,
+            ]}
+          />
+        </CardContent>
+      </Card>
       <ConfirmationDialog
         open={deleteAction.open}
         onOpenChange={(open) =>

@@ -1,11 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Pencil } from "lucide-react";
+import {
+  FireExtinguisher,
+  Pencil,
+  ShieldQuestion,
+  SquareStack,
+} from "lucide-react";
 import { Link, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
+import { DataTable } from "~/components/data-table/data-table";
+import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import AssetQuestionsTable from "~/components/products/asset-questions-table";
 import CustomTag from "~/components/products/custom-tag";
 import EditProductButton from "~/components/products/edit-product-button";
@@ -53,7 +60,8 @@ export default function ProductDetails({
     <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle>
+            <FireExtinguisher />
             <div className="inline-flex items-center gap-4">
               Product Details
               <div className="flex gap-2">
@@ -70,6 +78,7 @@ export default function ProductDetails({
                 )}
               </div>
             </div>
+            <div className="flex-1"></div>
             <ActiveIndicator active={product.active} />
           </CardTitle>
         </CardHeader>
@@ -151,7 +160,46 @@ export default function ProductDetails({
       <div className="h-max grid grid-cols-1 gap-2 sm:gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Questions</CardTitle>
+            <CardTitle>
+              <SquareStack /> Subproducts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={[
+                {
+                  accessorKey: "name",
+                  header: ({ column, table }) => (
+                    <DataTableColumnHeader column={column} table={table} />
+                  ),
+                },
+                {
+                  accessorKey: "sku",
+                  id: "SKU",
+                  header: ({ column, table }) => (
+                    <DataTableColumnHeader
+                      column={column}
+                      table={table}
+                      title="SKU"
+                    />
+                  ),
+                },
+              ]}
+              data={product.consumableProducts ?? []}
+              actions={[
+                <EditProductButton
+                  key="add-subproduct"
+                  parentProduct={product}
+                />,
+              ]}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <ShieldQuestion /> Questions
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <AssetQuestionsTable
@@ -164,12 +212,14 @@ export default function ProductDetails({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="flex justify-between items-center gap-2">
+            <CardTitle>
+              <ShieldQuestion />
               <span>
                 {product.productCategory.shortName ??
                   product.productCategory.name}{" "}
                 Category Questions
               </span>
+              <div className="flex-1"></div>
               {(isGlobalAdmin ||
                 product.productCategory.client?.externalId ===
                   userClientId) && (

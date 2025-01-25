@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   MessageCircleQuestion,
   Nfc,
+  Package,
   Shapes,
   Shield,
   User2,
@@ -119,6 +120,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
           title: "Clients",
           url: "admin/clients",
           icon: Building2,
+        },
+        {
+          title: "Order Reqeusts",
+          url: "admin/order-requests",
+          icon: Package,
         },
         {
           title: "Tags",

@@ -138,6 +138,7 @@ export const getSiteSchema = ({
 };
 
 export const createUserSchema = z.object({
+  active: z.boolean().optional(),
   firstName: z.string().nonempty(),
   lastName: z.string().nonempty(),
   email: z.string().email(),
@@ -212,6 +213,7 @@ export const createProductSchema = z.object({
     }),
   }),
   client: optionalConnectSchema,
+  parentProduct: optionalConnectSchema,
 });
 export const createProductSchemaResolver = zodResolver(createProductSchema);
 

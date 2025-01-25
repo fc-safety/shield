@@ -8,7 +8,7 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronRight, Link2, Search } from "lucide-react";
+import { ChevronRight, FireExtinguisher, Link2, Search } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
@@ -20,6 +20,7 @@ import EditProductButton from "~/components/products/edit-product-button";
 import ProductCard from "~/components/products/product-card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
@@ -64,7 +65,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     onlyMyProducts = false;
   }
 
-  const query = { limit: 10000 } as QueryParams;
+  const query = { type: "PRIMARY", limit: 10000 } as QueryParams;
 
   if (onlyMyProducts) {
     query.client = {
@@ -156,46 +157,53 @@ export default function AllProducts({
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex flex-1 items-center space-x-2">
-          <div className="relative h-max">
-            <Input
-              placeholder="Search products..."
-              value={(table.getState().globalFilter as string) ?? ""}
-              onChange={(event) => table.setGlobalFilter(event.target.value)}
-              className="pl-8 h-9 w-[150px] lg:w-[250px]"
-            />
-            <Search className="absolute size-4 left-2 top-1/2 -translate-y-1/2" />
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle>
+            <FireExtinguisher /> All Products
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+          <div className="flex flex-1 items-center space-x-2">
+            <div className="relative h-max">
+              <Input
+                placeholder="Search products..."
+                value={(table.getState().globalFilter as string) ?? ""}
+                onChange={(event) => table.setGlobalFilter(event.target.value)}
+                className="pl-8 h-9 w-[150px] lg:w-[250px]"
+              />
+              <Search className="absolute size-4 left-2 top-1/2 -translate-y-1/2" />
+            </div>
+            <Select
+              value={grouping.at(0)}
+              onValueChange={(value) => table.setGrouping([value])}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue placeholder="Select grouping" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="category">Group by category</SelectItem>
+                  <SelectItem value="manufacturer">
+                    Group by manufacturer
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="onlyMyProducts"
+                checked={onlyMyProducts}
+                onCheckedChange={(checked) => setOnlyMyProducts(checked)}
+              />
+              <Label htmlFor="onlyMyProducts">Only My Products</Label>
+            </div>
           </div>
-          <Select
-            value={grouping.at(0)}
-            onValueChange={(value) => table.setGrouping([value])}
-          >
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Select grouping" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="category">Group by category</SelectItem>
-                <SelectItem value="manufacturer">
-                  Group by manufacturer
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
           <div className="flex items-center space-x-2">
-            <Switch
-              id="onlyMyProducts"
-              checked={onlyMyProducts}
-              onCheckedChange={(checked) => setOnlyMyProducts(checked)}
-            />
-            <Label htmlFor="onlyMyProducts">Only My Products</Label>
+            <EditProductButton canAssignOwnership={isGlobalAdmin} />
           </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <EditProductButton canAssignOwnership={isGlobalAdmin} />
-        </div>
-      </div>
+        </CardContent>
+      </Card>
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4 sm:gap-8">
         {table
           .getRowModel()

@@ -5,6 +5,7 @@ import {
   CornerDownRight,
   Download,
   FilePlus,
+  FileSpreadsheet,
   MoreHorizontal,
   Pencil,
   Printer,
@@ -15,6 +16,7 @@ import { getSelectColumn } from "~/components/data-table/columns";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,45 +132,54 @@ export default function ReportsIndex() {
 
   return (
     <>
-      <DataTable
-        columns={columns}
-        data={reports}
-        searchPlaceholder="Search reports..."
-        initialState={{
-          sorting: [
-            {
-              id: "createdAt",
-              desc: true,
-            },
-          ],
-        }}
-        actions={({ table }) => [
-          <Button key="add" size="sm" asChild>
-            <Link to="/reports/build">
-              <FilePlus />
-              Build Report
-            </Link>
-          </Button>,
-          <DropdownMenu key="bulk-actions">
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!table.getIsSomeRowsSelected()}
-              >
-                Actions ({table.getSelectedRowModel().rows.length})
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Trash />
-                Delete Selected
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>,
-        ]}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <FileSpreadsheet /> Reports
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={reports}
+            searchPlaceholder="Search reports..."
+            initialState={{
+              sorting: [
+                {
+                  id: "createdAt",
+                  desc: true,
+                },
+              ],
+            }}
+            actions={({ table }) => [
+              <Button key="add" size="sm" asChild>
+                <Link to="/reports/build">
+                  <FilePlus />
+                  Build Report
+                </Link>
+              </Button>,
+              <DropdownMenu key="bulk-actions">
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!table.getIsSomeRowsSelected()}
+                  >
+                    Actions ({table.getSelectedRowModel().rows.length})
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Trash />
+                    Delete Selected
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>,
+            ]}
+          />
+        </CardContent>
+      </Card>
     </>
   );
 }

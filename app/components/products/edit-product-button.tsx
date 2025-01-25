@@ -15,12 +15,14 @@ interface EditProductButtonProps {
   product?: Product;
   trigger?: React.ReactNode;
   canAssignOwnership?: boolean;
+  parentProduct?: Product;
 }
 
 export default function EditProductButton({
   product,
   trigger,
   canAssignOwnership,
+  parentProduct,
 }: EditProductButtonProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -29,18 +31,23 @@ export default function EditProductButton({
         {trigger ?? (
           <Button type="button" size="sm">
             {product ? <Pencil /> : <Plus />}
-            {product ? "Edit" : "Add"} Product
+            {product ? "Edit" : "Add"}{" "}
+            {parentProduct ? "Subproduct" : "Product"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{product ? "Edit" : "Add New"} Product</DialogTitle>
+          <DialogTitle>
+            {product ? "Edit" : "Add New"}{" "}
+            {parentProduct ? "Subproduct" : "Product"}
+          </DialogTitle>
         </DialogHeader>
         <ProductDetailsForm
           onSubmitted={() => setOpen(false)}
           product={product}
           canAssignOwnership={canAssignOwnership}
+          parentProduct={parentProduct}
         />
       </DialogContent>
     </Dialog>

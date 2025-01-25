@@ -5,10 +5,8 @@ import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
 export const handle = {
-  /*************  ✨ Codeium Command ⭐  *************/
-  /******  766c112a-d389-45a0-af37-0cf1f5de8f54  *******/
   breadcrumb: () => ({
-    label: "Roles",
+    label: "Order Requests",
   }),
 };
 
@@ -21,6 +19,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return null;
 };
 
-export default function AdminRolesLayout() {
+export default function AdminOrderRequestsLayout() {
   return <Outlet />;
 }

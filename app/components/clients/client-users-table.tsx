@@ -1,9 +1,20 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, Pencil, UserPen, UserPlus } from "lucide-react";
-import { useMemo } from "react";
+import {
+  MoreHorizontal,
+  Pencil,
+  ShieldCheck,
+  ShieldOff,
+  UserPen,
+  UserPlus,
+} from "lucide-react";
+import { useCallback, useMemo } from "react";
+import type { z } from "zod";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Site } from "~/lib/models";
+import type { updateUserSchema } from "~/lib/schema";
 import type { ClientUser } from "~/lib/types";
+import ActiveIndicator2 from "../active-indicator-2";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { ResponsiveDialog } from "../responsive-dialog";
@@ -34,8 +45,29 @@ export default function ClientUsersTable({
   const editUser = useOpenData<ClientUser>();
   const updateRole = useOpenData<ClientUser>();
 
+  const { submit } = useModalSubmit();
+  const setUserActive = useCallback(
+    (id: string, data: Pick<z.infer<typeof updateUserSchema>, "active">) => {
+      submit(data, {
+        method: "patch",
+        action: `/api/proxy/clients/${clientId}/users/${id}?_throw=false`,
+        encType: "application/json",
+      });
+    },
+    [clientId, submit]
+  );
+
   const clientUserColumns: ColumnDef<ClientUser>[] = useMemo(
     () => [
+      {
+        accessorKey: "active",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => (
+          <ActiveIndicator2 active={getValue() as boolean} />
+        ),
+      },
       {
         accessorKey: "name",
         header: ({ column, table }) => (
@@ -96,13 +128,30 @@ export default function ClientUsersTable({
                     </>
                   )}
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() =>
+                    setUserActive(user.id, { active: !user.active })
+                  }
+                >
+                  {user.active ? (
+                    <>
+                      <ShieldOff />
+                      Deactivate
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck />
+                      Reactivate
+                    </>
+                  )}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );
         },
       },
     ],
-    [getSiteByExternalId, editUser, updateRole]
+    [getSiteByExternalId, editUser, updateRole, setUserActive]
   );
 
   return (

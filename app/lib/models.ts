@@ -75,6 +75,39 @@ export interface Inspection extends BaseModel {
 export const InspectionStatuses = ["PENDING", "COMPLETE"] as const;
 export type InspectionStatus = (typeof InspectionStatuses)[number];
 
+export interface ProductRequest extends BaseModel {
+  status: ProductRequestStatus;
+  requestor: Person;
+  productRequestApprovals: ProductRequestApproval[];
+  productRequestItems: ProductRequestItem[];
+  site?: Site;
+  siteId: string;
+  client?: Client;
+  clientId: string;
+}
+
+export const ProductRequestStatuses = [
+  "NEW",
+  "APPROVED",
+  "RECEIVED",
+  "PROCESSING",
+  "FULLFILLED",
+  "CANCELLED",
+  "COMPLETE",
+] as const;
+export type ProductRequestStatus = (typeof ProductRequestStatuses)[number];
+
+export interface ProductRequestApproval extends BaseModel {
+  approved: boolean;
+  approver: Person;
+}
+
+export interface ProductRequestItem extends BaseModel {
+  product: Product;
+  quantity: number;
+  addedBy: Person;
+}
+
 export interface Address {
   id: string;
   street1: string;
@@ -245,8 +278,10 @@ export interface Product extends BaseModel {
   imageUrl?: string | null;
   productCategory: ProductCategory;
   productCategoryId: string;
+  parentProduct?: Product | null;
   assetQuestions?: AssetQuestion[];
   client?: Client | null;
 
   // TODO: Add consumable support
+  consumableProducts?: Product[];
 }

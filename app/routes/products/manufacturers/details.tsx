@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import { Pencil } from "lucide-react";
+import { Factory, FireExtinguisher, Pencil } from "lucide-react";
 import { type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
@@ -50,7 +50,8 @@ export default function ProductManufacturerDetails({
     <div className="grid gap-4">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle>
+            <Factory />
             <div className="inline-flex items-center gap-4">
               Manufacturer Details
               <div className="flex gap-2">
@@ -66,6 +67,7 @@ export default function ProductManufacturerDetails({
                 )}
               </div>
             </div>
+            <div className="flex-1"></div>
             <ActiveIndicator active={manufacturer.active} />
           </CardTitle>
         </CardHeader>
@@ -116,7 +118,9 @@ export default function ProductManufacturerDetails({
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Products</CardTitle>
+          <CardTitle>
+            <FireExtinguisher /> Products
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">
