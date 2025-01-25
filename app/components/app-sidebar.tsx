@@ -12,12 +12,14 @@ import {
   FileSpreadsheet,
   FireExtinguisher,
   LayoutDashboard,
+  LogOut,
   MessageCircleQuestion,
   Nfc,
   Package,
   Shapes,
   Shield,
   User2,
+  UserCog,
   Users,
 } from "lucide-react";
 import { Link, NavLink, useMatches } from "react-router";
@@ -289,10 +291,13 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 className="w-[--radix-popper-anchor-width]"
               >
                 <DropdownMenuItem asChild>
-                  <Link to="/account">Account</Link>
+                  <Link to="/account">
+                    <UserCog /> Account
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/logout">
+                    <LogOut />
                     <span>Sign out</span>
                   </Link>
                 </DropdownMenuItem>

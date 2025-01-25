@@ -45,8 +45,41 @@ export default function Account({
                   className="p-0 leading-none h-min"
                   asChild
                 >
-                  <Link to="/login?action=update_password" target="_blank">
+                  <Link to="/login?action=UPDATE_PASSWORD" target="_blank">
                     Change Password
+                    <ExternalLink />
+                  </Link>
+                </Button>
+              ),
+            },
+            {
+              label: "Passkey",
+              value: (
+                <Button
+                  variant="link"
+                  className="p-0 leading-none h-min"
+                  asChild
+                >
+                  <Link
+                    to="/login?action=webauthn-register-passwordless"
+                    target="_blank"
+                  >
+                    Configure Passkey
+                    <ExternalLink />
+                  </Link>
+                </Button>
+              ),
+            },
+            {
+              label: "Authenticator",
+              value: (
+                <Button
+                  variant="link"
+                  className="p-0 leading-none h-min"
+                  asChild
+                >
+                  <Link to="/login?action=CONFIGURE_TOTP" target="_blank">
+                    Configure Authenticator
                     <ExternalLink />
                   </Link>
                 </Button>

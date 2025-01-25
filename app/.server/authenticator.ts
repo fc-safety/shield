@@ -49,7 +49,7 @@ class KeycloakOAuth2Strategy<User> extends OAuth2Strategy<User> {
 
     const queryParams = getSearchParams(request);
     if (queryParams.has("action")) {
-      newParams.set("kc_action", queryParams.get("action")!.toUpperCase());
+      newParams.set("kc_action", queryParams.get("action")!);
     }
 
     return newParams;
