@@ -24,10 +24,10 @@ export type User = {
   tokens: Tokens;
 };
 
-export const buildUser = async (tokens: {
+export const buildUser = (tokens: {
   accessToken: string | (() => string);
   refreshToken: string | (() => string);
-}): Promise<User> => {
+}): User => {
   const retrieve = (value: string | (() => string)) =>
     typeof value === "string" ? value : value();
   const accessToken = retrieve(tokens.accessToken);

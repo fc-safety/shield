@@ -2,10 +2,9 @@ import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { ResultsPage } from "~/lib/models";
 import { buildUrl, type PathParams, type QueryParams } from "~/lib/urls";
-import { strategy } from "./authenticator";
 import { API_BASE_URL } from "./config";
 import { logger } from "./logger";
-import { getLoginRedirect, requireUserSession } from "./sessions";
+import { refreshTokensOrRelogin, requireUserSession } from "./sessions";
 
 type NativeFetchParameters = Parameters<typeof fetch>;
 type FetchArguments = {
@@ -158,25 +157,9 @@ export const fetchAuthenticated = async (
   // or reinitiate login.
   const testResponse = await Promise.any(awaitableResponses);
   if (testResponse.status === 401) {
-    try {
-      const refreshedTokens = await strategy.then((s) =>
-        s.refreshToken(user.tokens.refreshToken)
-      );
-      user.tokens.accessToken = refreshedTokens.accessToken();
-      user.tokens.refreshToken = refreshedTokens.refreshToken();
-
-      session.set("tokens", {
-        accessToken: user.tokens.accessToken,
-        refreshToken: user.tokens.refreshToken,
-      });
-
-      setSessionCookie(await getSessionToken(session));
-
-      awaitableResponses = getResponses(user.tokens.accessToken);
-    } catch (e) {
-      console.error("Token refresh failed", e);
-      throw await getLoginRedirect(request, session);
-    }
+    user.tokens = await refreshTokensOrRelogin(request, session, user.tokens);
+    setSessionCookie(await getSessionToken(session));
+    awaitableResponses = getResponses(user.tokens.accessToken);
   }
 
   return awaitableResponses;

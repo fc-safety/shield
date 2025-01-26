@@ -16,6 +16,8 @@ interface EditProductButtonProps {
   trigger?: React.ReactNode;
   canAssignOwnership?: boolean;
   parentProduct?: Product;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export default function EditProductButton({
@@ -23,10 +25,13 @@ export default function EditProductButton({
   trigger,
   canAssignOwnership,
   parentProduct,
+  open: openProp,
+  onOpenChange,
 }: EditProductButtonProps) {
   const [open, setOpen] = useState(false);
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={openProp ?? open} onOpenChange={onOpenChange ?? setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button type="button" size="sm">
@@ -44,7 +49,9 @@ export default function EditProductButton({
           </DialogTitle>
         </DialogHeader>
         <ProductDetailsForm
-          onSubmitted={() => setOpen(false)}
+          onSubmitted={() =>
+            onOpenChange ? onOpenChange(false) : setOpen(false)
+          }
           product={product}
           canAssignOwnership={canAssignOwnership}
           parentProduct={parentProduct}

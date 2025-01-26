@@ -2,14 +2,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import {
   FireExtinguisher,
+  MoreHorizontal,
   Pencil,
   ShieldQuestion,
   SquareStack,
+  Trash,
 } from "lucide-react";
 import { Link, type UIMatch } from "react-router";
+import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator from "~/components/active-indicator";
+import ActiveIndicator2 from "~/components/active-indicator-2";
+import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -20,7 +25,17 @@ import { ManufacturerCard } from "~/components/products/manufacturer-selector";
 import { ProductImage } from "~/components/products/product-card";
 import { ProductCategoryCard } from "~/components/products/product-category-selector";
 import { Button } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useOpenData } from "~/hooks/use-open-data";
+import type { Product } from "~/lib/models";
 import { isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
@@ -165,33 +180,9 @@ export default function ProductDetails({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <DataTable
-              columns={[
-                {
-                  accessorKey: "name",
-                  header: ({ column, table }) => (
-                    <DataTableColumnHeader column={column} table={table} />
-                  ),
-                },
-                {
-                  accessorKey: "sku",
-                  id: "SKU",
-                  header: ({ column, table }) => (
-                    <DataTableColumnHeader
-                      column={column}
-                      table={table}
-                      title="SKU"
-                    />
-                  ),
-                },
-              ]}
-              data={product.consumableProducts ?? []}
-              actions={[
-                <EditProductButton
-                  key="add-subproduct"
-                  parentProduct={product}
-                />,
-              ]}
+            <SubproductsTable
+              subproducts={product.consumableProducts ?? []}
+              parentProduct={product}
             />
           </CardContent>
         </Card>
@@ -244,5 +235,144 @@ export default function ProductDetails({
         </Card>
       </div>
     </div>
+  );
+}
+
+function SubproductsTable({
+  subproducts,
+  parentProduct,
+}: {
+  subproducts: Product[];
+  parentProduct: Product;
+}) {
+  const editSubproduct = useOpenData<Product>();
+
+  const { submit: submitDelete } = useModalSubmit({
+    defaultErrorMessage: "Error: Failed to delete subproduct",
+  });
+
+  const [deleteAction, setDeleteAction] = useImmer({
+    open: false,
+    action: () => {},
+    cancel: () => {},
+    title: "Are you sure?",
+    message: "",
+    requiredUserInput: "",
+  });
+
+  return (
+    <>
+      <DataTable
+        columns={[
+          {
+            accessorKey: "active",
+            header: ({ column, table }) => (
+              <DataTableColumnHeader column={column} table={table} />
+            ),
+            cell: ({ getValue }) => (
+              <ActiveIndicator2 active={getValue() as boolean} />
+            ),
+          },
+          {
+            accessorKey: "name",
+            header: ({ column, table }) => (
+              <DataTableColumnHeader column={column} table={table} />
+            ),
+          },
+          {
+            accessorKey: "sku",
+            id: "SKU",
+            header: ({ column, table }) => (
+              <DataTableColumnHeader
+                column={column}
+                table={table}
+                title="SKU"
+              />
+            ),
+          },
+          {
+            id: "edit",
+            cell: ({ row }) => {
+              const subproduct = row.original;
+
+              return (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <span className="sr-only">Open menu</span>
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
+                    <DropdownMenuItem
+                      onSelect={() => editSubproduct.openData(subproduct)}
+                    >
+                      <Pencil />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete Subproduct";
+                          draft.message = `Are you sure you want to delete ${subproduct.name}?`;
+                          draft.requiredUserInput =
+                            subproduct.name || subproduct.id;
+                          draft.action = () => {
+                            submitDelete(
+                              {},
+                              {
+                                method: "delete",
+                                action: `/api/proxy/products/${subproduct.id}`,
+                              }
+                            );
+                          };
+                        })
+                      }
+                    >
+                      <Trash />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            },
+          },
+        ]}
+        data={subproducts ?? []}
+        actions={[
+          <EditProductButton
+            key="add-subproduct"
+            parentProduct={parentProduct}
+          />,
+        ]}
+      />
+      {editSubproduct.data && (
+        <EditProductButton
+          open={editSubproduct.open}
+          onOpenChange={editSubproduct.setOpen}
+          product={editSubproduct.data}
+          parentProduct={parentProduct}
+          trigger={<></>}
+        />
+      )}
+      <ConfirmationDialog
+        open={deleteAction.open}
+        onOpenChange={(open) =>
+          setDeleteAction((draft) => {
+            draft.open = open;
+          })
+        }
+        destructive
+        onConfirm={() => deleteAction.action()}
+        confirmText="Delete"
+        onCancel={() => deleteAction.cancel()}
+        requiredUserInput={deleteAction.requiredUserInput}
+        title={deleteAction.title}
+        message={deleteAction.message}
+      />
+    </>
   );
 }

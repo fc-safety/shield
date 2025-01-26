@@ -10,6 +10,7 @@ import {
   BellRing,
   Check,
   ClipboardCheck,
+  CornerDownRight,
   Package,
   Pencil,
   Route as RouteIcon,
@@ -436,7 +437,8 @@ function AlertsTable({ alerts }: { alerts: Alert[] }) {
             alertId={row.original.id}
             trigger={
               <Button variant="secondary" size="sm">
-                View
+                <CornerDownRight />
+                Details
               </Button>
             }
           />

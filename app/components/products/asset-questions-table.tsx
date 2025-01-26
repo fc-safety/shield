@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useFetcher } from "react-router";
 import { useImmer } from "use-immer";
+import { useOpenData } from "~/hooks/use-open-data";
 import type { AssetQuestion } from "~/lib/models";
 import ActiveIndicator2 from "../active-indicator-2";
 import AssetQuestionDetailForm from "../assets/asset-question-detail-form";
@@ -33,8 +34,7 @@ export default function AssetQuestionsTable({
   parentType,
   parentId,
 }: AssetQuestionsTableProps) {
-  const [editOpen, setEditOpen] = useState(false);
-  const [selectedQuestion, setSelectedQuestion] = useState<AssetQuestion>();
+  const editQuestion = useOpenData<AssetQuestion>();
 
   const fetcher = useFetcher();
 
@@ -46,11 +46,6 @@ export default function AssetQuestionsTable({
     message: "",
     requiredUserInput: "",
   });
-
-  const handleEditQuestion = (question: AssetQuestion) => {
-    setSelectedQuestion(question);
-    setEditOpen(true);
-  };
 
   const existingSetupQuestionsCount = useMemo(
     () => questions.filter((q) => q.type === "SETUP").length,
@@ -123,7 +118,9 @@ export default function AssetQuestionsTable({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
-              <DropdownMenuItem onSelect={() => handleEditQuestion(question)}>
+              <DropdownMenuItem
+                onSelect={() => editQuestion.openData(question)}
+              >
                 <Pencil />
                 Edit
               </DropdownMenuItem>
@@ -198,14 +195,14 @@ export default function AssetQuestionsTable({
         title={deleteAction.title}
         message={deleteAction.message}
       />
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <Dialog open={editQuestion.open} onOpenChange={editQuestion.setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Question</DialogTitle>
           </DialogHeader>
           <AssetQuestionDetailForm
-            assetQuestion={selectedQuestion}
-            onSubmitted={() => setEditOpen(false)}
+            assetQuestion={editQuestion.data ?? undefined}
+            onSubmitted={() => editQuestion.setOpen(false)}
             existingSetupQuestionsCount={existingSetupQuestionsCount}
             existingInspectionQuestionsCount={existingInspectionQuestionsCount}
             parentType={parentType}

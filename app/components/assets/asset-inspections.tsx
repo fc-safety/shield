@@ -1,6 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { CornerDownRight, Loader2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import type { Inspection } from "~/lib/models";
@@ -76,6 +76,7 @@ export default function AssetInspections({
             onMouseEnter={() => handlePreloadInspectionDetails(row.original.id)}
             onClick={() => setInspectionDetailsOpen(true)}
           >
+            <CornerDownRight />
             Details
           </Button>
         ),
