@@ -14,12 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ChevronsUpDown, Loader2 } from "lucide-react";
-import {
-  useEffect,
-  useState,
-  type ComponentProps,
-  type ReactNode,
-} from "react";
+import { useState, type ComponentProps, type ReactNode } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { cn } from "~/lib/utils";
@@ -53,28 +48,24 @@ export function ResponsiveCombobox({
   disabled,
   ...selectOptionsProps
 }: ResponsiveComboboxProps) {
-  const [open, setOpen] = useState(openProp ?? false);
+  const [internalOpen, setInternalOpen] = useState(openProp ?? false);
+  const open = openProp ?? internalOpen;
+  const setOpen = (open: boolean) => {
+    setInternalOpen(open);
+    onOpenChange?.(open);
+  };
   const isDesktop = useMediaQuery("(min-width: 768px)");
   useBlurOnClose({
     onBlur,
     open,
   });
 
-  useEffect(() => {
-    onOpenChange?.(open);
-  }, [open, onOpenChange]);
-
-  const [value, setValue] = useState(valueProp ?? undefined);
-
-  useEffect(() => {
-    if (valueProp && valueProp !== value) {
-      setValue(valueProp);
-    }
-  }, [valueProp, value]);
-
-  useEffect(() => {
+  const [internalValue, setInternalValue] = useState(valueProp ?? undefined);
+  const value = valueProp ?? internalValue;
+  const setValue = (value: string | undefined) => {
+    setInternalValue(value);
     onValueChange?.(value);
-  }, [value, onValueChange]);
+  };
 
   const renderInput = ({
     renderTrigger,
