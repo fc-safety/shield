@@ -9,11 +9,23 @@ export function useOpenData<T>() {
     setData(data);
   };
 
+  const openNew = () => {
+    setOpen(true);
+    setData(null);
+  };
+
+  const close = () => {
+    setOpen(false);
+    setData(null);
+  };
+
   return {
     open,
     setOpen,
     data,
     setData,
     openData,
+    openNew,
+    close,
   };
 }

@@ -124,7 +124,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           icon: Building2,
         },
         {
-          title: "Order Reqeusts",
+          title: "Order Requests",
           url: "admin/order-requests",
           icon: Package,
         },

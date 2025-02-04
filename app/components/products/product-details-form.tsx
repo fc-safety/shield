@@ -236,7 +236,7 @@ export default function ProductDetailsForm({
             <FormItem>
               <FormLabel>Image URL</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} type="file" accept="image/*" />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -96,6 +96,10 @@ const keycloakTokenPayloadSchema = z.object({
       })
     )
     .optional(),
+  permissions: z
+    .array(z.string())
+    .transform((roles) => roles.filter(isValidPermission))
+    .optional(),
   client_id: z.string().default("unknown"),
   site_id: z.string().default("unknown"),
 });
@@ -110,7 +114,8 @@ const buildUserFromToken = (input: unknown, tokens: Tokens): User => {
     givenName: payload.given_name,
     familyName: payload.family_name,
     picture: payload.picture,
-    permissions: payload.resource_access?.["shield-api"]?.roles,
+    permissions:
+      payload.permissions ?? payload.resource_access?.["shield-api"]?.roles,
     clientId: payload.client_id,
     siteId: payload.site_id,
     tokens,
