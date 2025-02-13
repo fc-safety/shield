@@ -13,7 +13,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { useFetcher } from "react-router";
-import { useImmer } from "use-immer";
+import useDeleteAction from "~/hooks/use-delete-action";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AssetQuestion } from "~/lib/models";
 import ActiveIndicator2 from "../active-indicator-2";
@@ -38,14 +38,7 @@ export default function AssetQuestionsTable({
 
   const fetcher = useFetcher();
 
-  const [deleteAction, setDeleteAction] = useImmer({
-    open: false,
-    action: () => {},
-    cancel: () => {},
-    title: "Are you sure?",
-    message: "",
-    requiredUserInput: "",
-  });
+  const [deleteAction, setDeleteAction] = useDeleteAction();
 
   const existingSetupQuestionsCount = useMemo(
     () => questions.filter((q) => q.type === "SETUP").length,

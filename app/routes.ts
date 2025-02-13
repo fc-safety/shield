@@ -96,7 +96,6 @@ export default [
     route("link-preview-metadata", "./routes/api/link-preview-metadata.ts"),
     route("product-categories", "./routes/api/product-categories.ts"),
     route("manufacturers", "./routes/api/manufacturers.ts"),
-    route("products", "./routes/api/products.ts"),
     route("tags", "./routes/api/tags.ts"),
     route("inspections/:id", "./routes/api/inspections.ts"),
     ...prefix("assets/:assetId/alerts", [
@@ -105,5 +104,6 @@ export default [
       route(":id/resolve", "./routes/api/alerts/resolve.ts"),
     ]),
     route("proxy/*", "./routes/api/proxy.ts"),
+    route("image-upload-url", "./routes/api/image-upload-url.ts"),
   ]),
 ] satisfies RouteConfig;

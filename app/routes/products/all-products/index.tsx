@@ -9,7 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronRight, FireExtinguisher, Link2, Search } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
-import { useQueryNavigate } from "~/hooks/useQueryNavigate";
+import { useQueryNavigate } from "~/hooks/use-query-navigate";
 import type { Manufacturer, ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
 import { isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
@@ -103,12 +103,15 @@ export default function AllProducts({
     () => query.get("show-all") !== "true",
     [query]
   );
-  const setOnlyMyProducts = (value: boolean) => {
-    setQuery((prev) => {
-      prev.set("show-all", String(!value));
-      return prev;
-    });
-  };
+  const setOnlyMyProducts = useCallback(
+    (value: boolean) => {
+      setQuery((prev) => {
+        prev.set("show-all", String(!value));
+        return prev;
+      });
+    },
+    [setQuery]
+  );
 
   const [sorting, setSorting] = useImmer<SortingState>([
     {

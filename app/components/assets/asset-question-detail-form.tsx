@@ -28,8 +28,10 @@ import {
   AlertLevels,
   AssetQuestionResponseTypes,
   AssetQuestionTypes,
+  ConsumableMappingTypes,
   type AssetQuestion,
   type AssetQuestionResponseType,
+  type ConsumableMappingType,
 } from "~/lib/models";
 import {
   createAssetAlertCriterionSchema,
@@ -40,8 +42,9 @@ import {
   type createAssetQuestionSchema,
   type updateAssetQuestionSchema,
 } from "~/lib/schema";
-import { cn } from "~/lib/utils";
+import { cn, humanize } from "~/lib/utils";
 import AssetQuestionResponseTypeInput from "./asset-question-response-input";
+import ConsumableCombobox from "./consumable-combobox";
 
 type TForm = z.infer<
   typeof updateAssetQuestionSchema | typeof createAssetQuestionSchema
@@ -92,6 +95,22 @@ export default function AssetQuestionDetailForm({
               data: { ...c },
             })),
           },
+          consumableConfig: assetQuestion.consumableConfig
+            ? {
+                update: {
+                  consumableProduct: assetQuestion.consumableConfig
+                    .consumableProductId
+                    ? {
+                        connect: {
+                          id: assetQuestion.consumableConfig
+                            .consumableProductId,
+                        },
+                      }
+                    : undefined,
+                  mappingType: assetQuestion.consumableConfig.mappingType,
+                },
+              }
+            : undefined,
         }
       : {
           ...FORM_DEFAULTS,
@@ -108,7 +127,7 @@ export default function AssetQuestionDetailForm({
 
   const type = watch("type");
   const order = watch("order");
-
+  const consumableConfig = watch("consumableConfig");
   useEffect(() => {
     if (!isNew) return;
     const defaultOrder =
@@ -126,6 +145,28 @@ export default function AssetQuestionDetailForm({
     setValue,
     type,
   ]);
+
+  const requiredValueType = useMemo(() => {
+    if (consumableConfig) {
+      const theConfig =
+        (
+          consumableConfig as Exclude<
+            z.infer<typeof updateAssetQuestionSchema>["consumableConfig"],
+            undefined
+          >
+        ).update ?? consumableConfig.create;
+
+      if (theConfig?.mappingType) {
+        return consumableConfigMappingTypeToResponseType[theConfig.mappingType];
+      }
+    }
+  }, [consumableConfig]);
+
+  useEffect(() => {
+    if (requiredValueType) {
+      form.setValue("valueType", requiredValueType);
+    }
+  }, [requiredValueType, form]);
 
   const atomicCounter = useRef(0);
 
@@ -250,11 +291,8 @@ export default function AssetQuestionDetailForm({
                         value={type}
                         id={"questionStatus" + idx}
                       />
-                      <Label
-                        className="capitalize"
-                        htmlFor={"questionStatus" + idx}
-                      >
-                        {type.toLowerCase()}
+                      <Label htmlFor={"questionStatus" + idx}>
+                        {humanize(type)}
                       </Label>
                     </div>
                   ))}
@@ -302,18 +340,18 @@ export default function AssetQuestionDetailForm({
             <FormItem>
               <FormLabel>Answer Type</FormLabel>
               <FormControl>
-                <Select value={value} onValueChange={onChange}>
-                  <SelectTrigger className="capitalize" onBlur={onBlur}>
+                <Select
+                  value={value}
+                  onValueChange={onChange}
+                  disabled={!!requiredValueType}
+                >
+                  <SelectTrigger onBlur={onBlur}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent side="top">
                     {AssetQuestionResponseTypes.map((type) => (
-                      <SelectItem
-                        key={type}
-                        value={type}
-                        className="capitalize"
-                      >
-                        {type.replace("_", " ").toLowerCase()}
+                      <SelectItem key={type} value={type}>
+                        {humanize(type)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -336,6 +374,107 @@ export default function AssetQuestionDetailForm({
             </FormItem>
           )}
         />
+
+        {type === "SETUP" && parentType === "product" && (
+          <div>
+            <h3 className="mb-4 text-lg font-medium inline-flex items-center gap-2">
+              Configure Consumable
+              {consumableConfig && (
+                <Button
+                  size="icon"
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    form.setValue("consumableConfig", undefined);
+                  }}
+                >
+                  <Trash />
+                </Button>
+              )}
+            </h3>
+            <div className="space-y-4">
+              {consumableConfig ? (
+                <>
+                  <FormField
+                    control={form.control}
+                    name={
+                      consumableConfig.create
+                        ? "consumableConfig.create.consumableProduct.connect.id"
+                        : "consumableConfig.update.consumableProduct.connect.id"
+                    }
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subproduct</FormLabel>
+                        <FormControl>
+                          <ConsumableCombobox
+                            parentProductId={parentId}
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            onBlur={field.onBlur}
+                            className="flex w-full"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={
+                      consumableConfig.create
+                        ? "consumableConfig.create.mappingType"
+                        : "consumableConfig.update.mappingType"
+                    }
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mapping Type</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={field.value}
+                            onValueChange={field.onChange}
+                          >
+                            <SelectTrigger onBlur={field.onBlur}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ConsumableMappingTypes.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {humanize(type)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  className="w-full"
+                  onClick={() => {
+                    form.setValue("consumableConfig", {
+                      create: {
+                        consumableProduct: {
+                          connect: {
+                            id: "",
+                          },
+                        },
+                        mappingType: "EXPIRATION_DATE",
+                      },
+                    });
+                  }}
+                >
+                  Add Consumable
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
         {type === "INSPECTION" && (
           <div>
@@ -381,8 +520,6 @@ export default function AssetQuestionDetailForm({
   );
 }
 
-// TODO: This is all very messy and should be cleaned up.
-
 function AlertTrigger({
   className,
   idx,
@@ -420,17 +557,13 @@ function AlertTrigger({
                 <FormLabel>Trigger</FormLabel>
                 <FormControl>
                   <Select value={value} onValueChange={onChange}>
-                    <SelectTrigger className="capitalize" onBlur={onBlur}>
+                    <SelectTrigger onBlur={onBlur}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent side="top">
                       {AlertLevels.map((level) => (
-                        <SelectItem
-                          key={level}
-                          value={level}
-                          className="capitalize"
-                        >
-                          {level.replace("_", " ").toLowerCase()}
+                        <SelectItem key={level} value={level}>
+                          {humanize(level)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -668,4 +801,11 @@ const determineValueTypeFromOperator = (
   }
 
   return valueType;
+};
+
+const consumableConfigMappingTypeToResponseType: Record<
+  ConsumableMappingType,
+  AssetQuestionResponseType
+> = {
+  EXPIRATION_DATE: "DATE",
 };

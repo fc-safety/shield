@@ -10,6 +10,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useMutation } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
@@ -20,8 +23,10 @@ import {
   updateProductSchemaResolver,
   type updateProductSchema,
 } from "~/lib/schema";
+import { slugify } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
 import ManufacturerSelector from "./manufacturer-selector";
+import { ProductImage } from "./product-card";
 import ProductCategorySelector from "./product-category-selector";
 
 type TForm = z.infer<typeof createProductSchema | typeof updateProductSchema>;
@@ -101,18 +106,83 @@ export default function ProductDetailsForm({
     formState: { isDirty, isValid },
   } = form;
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
-    onSubmitted,
+  const { createOrUpdateJson: submit, isSubmitting: isSubmittingData } =
+    useModalSubmit({
+      onSubmitted,
+    });
+
+  const [image, setImage] = useState<File | null>(null);
+  const handleImageChange =
+    (onChange: (value: unknown) => void) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setImage(file);
+      }
+      onChange(e.target.value);
+    };
+
+  const { mutate: uploadImage, isPending: isUploadingImage } = useMutation<
+    string,
+    Error,
+    { data: TForm; image: File }
+  >({
+    mutationFn: async ({ data, image }: { data: TForm; image: File }) => {
+      const ext = image.type.split("/").pop();
+      const key = `product-images/${format(new Date(), "yyyy-MM-dd")}_${
+        parentProduct?.name ? `${slugify(parentProduct.name)}_` : ""
+      }${slugify(data.name ?? "unnamed")}${ext ? `.${ext}` : ""}`;
+      const getUrlResponse = await fetch(`/api/image-upload-url?key=${key}`);
+      if (getUrlResponse.ok) {
+        const { getUrl, putUrl } = await getUrlResponse.json();
+        const uploadResponse = await fetch(putUrl, {
+          method: "PUT",
+          body: image,
+        });
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to upload image", {
+            cause: uploadResponse,
+          });
+        }
+        return getUrl;
+      }
+
+      throw new Error("Failed to get image upload URL", {
+        cause: getUrlResponse,
+      });
+    },
   });
 
-  const handleSubmit = (data: TForm) => {
-    submit(data, {
-      path: "/api/proxy/products",
-      id: product?.id,
-      query: {
-        _throw: "false",
-      },
-    });
+  const isSubmitting = isSubmittingData || isUploadingImage;
+
+  const handleSubmit = async (data: TForm) => {
+    const doSubmit = (data: TForm) =>
+      submit(data, {
+        path: "/api/proxy/products",
+        id: product?.id,
+        query: {
+          _throw: "false",
+        },
+      });
+
+    if (image) {
+      uploadImage(
+        {
+          data,
+          image,
+        },
+        {
+          onSuccess: (imageUrl) => {
+            doSubmit({
+              ...data,
+              imageUrl,
+            });
+          },
+        }
+      );
+    } else {
+      doSubmit(data);
+    }
   };
 
   return (
@@ -232,11 +302,23 @@ export default function ProductDetailsForm({
         <FormField
           control={form.control}
           name="imageUrl"
-          render={({ field }) => (
+          render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>Image</FormLabel>
+              {(image || value) && (
+                <ProductImage
+                  imageUrl={image?.name ? URL.createObjectURL(image) : value}
+                  name="Product"
+                  className="w-full rounded-sm"
+                />
+              )}
               <FormControl>
-                <Input {...field} type="file" accept="image/*" />
+                <Input
+                  {...field}
+                  onChange={handleImageChange(onChange)}
+                  type="file"
+                  accept="image/*"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

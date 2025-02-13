@@ -224,3 +224,19 @@ export const getValidatedFormDataOrThrow = async <T extends FieldValues>(
   }
   return { data: data as T, receivedValues };
 };
+
+export const humanize = <T extends string | null | undefined>(str: T) => {
+  if (!str) return str;
+
+  return str
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+export const slugify = (str: string) => {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-");
+};

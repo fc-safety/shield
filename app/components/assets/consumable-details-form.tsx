@@ -1,0 +1,163 @@
+import { parseISO } from "date-fns";
+import { useForm } from "react-hook-form";
+import type { z } from "zod";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
+import type { Consumable } from "~/lib/models";
+import {
+  createConsumableSchemaResolver,
+  updateConsumableSchemaResolver,
+  type createConsumableSchema,
+  type updateConsumableSchema,
+} from "~/lib/schema";
+import { DatePicker } from "../date-picker";
+import { Button } from "../ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../ui/form";
+import { Input } from "../ui/input";
+import ConsumableCombobox from "./consumable-combobox";
+
+type TForm = z.infer<
+  typeof updateConsumableSchema | typeof createConsumableSchema
+>;
+
+interface ConsumableDetailsFormProps {
+  consumable?: Consumable;
+  onSubmitted?: () => void;
+  assetId: string;
+  parentProductId: string;
+}
+
+export default function ConsumableDetailsForm({
+  consumable,
+  onSubmitted,
+  assetId,
+  parentProductId,
+}: ConsumableDetailsFormProps) {
+  const isNew = !consumable;
+
+  const FORM_DEFAULTS = {
+    quantity: 1,
+    expiresOn: undefined,
+    asset: {
+      connect: {
+        id: assetId,
+      },
+    },
+  } satisfies TForm;
+
+  const form = useForm<TForm>({
+    resolver: isNew
+      ? createConsumableSchemaResolver
+      : updateConsumableSchemaResolver,
+    values: consumable
+      ? {
+          ...consumable,
+          expiresOn: consumable.expiresOn ?? undefined,
+          asset: {
+            connect: {
+              id: consumable.assetId,
+            },
+          },
+          product: {
+            connect: { id: consumable.productId },
+          },
+        }
+      : FORM_DEFAULTS,
+    mode: "onBlur",
+  });
+
+  const {
+    formState: { isDirty, isValid },
+  } = form;
+
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+    onSubmitted,
+  });
+
+  const handleSubmit = (data: TForm) => {
+    submit(data, {
+      path: `/api/proxy/consumables`,
+      id: consumable?.id,
+      query: {
+        _throw: "false",
+      },
+    });
+  };
+
+  return (
+    <Form {...form}>
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+        <Input type="hidden" {...form.register("id")} hidden />
+        <Input type="hidden" {...form.register("asset.connect.id")} hidden />
+
+        <FormField
+          control={form.control}
+          name="product.connect.id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Subproduct</FormLabel>
+              <FormControl>
+                <ConsumableCombobox
+                  parentProductId={parentProductId}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  assetId={assetId}
+                  className="flex w-full"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="quantity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Quantity</FormLabel>
+              <FormControl>
+                <Input type="number" {...field} min={1} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="expiresOn"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Expires On</FormLabel>
+              <FormControl>
+                <DatePicker
+                  value={field.value ? parseISO(field.value) : undefined}
+                  onValueChange={(date) => {
+                    field.onChange(date?.toISOString());
+                  }}
+                  onBlur={field.onBlur}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
+        >
+          {isSubmitting ? "Saving..." : "Save"}
+        </Button>
+      </form>
+    </Form>
+  );
+}

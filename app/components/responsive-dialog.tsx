@@ -19,7 +19,9 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface ResponsiveDialogProps extends React.PropsWithChildren {
   dialogClassName?: string;
@@ -31,21 +33,30 @@ interface ResponsiveDialogProps extends React.PropsWithChildren {
   description?: string;
   cancelTrigger?: React.ReactNode;
   minWidth?: string;
+  render?: (props: {
+    isDesktop: boolean;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) => React.ReactNode;
 }
 
 export function ResponsiveDialog({
   dialogClassName,
   drawerClassName,
-  open,
-  onOpenChange,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
   trigger,
   cancelTrigger,
   title,
   description,
   children,
   minWidth = "768px",
+  render,
 }: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery(`(min-width: ${minWidth})`);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const onOpenChange = onOpenChangeProp ?? setInternalOpen;
 
   if (isDesktop) {
     return (
@@ -54,11 +65,13 @@ export function ResponsiveDialog({
         <DialogContent
           className={cn("sm:max-w-[425px] rounded-lg", dialogClassName)}
         >
-          <DialogHeader className="text-left">
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
-          </DialogHeader>
-          {children}
+          <ScrollArea className="max-h-[calc(100vh-10rem)]">
+            <DialogHeader className="text-left">
+              <DialogTitle>{title}</DialogTitle>
+              <DialogDescription>{description}</DialogDescription>
+            </DialogHeader>
+            {render ? render({ isDesktop, open, onOpenChange }) : children}
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     );
@@ -68,14 +81,16 @@ export function ResponsiveDialog({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerTrigger asChild>{trigger}</DrawerTrigger>
       <DrawerContent className={cn(drawerClassName)}>
-        <DrawerHeader className="text-left">
-          <DrawerTitle>{title}</DrawerTitle>
-          <DrawerDescription>{description}</DrawerDescription>
-        </DrawerHeader>
-        <div className="px-4">{children}</div>
-        <DrawerFooter className="pt-2">
-          <DrawerClose asChild>{cancelTrigger}</DrawerClose>
-        </DrawerFooter>
+        <ScrollArea className="h-[calc(100vh-10rem)]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>{title}</DrawerTitle>
+            <DrawerDescription>{description}</DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4">{children}</div>
+          <DrawerFooter className="pt-2">
+            <DrawerClose asChild>{cancelTrigger}</DrawerClose>
+          </DrawerFooter>
+        </ScrollArea>
       </DrawerContent>
     </Drawer>
   );

@@ -11,6 +11,7 @@ import {
   Check,
   ClipboardCheck,
   CornerDownRight,
+  MoreHorizontal,
   Package,
   Pencil,
   Route as RouteIcon,
@@ -19,6 +20,7 @@ import {
   ShieldAlert,
   SquareStack,
   Thermometer,
+  Trash,
   X,
 } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
@@ -35,7 +37,9 @@ import {
   InspectionStatusBadge,
 } from "~/components/assets/asset-status-badge";
 import EditAssetButton from "~/components/assets/edit-asset-button";
+import EditConsumableButton from "~/components/assets/edit-consumable-button";
 import { TagCard } from "~/components/assets/tag-selector";
+import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -43,8 +47,18 @@ import ProductCard from "~/components/products/product-card";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import useDeleteAction from "~/hooks/use-delete-action";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useOpenData } from "~/hooks/use-open-data";
 import {
   getAssetAlertsStatus,
   getAssetInspectionStatus,
@@ -245,14 +259,21 @@ export default function AssetDetails({
               className="rounded-b-none"
               icon={Package}
             >
-              <AssetOrderRequests />
+              <AssetOrderRequests
+                assetId={asset.id}
+                parentProductId={asset.productId}
+                productRequests={asset.productRequests ?? []}
+              />
             </BasicCard>
             <BasicCard
               title="Consumables"
               className="rounded-t-none"
               icon={SquareStack}
             >
-              <ConsumablesTable consumables={asset.consumables ?? []} />
+              <ConsumablesTable
+                consumables={asset.consumables ?? []}
+                asset={asset}
+              />
             </BasicCard>
           </TabsContent>
           <TabsContent value="alerts">
@@ -341,7 +362,21 @@ function StatusCard({ asset }: { asset: Asset }) {
   );
 }
 
-function ConsumablesTable({ consumables }: { consumables: Consumable[] }) {
+function ConsumablesTable({
+  consumables,
+  asset,
+}: {
+  consumables: Consumable[];
+  asset: Asset;
+}) {
+  const editConsumable = useOpenData<Consumable>();
+
+  const { submit: submitDelete } = useModalSubmit({
+    defaultErrorMessage: "Error: Failed to delete consumable",
+  });
+
+  const [deleteAction, setDeleteAction] = useDeleteAction();
+
   const columns = useMemo<ColumnDef<Consumable>[]>(
     () => [
       {
@@ -352,6 +387,7 @@ function ConsumablesTable({ consumables }: { consumables: Consumable[] }) {
       },
       {
         accessorKey: "expiresOn",
+        id: "expires",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
@@ -373,8 +409,55 @@ function ConsumablesTable({ consumables }: { consumables: Consumable[] }) {
           <DataTableColumnHeader column={column} table={table} />
         ),
       },
+      {
+        id: "actions",
+        cell: ({ row }) => {
+          const consumable = row.original;
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => editConsumable.openData(consumable)}
+                >
+                  <Pencil />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() =>
+                    setDeleteAction((draft) => {
+                      draft.open = true;
+                      draft.title = "Delete Subproduct";
+                      draft.message = `Are you sure you want to remove ${consumable.product.name} from this asset?`;
+                      draft.action = () => {
+                        submitDelete(
+                          {},
+                          {
+                            method: "delete",
+                            action: `/api/proxy/consumables/${consumable.id}`,
+                          }
+                        );
+                      };
+                    })
+                  }
+                >
+                  <Trash />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      },
     ],
-    []
+    [setDeleteAction, submitDelete, editConsumable]
   );
 
   return (
@@ -383,6 +466,38 @@ function ConsumablesTable({ consumables }: { consumables: Consumable[] }) {
         columns={columns}
         data={consumables}
         searchPlaceholder="Search consumables..."
+        actions={[
+          <EditConsumableButton
+            key="add"
+            assetId={asset.id}
+            parentProductId={asset.productId}
+          />,
+        ]}
+      />
+      {editConsumable.data && (
+        <EditConsumableButton
+          open={editConsumable.open}
+          onOpenChange={editConsumable.setOpen}
+          consumable={editConsumable.data}
+          assetId={asset.id}
+          parentProductId={asset.productId}
+          trigger={<></>}
+        />
+      )}
+      <ConfirmationDialog
+        open={deleteAction.open}
+        onOpenChange={(open) =>
+          setDeleteAction((draft) => {
+            draft.open = open;
+          })
+        }
+        destructive
+        onConfirm={() => deleteAction.action()}
+        confirmText="Delete"
+        onCancel={() => deleteAction.cancel()}
+        requiredUserInput={deleteAction.requiredUserInput}
+        title={deleteAction.title}
+        message={deleteAction.message}
       />
     </>
   );

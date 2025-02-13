@@ -258,6 +258,46 @@ export const updateAssetSchema = createAssetSchema
   .partial();
 export const updateAssetSchemaResolver = zodResolver(updateAssetSchema);
 
+export const createConsumableSchema = z.object({
+  asset: z.object({
+    connect: z.object({
+      id: z.string(),
+    }),
+  }),
+  product: z.object({
+    connect: z.object({
+      id: z.string(),
+    }),
+  }),
+  quantity: z.coerce.number().gte(1).optional(),
+  expiresOn: z.string().datetime().optional(),
+  site: optionalConnectSchema,
+});
+export const createConsumableSchemaResolver = zodResolver(
+  createConsumableSchema
+);
+
+export const updateConsumableSchema = createConsumableSchema
+  .extend({ id: z.string() })
+  .partial();
+export const updateConsumableSchemaResolver = zodResolver(
+  updateConsumableSchema
+);
+
+export const createProductRequestItemSchema = z.object({
+  productId: z.string(),
+  quantity: z.coerce.number().gte(1),
+});
+
+export const createAssetOrderRequestSchema = z.object({
+  productRequestItems: z.object({
+    createMany: z.object({
+      data: z.array(createProductRequestItemSchema).min(1),
+    }),
+  }),
+  asset: optionalConnectSchema,
+});
+
 export const ruleOperatorsSchema = z
   .object({
     empty: z.literal(true),
@@ -305,6 +345,15 @@ export const updateAssetAlertCriterionSchema = createAssetAlertCriterionSchema
   .extend({ id: z.string() })
   .partial();
 
+export const createConsumableConfigSchema = z.object({
+  consumableProduct: z.object({
+    connect: z.object({
+      id: z.string(),
+    }),
+  }),
+  mappingType: z.enum(["EXPIRATION_DATE"]),
+});
+
 export const createAssetQuestionSchema = z.object({
   active: z.boolean().default(true),
   type: z.enum(AssetQuestionTypes),
@@ -320,7 +369,14 @@ export const createAssetQuestionSchema = z.object({
     })
     .partial()
     .optional(),
+  consumableConfig: z
+    .object({
+      create: createConsumableConfigSchema,
+    })
+    .partial()
+    .optional(),
 });
+
 export const createAssetQuestionSchemaResolver = zodResolver(
   createAssetQuestionSchema
 );
@@ -341,6 +397,14 @@ export const updateAssetQuestionSchema = createAssetQuestionSchema
           })
         ),
         deleteMany: z.array(z.object({ id: z.string() })),
+      })
+      .partial()
+      .optional(),
+    consumableConfig: z
+      .object({
+        create: createConsumableConfigSchema,
+        update: createConsumableConfigSchema.partial(),
+        delete: z.boolean().default(false),
       })
       .partial()
       .optional(),

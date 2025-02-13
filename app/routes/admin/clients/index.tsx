@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
 import EditClientButton from "~/components/clients/edit-client-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -28,6 +27,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "~/components/ui/hover-card";
+import useDeleteAction from "~/hooks/use-delete-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Client } from "~/lib/models";
 import { beautifyPhone } from "~/lib/utils";
@@ -44,14 +44,7 @@ export default function ClientsIndex({
     defaultErrorMessage: "Error: Failed to delete client",
   });
 
-  const [deleteAction, setDeleteAction] = useImmer({
-    open: false,
-    action: () => {},
-    cancel: () => {},
-    title: "Are you sure?",
-    message: "",
-    requiredUserInput: "",
-  });
+  const [deleteAction, setDeleteAction] = useDeleteAction();
 
   const columns: ColumnDef<Client>[] = useMemo(
     () => [

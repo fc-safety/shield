@@ -9,7 +9,6 @@ import {
   Trash,
 } from "lucide-react";
 import { Link, type UIMatch } from "react-router";
-import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator from "~/components/active-indicator";
@@ -33,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
+import useDeleteAction from "~/hooks/use-delete-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Product } from "~/lib/models";
@@ -251,14 +251,7 @@ function SubproductsTable({
     defaultErrorMessage: "Error: Failed to delete subproduct",
   });
 
-  const [deleteAction, setDeleteAction] = useImmer({
-    open: false,
-    action: () => {},
-    cancel: () => {},
-    title: "Are you sure?",
-    message: "",
-    requiredUserInput: "",
-  });
+  const [deleteAction, setDeleteAction] = useDeleteAction();
 
   return (
     <>
@@ -291,7 +284,7 @@ function SubproductsTable({
             ),
           },
           {
-            id: "edit",
+            id: "actions",
             cell: ({ row }) => {
               const subproduct = row.original;
 

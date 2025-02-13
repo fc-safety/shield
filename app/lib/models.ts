@@ -28,6 +28,7 @@ export interface Asset extends BaseModel {
   setupQuestionResponses?: AssetQuestionResponse[];
   consumables?: Consumable[];
   alerts?: Alert[];
+  productRequests?: ProductRequest[];
 
   // TODO: remove this
   status: string;
@@ -35,10 +36,10 @@ export interface Asset extends BaseModel {
 
 export interface Consumable extends BaseModel {
   asset?: Asset;
-  assetId?: string;
+  assetId: string;
   product: Product;
   productId: string;
-  expiresOn?: string;
+  expiresOn: string | null;
   siteId: string;
   clientId: string;
 }
@@ -186,6 +187,8 @@ export interface AssetQuestion extends BaseModel {
   productCategoryId: string | null;
   product?: Product | null;
   productId: string | null;
+  consumableConfig?: ConsumableQuestionConfig | null;
+  consumableConfigId: string | null;
 }
 
 export interface Alert extends BaseModel {
@@ -285,3 +288,12 @@ export interface Product extends BaseModel {
   // TODO: Add consumable support
   consumableProducts?: Product[];
 }
+
+export interface ConsumableQuestionConfig extends BaseModel {
+  consumableProduct?: Product;
+  consumableProductId: string;
+  mappingType: ConsumableMappingType;
+}
+
+export const ConsumableMappingTypes = ["EXPIRATION_DATE"] as const;
+export type ConsumableMappingType = (typeof ConsumableMappingTypes)[number];

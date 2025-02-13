@@ -32,3 +32,14 @@ export const ZIPCODESTACK_API_KEY = getNotEmptyVar("ZIPCODESTACK_API_KEY");
 
 // Google Maps
 export const GOOGLE_MAPS_API_KEY = getNotEmptyVar("GOOGLE_MAPS_API_KEY");
+
+// AWS
+export const AWS_UPLOAD_PUBLIC_S3_ACCESS_KEY_ID = getNotEmptyVar(
+  "AWS_UPLOAD_PUBLIC_S3_ACCESS_KEY_ID"
+);
+export const AWS_SECRET_ACCESS_KEY = getNotEmptyVar(
+  "AWS_UPLOAD_PUBLIC_S3_SECRET_ACCESS_KEY"
+);
+export const AWS_REGION = getNotEmptyVar("AWS_REGION");
+export const AWS_PUBLIC_BUCKET = getNotEmptyVar("AWS_PUBLIC_BUCKET");
+export const AWS_PUBLIC_CDN_URL = getNotEmptyVar("AWS_PUBLIC_CDN_URL");

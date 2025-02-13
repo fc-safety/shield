@@ -1,14 +1,8 @@
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { Product } from "~/lib/models";
+import { ResponsiveDialog } from "../responsive-dialog";
 import ProductDetailsForm from "./product-details-form";
 
 interface EditProductButtonProps {
@@ -31,32 +25,31 @@ export default function EditProductButton({
   const [open, setOpen] = useState(false);
 
   return (
-    <Dialog open={openProp ?? open} onOpenChange={onOpenChange ?? setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
+    <ResponsiveDialog
+      open={openProp ?? open}
+      onOpenChange={onOpenChange ?? setOpen}
+      title={`${product ? "Edit" : "Add New"} ${
+        parentProduct ? "Subproduct" : "Product"
+      }`}
+      dialogClassName="sm:max-w-lg"
+      trigger={
+        trigger ?? (
           <Button type="button" size="sm">
             {product ? <Pencil /> : <Plus />}
             {product ? "Edit" : "Add"}{" "}
             {parentProduct ? "Subproduct" : "Product"}
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {product ? "Edit" : "Add New"}{" "}
-            {parentProduct ? "Subproduct" : "Product"}
-          </DialogTitle>
-        </DialogHeader>
-        <ProductDetailsForm
-          onSubmitted={() =>
-            onOpenChange ? onOpenChange(false) : setOpen(false)
-          }
-          product={product}
-          canAssignOwnership={canAssignOwnership}
-          parentProduct={parentProduct}
-        />
-      </DialogContent>
-    </Dialog>
+        )
+      }
+    >
+      <ProductDetailsForm
+        onSubmitted={() =>
+          onOpenChange ? onOpenChange(false) : setOpen(false)
+        }
+        product={product}
+        canAssignOwnership={canAssignOwnership}
+        parentProduct={parentProduct}
+      />
+    </ResponsiveDialog>
   );
 }

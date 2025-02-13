@@ -23,6 +23,7 @@ import Footer from "./components/footer";
 import Header from "./components/header";
 import { Button } from "./components/ui/button";
 import { Toaster } from "./components/ui/sonner";
+import QueryContext from "./contexts/query-context";
 import { FONT_AWESOME_VERSION } from "./lib/constants";
 import styles from "./tailwind.css?url";
 
@@ -92,7 +93,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       specifiedTheme={data?.theme ?? null}
       themeAction="/action/set-theme"
     >
-      <BaseLayout>{children}</BaseLayout>
+      <QueryContext>
+        <BaseLayout>{children}</BaseLayout>
+      </QueryContext>
     </ThemeProvider>
   );
 }

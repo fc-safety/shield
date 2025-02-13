@@ -2,7 +2,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, Factory, MoreHorizontal, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useNavigate } from "react-router";
-import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator2 from "~/components/active-indicator-2";
@@ -23,6 +22,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
+import useDeleteAction from "~/hooks/use-delete-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Manufacturer } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
@@ -63,14 +63,7 @@ export default function ProductManufacturers({
   });
   const navigate = useNavigate();
 
-  const [deleteAction, setDeleteAction] = useImmer({
-    open: false,
-    action: () => {},
-    cancel: () => {},
-    title: "Are you sure?",
-    message: "",
-    requiredUserInput: "",
-  });
+  const [deleteAction, setDeleteAction] = useDeleteAction();
 
   const setOnlyMyManufacturers = (value: boolean) => {
     navigate(`?show-all=${!value}`);

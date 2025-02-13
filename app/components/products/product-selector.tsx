@@ -176,7 +176,7 @@ export default function ProductSelector({
   // Preload the products lazily.
   const handlePreload = useCallback(() => {
     if (fetcher.state === "idle" && fetcher.data === undefined) {
-      fetcher.load("/api/products");
+      fetcher.load("/api/proxy/products?type=PRIMARY&limit=10000");
     }
   }, [fetcher]);
 

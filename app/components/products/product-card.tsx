@@ -163,6 +163,7 @@ export function ProductImage({
                 src={imageContext.dataUrl}
                 alt={name}
                 className="object-contain max-h-44"
+                loading="lazy"
               />
             </div>
           ) : (

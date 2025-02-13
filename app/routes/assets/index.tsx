@@ -2,7 +2,6 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Shield, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
-import { useImmer } from "use-immer";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator2 from "~/components/active-indicator-2";
@@ -25,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import useDeleteAction from "~/hooks/use-delete-action";
 import type { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
 import {
   getAssetAlertsStatus,
@@ -53,14 +53,7 @@ export default function AssetsIndex({
   const [searchParams] = useSearchParams();
   const fetcher = useFetcher();
 
-  const [deleteAction, setDeleteAction] = useImmer({
-    open: false,
-    action: () => {},
-    cancel: () => {},
-    title: "Are you sure?",
-    message: "",
-    requiredUserInput: "",
-  });
+  const [deleteAction, setDeleteAction] = useDeleteAction();
 
   const columnFilters = useMemo(() => {
     if (searchParams.has("status")) {
