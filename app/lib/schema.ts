@@ -5,6 +5,7 @@ import {
   AssetQuestionTypes,
   ClientStatuses,
   InspectionStatuses,
+  ProductRequestStatuses,
   ProductTypes,
   type AssetQuestion,
   type AssetQuestionResponse,
@@ -296,6 +297,11 @@ export const createAssetOrderRequestSchema = z.object({
     }),
   }),
   asset: optionalConnectSchema,
+});
+
+export const updateOrderRequestStatusesSchema = z.object({
+  ids: z.array(z.string()),
+  status: z.enum(ProductRequestStatuses),
 });
 
 export const ruleOperatorsSchema = z

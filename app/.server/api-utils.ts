@@ -12,6 +12,13 @@ type FetchArguments = {
   options?: NativeFetchParameters[1];
 };
 
+const VIEW_CONTEXTS = ["admin", "user"] as const;
+export type ViewContext = (typeof VIEW_CONTEXTS)[number];
+
+type FetchBuildOptions = {
+  context?: ViewContext;
+};
+
 export class FetchOptions {
   private url: NativeFetchParameters[0];
   private options: Exclude<NativeFetchParameters[1], undefined> & {
@@ -71,7 +78,10 @@ export class FetchOptions {
     return this;
   }
 
-  public build() {
+  public build(options: FetchBuildOptions = {}) {
+    if (options.context) {
+      this.options.headers.set("X-View-Context", options.context);
+    }
     return {
       url: this.url,
       options: this.options,
@@ -233,19 +243,37 @@ interface AllCrudActions<
   TCreateSchema extends z.ZodType,
   TUpdateSchema extends z.ZodType
 > {
-  list: (request: Request, query?: QueryParams) => DataResponse<ResultsPage<T>>;
-  get: (request: Request, id: string) => DataResponse<T>;
-  create: (request: Request, input: z.infer<TCreateSchema>) => DataResponse<T>;
+  list: (
+    request: Request,
+    query?: QueryParams,
+    options?: FetchBuildOptions
+  ) => DataResponse<ResultsPage<T>>;
+  get: (
+    request: Request,
+    id: string,
+    options?: FetchBuildOptions
+  ) => DataResponse<T>;
+  create: (
+    request: Request,
+    input: z.infer<TCreateSchema>,
+    options?: FetchBuildOptions
+  ) => DataResponse<T>;
   update: (
     request: Request,
     id: string,
-    input: z.infer<TUpdateSchema>
+    input: z.infer<TUpdateSchema>,
+    options?: FetchBuildOptions
   ) => DataResponse<T>;
-  delete: (request: Request, id: string) => DataResponse<unknown>;
+  delete: (
+    request: Request,
+    id: string,
+    options?: FetchBuildOptions
+  ) => DataResponse<unknown>;
   deleteAndRedirect: (
     request: Request,
     id: string,
-    to: string
+    to: string,
+    options?: FetchBuildOptions
   ) => Promise<Response>;
 }
 
@@ -268,28 +296,40 @@ function buildCrud<
   return actions.reduce((acc, action) => {
     switch (action) {
       case "list":
-        acc[action] = (request: Request, query: QueryParams = {}) => {
+        acc[action] = (
+          request: Request,
+          query: QueryParams = {},
+          options: FetchBuildOptions = {}
+        ) => {
           return authenticatedData<ResultsPage<T>>(request, [
             FetchOptions.url(path, {
               order: {
                 createdOn: "desc",
               },
               ...query,
-            }).build(),
+            }).build(options),
           ]);
         };
         break;
       case "get":
-        acc[action] = (request: Request, id: string) => {
+        acc[action] = (
+          request: Request,
+          id: string,
+          options: FetchBuildOptions = {}
+        ) => {
           return authenticatedData<T>(request, [
-            FetchOptions.url(`${path}/:id`, { id }).build(),
+            FetchOptions.url(`${path}/:id`, { id }).build(options),
           ]);
         };
         break;
       case "create":
-        acc[action] = (request: Request, input: z.infer<TCreateSchema>) => {
+        acc[action] = (
+          request: Request,
+          input: z.infer<TCreateSchema>,
+          options: FetchBuildOptions = {}
+        ) => {
           return authenticatedData<T>(request, [
-            FetchOptions.url(path).post().json(input).build(),
+            FetchOptions.url(path).post().json(input).build(options),
           ]);
         };
         break;
@@ -297,24 +337,37 @@ function buildCrud<
         acc[action] = (
           request: Request,
           id: string,
-          input: z.infer<TUpdateSchema>
+          input: z.infer<TUpdateSchema>,
+          options: FetchBuildOptions = {}
         ) => {
           return authenticatedData<T>(request, [
-            FetchOptions.url(`${path}/:id`, { id }).patch().json(input).build(),
+            FetchOptions.url(`${path}/:id`, { id })
+              .patch()
+              .json(input)
+              .build(options),
           ]);
         };
         break;
       case "delete":
-        acc[action] = (request: Request, id: string) => {
+        acc[action] = (
+          request: Request,
+          id: string,
+          options: FetchBuildOptions = {}
+        ) => {
           return authenticatedData(request, [
-            FetchOptions.url(`${path}/:id`, { id }).delete().build(),
+            FetchOptions.url(`${path}/:id`, { id }).delete().build(options),
           ]);
         };
         break;
       case "deleteAndRedirect":
-        acc[action] = (request: Request, id: string, to: string) => {
+        acc[action] = (
+          request: Request,
+          id: string,
+          to: string,
+          options: FetchBuildOptions = {}
+        ) => {
           return authenticatedData(request, [
-            FetchOptions.url(`${path}/:id`, { id }).delete().build(),
+            FetchOptions.url(`${path}/:id`, { id }).delete().build(options),
           ]).asRedirect(to);
         };
         break;

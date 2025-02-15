@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Plus, Trash } from "lucide-react";
+import { NotepadText, Plus, Trash } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
@@ -17,25 +17,21 @@ import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Product, ProductRequest, ResultsPage } from "~/lib/models";
 import { createAssetOrderRequestSchema } from "~/lib/schema";
 import { ResponsiveDialog } from "../responsive-dialog";
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 import { DialogFooter } from "../ui/dialog";
 import { Input } from "../ui/input";
+import AssetOrderRequestApprovalIndicator from "./asset-order-request-approval-indicator";
 
 interface AssetOrderRequestsProps {
-  assetId: string;
-  parentProductId: string;
   productRequests: ProductRequest[];
 }
 
 export default function AssetOrderRequests({
-  assetId,
-  parentProductId,
   productRequests,
 }: AssetOrderRequestsProps) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4">
       {productRequests.length === 0 && (
         <p className="text-muted-foreground text-xs">
           No active supply requests.
@@ -43,50 +39,58 @@ export default function AssetOrderRequests({
       )}
 
       {productRequests.map((request) => (
-        <Card key={request.id}>
-          <CardHeader>
-            <CardDescription className="text-muted-foreground text-xs">
-              {format(request.createdOn, "PPpp")}
-            </CardDescription>
-            <CardTitle>
-              {request.status} - {request.productRequestItems.length} items
-            </CardTitle>
-          </CardHeader>
-          {/* <CardContent></CardContent> */}
-        </Card>
+        <ProductRequestCard key={request.id} request={request} />
       ))}
-
-      <ResponsiveDialog
-        open={open}
-        onOpenChange={setOpen}
-        trigger={
-          <Button type="submit" variant="secondary">
-            New Supply Request
-          </Button>
-        }
-        title="Supply Request"
-        description="Please select which consumables and the quantities you would like to order."
-        dialogClassName="sm:max-w-[425px]"
-        render={({ isDesktop }) => (
-          <AssetOrderRequestForm
-            assetId={assetId}
-            parentProductId={parentProductId}
-            renderSubmitButton={({ isSubmitting, disabled }) => {
-              const btn = (
-                <Button type="submit" disabled={disabled || isSubmitting}>
-                  {isSubmitting ? "Submitting..." : "Submit Order"}
-                </Button>
-              );
-
-              return isDesktop ? <DialogFooter>{btn}</DialogFooter> : btn;
-            }}
-            onSubmitted={() => {
-              setOpen(false);
-            }}
-          />
-        )}
-      />
     </div>
+  );
+}
+
+export function NewSupplyRequestButton({
+  assetId,
+  parentProductId,
+}: {
+  assetId: string;
+  parentProductId: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Button
+          type="submit"
+          variant="default"
+          size="sm"
+          className="justify-self-end"
+        >
+          <NotepadText />
+          New Supply Request
+        </Button>
+      }
+      title="Supply Request"
+      description="Please select which consumables and the quantities you would like to order."
+      dialogClassName="sm:max-w-[425px]"
+      render={({ isDesktop }) => (
+        <AssetOrderRequestForm
+          assetId={assetId}
+          parentProductId={parentProductId}
+          renderSubmitButton={({ isSubmitting, disabled }) => {
+            const btn = (
+              <Button type="submit" disabled={disabled || isSubmitting}>
+                {isSubmitting ? "Submitting..." : "Submit Order"}
+              </Button>
+            );
+
+            return isDesktop ? <DialogFooter>{btn}</DialogFooter> : btn;
+          }}
+          onSubmitted={() => {
+            setOpen(false);
+          }}
+        />
+      )}
+    />
   );
 }
 
@@ -182,10 +186,7 @@ function AssetOrderRequestForm({
 
   return (
     <Form {...form}>
-      <form
-        className="space-y-4 mt-4"
-        onSubmit={form.handleSubmit(handleSubmit)}
-      >
+      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <div>
           <h3 className="font-medium">Available Consumables</h3>
           <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 divide-y divide-border">
@@ -259,5 +260,52 @@ function AssetOrderRequestForm({
         {renderSubmitButton({ isSubmitting, disabled: !isDirty || !isValid })}
       </form>
     </Form>
+  );
+}
+
+export function ProductRequestCard({ request }: { request: ProductRequest }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardDescription className="text-muted-foreground text-xs flex items-center gap-x-4 justify-between">
+          <div className="flex items-center gap-x-2">
+            <Badge variant="default">{request.status}</Badge>
+            <div>&mdash;</div>
+            <div>{format(request.createdOn, "PPpp")}</div>
+          </div>
+          <div className="flex items-center gap-x-2">
+            {request.productRequestApprovals?.map((approval) => (
+              <AssetOrderRequestApprovalIndicator
+                key={approval.id}
+                approval={approval}
+              />
+            ))}
+            {request.productRequestApprovals?.length === 0 && (
+              <AssetOrderRequestApprovalIndicator
+                key={"no approval"}
+                approval={null}
+              />
+            )}
+          </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-x-4 text-sm grid-cols-[auto_auto_1fr] divide-y divide-border">
+          <div className="grid col-span-full grid-cols-subgrid items-center py-2 text-muted-foreground text-xs font-medium">
+            <div>Qty</div>
+            <div>Consumable</div>
+          </div>
+          {request.productRequestItems.map((item) => (
+            <div
+              key={item.id}
+              className="grid col-span-full grid-cols-subgrid items-center py-2"
+            >
+              <div className="text-end">{item.quantity}</div>
+              <div>{item.product.name}</div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

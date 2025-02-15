@@ -8,7 +8,6 @@ import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
-import { ScrollArea } from "../ui/scroll-area";
 import InspectionDetails from "./inspection-details";
 
 interface AssetHistoryLogsProps {
@@ -106,16 +105,14 @@ export default function AssetInspections({
         dialogClassName="sm:max-w-lg"
         minWidth="578px"
       >
-        <ScrollArea className="h-[70svh]">
-          {!fetcher.data || fetcher.state === "loading" ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <InspectionDetails
-              inspection={fetcher.data}
-              googleMapsApiKey={googleMapsApiKey}
-            />
-          )}
-        </ScrollArea>
+        {!fetcher.data || fetcher.state === "loading" ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          <InspectionDetails
+            inspection={fetcher.data}
+            googleMapsApiKey={googleMapsApiKey}
+          />
+        )}
       </ResponsiveDialog>
     </>
   );

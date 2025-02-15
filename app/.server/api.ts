@@ -8,10 +8,12 @@ import {
   type Manufacturer,
   type Product,
   type ProductCategory,
+  type ProductRequest,
   type Site,
   type Tag,
 } from "~/lib/models";
 import {
+  createAssetOrderRequestSchema,
   createInspectionSchema,
   createRoleSchema,
   resolveAlertSchema,
@@ -69,26 +71,18 @@ export const api = {
           .build(),
       ]);
     },
-
-    // Alerts
-    alerts: (assetId: string) => ({
-      ...CRUD.for<Alert, never, never>(`/assets/${assetId}/alerts`).only([
-        "get",
-        "list",
-      ]),
-      resolve: (
-        request: Request,
-        alertId: string,
-        input: z.infer<typeof resolveAlertSchema>
-      ) => {
-        return authenticatedData<Alert>(request, [
-          FetchOptions.url(`/assets/${assetId}/alerts/${alertId}/resolve`)
-            .post()
-            .json(input)
-            .build(),
-        ]);
-      },
-    }),
+  },
+  alerts: {
+    ...CRUD.for<Alert, never, never>("/alerts").only(["get", "list"]),
+    resolve: (
+      request: Request,
+      id: string,
+      input: z.infer<typeof resolveAlertSchema>
+    ) => {
+      return authenticatedData<Alert>(request, [
+        FetchOptions.url(`/alerts/${id}/resolve`).post().json(input).build(),
+      ]);
+    },
   },
   tags: {
     ...CRUD.for<Tag, typeof createTagSchema, typeof updateTagSchema>(
@@ -104,6 +98,11 @@ export const api = {
   inspections: {
     ...CRUD.for<Inspection, typeof backendCreateInspectionSchema, never>(
       "/inspections"
+    ).except(["delete", "deleteAndRedirect", "update"]),
+  },
+  orderRequests: {
+    ...CRUD.for<ProductRequest, typeof createAssetOrderRequestSchema, never>(
+      "/order-requests"
     ).except(["delete", "deleteAndRedirect", "update"]),
   },
 

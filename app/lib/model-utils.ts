@@ -19,9 +19,10 @@ export const getAssetInspectionStatus = (
 };
 
 export const getAssetAlertsStatus = (alerts: Alert[]): AlertsStatus => {
-  return alerts.some((a) => a.alertLevel === "URGENT")
+  const unresolvedAlerts = alerts.filter((a) => !a.resolved);
+  return unresolvedAlerts.some((a) => a.alertLevel === "URGENT")
     ? AlertsStatus.URGENT
-    : alerts.some((a) => a.alertLevel === "INFO")
+    : unresolvedAlerts.some((a) => a.alertLevel === "INFO")
     ? AlertsStatus.INFO
     : AlertsStatus.NONE;
 };

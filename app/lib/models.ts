@@ -79,8 +79,10 @@ export type InspectionStatus = (typeof InspectionStatuses)[number];
 export interface ProductRequest extends BaseModel {
   status: ProductRequestStatus;
   requestor: Person;
-  productRequestApprovals: ProductRequestApproval[];
+  productRequestApprovals?: ProductRequestApproval[];
   productRequestItems: ProductRequestItem[];
+  asset?: Asset;
+  assetId: string;
   site?: Site;
   siteId: string;
   client?: Client;
@@ -92,7 +94,7 @@ export const ProductRequestStatuses = [
   "APPROVED",
   "RECEIVED",
   "PROCESSING",
-  "FULLFILLED",
+  "FULFILLED",
   "CANCELLED",
   "COMPLETE",
 ] as const;

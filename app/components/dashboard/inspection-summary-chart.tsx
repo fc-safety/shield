@@ -17,7 +17,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "~/components/ui/chart";
-import type { assetStatuses } from "~/lib/demo-data";
 
 const StatusLink = ({ status, label }: { status: string; label?: string }) => {
   return (
@@ -52,7 +51,7 @@ export function InspectionSummaryChart({
   data: dataProp,
 }: {
   data: {
-    status: (typeof assetStatuses)[number];
+    status: string;
     totalAssets: number;
   }[];
 }) {

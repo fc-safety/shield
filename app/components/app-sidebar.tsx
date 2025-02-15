@@ -23,7 +23,6 @@ import {
   Users,
 } from "lucide-react";
 import { Link, NavLink, useMatches } from "react-router";
-import type { User } from "~/.server/authenticator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,11 +45,8 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "~/components/ui/sidebar";
+import { useAuth } from "~/contexts/auth-context";
 import { isGlobalAdmin } from "~/lib/users";
-
-interface AppSidebarProps {
-  user?: User;
-}
 
 interface SidebarGroup {
   groupTitle: string;
@@ -73,7 +69,9 @@ interface SidebarMenuSubItem {
   hide?: boolean;
 }
 
-export function AppSidebar({ user }: AppSidebarProps) {
+export function AppSidebar() {
+  const { user } = useAuth();
+
   const groups: SidebarGroup[] = [
     {
       groupTitle: "Application",

@@ -11,8 +11,10 @@ export type PathParams<TPath extends string> = {
   [Key in ExtractPathParams<TPath>]: string | number;
 };
 
-type BaseQueryParams = Record<string, string | number | null>;
-export type QueryParams = BaseQueryParams | Record<string, BaseQueryParams>;
+type BaseQueryParamValue = string | number | null | undefined;
+export interface QueryParams {
+  [key: string]: BaseQueryParamValue | BaseQueryParamValue[] | QueryParams;
+}
 
 export const buildPath = <TPath extends string>(
   path: TPath,

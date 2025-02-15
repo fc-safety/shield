@@ -1,5 +1,6 @@
 import { createCookieSessionStorage, redirect } from "react-router";
 import { createThemeSessionResolver } from "remix-themes";
+import { isTokenExpired } from "~/lib/users";
 import { buildUser, strategy, type Tokens } from "./authenticator";
 import { COOKIE_SECRET, SESSION_SECRET } from "./config";
 import { logger } from "./logger";
@@ -76,15 +77,6 @@ export const requireUserSession = async (request: Request) => {
     getSessionToken: (thisSession: typeof session) =>
       userSessionStorage.commitSession(thisSession),
   };
-};
-
-const TOKEN_EXPIRATION_BUFFER_SECONDS = 2;
-
-export const isTokenExpired = (token: string) => {
-  const parsedToken = JSON.parse(atob(token.split(".")[1]));
-  return (
-    (parsedToken.exp - TOKEN_EXPIRATION_BUFFER_SECONDS) * 1000 < Date.now()
-  );
 };
 
 export const refreshTokensOrRelogin = async (

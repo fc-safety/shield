@@ -181,22 +181,6 @@ export default function AssetsIndex({
           </Link>
         ),
       },
-      // {
-      //   accessorKey: "status",
-      //   header: ({ column }) => (
-      //     <DataTableColumnHeader column={column} title="Status" />
-      //   ),
-      //   cell: ({ getValue }) => {
-      //     const status = getValue();
-      //     return status === "ok" ? (
-      //       <ShieldCheck className="text-green-500" />
-      //     ) : status === "warning" ? (
-      //       <ShieldAlert className="text-yellow-500" />
-      //     ) : (
-      //       <ShieldClose className="text-red-500" />
-      //     );
-      //   },
-      // },
       {
         id: "actions",
         cell: ({ row }) => {
@@ -306,46 +290,8 @@ export default function AssetsIndex({
                   })),
                 title: "Manufacturer",
               },
-              //   {
-              //     column: table.getColumn("status"),
-              //     options: assetStatuses.map((type) => ({
-              //       label: type,
-              //       value: type,
-              //       icon:
-              //         type === "ok"
-              //           ? CheckCircle2
-              //           : type === "warning"
-              //           ? TriangleAlert
-              //           : XCircle,
-              //     })),
-              //     title: "Status",
-              //   },
             ]}
-            actions={[
-              <EditAssetButton key="add" />,
-              // TODO: If bulk actions are needed, make sure to add select column.
-              //   <DropdownMenu key="bulk-actions">
-              //     <DropdownMenuTrigger asChild>
-              //       <Button
-              //         variant="outline"
-              //         size="sm"
-              //         disabled={
-              //           !table.getIsSomeRowsSelected() &&
-              //           !table.getIsAllRowsSelected()
-              //         }
-              //       >
-              //         Actions ({table.getSelectedRowModel().rows.length})
-              //         <ChevronDown className="h-4 w-4" />
-              //       </Button>
-              //     </DropdownMenuTrigger>
-              //     <DropdownMenuContent align="end">
-              //       <DropdownMenuItem>
-              //         <Trash />
-              //         Some Bulk Action
-              //       </DropdownMenuItem>
-              //     </DropdownMenuContent>
-              //   </DropdownMenu>,
-            ]}
+            actions={[<EditAssetButton key="add" />]}
           />
         </CardContent>
       </Card>

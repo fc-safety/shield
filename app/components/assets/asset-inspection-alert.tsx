@@ -37,7 +37,7 @@ export default function AssetInspectionAlert({
 
   const handlePreloadAlerts = useCallback(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
-      fetcher.load(`/api/assets/${assetId}/alerts/${alertId}`);
+      fetcher.load(`/api/proxy/alerts/${alertId}?assetId=${assetId}`);
     }
   }, [fetcher, assetId, alertId]);
 
@@ -170,7 +170,7 @@ function InspectionAlert({
         <fetcher.Form
           className="space-y-4"
           method="post"
-          action={`/api/assets/${alert.assetId}/alerts/${alert.id}/resolve`}
+          action={`/api/proxy/alerts/${alert.id}/resolve`}
         >
           <FormField
             control={form.control}

@@ -1,0 +1,117 @@
+import { useQuery } from "@tanstack/react-query";
+import { Check } from "lucide-react";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import type { Alert, ResultsPage } from "~/lib/models";
+import { cn } from "~/lib/utils";
+import { DataTable } from "../data-table/data-table";
+import { DataTableColumnHeader } from "../data-table/data-table-column-header";
+import DisplayRelativeDate from "../display-relative-date";
+import Icon from "../icons/icon";
+import { Card, CardContent, CardHeader } from "../ui/card";
+import BlankDashboardTile from "./blank-dashboard-tile";
+import ErrorDashboardTile from "./error-dashboard-tile";
+export default function InspectionAlertsOverview() {
+  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
+
+  const { data, error } = useQuery({
+    queryKey: ["inspection-alerts"],
+    queryFn: () => getInspectionAlerts(fetch),
+  });
+
+  return data ? (
+    <Card>
+      <CardHeader>Inspection Alerts</CardHeader>
+      <CardContent>
+        <DataTable
+          columns={[
+            {
+              accessorKey: "createdOn",
+              id: "date",
+              header: ({ column, table }) => (
+                <DataTableColumnHeader column={column} table={table} />
+              ),
+              cell: ({ getValue }) => (
+                <DisplayRelativeDate date={getValue() as string} />
+              ),
+            },
+            {
+              accessorKey: "asset.name",
+              id: "asset",
+              header: ({ column, table }) => (
+                <DataTableColumnHeader column={column} table={table} />
+              ),
+              cell: ({ row, getValue }) => {
+                const assetName = getValue() as string;
+                return (
+                  <span className="flex items-center gap-2">
+                    {row.original.asset?.product?.productCategory?.icon && (
+                      <Icon
+                        iconId={row.original.asset.product.productCategory.icon}
+                        color={row.original.asset.product.productCategory.color}
+                        className="text-lg"
+                      />
+                    )}
+                    {assetName}
+                  </span>
+                );
+              },
+            },
+            {
+              accessorKey: "alertLevel",
+              id: "level",
+              header: ({ column, table }) => (
+                <DataTableColumnHeader column={column} table={table} />
+              ),
+              cell: ({ getValue, row: { original: alert } }) => {
+                const level = getValue() as string;
+                return (
+                  <span
+                    className={cn("capitalize rounded-md px-2 py-1", {
+                      "bg-urgent text-urgent-foreground":
+                        !alert.resolved && level === "URGENT",
+                      "bg-important text-important-foreground":
+                        !alert.resolved && level === "INFO",
+                      "bg-muted text-muted-foreground": alert.resolved,
+                    })}
+                  >
+                    {level.toLowerCase()}
+                  </span>
+                );
+              },
+            },
+            {
+              accessorKey: "resolved",
+              id: "resolved",
+              header: ({ column, table }) => (
+                <DataTableColumnHeader column={column} table={table} />
+              ),
+              cell: ({ getValue }) =>
+                getValue() ? (
+                  <Check className="size-5 text-status-ok" />
+                ) : (
+                  <>&mdash;</>
+                ),
+            },
+          ]}
+          data={data.results}
+          initialState={{
+            sorting: [{ id: "date", desc: true }],
+          }}
+        />
+      </CardContent>
+    </Card>
+  ) : error ? (
+    <ErrorDashboardTile />
+  ) : (
+    <BlankDashboardTile className="animate-pulse" />
+  );
+}
+const getInspectionAlerts = async (
+  fetch: (url: string, options: RequestInit) => Promise<Response>
+) => {
+  const response = await fetch("/alerts", {
+    method: "GET",
+  });
+
+  return response.json() as Promise<ResultsPage<Alert>>;
+};

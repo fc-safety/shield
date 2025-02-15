@@ -31,7 +31,9 @@ import { GOOGLE_MAPS_API_KEY } from "~/.server/config";
 import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
-import AssetOrderRequests from "~/components/assets/asset-order-requests";
+import AssetOrderRequests, {
+  NewSupplyRequestButton,
+} from "~/components/assets/asset-order-requests";
 import {
   AlertsStatusBadge,
   InspectionStatusBadge,
@@ -254,17 +256,25 @@ export default function AssetDetails({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="consumables">
-            <BasicCard
-              title="Requests"
-              className="rounded-b-none"
-              icon={Package}
-            >
-              <AssetOrderRequests
-                assetId={asset.id}
-                parentProductId={asset.productId}
-                productRequests={asset.productRequests ?? []}
-              />
-            </BasicCard>
+            <Card className="rounded-b-none">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Package />
+                    Requests
+                  </div>
+                  <NewSupplyRequestButton
+                    assetId={asset.id}
+                    parentProductId={asset.productId}
+                  />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AssetOrderRequests
+                  productRequests={asset.productRequests ?? []}
+                />
+              </CardContent>
+            </Card>
             <BasicCard
               title="Consumables"
               className="rounded-t-none"

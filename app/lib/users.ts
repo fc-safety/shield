@@ -16,3 +16,24 @@ export function visibility(user: User): TVisibility {
 
   return "self";
 }
+
+const DEFAULT_TOKEN_EXPIRATION_BUFFER_SECONDS = 2;
+
+export const isTokenExpired = (
+  token: string,
+  bufferSeconds = DEFAULT_TOKEN_EXPIRATION_BUFFER_SECONDS
+) => {
+  const parsedToken = JSON.parse(atob(token.split(".")[1]));
+  return (parsedToken.exp - bufferSeconds) * 1000 < Date.now();
+};
+
+export function getUserDisplayName(user: {
+  firstName?: string;
+  lastName?: string;
+  givenName?: string;
+  familyName?: string;
+}) {
+  return `${user.firstName ?? user.givenName ?? ""} ${
+    user.lastName ?? user.familyName ?? ""
+  }`.trim();
+}

@@ -4,11 +4,13 @@ import { toast } from "sonner";
 import { buildErrorDisplay } from "~/lib/error-handling";
 import { buildPath, type QueryParams } from "~/lib/urls";
 
-export function useModalSubmit({
+export function useModalSubmit<T>({
   onSubmitted,
+  onData,
   defaultErrorMessage,
 }: {
   onSubmitted?: () => void;
+  onData?: (data: T) => void;
   defaultErrorMessage?: string;
 } = {}) {
   const fetcher = useFetcher();
@@ -25,7 +27,7 @@ export function useModalSubmit({
     data: Parameters<typeof fetcher.submit>[0],
     options: {
       path: string;
-      id: string | undefined | null;
+      id?: string | null;
       query?: QueryParams;
     }
   ) => {
@@ -45,6 +47,7 @@ export function useModalSubmit({
 
   useEffect(() => {
     if (fetcher.data && fetcher.state === "idle") {
+      onData?.(fetcher.data as T);
       if (fetcher.data.error) {
         if (!errorReported.current) {
           errorReported.current = true;
@@ -62,7 +65,7 @@ export function useModalSubmit({
       }
       setIsSubmitting(false);
     }
-  }, [fetcher.data, fetcher.state, onSubmitted, defaultErrorMessage]);
+  }, [fetcher.data, fetcher.state, onSubmitted, defaultErrorMessage, onData]);
 
   return {
     fetcher,

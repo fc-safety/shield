@@ -88,7 +88,10 @@ export default [
   ]),
 
   // Action Routes
-  ...prefix("action", [route("set-theme", "./routes/actions/set-theme.tsx")]),
+  ...prefix("action", [route("set-theme", "./routes/actions/set-theme.ts")]),
+  ...prefix("action", [
+    route("refresh-auth", "./routes/actions/refresh-auth.ts"),
+  ]),
 
   // API Routes
   ...prefix("api", [
@@ -98,11 +101,6 @@ export default [
     route("manufacturers", "./routes/api/manufacturers.ts"),
     route("tags", "./routes/api/tags.ts"),
     route("inspections/:id", "./routes/api/inspections.ts"),
-    ...prefix("assets/:assetId/alerts", [
-      index("./routes/api/alerts/list.ts"),
-      route(":id", "./routes/api/alerts/get.ts"),
-      route(":id/resolve", "./routes/api/alerts/resolve.ts"),
-    ]),
     route("proxy/*", "./routes/api/proxy.ts"),
     route("image-upload-url", "./routes/api/image-upload-url.ts"),
   ]),
