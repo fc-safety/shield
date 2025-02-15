@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { Link, useNavigate } from "react-router";
 import { Cell, Label, Pie, PieChart } from "recharts";
@@ -17,6 +18,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "~/components/ui/chart";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import { getAssetInspectionStatus } from "~/lib/model-utils";
+import type { Asset } from "~/lib/models";
+import { countBy } from "~/lib/utils";
+import BlankDashboardTile from "./blank-dashboard-tile";
+import ErrorDashboardTile from "./error-dashboard-tile";
 
 const StatusLink = ({ status, label }: { status: string; label?: string }) => {
   return (
@@ -35,41 +42,60 @@ const chartConfig = {
   },
   ok: {
     label: <StatusLink status="ok" label="Compliant" />,
-    color: "hsl(var(--chart-status-ok))",
+    color: "hsl(var(--status-ok))",
   },
-  warning: {
+  overdue: {
     label: <StatusLink status="warning" />,
-    color: "hsl(var(--chart-status-warning))",
+    color: "hsl(var(--status-overdue))",
   },
-  error: {
+  expired: {
     label: <StatusLink status="error" />,
-    color: "hsl(var(--chart-status-error))",
+    color: "hsl(var(--status-expired))",
+  },
+  never: {
+    label: <StatusLink status="never" />,
+    color: "hsl(var(--status-never))",
   },
 } satisfies ChartConfig;
 
-export function InspectionSummaryChart({
-  data: dataProp,
-}: {
-  data: {
-    status: string;
-    totalAssets: number;
-  }[];
-}) {
+export function InspectionSummaryChart() {
+  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
+
+  const { data: rawAssets, error } = useQuery({
+    queryKey: ["assets-with-latest-inspection"],
+    queryFn: () => getAssetsWithLatestInspection(fetch),
+  });
+
   const data = React.useMemo(
     () =>
-      dataProp.map((d) => ({
-        ...d,
-        fill: "var(--color-" + d.status + ")",
+      rawAssets &&
+      countBy(
+        rawAssets.map((a) => {
+          const status = getAssetInspectionStatus(
+            a.inspections ?? []
+          ).toLowerCase();
+          return {
+            status,
+          };
+        }),
+        "status"
+      ).map(({ status, count }) => ({
+        status,
+        totalAssets: count,
+        fill: `hsl(var(--status-${status}))`,
       })),
-    [dataProp]
+    [rawAssets]
   );
+
+  console.log(data);
+
   const totalAssets = React.useMemo(() => {
-    return data.reduce((acc, curr) => acc + curr.totalAssets, 0);
-  }, [data]);
+    return rawAssets?.length ?? 0;
+  }, [rawAssets]);
 
   const navigate = useNavigate();
 
-  return (
+  return data ? (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle>Inspection Scorecard</CardTitle>
@@ -146,5 +172,19 @@ export function InspectionSummaryChart({
         </div> */}
       </CardFooter>
     </Card>
+  ) : error ? (
+    <ErrorDashboardTile />
+  ) : (
+    <BlankDashboardTile className="animate-pulse" />
   );
 }
+
+const getAssetsWithLatestInspection = async (
+  fetch: (url: string, options: RequestInit) => Promise<Response>
+) => {
+  const response = await fetch("/assets/latest-inspection", {
+    method: "GET",
+  });
+
+  return response.json() as Promise<Asset[]>;
+};

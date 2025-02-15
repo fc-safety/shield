@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   ShieldX,
 } from "lucide-react";
-import { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
+import { AlertsStatus, type AssetInspectionsStatus } from "~/lib/enums";
 import { cn } from "~/lib/utils";
 import { Badge } from "../ui/badge";
 
@@ -39,25 +39,25 @@ export function InspectionStatusBadge({
 }: {
   status: AssetInspectionsStatus | undefined | null;
 }) {
-  return status === AssetInspectionsStatus.READY ? (
+  return status === "OK" ? (
     <StatusBadge
       icon={CircleCheck}
       status="Ready"
       className="bg-status-ok text-status-ok-foreground hover:bg-status-ok"
     />
-  ) : status === AssetInspectionsStatus.OVERDUE ? (
+  ) : status === "OVERDUE" ? (
     <StatusBadge
       icon={CircleAlert}
       status="Overdue"
       className="bg-status-overdue text-status-overdue-foreground hover:bg-status-overdue"
     />
-  ) : status === AssetInspectionsStatus.EXPIRED ? (
+  ) : status === "EXPIRED" ? (
     <StatusBadge
       icon={CircleX}
       status="Expired"
       className="bg-status-expired text-status-expired-foreground hover:bg-status-expired"
     />
-  ) : status === AssetInspectionsStatus.NEVER ? (
+  ) : status === "NEVER" ? (
     <StatusBadge
       icon={Clock}
       status="Never Inspected"
