@@ -56,11 +56,11 @@ export default function AssetsIndex({
   const [deleteAction, setDeleteAction] = useDeleteAction();
 
   const columnFilters = useMemo(() => {
-    if (searchParams.has("status")) {
+    if (searchParams.has("inspectionsStatus")) {
       return [
         {
-          id: "status",
-          value: searchParams.get("status"),
+          id: "inspectionsStatus",
+          value: searchParams.get("inspectionsStatus"),
         },
       ];
     }
@@ -289,6 +289,28 @@ export default function AssetsIndex({
                     value: name,
                   })),
                 title: "Manufacturer",
+              },
+              {
+                column: table.getColumn("inspectionsStatus"),
+                options: [
+                  {
+                    label: "Ready",
+                    value: "OK",
+                  },
+                  {
+                    label: "Overdue",
+                    value: "OVERDUE",
+                  },
+                  {
+                    label: "Expired",
+                    value: "EXPIRED",
+                  },
+                  {
+                    label: "Never Inspected",
+                    value: "NEVER",
+                  },
+                ],
+                title: "Inspection Status",
               },
             ]}
             actions={[<EditAssetButton key="add" />]}

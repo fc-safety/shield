@@ -28,7 +28,7 @@ import ErrorDashboardTile from "./error-dashboard-tile";
 const StatusLink = ({ status, label }: { status: string; label?: string }) => {
   return (
     <Link
-      to={`/assets?status=${status}`}
+      to={`/assets?inspectionsStatus=${status.toUpperCase()}`}
       className="transition-colors hover:text-muted-foreground capitalize"
     >
       {label || status}
@@ -45,11 +45,11 @@ const chartConfig = {
     color: "hsl(var(--status-ok))",
   },
   overdue: {
-    label: <StatusLink status="warning" />,
+    label: <StatusLink status="overdue" />,
     color: "hsl(var(--status-overdue))",
   },
   expired: {
-    label: <StatusLink status="error" />,
+    label: <StatusLink status="expired" />,
     color: "hsl(var(--status-expired))",
   },
   never: {
@@ -117,7 +117,11 @@ export function InspectionSummaryChart() {
               nameKey="status"
               innerRadius={80}
               strokeWidth={5}
-              onClick={(d) => navigate(`/assets?status=${d.payload.status}`)}
+              onClick={(d) =>
+                navigate(
+                  `/assets?inspectionsStatus=${d.payload.status.toUpperCase()}`
+                )
+              }
             >
               {data.map((entry) => (
                 <Cell
