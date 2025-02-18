@@ -22,7 +22,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
-import useDeleteAction from "~/hooks/use-delete-action";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
@@ -66,7 +66,9 @@ export default function ProductCategories({
     navigate(`?show-all=${!value}`);
   };
 
-  const [deleteAction, setDeleteAction] = useDeleteAction();
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
 
   const columns: ColumnDef<ProductCategory>[] = useMemo(
     () => [
@@ -174,7 +176,7 @@ export default function ProductCategories({
                         category.name || category.id
                       }?`;
                       draft.requiredUserInput = category.name || category.id;
-                      draft.action = () => {
+                      draft.onConfirm = () => {
                         submitDelete(
                           {},
                           {
@@ -231,21 +233,7 @@ export default function ProductCategories({
           />
         </CardContent>
       </Card>
-      <ConfirmationDialog
-        open={deleteAction.open}
-        onOpenChange={(open) =>
-          setDeleteAction((draft) => {
-            draft.open = open;
-          })
-        }
-        destructive
-        onConfirm={() => deleteAction.action()}
-        confirmText="Delete"
-        onCancel={() => deleteAction.cancel()}
-        requiredUserInput={deleteAction.requiredUserInput}
-        title={deleteAction.title}
-        message={deleteAction.message}
-      />
+      <ConfirmationDialog {...deleteAction} />
     </>
   );
 }

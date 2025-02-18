@@ -7,26 +7,30 @@ export const extractErrorMessage = async (error: unknown) => {
         errMsgRaw = JSON.parse(errMsgString);
       }
 
-      const cleanErrMsg = (err: unknown) => {
-        if (typeof err === "object" && err !== null) {
-          if ("message" in err) {
-            return String(err.message);
-          }
-          if ("error" in err) {
-            return String(err.error);
-          }
-          return JSON.stringify(err, null, 2);
-        }
-        return String(err).replace(/^./, (str) => str.toUpperCase());
-      };
-
-      const errMsg = Array.isArray(errMsgRaw)
-        ? errMsgRaw.map(cleanErrMsg)
-        : cleanErrMsg(errMsgRaw);
-
-      return errMsg;
+      return errMsgRaw;
     }
   }
 
   return null;
+};
+
+export const cleanErrorMessage = (error: unknown) => {
+  const cleanErrMsg = (err: unknown) => {
+    if (typeof err === "object" && err !== null) {
+      if ("message" in err) {
+        return String(err.message);
+      }
+      if ("error" in err) {
+        return String(err.error);
+      }
+      return JSON.stringify(err, null, 2);
+    }
+    return String(err).replace(/^./, (str) => str.toUpperCase());
+  };
+
+  const errMsg = Array.isArray(error)
+    ? error.map(cleanErrMsg)
+    : cleanErrMsg(error);
+
+  return errMsg;
 };

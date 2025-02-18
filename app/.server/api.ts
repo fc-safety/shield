@@ -13,8 +13,8 @@ import {
   type Tag,
 } from "~/lib/models";
 import {
-  createAssetOrderRequestSchema,
   createInspectionSchema,
+  createProductRequestSchema,
   createRoleSchema,
   resolveAlertSchema,
   updateRoleSchema,
@@ -100,9 +100,9 @@ export const api = {
       "/inspections"
     ).except(["delete", "deleteAndRedirect", "update"]),
   },
-  orderRequests: {
-    ...CRUD.for<ProductRequest, typeof createAssetOrderRequestSchema, never>(
-      "/order-requests"
+  productRequests: {
+    ...CRUD.for<ProductRequest, typeof createProductRequestSchema, never>(
+      "/product-requests"
     ).except(["delete", "deleteAndRedirect", "update"]),
   },
 

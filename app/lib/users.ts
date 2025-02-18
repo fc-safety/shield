@@ -1,5 +1,5 @@
 import type { User } from "~/.server/authenticator";
-import type { TVisibility } from "./permissions";
+import type { TAction, TResource, TVisibility } from "./permissions";
 
 export function isGlobalAdmin(user: User) {
   return visibility(user) === "global";
@@ -36,4 +36,8 @@ export function getUserDisplayName(user: {
   return `${user.firstName ?? user.givenName ?? ""} ${
     user.lastName ?? user.familyName ?? ""
   }`.trim();
+}
+
+export function can(user: User, action: TAction, resource: TResource) {
+  return !!user.permissions?.includes(`${action}:${resource}`);
 }

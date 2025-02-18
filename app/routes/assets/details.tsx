@@ -31,15 +31,15 @@ import { GOOGLE_MAPS_API_KEY } from "~/.server/config";
 import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
-import AssetOrderRequests, {
-  NewSupplyRequestButton,
-} from "~/components/assets/asset-order-requests";
 import {
   AlertsStatusBadge,
   InspectionStatusBadge,
 } from "~/components/assets/asset-status-badge";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import EditConsumableButton from "~/components/assets/edit-consumable-button";
+import ProductRequests, {
+  NewSupplyRequestButton,
+} from "~/components/assets/product-requests";
 import { TagCard } from "~/components/assets/tag-selector";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
@@ -58,7 +58,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import useDeleteAction from "~/hooks/use-delete-action";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { useOpenData } from "~/hooks/use-open-data";
 import {
@@ -270,7 +270,7 @@ export default function AssetDetails({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <AssetOrderRequests
+                <ProductRequests
                   productRequests={asset.productRequests ?? []}
                 />
               </CardContent>
@@ -385,7 +385,9 @@ function ConsumablesTable({
     defaultErrorMessage: "Error: Failed to delete consumable",
   });
 
-  const [deleteAction, setDeleteAction] = useDeleteAction();
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
 
   const columns = useMemo<ColumnDef<Consumable>[]>(
     () => [
@@ -446,7 +448,7 @@ function ConsumablesTable({
                       draft.open = true;
                       draft.title = "Delete Subproduct";
                       draft.message = `Are you sure you want to remove ${consumable.product.name} from this asset?`;
-                      draft.action = () => {
+                      draft.onConfirm = () => {
                         submitDelete(
                           {},
                           {
@@ -494,21 +496,7 @@ function ConsumablesTable({
           trigger={<></>}
         />
       )}
-      <ConfirmationDialog
-        open={deleteAction.open}
-        onOpenChange={(open) =>
-          setDeleteAction((draft) => {
-            draft.open = open;
-          })
-        }
-        destructive
-        onConfirm={() => deleteAction.action()}
-        confirmText="Delete"
-        onCancel={() => deleteAction.cancel()}
-        requiredUserInput={deleteAction.requiredUserInput}
-        title={deleteAction.title}
-        message={deleteAction.message}
-      />
+      <ConfirmationDialog {...deleteAction} />
     </>
   );
 }

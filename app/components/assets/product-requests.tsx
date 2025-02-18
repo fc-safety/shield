@@ -14,27 +14,32 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
-import type { Product, ProductRequest, ResultsPage } from "~/lib/models";
-import { createAssetOrderRequestSchema } from "~/lib/schema";
+import type {
+  Product,
+  ProductRequest,
+  ProductRequestApproval,
+  ResultsPage,
+} from "~/lib/models";
+import { createProductRequestSchema } from "~/lib/schema";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 import { DialogFooter } from "../ui/dialog";
 import { Input } from "../ui/input";
-import AssetOrderRequestApprovalIndicator from "./asset-order-request-approval-indicator";
+import ProductRequestApprovalIndicator from "./product-request-approval-indicator";
 
-interface AssetOrderRequestsProps {
+interface ProductRequestsProps {
   productRequests: ProductRequest[];
 }
 
-export default function AssetOrderRequests({
+export default function ProductRequests({
   productRequests,
-}: AssetOrderRequestsProps) {
+}: ProductRequestsProps) {
   return (
     <div className="grid gap-4">
       {productRequests.length === 0 && (
         <p className="text-muted-foreground text-xs">
-          No active supply requests.
+          No active product requests.
         </p>
       )}
 
@@ -66,14 +71,14 @@ export function NewSupplyRequestButton({
           className="justify-self-end"
         >
           <NotepadText />
-          New Supply Request
+          New Product Request
         </Button>
       }
-      title="Supply Request"
+      title="Product Request"
       description="Please select which consumables and the quantities you would like to order."
       dialogClassName="sm:max-w-[425px]"
       render={({ isDesktop }) => (
-        <AssetOrderRequestForm
+        <ProductRequestForm
           assetId={assetId}
           parentProductId={parentProductId}
           renderSubmitButton={({ isSubmitting, disabled }) => {
@@ -94,10 +99,10 @@ export function NewSupplyRequestButton({
   );
 }
 
-type TForm = z.infer<typeof createAssetOrderRequestSchema>;
-const resolver = zodResolver(createAssetOrderRequestSchema);
+type TForm = z.infer<typeof createProductRequestSchema>;
+const resolver = zodResolver(createProductRequestSchema);
 
-function AssetOrderRequestForm({
+function ProductRequestForm({
   assetId,
   parentProductId,
   renderSubmitButton = ({ isSubmitting, disabled }) => (
@@ -176,7 +181,7 @@ function AssetOrderRequestForm({
 
   const handleSubmit = (data: TForm) => {
     submit(data, {
-      path: `/api/proxy/order-requests`,
+      path: `/api/proxy/product-requests`,
       id: undefined,
       query: {
         _throw: "false",
@@ -273,20 +278,9 @@ export function ProductRequestCard({ request }: { request: ProductRequest }) {
             <div>&mdash;</div>
             <div>{format(request.createdOn, "PPpp")}</div>
           </div>
-          <div className="flex items-center gap-x-2">
-            {request.productRequestApprovals?.map((approval) => (
-              <AssetOrderRequestApprovalIndicator
-                key={approval.id}
-                approval={approval}
-              />
-            ))}
-            {request.productRequestApprovals?.length === 0 && (
-              <AssetOrderRequestApprovalIndicator
-                key={"no approval"}
-                approval={null}
-              />
-            )}
-          </div>
+          <ProductRequestApprovalsDisplay
+            approvals={request.productRequestApprovals ?? []}
+          />
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -307,5 +301,25 @@ export function ProductRequestCard({ request }: { request: ProductRequest }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+export function ProductRequestApprovalsDisplay({
+  approvals,
+}: {
+  approvals: ProductRequestApproval[];
+}) {
+  return (
+    <div className="flex items-center gap-x-1">
+      {approvals.map((approval) => (
+        <ProductRequestApprovalIndicator
+          key={approval.id}
+          approval={approval}
+        />
+      ))}
+      {approvals.length === 0 && (
+        <ProductRequestApprovalIndicator key={"no approval"} approval={null} />
+      )}
+    </div>
   );
 }

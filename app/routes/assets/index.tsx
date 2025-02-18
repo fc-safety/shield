@@ -24,7 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import useDeleteAction from "~/hooks/use-delete-action";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import type { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
 import {
   getAssetAlertsStatus,
@@ -53,7 +53,9 @@ export default function AssetsIndex({
   const [searchParams] = useSearchParams();
   const fetcher = useFetcher();
 
-  const [deleteAction, setDeleteAction] = useDeleteAction();
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
 
   const columnFilters = useMemo(() => {
     if (searchParams.has("inspectionsStatus")) {
@@ -212,7 +214,7 @@ export default function AssetsIndex({
                         asset.name || asset.id
                       }?`;
                       draft.requiredUserInput = asset.name || asset.id;
-                      draft.action = () => {
+                      draft.onConfirm = () => {
                         fetcher.submit(
                           {},
                           {
@@ -317,21 +319,7 @@ export default function AssetsIndex({
           />
         </CardContent>
       </Card>
-      <ConfirmationDialog
-        open={deleteAction.open}
-        onOpenChange={(open) =>
-          setDeleteAction((draft) => {
-            draft.open = open;
-          })
-        }
-        destructive
-        onConfirm={() => deleteAction.action()}
-        confirmText="Delete"
-        onCancel={() => deleteAction.cancel()}
-        requiredUserInput={deleteAction.requiredUserInput}
-        title={deleteAction.title}
-        message={deleteAction.message}
-      />
+      <ConfirmationDialog {...deleteAction} />
     </>
   );
 }

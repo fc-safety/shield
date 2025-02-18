@@ -13,7 +13,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { useFetcher } from "react-router";
-import useDeleteAction from "~/hooks/use-delete-action";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AssetQuestion } from "~/lib/models";
 import ActiveIndicator2 from "../active-indicator-2";
@@ -38,7 +38,7 @@ export default function AssetQuestionsTable({
 
   const fetcher = useFetcher();
 
-  const [deleteAction, setDeleteAction] = useDeleteAction();
+  const [deleteAction, setDeleteAction] = useConfirmAction();
 
   const existingSetupQuestionsCount = useMemo(
     () => questions.filter((q) => q.type === "SETUP").length,
@@ -124,7 +124,7 @@ export default function AssetQuestionsTable({
                     draft.open = true;
                     draft.title = "Delete Question";
                     draft.message = `Are you sure you want to delete the question "${question.prompt}"?`;
-                    draft.action = () => {
+                    draft.onConfirm = () => {
                       fetcher.submit(
                         {},
                         {
@@ -181,9 +181,9 @@ export default function AssetQuestionsTable({
           })
         }
         destructive
-        onConfirm={() => deleteAction.action()}
+        onConfirm={() => deleteAction.onConfirm()}
         confirmText="Delete"
-        onCancel={() => deleteAction.cancel()}
+        onCancel={() => deleteAction.onCancel()}
         requiredUserInput={deleteAction.requiredUserInput}
         title={deleteAction.title}
         message={deleteAction.message}

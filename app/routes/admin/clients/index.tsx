@@ -27,7 +27,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "~/components/ui/hover-card";
-import useDeleteAction from "~/hooks/use-delete-action";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Client } from "~/lib/models";
 import { beautifyPhone } from "~/lib/utils";
@@ -44,7 +44,9 @@ export default function ClientsIndex({
     defaultErrorMessage: "Error: Failed to delete client",
   });
 
-  const [deleteAction, setDeleteAction] = useDeleteAction();
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
 
   const columns: ColumnDef<Client>[] = useMemo(
     () => [
@@ -136,7 +138,7 @@ export default function ClientsIndex({
                         client.name || client.id
                       }?`;
                       draft.requiredUserInput = client.name || client.id;
-                      draft.action = () => {
+                      draft.onConfirm = () => {
                         submitDelete(
                           {},
                           {
@@ -177,21 +179,7 @@ export default function ClientsIndex({
           />
         </CardContent>
       </Card>
-      <ConfirmationDialog
-        open={deleteAction.open}
-        onOpenChange={(open) =>
-          setDeleteAction((draft) => {
-            draft.open = open;
-          })
-        }
-        destructive
-        onConfirm={() => deleteAction.action()}
-        confirmText="Delete"
-        onCancel={() => deleteAction.cancel()}
-        requiredUserInput={deleteAction.requiredUserInput}
-        title={deleteAction.title}
-        message={deleteAction.message}
-      />
+      <ConfirmationDialog {...deleteAction} />
     </>
   );
 }

@@ -8,7 +8,7 @@ import {
 import { type PropsWithChildren, useCallback, useId, useState } from "react";
 import { toast } from "sonner";
 import { buildErrorDisplay } from "~/lib/error-handling";
-import { extractErrorMessage } from "../lib/errors";
+import { cleanErrorMessage, extractErrorMessage } from "../lib/errors";
 export default function QueryContext({ children }: PropsWithChildren) {
   const defaultErrorAlertId = useId();
 
@@ -18,7 +18,9 @@ export default function QueryContext({ children }: PropsWithChildren) {
       const errMsg = await extractErrorMessage(error);
       if (errMsg) {
         toast.error(
-          buildErrorDisplay(errMsg, { defaultErrorMessage: asString(errMsg) }),
+          buildErrorDisplay(errMsg, {
+            defaultErrorMessage: asString(cleanErrorMessage(errMsg)),
+          }),
           { id: defaultErrorAlertId }
         );
         return;

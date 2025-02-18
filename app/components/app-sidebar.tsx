@@ -122,8 +122,8 @@ export function AppSidebar() {
           icon: Building2,
         },
         {
-          title: "Order Requests",
-          url: "admin/order-requests",
+          title: "Product Requests",
+          url: "admin/product-requests",
           icon: Package,
         },
         {

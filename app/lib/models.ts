@@ -102,7 +102,7 @@ export type ProductRequestStatus = (typeof ProductRequestStatuses)[number];
 
 export interface ProductRequestApproval extends BaseModel {
   approved: boolean;
-  approver: Person;
+  approver?: Person;
 }
 
 export interface ProductRequestItem extends BaseModel {

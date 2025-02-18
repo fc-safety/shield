@@ -290,7 +290,7 @@ export const createProductRequestItemSchema = z.object({
   quantity: z.coerce.number().gte(1),
 });
 
-export const createAssetOrderRequestSchema = z.object({
+export const createProductRequestSchema = z.object({
   productRequestItems: z.object({
     createMany: z.object({
       data: z.array(createProductRequestItemSchema).min(1),
@@ -299,7 +299,7 @@ export const createAssetOrderRequestSchema = z.object({
   asset: optionalConnectSchema,
 });
 
-export const updateOrderRequestStatusesSchema = z.object({
+export const updateProductRequestSchema = z.object({
   ids: z.array(z.string()),
   status: z.enum(ProductRequestStatuses),
 });

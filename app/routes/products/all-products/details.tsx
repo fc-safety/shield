@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
-import useDeleteAction from "~/hooks/use-delete-action";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Product } from "~/lib/models";
@@ -251,7 +251,9 @@ function SubproductsTable({
     defaultErrorMessage: "Error: Failed to delete subproduct",
   });
 
-  const [deleteAction, setDeleteAction] = useDeleteAction();
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
 
   return (
     <>
@@ -313,7 +315,7 @@ function SubproductsTable({
                           draft.message = `Are you sure you want to delete ${subproduct.name}?`;
                           draft.requiredUserInput =
                             subproduct.name || subproduct.id;
-                          draft.action = () => {
+                          draft.onConfirm = () => {
                             submitDelete(
                               {},
                               {
@@ -351,21 +353,7 @@ function SubproductsTable({
           trigger={<></>}
         />
       )}
-      <ConfirmationDialog
-        open={deleteAction.open}
-        onOpenChange={(open) =>
-          setDeleteAction((draft) => {
-            draft.open = open;
-          })
-        }
-        destructive
-        onConfirm={() => deleteAction.action()}
-        confirmText="Delete"
-        onCancel={() => deleteAction.cancel()}
-        requiredUserInput={deleteAction.requiredUserInput}
-        title={deleteAction.title}
-        message={deleteAction.message}
-      />
+      <ConfirmationDialog {...deleteAction} />
     </>
   );
 }

@@ -50,12 +50,12 @@ import {
   type ProductRequestItem,
   type ProductRequestStatus,
 } from "~/lib/models";
-import { updateOrderRequestStatusesSchema } from "~/lib/schema";
+import { updateProductRequestSchema } from "~/lib/schema";
 import { humanize } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export function loader({ request }: Route.LoaderArgs) {
-  return api.orderRequests.list(
+  return api.productRequests.list(
     request,
     {
       limit: 10000,
@@ -64,8 +64,8 @@ export function loader({ request }: Route.LoaderArgs) {
   );
 }
 
-export default function AdminOrderRequestsIndex({
-  loaderData: orderRequests,
+export default function AdminProductRequestsIndex({
+  loaderData: productRequests,
 }: Route.ComponentProps) {
   const updateStatus = useOpenData<ProductRequest[]>();
 
@@ -183,13 +183,13 @@ export default function AdminOrderRequestsIndex({
       <Card>
         <CardHeader>
           <CardTitle>
-            <Package /> Order Requests
+            <Package /> Product Requests
           </CardTitle>
         </CardHeader>
         <CardContent>
           <DataTable
             columns={columns}
-            data={orderRequests.results}
+            data={productRequests.results}
             initialState={{
               sorting: [{ id: "orderedOn", desc: true }],
             }}
@@ -244,7 +244,7 @@ export default function AdminOrderRequestsIndex({
 
 const MAX_ITEMS_DISPLAY = 3;
 
-type TUpdateStatusesForm = z.infer<typeof updateOrderRequestStatusesSchema>;
+type TUpdateStatusesForm = z.infer<typeof updateProductRequestSchema>;
 
 function UpdateStatusDialog({
   openData: updateStatus,
@@ -292,7 +292,7 @@ function UpdateStatusForm({
           .filter((r) => !["COMPLETE", "CANCELLED"].includes(r.status))
           .map((request) => request.id) || [],
     },
-    resolver: zodResolver(updateOrderRequestStatusesSchema),
+    resolver: zodResolver(updateProductRequestSchema),
   });
 
   const {
@@ -316,7 +316,7 @@ function UpdateStatusForm({
   const handleSubmit = (data: TUpdateStatusesForm) => {
     submit(data, {
       method: "patch",
-      action: "/api/proxy/order-requests/statuses?_throw=false",
+      action: "/api/proxy/product-requests/statuses?_throw=false",
       encType: "application/json",
     });
   };

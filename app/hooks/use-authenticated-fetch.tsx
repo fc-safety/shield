@@ -26,7 +26,7 @@ export function useAuthenticatedFetch() {
 
     fetcher.submit(null, {
       method: "POST",
-      action: REFRESH_AUTH_ACTION,
+      action: getRefreshAuthAction(),
     });
 
     return pendingRefresh;
@@ -86,7 +86,10 @@ export function useAuthenticatedFetch() {
   };
 }
 
-const REFRESH_AUTH_ACTION = "/action/refresh-auth";
+const getRefreshAuthAction = () =>
+  typeof document !== "undefined"
+    ? `/action/refresh-auth?returnTo=${window.location.href}`
+    : "/action/refresh-auth";
 
 const doFetch = async (
   accessToken: string,

@@ -87,8 +87,6 @@ export function InspectionSummaryChart() {
     [rawAssets]
   );
 
-  console.log(data);
-
   const totalAssets = React.useMemo(() => {
     return rawAssets?.length ?? 0;
   }, [rawAssets]);

@@ -1,12 +1,13 @@
 import { CheckCircle2, CircleDashed, XCircle } from "lucide-react";
 import type { ProductRequestApproval } from "~/lib/models";
+import { getUserDisplayName } from "~/lib/users";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "../ui/hover-card";
 
-export default function AssetOrderRequestApprovalIndicator({
+export default function ProductRequestApprovalIndicator({
   approval,
 }: {
   approval: ProductRequestApproval | null;
@@ -29,14 +30,20 @@ export default function AssetOrderRequestApprovalIndicator({
               <div>
                 <div className="font-medium">Approved</div>
                 <div className="text-xs text-muted-foreground">
-                  by {approval.approver.firstName} {approval.approver.lastName}
+                  by{" "}
+                  {approval.approver
+                    ? getUserDisplayName(approval.approver)
+                    : "unknown"}
                 </div>
               </div>
             ) : (
               <div>
                 <div className="font-medium">Rejected</div>
                 <div className="text-xs text-muted-foreground">
-                  by {approval.approver.firstName} {approval.approver.lastName}
+                  by{" "}
+                  {approval.approver
+                    ? getUserDisplayName(approval.approver)
+                    : "unknown"}
                 </div>
               </div>
             )

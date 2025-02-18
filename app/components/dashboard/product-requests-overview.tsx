@@ -1,15 +1,29 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import useConfirmAction from "~/hooks/use-confirm-action";
+import { useOpenData } from "~/hooks/use-open-data";
 import type { ProductRequest, ResultsPage } from "~/lib/models";
+import { can, getUserDisplayName } from "~/lib/users";
+import {
+  ProductRequestApprovalsDisplay,
+  ProductRequestCard,
+} from "../assets/product-requests";
+import ConfirmationDialog from "../confirmation-dialog";
+import DataList from "../data-list";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DisplayRelativeDate from "../display-relative-date";
 import Icon from "../icons/icon";
+import { ResponsiveDialog } from "../responsive-dialog";
+import { Button } from "../ui/button";
+import { DialogFooter } from "../ui/dialog";
 import BlankDashboardTile from "./blank-dashboard-tile";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
 export default function ProductRequestsOverview() {
+  const { user } = useAuth();
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
   const { data, error } = useQuery({
@@ -17,67 +31,120 @@ export default function ProductRequestsOverview() {
     queryFn: () => getProductRequests(fetch),
   });
 
+  const reviewRequest = useOpenData<ProductRequest>();
+
   return data ? (
-    <Card>
-      <CardHeader>Supply Requests</CardHeader>
-      <CardContent>
-        <DataTable
-          columns={[
-            {
-              accessorKey: "createdOn",
-              id: "orderedOn",
-              header: ({ column, table }) => (
-                <DataTableColumnHeader column={column} table={table} />
-              ),
-              cell: ({ getValue }) => (
-                <DisplayRelativeDate date={getValue() as string} />
-              ),
-            },
-            {
-              accessorKey: "status",
-              id: "status",
-              header: ({ column, table }) => (
-                <DataTableColumnHeader column={column} table={table} />
-              ),
-            },
-            {
-              accessorKey: "asset.name",
-              id: "asset",
-              header: ({ column, table }) => (
-                <DataTableColumnHeader column={column} table={table} />
-              ),
-              cell: ({ row, getValue }) => {
-                const assetName = getValue() as string;
-                return (
-                  <span className="flex items-center gap-2">
-                    {row.original.asset?.product?.productCategory?.icon && (
-                      <Icon
-                        iconId={row.original.asset.product.productCategory.icon}
-                        color={row.original.asset.product.productCategory.color}
-                        className="text-lg"
-                      />
-                    )}
-                    {assetName}
-                  </span>
-                );
+    <>
+      <Card>
+        <CardHeader>Product Requests</CardHeader>
+        <CardContent>
+          <DataTable
+            columns={[
+              {
+                accessorKey: "createdOn",
+                id: "orderedOn",
+                header: ({ column, table }) => (
+                  <DataTableColumnHeader column={column} table={table} />
+                ),
+                cell: ({ getValue }) => (
+                  <DisplayRelativeDate date={getValue() as string} />
+                ),
               },
-            },
-            {
-              accessorFn: (request) =>
-                request.productRequestApprovals?.length ?? 0,
-              id: "approvals",
-              header: ({ column, table }) => (
-                <DataTableColumnHeader column={column} table={table} />
-              ),
-            },
-          ]}
-          initialState={{
-            sorting: [{ id: "orderedOn", desc: true }],
-          }}
-          data={data.results}
-        />
-      </CardContent>
-    </Card>
+              {
+                accessorKey: "status",
+                id: "status",
+                header: ({ column, table }) => (
+                  <DataTableColumnHeader column={column} table={table} />
+                ),
+              },
+              {
+                accessorKey: "asset.name",
+                id: "asset",
+                header: ({ column, table }) => (
+                  <DataTableColumnHeader column={column} table={table} />
+                ),
+                cell: ({ row, getValue }) => {
+                  const assetName = getValue() as string;
+                  return (
+                    <span className="flex items-center gap-2">
+                      {row.original.asset?.product?.productCategory?.icon && (
+                        <Icon
+                          iconId={
+                            row.original.asset.product.productCategory.icon
+                          }
+                          color={
+                            row.original.asset.product.productCategory.color
+                          }
+                          className="text-lg"
+                        />
+                      )}
+                      {assetName}
+                    </span>
+                  );
+                },
+              },
+              {
+                accessorFn: (request) =>
+                  request.productRequestApprovals?.length ?? 0,
+                id: "reviews",
+                header: ({ column, table }) => (
+                  <DataTableColumnHeader column={column} table={table} />
+                ),
+                cell: ({ row }) => {
+                  const request = row.original;
+                  return (
+                    <ProductRequestApprovalsDisplay
+                      approvals={request.productRequestApprovals ?? []}
+                    />
+                  );
+                },
+              },
+              {
+                id: "review",
+                cell: ({ row }) => {
+                  const request = row.original;
+                  const myApproval = request.productRequestApprovals?.find(
+                    (a) => a.approver?.idpId === user?.idpId
+                  );
+                  return (
+                    <Button
+                      variant={
+                        !myApproval
+                          ? "secondary"
+                          : myApproval.approved
+                          ? "default"
+                          : "destructive"
+                      }
+                      disabled={!!myApproval}
+                      size="sm"
+                      onClick={() => reviewRequest.openData(request)}
+                    >
+                      {!myApproval
+                        ? "Review"
+                        : myApproval.approved
+                        ? "Approved"
+                        : "Rejected"}
+                    </Button>
+                  );
+                },
+              },
+            ]}
+            initialState={{
+              sorting: [{ id: "orderedOn", desc: true }],
+              columnVisibility: {
+                review: can(user, "review", "product-requests"),
+              },
+            }}
+            data={data.results}
+          />
+        </CardContent>
+      </Card>
+      <ReviewProductRequestModal
+        open={reviewRequest.open}
+        onOpenChange={reviewRequest.setOpen}
+        request={reviewRequest.data}
+      />
+    </>
   ) : error ? (
     <ErrorDashboardTile />
   ) : (
@@ -88,9 +155,136 @@ export default function ProductRequestsOverview() {
 const getProductRequests = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>
 ) => {
-  const response = await fetch("/order-requests", {
+  const response = await fetch("/product-requests", {
     method: "GET",
   });
 
   return response.json() as Promise<ResultsPage<ProductRequest>>;
 };
+
+const reviewProductRequest = async (
+  fetch: (url: string, options: RequestInit) => Promise<Response>,
+  requestId: string,
+  approved: boolean
+) => {
+  const response = await fetch(`/product-requests/${requestId}/review`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      productRequestApprovals: {
+        create: {
+          approved,
+        },
+      },
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return response.json();
+};
+
+function ReviewProductRequestModal({
+  open,
+  onOpenChange,
+  request,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  request: ProductRequest | null;
+}) {
+  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
+
+  const queryClient = useQueryClient();
+  const { mutate: doReview, isPending: isSubmittingReview } = useMutation({
+    mutationFn: ({
+      requestId,
+      approved,
+    }: {
+      requestId: string;
+      approved: boolean;
+    }) => reviewProductRequest(fetch, requestId, approved),
+    onSuccess: () => {
+      onOpenChange(false);
+      queryClient.invalidateQueries({ queryKey: ["product-requests"] });
+    },
+  });
+
+  const [confirmAction, setConfirmAction] = useConfirmAction();
+
+  const handleReview = (approved: boolean) => {
+    if (!request?.id) {
+      return;
+    }
+
+    setConfirmAction((draft) => {
+      draft.open = true;
+      draft.onConfirm = () => {
+        doReview({
+          requestId: request.id,
+          approved,
+        });
+      };
+      draft.title = `${approved ? "Approve" : "Reject"} this product request?`;
+      draft.destructive = !approved;
+      draft.confirmText = approved ? "Approve" : "Reject";
+    });
+  };
+
+  return (
+    <>
+      <ResponsiveDialog
+        title="Review Product Request"
+        open={open}
+        onOpenChange={onOpenChange}
+        dialogClassName="sm:max-w-lg"
+      >
+        <>
+          <div className="flex flex-col gap-4 py-4">
+            <DataList
+              details={[
+                {
+                  label: "Requestor",
+                  value:
+                    request?.requestor &&
+                    getUserDisplayName(request?.requestor),
+                },
+                {
+                  label: "Site",
+                  value: request?.site?.name,
+                },
+              ]}
+              defaultValue={<>&mdash;</>}
+            />
+            {request ? (
+              <ProductRequestCard request={request} />
+            ) : (
+              <p>No request selected</p>
+            )}
+          </div>
+          <DialogFooter className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+            <div className="flex-1"></div>
+            <Button
+              variant="destructive"
+              disabled={isSubmittingReview}
+              onClick={() => handleReview(false)}
+            >
+              Reject
+            </Button>
+            <Button
+              variant="default"
+              disabled={isSubmittingReview}
+              onClick={() => handleReview(true)}
+            >
+              Approve
+            </Button>
+          </DialogFooter>
+        </>
+      </ResponsiveDialog>
+      <ConfirmationDialog {...confirmAction} />
+    </>
+  );
+}

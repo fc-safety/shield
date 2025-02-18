@@ -6,7 +6,7 @@ import type { Route } from "./+types/layout";
 
 export const handle = {
   breadcrumb: () => ({
-    label: "Order Requests",
+    label: "Product Requests",
   }),
 };
 
@@ -19,6 +19,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return null;
 };
 
-export default function AdminOrderRequestsLayout() {
+export default function AdminProductRequestsLayout() {
   return <Outlet />;
 }

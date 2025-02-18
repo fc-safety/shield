@@ -38,9 +38,12 @@ export const userSessionStorage = createCookieSessionStorage<{
 
 export const getLoginRedirect = async (
   request: Request,
-  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>
+  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
+  options: {
+    returnTo?: string;
+  } = {}
 ) => {
-  session.set("returnTo", request.url);
+  session.set("returnTo", options.returnTo ?? request.url);
   return redirect("/login", {
     headers: {
       "Set-Cookie": await userSessionStorage.commitSession(session),
@@ -82,7 +85,10 @@ export const requireUserSession = async (request: Request) => {
 export const refreshTokensOrRelogin = async (
   request: Request,
   session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
-  tokens: Tokens
+  tokens: Tokens,
+  options: {
+    returnTo?: string;
+  } = {}
 ) => {
   const { refreshToken } = tokens;
   try {
@@ -101,6 +107,8 @@ export const refreshTokensOrRelogin = async (
     return tokensResponse;
   } catch (e) {
     logger.warn("Token refresh failed", { details: e });
-    throw await getLoginRedirect(request, session);
+    throw await getLoginRedirect(request, session, {
+      returnTo: options.returnTo,
+    });
   }
 };

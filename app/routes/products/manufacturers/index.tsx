@@ -22,7 +22,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
-import useDeleteAction from "~/hooks/use-delete-action";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Manufacturer } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
@@ -63,7 +63,9 @@ export default function ProductManufacturers({
   });
   const navigate = useNavigate();
 
-  const [deleteAction, setDeleteAction] = useDeleteAction();
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
 
   const setOnlyMyManufacturers = (value: boolean) => {
     navigate(`?show-all=${!value}`);
@@ -152,7 +154,7 @@ export default function ProductManufacturers({
                       }?`;
                       draft.requiredUserInput =
                         manufacturer.name || manufacturer.id;
-                      draft.action = () => {
+                      draft.onConfirm = () => {
                         submitDelete(
                           {},
                           {
@@ -205,21 +207,7 @@ export default function ProductManufacturers({
           />
         </CardContent>
       </Card>
-      <ConfirmationDialog
-        open={deleteAction.open}
-        onOpenChange={(open) =>
-          setDeleteAction((draft) => {
-            draft.open = open;
-          })
-        }
-        destructive
-        onConfirm={() => deleteAction.action()}
-        confirmText="Delete"
-        onCancel={() => deleteAction.cancel()}
-        requiredUserInput={deleteAction.requiredUserInput}
-        title={deleteAction.title}
-        message={deleteAction.message}
-      />
+      <ConfirmationDialog {...deleteAction} />
     </>
   );
 }
