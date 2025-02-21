@@ -16,6 +16,8 @@ import { Form, Link } from "react-router";
 import { useRemixForm } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import { guard } from "~/.server/guard";
+import { validateTagId } from "~/.server/inspections";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import DataList from "~/components/data-list";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
@@ -30,12 +32,8 @@ import {
 import { Input } from "~/components/ui/input";
 import type { AssetQuestion } from "~/lib/models";
 import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
-import {
-  buildTitle,
-  cn,
-  getValidatedFormDataOrThrow,
-  validateSearchParam,
-} from "~/lib/utils";
+import { can } from "~/lib/users";
+import { buildTitle, cn, getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -50,9 +48,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 };
 
-export const loader = ({ request }: Route.LoaderArgs) => {
-  const tagNo = validateSearchParam(request, "tagNo");
-  return api.tags.getBySerial(request, tagNo);
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  await guard(request, (user) => can(user, "setup", "assets"));
+
+  const extId = await validateTagId(request, "/inspect/setup");
+  return api.tags.getByExternalId(request, extId).mapTo((data) => ({
+    tag: data,
+  }));
 };
 
 export const meta: Route.MetaFunction = ({ data, matches }) => {
@@ -60,7 +62,7 @@ export const meta: Route.MetaFunction = ({ data, matches }) => {
     {
       title: buildTitle(
         matches,
-        data?.asset?.name ?? data?.serialNumber,
+        data?.tag.asset?.name ?? data?.tag.serialNumber,
         "Setup"
       ),
     },
@@ -77,7 +79,7 @@ const onlySetupQuestions = (questions: AssetQuestion[] | undefined) =>
   (questions ?? []).filter((question) => question.type === "SETUP");
 
 export default function InspectSetup({
-  loaderData: tag,
+  loaderData: { tag },
 }: Route.ComponentProps) {
   const isSetup = !!tag.asset?.setupOn;
 

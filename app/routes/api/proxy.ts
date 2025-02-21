@@ -20,20 +20,27 @@ const proxy = async ({
   const doThrow = query.get("_throw") !== "false";
   query.delete("_throw");
 
-  const awaitableData = authenticatedData(request, [
-    {
-      url: buildUrl(
-        pathSplat,
-        API_BASE_URL,
-        Object.fromEntries(query.entries())
-      ),
-      options: {
-        method: method,
-        body: method !== "GET" ? await request.text() : undefined,
-        headers,
+  const awaitableData = authenticatedData(
+    request,
+    [
+      {
+        url: buildUrl(
+          pathSplat,
+          API_BASE_URL,
+          Object.fromEntries(query.entries())
+        ),
+        options: {
+          method: method,
+          body: method !== "GET" ? await request.text() : undefined,
+          headers,
+        },
       },
-    },
-  ]);
+    ],
+    {
+      returnTo:
+        headers.get("referer") ?? headers.get("x-return-to") ?? undefined,
+    }
+  );
 
   if (doThrow) {
     return awaitableData;

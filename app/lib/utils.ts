@@ -76,7 +76,7 @@ export function validateBreadcrumb<M>(
 
 export function buildTitle(
   matches: ({ meta: MetaDescriptor[] } | undefined)[],
-  ...titleSegments: string[]
+  ...titleSegments: (string | undefined)[]
 ) {
   const title = titleSegments.filter((s) => !!s).join(" | ");
   const rootTitle = matches

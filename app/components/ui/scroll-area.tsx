@@ -1,24 +1,53 @@
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import * as React from "react";
+import { useEffect, useRef } from "react";
+import { useResizeObserver } from "usehooks-ts";
 
 import { cn } from "~/lib/utils";
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
->(({ className, children, ...props }, ref) => (
-  <ScrollAreaPrimitive.Root
-    ref={ref}
-    className={cn("relative overflow-y-hidden", className)}
-    {...props}
-  >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
-      {children}
-    </ScrollAreaPrimitive.Viewport>
-    <ScrollBar />
-    <ScrollAreaPrimitive.Corner />
-  </ScrollAreaPrimitive.Root>
-));
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
+    onIsOverflowing?: (isOverflowing: boolean) => void;
+    scrollDisabled?: boolean;
+  }
+>(({ className, children, onIsOverflowing, scrollDisabled, ...props }, ref) => {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const { height: viewPortHeight = 0 } = useResizeObserver({
+    ref: viewportRef,
+    box: "border-box",
+  });
+
+  useEffect(() => {
+    onIsOverflowing?.(
+      !!viewportRef.current?.scrollHeight &&
+        viewportRef.current?.scrollHeight > viewPortHeight
+    );
+  }, [viewportRef.current?.scrollHeight, viewPortHeight, onIsOverflowing]);
+
+  return (
+    <ScrollAreaPrimitive.Root
+      ref={ref}
+      className={cn(
+        "relative overflow-y-hidden flex flex-col items-center",
+        className
+      )}
+      {...props}
+    >
+      <ScrollAreaPrimitive.Viewport
+        ref={viewportRef}
+        className={cn(
+          "h-full w-full rounded-[inherit] -mx-[1px] px-[1px]",
+          scrollDisabled && "touch-none"
+        )}
+      >
+        {children}
+      </ScrollAreaPrimitive.Viewport>
+      {!scrollDisabled && <ScrollBar />}
+      <ScrollAreaPrimitive.Corner />
+    </ScrollAreaPrimitive.Root>
+  );
+});
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
 const ScrollBar = React.forwardRef<

@@ -24,6 +24,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { ScrollArea } from "./ui/scroll-area";
 
 interface ResponsiveDialogProps extends React.PropsWithChildren {
+  className?: string;
   dialogClassName?: string;
   drawerClassName?: string;
   open?: boolean;
@@ -41,6 +42,7 @@ interface ResponsiveDialogProps extends React.PropsWithChildren {
 }
 
 export function ResponsiveDialog({
+  className,
   dialogClassName,
   drawerClassName,
   open: openProp,
@@ -63,7 +65,11 @@ export function ResponsiveDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogTrigger asChild>{trigger}</DialogTrigger>
         <DialogContent
-          className={cn("sm:max-w-[425px] rounded-lg", dialogClassName)}
+          className={cn(
+            "sm:max-w-[425px] rounded-lg",
+            className,
+            dialogClassName
+          )}
         >
           <ScrollArea className="max-h-[calc(100vh-10rem)]">
             <DialogHeader className="text-left">
@@ -80,7 +86,7 @@ export function ResponsiveDialog({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-      <DrawerContent className={cn(drawerClassName)}>
+      <DrawerContent className={cn(className, drawerClassName)}>
         <ScrollArea className="h-[calc(100vh-10rem)]">
           <DrawerHeader className="text-left">
             <DrawerTitle>{title}</DrawerTitle>

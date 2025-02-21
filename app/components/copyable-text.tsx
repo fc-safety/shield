@@ -25,27 +25,29 @@ export const CopyableText = ({
   return (
     <div className="flex items-center gap-2 group">
       {text}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-7 w-7 text-muted-foreground",
-                hoverOnly && "opacity-0 group-hover:opacity-100"
-              )}
-              onClick={handleCopy}
-              type="button"
-            >
-              <Clipboard />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Copy</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {text && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-7 w-7 text-muted-foreground",
+                  hoverOnly && "opacity-0 group-hover:opacity-100"
+                )}
+                onClick={handleCopy}
+                type="button"
+              >
+                <Clipboard />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Copy</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
     </div>
   );
 };

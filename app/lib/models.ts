@@ -76,6 +76,52 @@ export interface Inspection extends BaseModel {
 export const InspectionStatuses = ["PENDING", "COMPLETE"] as const;
 export type InspectionStatus = (typeof InspectionStatuses)[number];
 
+export interface InspectionRoute extends BaseModel {
+  name: string;
+  description?: string | null;
+  inspectionRoutePoints?: InspectionRoutePoint[];
+  site?: Site;
+  siteId: string;
+  client?: Client;
+  clientId: string;
+}
+
+export interface InspectionRoutePoint extends BaseModel {
+  order: number;
+  asset?: Asset;
+  assetId: string;
+  site?: Site;
+  siteId: string;
+  client?: Client;
+  clientId: string;
+}
+
+export interface InspectionSession extends BaseModel {
+  status: InspectionSessionStatus;
+  inspectionRoute?: InspectionRoute;
+  inspectionRouteId: string;
+  completedInspectionRoutePoints?: CompletedInspectionRoutePoint[];
+  lastInspector?: Person;
+  lastInspectorId: string;
+  site?: Site;
+  siteId: string;
+  client?: Client;
+  clientId: string;
+}
+
+export const InspectionSessionStatuses = ["PENDING", "COMPLETE"] as const;
+export type InspectionSessionStatus =
+  (typeof InspectionSessionStatuses)[number];
+
+export interface CompletedInspectionRoutePoint extends BaseModel {
+  inspectionSession?: InspectionSession;
+  inspectionSessionId: string;
+  inspectionRoutePoint?: InspectionRoutePoint;
+  inspectionRoutePointId: string;
+  inspection?: Inspection;
+  inspectionId: string;
+}
+
 export interface ProductRequest extends BaseModel {
   status: ProductRequestStatus;
   requestor: Person;

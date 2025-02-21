@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { Link } from "react-router";
 import { api } from "~/.server/api";
 import NewTagButton from "~/components/assets/edit-tag-button";
+import { CopyableText } from "~/components/copyable-text";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -27,6 +28,13 @@ export default function AdminTagsIndex({
             {getValue() as string}
           </Link>
         ),
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
+        accessorKey: "externalId",
+        cell: ({ getValue }) => <CopyableText text={getValue() as string} />,
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),

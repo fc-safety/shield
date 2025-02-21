@@ -1,8 +1,16 @@
-import { Link } from "react-router";
+import { Link, type To } from "react-router";
 import useBoundaryError from "~/hooks/use-boundary-error";
 import { Button } from "./ui/button";
 
-export default function DefaultErrorBoundary({ error }: { error: unknown }) {
+export default function DefaultErrorBoundary({
+  error,
+  homeTo = "/",
+  contactTo = "/contact",
+}: {
+  error: unknown;
+  homeTo?: To;
+  contactTo?: To;
+}) {
   const errorDisplay = useBoundaryError({ error });
 
   return (
@@ -24,10 +32,10 @@ export default function DefaultErrorBoundary({ error }: { error: unknown }) {
       )}
       <div className="mt-10 flex items-center justify-center gap-2 flex-wrap">
         <Button asChild>
-          <Link to={"/"}>Go back home</Link>
+          <Link to={homeTo}>Go back home</Link>
         </Button>
         <Button asChild variant="ghost">
-          <Link to={"/contact"} target="_blank" rel="noreferrer">
+          <Link to={contactTo} target="_blank" rel="noreferrer">
             Contact support <span aria-hidden="true">&rarr;</span>
           </Link>
         </Button>

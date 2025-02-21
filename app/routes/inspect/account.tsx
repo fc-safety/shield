@@ -1,7 +1,7 @@
 import { requireUserSession } from "~/.server/sessions";
 import AccountCard from "~/components/account/AccountCard";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
-import type { Route } from "./+types/account";
+import type { Route } from "../+types/account";
 
 export const handle = {
   breadcrumb: () => ({ label: "Account" }),

@@ -472,6 +472,32 @@ export const buildInspectionSchema = (questions: AssetQuestion[]) =>
     }),
   });
 
+export const createInspectionRouteSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().nonempty(),
+  description: z.string().optional(),
+  inspectionRoutePoints: z.array(
+    z.object({
+      order: z.coerce.number(),
+      asset: optionalConnectSchema,
+    })
+  ),
+});
+
+export const updateInspectionRouteSchema = createInspectionRouteSchema
+  .partial()
+  .extend({ id: z.string() });
+
+export const createInspectionRoutePointSchema = z.object({
+  id: z.string().optional(),
+  order: z.coerce.number(),
+  assetId: z.string().nonempty("Required"),
+});
+
+export const updateInspectionRoutePointSchema = createInspectionRoutePointSchema
+  .partial()
+  .extend({ id: z.string() });
+
 export const resolveAlertSchema = z.object({
   resolutionNote: z.string().nonempty(),
 });

@@ -4,7 +4,11 @@ import type { ResultsPage } from "~/lib/models";
 import { buildUrl, type PathParams, type QueryParams } from "~/lib/urls";
 import { API_BASE_URL } from "./config";
 import { logger } from "./logger";
-import { refreshTokensOrRelogin, requireUserSession } from "./sessions";
+import {
+  refreshTokensOrRelogin,
+  requireUserSession,
+  type LoginRedirectOptions,
+} from "./sessions";
 
 type NativeFetchParameters = Parameters<typeof fetch>;
 type FetchArguments = {
@@ -17,6 +21,7 @@ export type ViewContext = (typeof VIEW_CONTEXTS)[number];
 
 type FetchBuildOptions = {
   context?: ViewContext;
+  params?: QueryParams;
 };
 
 export class FetchOptions {
@@ -105,15 +110,35 @@ export const tryJson = async <T = unknown>(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DataOrError<T> = { data?: T; error?: any };
 
+export const mergeInit = (
+  responseInit1: ResponseInit | null,
+  responseInit2: ResponseInit | null
+) => {
+  if (!responseInit1 || !responseInit2) {
+    return responseInit1 ?? responseInit2;
+  }
+
+  const mergedHeaders = new Headers(responseInit1.headers);
+  const headersToMerge = new Headers(responseInit2.headers);
+  headersToMerge.forEach((value, key) => {
+    mergedHeaders.set(key, value);
+  });
+  return { ...responseInit1, headers: mergedHeaders };
+};
+
 export class DataResponse<T> extends Promise<ReturnType<typeof data<T>>> {
-  public mapTo<U>(fn: (initData: T) => U) {
+  public mapTo<U>(fn: (initData: T) => U | Promise<U>) {
     return this.then(async ({ data: initData, init }) =>
       data(await fn(initData), init ?? undefined)
     ) as DataResponse<Awaited<U>>;
   }
 
   public mapWith<U>(fn: (initData: T) => DataResponse<U>) {
-    return this.mapTo((initData) => fn(initData).then(({ data }) => data));
+    return this.then(({ data: initData, init: thisInit }) =>
+      fn(initData).then(({ data: thatData, init: thatInit }) =>
+        data(thatData, mergeInit(thisInit, thatInit) ?? undefined)
+      )
+    ) as DataResponse<Awaited<U>>;
   }
 
   public async asRedirect(url: string) {
@@ -145,9 +170,13 @@ type AtLeastOneAwaitableResponse = [Promise<Response>, ...Promise<Response>[]];
 export const fetchAuthenticated = async (
   request: Request,
   setSessionCookie: (cookie: string) => void,
-  ...fetchArgs: AtLeastOneFetch
+  fetchArgs: AtLeastOneFetch,
+  options: LoginRedirectOptions = {}
 ) => {
-  const { user, session, getSessionToken } = await requireUserSession(request);
+  const { user, session, getSessionToken } = await requireUserSession(
+    request,
+    options
+  );
 
   const getResponses = (accessToken: string) => {
     return fetchArgs.map(async ({ url, options = {} }) => {
@@ -177,13 +206,15 @@ export const fetchAuthenticated = async (
 
 export const authenticatedResolver = async (
   request: Request,
-  ...fetchArgs: AtLeastOneFetch
+  fetchArgs: AtLeastOneFetch,
+  options: LoginRedirectOptions = {}
 ) => {
   const resHeaders = new Headers({});
   const responses = await fetchAuthenticated(
     request,
     (cookie) => resHeaders.append("Set-Cookie", cookie),
-    ...fetchArgs
+    fetchArgs,
+    options
   );
 
   return {
@@ -223,14 +254,18 @@ export const defaultDataGetter = async <T = unknown>(
 export const authenticatedData = <T>(
   request: Request,
   fetchArgs: AtLeastOneFetch,
-  getData: (
-    responses: AtLeastOneAwaitableResponse
-  ) => Promise<T> = defaultDataGetter
+  {
+    getData = defaultDataGetter,
+    ...passThroughOptions
+  }: LoginRedirectOptions & {
+    getData?: (responses: AtLeastOneAwaitableResponse) => Promise<T>;
+  } = {}
 ) => {
   const initData = (async () => {
     const { responses, headers } = await authenticatedResolver(
       request,
-      ...fetchArgs
+      fetchArgs,
+      passThroughOptions
     );
     return data(await getData(responses), { headers });
   })();
@@ -241,7 +276,9 @@ export const authenticatedData = <T>(
 interface AllCrudActions<
   T,
   TCreateSchema extends z.ZodType,
-  TUpdateSchema extends z.ZodType
+  TUpdateSchema extends z.ZodType,
+  TCreateReturn = T,
+  TUpdateReturn = T
 > {
   list: (
     request: Request,
@@ -257,13 +294,13 @@ interface AllCrudActions<
     request: Request,
     input: z.infer<TCreateSchema>,
     options?: FetchBuildOptions
-  ) => DataResponse<T>;
+  ) => DataResponse<TCreateReturn>;
   update: (
     request: Request,
     id: string,
     input: z.infer<TUpdateSchema>,
     options?: FetchBuildOptions
-  ) => DataResponse<T>;
+  ) => DataResponse<TUpdateReturn>;
   delete: (
     request: Request,
     id: string,
@@ -290,8 +327,18 @@ const CrudActionNames: CrudActionName[] = [
 function buildCrud<
   T,
   TCreateSchema extends z.ZodType,
-  TUpdateSchema extends z.ZodType
->(path: string): AllCrudActions<T, TCreateSchema, TUpdateSchema> {
+  TUpdateSchema extends z.ZodType,
+  TCreateReturn = T,
+  TUpdateReturn = T
+>(
+  path: string
+): AllCrudActions<
+  T,
+  TCreateSchema,
+  TUpdateSchema,
+  TCreateReturn,
+  TUpdateReturn
+> {
   const actions = [...CrudActionNames];
   return actions.reduce((acc, action) => {
     switch (action) {
@@ -328,8 +375,11 @@ function buildCrud<
           input: z.infer<TCreateSchema>,
           options: FetchBuildOptions = {}
         ) => {
-          return authenticatedData<T>(request, [
-            FetchOptions.url(path).post().json(input).build(options),
+          return authenticatedData<TCreateReturn>(request, [
+            FetchOptions.url(path, options.params)
+              .post()
+              .json(input)
+              .build(options),
           ]);
         };
         break;
@@ -340,8 +390,8 @@ function buildCrud<
           input: z.infer<TUpdateSchema>,
           options: FetchBuildOptions = {}
         ) => {
-          return authenticatedData<T>(request, [
-            FetchOptions.url(`${path}/:id`, { id })
+          return authenticatedData<TUpdateReturn>(request, [
+            FetchOptions.url(`${path}/:id`, { id, ...options.params })
               .patch()
               .json(input)
               .build(options),
@@ -376,26 +426,42 @@ function buildCrud<
     }
 
     return acc;
-  }, {} as AllCrudActions<T, TCreateSchema, TUpdateSchema>);
+  }, {} as AllCrudActions<T, TCreateSchema, TUpdateSchema, TCreateReturn, TUpdateReturn>);
 }
 
 export class CRUD<
   T,
   TCreateSchema extends z.ZodType,
-  TUpdateSchema extends z.ZodType
+  TUpdateSchema extends z.ZodType,
+  TCreateReturn = T,
+  TUpdateReturn = T
 > {
   constructor(private path: string) {}
 
   public static for<
     T,
     TCreateSchema extends z.ZodType,
-    TUpdateSchema extends z.ZodType
+    TUpdateSchema extends z.ZodType,
+    TCreateReturn = T,
+    TUpdateReturn = T
   >(path: string) {
-    return new CRUD<T, TCreateSchema, TUpdateSchema>(path);
+    return new CRUD<
+      T,
+      TCreateSchema,
+      TUpdateSchema,
+      TCreateReturn,
+      TUpdateReturn
+    >(path);
   }
 
   public all() {
-    return buildCrud<T, TCreateSchema, TUpdateSchema>(this.path);
+    return buildCrud<
+      T,
+      TCreateSchema,
+      TUpdateSchema,
+      TCreateReturn,
+      TUpdateReturn
+    >(this.path);
   }
 
   public only<TActions extends CrudActionName[]>(actions: TActions) {
@@ -404,7 +470,13 @@ export class CRUD<
         actions.includes(action as CrudActionName)
       )
     ) as Pick<
-      AllCrudActions<T, TCreateSchema, TUpdateSchema>,
+      AllCrudActions<
+        T,
+        TCreateSchema,
+        TUpdateSchema,
+        TCreateReturn,
+        TUpdateReturn
+      >,
       TActions[number]
     >;
   }
@@ -415,7 +487,13 @@ export class CRUD<
         ([action]) => !actions.includes(action as CrudActionName)
       )
     ) as Omit<
-      AllCrudActions<T, TCreateSchema, TUpdateSchema>,
+      AllCrudActions<
+        T,
+        TCreateSchema,
+        TUpdateSchema,
+        TCreateReturn,
+        TUpdateReturn
+      >,
       TActions[number]
     >;
   }

@@ -12,6 +12,36 @@ export default [
   route("logout", "./routes/auth/logout.tsx"),
   route("callback", "./routes/auth/callback.tsx"),
 
+  // Inspect routes
+  route("inspect", "./routes/inspect/layout.tsx", [
+    index("./routes/inspect/index.tsx"),
+    route("setup", "./routes/inspect/setup.tsx"),
+    route("next", "./routes/inspect/next.tsx"),
+    route("routes", "./routes/inspect/routes.tsx"),
+
+    // User routes
+    route("account", "./routes/inspect/account.tsx"),
+    route("contact", "./routes/inspect/contact.tsx"),
+    route("*", "./routes/inspect/404.tsx"),
+  ]),
+
+  // Action Routes
+  ...prefix("action", [route("set-theme", "./routes/actions/set-theme.ts")]),
+  ...prefix("action", [
+    route("refresh-auth", "./routes/actions/refresh-auth.ts"),
+  ]),
+
+  // API Routes
+  ...prefix("api", [
+    route("query-zip/:zip", "./routes/api/query-zip.ts"),
+    route("link-preview-metadata", "./routes/api/link-preview-metadata.ts"),
+    route("product-categories", "./routes/api/product-categories.ts"),
+    route("manufacturers", "./routes/api/manufacturers.ts"),
+    route("inspections/:id", "./routes/api/inspections.ts"),
+    route("proxy/*", "./routes/api/proxy.ts"),
+    route("image-upload-url", "./routes/api/image-upload-url.ts"),
+  ]),
+
   // App Routes
   layout("./routes/layout.tsx", [
     index("./routes/index.tsx"),
@@ -78,30 +108,5 @@ export default [
     route("account", "./routes/account.tsx"),
 
     route("*", "./routes/404.tsx"),
-  ]),
-
-  // Inspect routes
-  route("inspect", "./routes/inspect/layout.tsx", [
-    index("./routes/inspect/index.tsx"),
-    route("setup", "./routes/inspect/setup.tsx"),
-    route("next", "./routes/inspect/next.tsx"),
-  ]),
-
-  // Action Routes
-  ...prefix("action", [route("set-theme", "./routes/actions/set-theme.ts")]),
-  ...prefix("action", [
-    route("refresh-auth", "./routes/actions/refresh-auth.ts"),
-  ]),
-
-  // API Routes
-  ...prefix("api", [
-    route("query-zip/:zip", "./routes/api/query-zip.ts"),
-    route("link-preview-metadata", "./routes/api/link-preview-metadata.ts"),
-    route("product-categories", "./routes/api/product-categories.ts"),
-    route("manufacturers", "./routes/api/manufacturers.ts"),
-    route("tags", "./routes/api/tags.ts"),
-    route("inspections/:id", "./routes/api/inspections.ts"),
-    route("proxy/*", "./routes/api/proxy.ts"),
-    route("image-upload-url", "./routes/api/image-upload-url.ts"),
   ]),
 ] satisfies RouteConfig;

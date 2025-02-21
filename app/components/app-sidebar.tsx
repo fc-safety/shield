@@ -3,25 +3,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  BookOpenText,
-  Building2,
-  ChevronRight,
-  ChevronUp,
-  Factory,
-  FileSpreadsheet,
-  FireExtinguisher,
-  LayoutDashboard,
-  LogOut,
-  MessageCircleQuestion,
-  Nfc,
-  Package,
-  Shapes,
-  Shield,
-  User2,
-  UserCog,
-  Users,
-} from "lucide-react";
+import { ChevronRight, ChevronUp, LogOut, User2, UserCog } from "lucide-react";
 import { Link, NavLink, useMatches } from "react-router";
 import {
   DropdownMenu,
@@ -46,116 +28,46 @@ import {
   SidebarRail,
 } from "~/components/ui/sidebar";
 import { useAuth } from "~/contexts/auth-context";
-import { isGlobalAdmin } from "~/lib/users";
 
-interface SidebarGroup {
+export interface SidebarGroup {
   groupTitle: string;
   items: SidebarMenuItem[];
   hide?: boolean;
 }
 
-interface SidebarMenuItem {
+export interface SidebarMenuItem {
   title: string;
   url?: string;
   icon: React.ComponentType;
   children?: SidebarMenuSubItem[];
   defaultOpen?: boolean;
   hide?: boolean;
+  exact?: boolean;
 }
 
-interface SidebarMenuSubItem {
+export interface SidebarMenuSubItem {
   title: string;
   url: string;
   hide?: boolean;
+  exact?: boolean;
 }
 
-export function AppSidebar() {
-  const { user } = useAuth();
+export const DEFAULT_USER_ROUTES = [
+  {
+    title: "Account",
+    url: "/account",
+    icon: UserCog,
+  },
+];
 
-  const groups: SidebarGroup[] = [
-    {
-      groupTitle: "Application",
-      items: [
-        {
-          title: "Dashboard",
-          url: "dashboard",
-          icon: LayoutDashboard,
-        },
-        {
-          title: "Assets",
-          url: "assets",
-          icon: Shield,
-        },
-        {
-          title: "Reports",
-          url: "reports",
-          icon: FileSpreadsheet,
-        },
-      ],
-    },
-    {
-      groupTitle: "Products",
-      items: [
-        {
-          title: "All Products",
-          url: "products/all",
-          icon: FireExtinguisher,
-        },
-        {
-          title: "Categories",
-          url: "products/categories",
-          icon: Shapes,
-        },
-        {
-          title: "Manufacturers",
-          url: "products/manufacturers",
-          icon: Factory,
-        },
-      ],
-    },
-    {
-      groupTitle: "Admin",
-      items: [
-        {
-          title: "Clients",
-          url: "admin/clients",
-          icon: Building2,
-        },
-        {
-          title: "Product Requests",
-          url: "admin/product-requests",
-          icon: Package,
-        },
-        {
-          title: "Tags",
-          url: "admin/tags",
-          icon: Nfc,
-        },
-        {
-          title: "Roles",
-          url: "admin/roles",
-          icon: Users,
-          hide: !user || !isGlobalAdmin(user),
-        },
-      ],
-      hide: !user || !isGlobalAdmin(user),
-    },
-    {
-      groupTitle: "Support",
-      items: [
-        {
-          title: "FAQs",
-          url: "faqs",
-          icon: BookOpenText,
-        },
-        {
-          title: "Contact",
-          url: "contact",
-          icon: MessageCircleQuestion,
-        },
-      ],
-    },
-  ];
+export function AppSidebar({
+  groups,
+  userRoutes = DEFAULT_USER_ROUTES,
+}: {
+  groups: SidebarGroup[];
+  userRoutes?: (Omit<SidebarMenuItem, "children" | "url"> & { url: string })[];
+}) {
+  const { user } = useAuth();
 
   const matches = useMatches();
 
@@ -218,18 +130,23 @@ export function AppSidebar() {
                                   .filter((c) => !c.hide)
                                   .map((subItem) => (
                                     <SidebarMenuSubItem key={subItem.title}>
-                                      <NavLink to={subItem.url}>
+                                      <NavLink
+                                        to={subItem.url}
+                                        end={subItem.exact}
+                                      >
                                         {({ isActive }) => (
                                           <SidebarMenuSubButton
                                             asChild
                                             isActive={
                                               isActive ||
-                                              matches.some(
-                                                (m) =>
-                                                  m.pathname === subItem.url ||
-                                                  m.pathname ===
-                                                    `/${subItem.url}`
-                                              )
+                                              (!subItem.exact &&
+                                                matches.some(
+                                                  (m) =>
+                                                    m.pathname ===
+                                                      subItem.url ||
+                                                    m.pathname ===
+                                                      `/${subItem.url}`
+                                                ))
                                             }
                                           >
                                             <span>{subItem.title}</span>
@@ -244,17 +161,18 @@ export function AppSidebar() {
                         </Collapsible>
                       ) : item.url ? (
                         <SidebarMenuItem key={item.title}>
-                          <NavLink to={item.url}>
+                          <NavLink to={item.url} end={item.exact}>
                             {({ isActive }) => (
                               <SidebarMenuButton
                                 asChild
                                 isActive={
                                   isActive ||
-                                  matches.some(
-                                    (m) =>
-                                      m.pathname === item.url ||
-                                      m.pathname === `/${item.url}`
-                                  )
+                                  (!item.exact &&
+                                    matches.some(
+                                      (m) =>
+                                        m.pathname === item.url ||
+                                        m.pathname === `/${item.url}`
+                                    ))
                                 }
                               >
                                 <span>
@@ -288,11 +206,13 @@ export function AppSidebar() {
                 side="top"
                 className="w-[--radix-popper-anchor-width]"
               >
-                <DropdownMenuItem asChild>
-                  <Link to="/account">
-                    <UserCog /> Account
-                  </Link>
-                </DropdownMenuItem>
+                {userRoutes.map((route) => (
+                  <DropdownMenuItem asChild key={route.title}>
+                    <Link to={route.url}>
+                      <route.icon /> {route.title}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
                 <DropdownMenuItem asChild>
                   <Link to="/logout">
                     <LogOut />

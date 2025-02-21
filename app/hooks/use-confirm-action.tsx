@@ -9,8 +9,10 @@ export interface ConfirmAction extends ConfirmationDialogProps {
 
 export default function useConfirmAction({
   variant = "default",
+  defaultProps = {},
 }: {
   variant?: "default" | "destructive";
+  defaultProps?: Partial<ConfirmAction>;
 } = {}) {
   const [confirmAction, setConfirmAction] = useImmer<ConfirmAction>({
     open: false,
@@ -22,6 +24,7 @@ export default function useConfirmAction({
     requiredUserInput: "",
     destructive: variant === "destructive",
     confirmText: variant === "destructive" ? "Delete" : "Confirm",
+    ...defaultProps,
   });
 
   return [

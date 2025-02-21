@@ -5,6 +5,8 @@ import {
   type AssetQuestion,
   type Client,
   type Inspection,
+  type InspectionRoute,
+  type InspectionSession,
   type Manufacturer,
   type Product,
   type ProductCategory,
@@ -13,10 +15,12 @@ import {
   type Tag,
 } from "~/lib/models";
 import {
+  createInspectionRouteSchema,
   createInspectionSchema,
   createProductRequestSchema,
   createRoleSchema,
   resolveAlertSchema,
+  updateInspectionRouteSchema,
   updateRoleSchema,
   type baseSiteSchema,
   type createAssetQuestionSchema,
@@ -88,17 +92,48 @@ export const api = {
     ...CRUD.for<Tag, typeof createTagSchema, typeof updateTagSchema>(
       "/tags"
     ).all(),
-    getBySerial: (request: Request, serialNumber: string) =>
+    getByExternalId: (request: Request, externalId: string) =>
       authenticatedData<Tag>(request, [
-        FetchOptions.url("/tags/serial/:serialNumber", { serialNumber })
+        FetchOptions.url("/tags/externalId/:externalId", { externalId })
           .get()
           .build(),
       ]),
   },
   inspections: {
-    ...CRUD.for<Inspection, typeof backendCreateInspectionSchema, never>(
-      "/inspections"
-    ).except(["delete", "deleteAndRedirect", "update"]),
+    ...CRUD.for<
+      Inspection,
+      typeof backendCreateInspectionSchema,
+      never,
+      {
+        inspection: Inspection;
+        session: InspectionSession | null;
+      }
+    >("/inspections").except(["delete", "deleteAndRedirect", "update"]),
+    getSession: (request: Request, id: string) =>
+      authenticatedData<InspectionSession>(request, [
+        FetchOptions.url("/inspections/sessions/:id", { id }).get().build(),
+      ]),
+    getActiveSessionsForAsset: (request: Request, assetId: string) =>
+      authenticatedData<InspectionSession[]>(request, [
+        FetchOptions.url("/inspections/active-sessions/asset/:assetId", {
+          assetId,
+        })
+          .get()
+          .build(),
+      ]),
+  },
+  inspectionRoutes: {
+    ...CRUD.for<
+      InspectionRoute,
+      typeof createInspectionRouteSchema,
+      typeof updateInspectionRouteSchema
+    >("/inspection-routes").all(),
+    getForAssetId: (request: Request, assetId: string) =>
+      authenticatedData<InspectionRoute[]>(request, [
+        FetchOptions.url("/inspection-routes/asset/:assetId", { assetId })
+          .get()
+          .build(),
+      ]),
   },
   productRequests: {
     ...CRUD.for<ProductRequest, typeof createProductRequestSchema, never>(

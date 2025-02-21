@@ -56,10 +56,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       FetchOptions.url("/roles/:id", { id }).get().build(),
       FetchOptions.url("/roles/permissions").get().build(),
     ],
-    async ([rolesResponse, permissionsResponse]) => ({
-      role: await defaultDataGetter([rolesResponse]),
-      permissions: await defaultDataGetter([permissionsResponse]),
-    })
+    {
+      getData: async ([rolesResponse, permissionsResponse]) => ({
+        role: await defaultDataGetter([rolesResponse]),
+        permissions: await defaultDataGetter([permissionsResponse]),
+      }),
+    }
   );
 };
 

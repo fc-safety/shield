@@ -1,3 +1,4 @@
+import { redirect } from "react-router";
 import { refreshTokensOrRelogin, requireUserSession } from "~/.server/sessions";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/refresh-auth";
@@ -13,4 +14,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
   resHeaders.append("Set-Cookie", await getSessionToken(session));
 
   return user;
+};
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const returnTo = getSearchParam(request, "returnTo");
+  return redirect(returnTo ?? "/");
 };

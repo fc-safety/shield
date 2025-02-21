@@ -39,5 +39,11 @@ export function getUserDisplayName(user: {
 }
 
 export function can(user: User, action: TAction, resource: TResource) {
+  if (
+    ["create", "update", "read", "delete"].includes(action) &&
+    can(user, "manage", resource)
+  ) {
+    return true;
+  }
   return !!user.permissions?.includes(`${action}:${resource}`);
 }

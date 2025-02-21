@@ -53,7 +53,7 @@ export default function TagSelector({
   // Preload all tags lazily.
   const handlePreload = useCallback(() => {
     if (fetcher.state === "idle" && fetcher.data === undefined) {
-      fetcher.load("/api/tags");
+      fetcher.load("/api/proxy/tags?limit=10000");
     }
   }, [fetcher]);
 
