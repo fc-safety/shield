@@ -82,8 +82,9 @@ function RouteCard({ route }: { route: InspectionRoute }) {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
-        tolerance: 5,
+        distance: 0,
+        delay: 100,
+        tolerance: 2,
       },
     })
   );
@@ -177,7 +178,9 @@ function RouteCard({ route }: { route: InspectionRoute }) {
         <CardHeader className="flex-row justify-between">
           <CardHeader className="p-0 sm:p-0">
             <CardTitle>{route.name}</CardTitle>
-            <CardDescription>{route.description}</CardDescription>
+            <CardDescription>
+              {route.description ?? <>&mdash;</>}
+            </CardDescription>
           </CardHeader>
           <EditRouteButton
             route={route}
