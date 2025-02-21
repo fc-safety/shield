@@ -275,11 +275,11 @@ function RouteCard({ route }: { route: InspectionRoute }) {
 }
 
 const disableBodyScroll = () => {
-  document.body.style.setProperty("overflow", "hidden");
+  document.body.classList.add("touch-none");
 };
 
 const enableBodyScroll = () => {
-  document.body.style.removeProperty("overflow");
+  document.body.classList.remove("touch-none");
 };
 
 const SortableRoutePointItem = (props: RoutePointItemProps) => {
