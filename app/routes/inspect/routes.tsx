@@ -82,7 +82,6 @@ function RouteCard({ route }: { route: InspectionRoute }) {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        distance: 0,
         delay: 100,
         tolerance: 2,
       },
@@ -179,7 +178,7 @@ function RouteCard({ route }: { route: InspectionRoute }) {
           <CardHeader className="p-0 sm:p-0">
             <CardTitle>{route.name}</CardTitle>
             <CardDescription>
-              {route.description ?? <>&mdash;</>}
+              {route.description || <>&mdash;</>}
             </CardDescription>
           </CardHeader>
           <EditRouteButton
@@ -279,10 +278,12 @@ function RouteCard({ route }: { route: InspectionRoute }) {
 
 const disableBodyScroll = () => {
   document.body.classList.add("touch-none");
+  document.body.classList.add("overflow-hidden");
 };
 
 const enableBodyScroll = () => {
   document.body.classList.remove("touch-none");
+  document.body.classList.remove("overflow-hidden");
 };
 
 const SortableRoutePointItem = (props: RoutePointItemProps) => {
