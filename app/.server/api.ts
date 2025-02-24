@@ -121,6 +121,12 @@ export const api = {
           .get()
           .build(),
       ]),
+    completeSession: (request: Request, id: string) =>
+      authenticatedData<InspectionSession>(request, [
+        FetchOptions.url("/inspections/sessions/:id/complete", { id })
+          .post()
+          .build(),
+      ]),
   },
   inspectionRoutes: {
     ...CRUD.for<

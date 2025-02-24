@@ -1,7 +1,11 @@
-import { isAfter } from "date-fns";
+import { data } from "react-router";
 import { api } from "~/.server/api";
+import { getNextPointFromSession } from "~/.server/inspections";
 import { getSessionValue, inspectionSessionStorage } from "~/.server/sessions";
+import DataList from "~/components/data-list";
+import ProductCard from "~/components/products/product-card";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import type { Asset } from "~/lib/models";
 import type { Route } from "./+types/next";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -10,61 +14,54 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     inspectionSessionStorage,
     "activeSession"
   );
-  return activeSessionId
-    ? api.inspections.getSession(request, activeSessionId).mapTo((session) => {
-        // Get all points sorted by order.
-        const sortedPoints =
-          session.inspectionRoute?.inspectionRoutePoints?.sort(
-            (a, b) => a.order - b.order
-          ) ?? [];
+  if (activeSessionId) {
+    const inspectionsResponse = await api.inspections
+      .getSession(request, activeSessionId)
+      .mapTo((session) => ({
+        session,
+        ...getNextPointFromSession(session),
+      }));
 
-        const sortedCompletedPoints =
-          session.completedInspectionRoutePoints?.sort((a, b) =>
-            isAfter(a.createdOn, b.createdOn) ? -1 : 1
-          ) ?? [];
+    const {
+      data: { session, nextPoint, routeCompleted },
+    } = inspectionsResponse;
+    let init = inspectionsResponse.init;
 
-        // Create a set of completed point assetIds for quick lookup.
-        const completedPointAssetIds = new Set(
-          sortedCompletedPoints.map(
-            (completedPoint) => completedPoint.inspectionRoutePoint?.assetId
-          ) ?? []
-        );
+    let nextAsset: Asset | null = null;
+    if (nextPoint) {
+      const assetResponse = await api.assets
+        .get(request, nextPoint.assetId)
+        .mergeInit(init);
+      init = assetResponse.init;
+      nextAsset = assetResponse.data;
+    } else if (routeCompleted) {
+      const completeResponse = await api.inspections
+        .completeSession(request, session.id)
+        .mergeInit(init);
+      init = completeResponse.init;
+    }
 
-        const lastCompletedPoint = sortedCompletedPoints.at(0);
+    return data(
+      {
+        session,
+        nextPoint,
+        nextAsset,
+        routeCompleted,
+      },
+      init ?? undefined
+    );
+  }
 
-        // Find the index of the last completed point.
-        const lastCompletedIndex = lastCompletedPoint
-          ? sortedPoints.findIndex(
-              (point) =>
-                point.id === lastCompletedPoint.inspectionRoutePoint?.id
-            )
-          : -1;
-
-        // Find the next incomplete point after the last completed point, starting
-        // back from the beginning if necessary.
-        let nextPoint = null;
-        for (let i = 0; i < sortedPoints.length; i++) {
-          const candidateIdx =
-            (i + lastCompletedIndex + 1) % sortedPoints.length;
-          if (!completedPointAssetIds.has(sortedPoints[candidateIdx].assetId)) {
-            nextPoint = sortedPoints[i];
-            break;
-          }
-        }
-
-        return {
-          session,
-          nextPoint,
-        };
-      })
-    : {
-        session: null,
-        nextPoint: null,
-      };
+  return {
+    session: null,
+    nextPoint: null,
+    nextAsset: null,
+    routeCompleted: false,
+  };
 };
 
 export default function InspectNext({
-  loaderData: { session, nextPoint },
+  loaderData: { nextAsset, routeCompleted },
 }: Route.ComponentProps) {
   return (
     <div className="grid gap-4">
@@ -73,14 +70,48 @@ export default function InspectNext({
           <CardTitle>Inspection submitted!</CardTitle>
         </CardHeader>
       </Card>
-      {nextPoint && (
+      {nextAsset && (
         <Card>
           <CardHeader>
-            <CardTitle>Next Point</CardTitle>
+            <CardTitle>Next Asset to Inspect</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>{nextPoint.asset?.name}</p>
+            <div className="grid gap-2">
+              <h3 className="text-lg font-semibold">Details</h3>
+              <DataList
+                details={[
+                  {
+                    label: "Name",
+                    value: nextAsset.name,
+                  },
+                  {
+                    label: "Location",
+                    value: nextAsset.location,
+                  },
+                  {
+                    label: "Placement",
+                    value: nextAsset.placement,
+                  },
+                  {
+                    label: "Tag Serial No.",
+                    value: nextAsset.tag?.serialNumber,
+                  },
+                ]}
+                defaultValue={<>&mdash;</>}
+              />
+            </div>
+            <div className="grid gap-2">
+              <h3 className="text-lg font-semibold">Product</h3>
+              <ProductCard product={nextAsset.product} />
+            </div>
           </CardContent>
+        </Card>
+      )}
+      {!nextAsset && routeCompleted && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Inspection Route Completed</CardTitle>
+          </CardHeader>
         </Card>
       )}
     </div>

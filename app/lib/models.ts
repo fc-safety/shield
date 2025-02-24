@@ -51,6 +51,7 @@ export interface AssetQuestionResponse extends BaseModel {
 }
 
 export interface Tag extends BaseModel {
+  externalId: string;
   serialNumber: string;
   asset?: Asset | null;
   siteId?: string;

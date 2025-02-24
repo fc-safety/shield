@@ -141,6 +141,12 @@ export class DataResponse<T> extends Promise<ReturnType<typeof data<T>>> {
     ) as DataResponse<Awaited<U>>;
   }
 
+  public mergeInit(init: ResponseInit | null) {
+    return this.then(({ data: thisData, init: thisInit }) =>
+      data(thisData, mergeInit(thisInit, init) ?? undefined)
+    ) as DataResponse<T>;
+  }
+
   public async asRedirect(url: string) {
     return this.then(({ init }) => redirect(url, init ?? undefined));
   }

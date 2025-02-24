@@ -16,6 +16,8 @@ export interface QueryParams {
   [key: string]: BaseQueryParamValue | BaseQueryParamValue[] | QueryParams;
 }
 
+export const stringifyQuery = qs.stringify;
+
 export const buildPath = <TPath extends string>(
   path: TPath,
   params?: QueryParams & PathParams<TPath>,

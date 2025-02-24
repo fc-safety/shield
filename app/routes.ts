@@ -107,6 +107,9 @@ export default [
     // User routes
     route("account", "./routes/account.tsx"),
 
+    // Health routes
+    route("health", "./routes/health.tsx"),
+
     route("*", "./routes/404.tsx"),
   ]),
 ] satisfies RouteConfig;
