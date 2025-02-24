@@ -1,28 +1,42 @@
-import { redirect } from "react-router";
+import { redirect, type Session } from "react-router";
 import { strategy } from "~/.server/authenticator";
 import { APP_HOST, CLIENT_ID, LOGOUT_URL } from "~/.server/config";
+import { logger } from "~/.server/logger";
 import { userSessionStorage } from "~/.server/sessions";
 import type { Route } from "./+types/logout";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await userSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
-  let logoutUrl: URL | null = null;
+  const postLogoutUrl =
+    URL.parse(URL.parse(request.url)?.pathname ?? "/", APP_HOST)?.toString() ??
+    "";
+
+  let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
+  try {
+    session = await userSessionStorage.getSession(
+      request.headers.get("cookie")
+    );
+  } catch (e) {
+    logger.warn(
+      {
+        details: e,
+      },
+      "Failed to get session"
+    );
+    return redirect(postLogoutUrl, {
+      headers: {
+        "Set-Cookie": await userSessionStorage.destroySession({} as Session),
+      },
+    });
+  }
 
   const tokens = session.get("tokens");
   if (tokens) {
     await strategy.then((s) => s.revokeToken(tokens.accessToken));
-    logoutUrl = URL.parse(LOGOUT_URL);
-    logoutUrl?.searchParams.set("client_id", CLIENT_ID);
-
-    const postLogoutUrl =
-      URL.parse(
-        URL.parse(request.url)?.pathname ?? "/",
-        APP_HOST
-      )?.toString() ?? "";
-    logoutUrl?.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
   }
+
+  const logoutUrl = URL.parse(LOGOUT_URL);
+  logoutUrl?.searchParams.set("client_id", CLIENT_ID);
+  logoutUrl?.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
 
   return redirect(logoutUrl?.toString() ?? "/", {
     headers: { "Set-Cookie": await userSessionStorage.destroySession(session) },

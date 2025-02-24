@@ -115,13 +115,6 @@ export const userSessionStorage = createCookieSessionStorage<{
       try {
         return decompress(value);
       } catch (e) {
-        logger.warn(
-          {
-            details: e,
-            value,
-          },
-          "Failed to decompress session cookie"
-        );
         return value;
       }
     },
@@ -155,9 +148,14 @@ export const requireUserSession = async (
   request: Request,
   options: LoginRedirectOptions = {}
 ) => {
-  const session = await userSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
+  try {
+    session = await userSessionStorage.getSession(
+      request.headers.get("cookie")
+    );
+  } catch (e) {
+    throw redirect("/logout");
+  }
 
   let tokens = session.get("tokens");
   if (!tokens) {
