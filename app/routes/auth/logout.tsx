@@ -3,12 +3,12 @@ import { strategy } from "~/.server/authenticator";
 import { APP_HOST, CLIENT_ID, LOGOUT_URL } from "~/.server/config";
 import { logger } from "~/.server/logger";
 import { userSessionStorage } from "~/.server/sessions";
+import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/logout";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const postLogoutUrl =
-    URL.parse(URL.parse(request.url)?.pathname ?? "/", APP_HOST)?.toString() ??
-    "";
+  const returnTo = getSearchParam(request, "returnTo");
+  const postLogoutUrl = URL.parse(returnTo ?? "/", APP_HOST)?.toString() ?? "";
 
   let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
   try {
