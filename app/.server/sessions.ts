@@ -115,10 +115,13 @@ export const userSessionStorage = createCookieSessionStorage<{
       try {
         return decompress(value);
       } catch (e) {
-        logger.warn("Failed to decompress session cookie", {
-          details: e,
-          value,
-        });
+        logger.warn(
+          {
+            details: e,
+            value,
+          },
+          "Failed to decompress session cookie"
+        );
         return value;
       }
     },
