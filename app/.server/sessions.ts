@@ -20,15 +20,20 @@ export const compress = (data: string) =>
 export const decompress = (data: string) =>
   inflate(Buffer.from(data, "base64"), { to: "string" });
 
+export const getSession = async <T = SessionData>(
+  request: Request,
+  sessionStorage: SessionStorage<T>
+) => {
+  return sessionStorage.getSession(request.headers.get("cookie"));
+};
+
 export const setAndCommitSession = async <T = SessionData>(
   request: Request,
   sessionStorage: SessionStorage<T>,
   key: keyof T & string,
   value: T[keyof T & string]
 ) => {
-  const session = await sessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const session = await getSession(request, sessionStorage);
   session.set(key, value);
   return sessionStorage.commitSession(session);
 };
@@ -38,9 +43,7 @@ export const getSessionValue = async <T = SessionData>(
   sessionStorage: SessionStorage<T>,
   key: keyof T & string
 ) => {
-  const session = await sessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const session = await getSession(request, sessionStorage);
   return session.get(key);
 };
 
@@ -52,9 +55,7 @@ export const getSessionValues = async <
   sessionStorage: SessionStorage<T>,
   keys: K
 ) => {
-  const session = await sessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const session = await getSession(request, sessionStorage);
   return keys.map(session.get) as {
     [I in keyof K]: K[I] extends keyof T ? T[K[I]] | undefined : undefined;
   };
@@ -114,6 +115,10 @@ export const userSessionStorage = createCookieSessionStorage<{
       try {
         return decompress(value);
       } catch (e) {
+        logger.warn("Failed to decompress session cookie", {
+          details: e,
+          value,
+        });
         return value;
       }
     },
