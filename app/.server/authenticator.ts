@@ -1,8 +1,9 @@
 import { Authenticator } from "remix-auth";
 import { OAuth2Strategy } from "remix-auth-oauth2";
-import { z } from "zod";
+import type { z } from "zod";
+import { keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import { getSearchParams } from "~/lib/utils";
-import { isValidPermission, type TPermission } from "../lib/permissions";
+import { type TPermission } from "../lib/permissions";
 import { CLIENT_ID, CLIENT_SECRET, ISSUER_URL, REDIRECT_URL } from "./config";
 
 export interface Tokens {
@@ -33,7 +34,7 @@ export const buildUser = (tokens: {
   const accessToken = retrieve(tokens.accessToken);
   const refreshToken = retrieve(tokens.refreshToken);
 
-  const parsedToken = JSON.parse(atob(accessToken.split(".")[1]));
+  const parsedToken = parseToken(accessToken, keycloakTokenPayloadSchema);
 
   return buildUserFromToken(parsedToken, { accessToken, refreshToken });
 };
@@ -78,34 +79,10 @@ export const authenticator = strategy.then((s) => {
   return authn;
 });
 
-const keycloakTokenPayloadSchema = z.object({
-  sub: z.string(),
-  email: z.string(),
-  preferred_username: z.string(),
-  name: z.string().optional(),
-  given_name: z.string().optional(),
-  family_name: z.string().optional(),
-  picture: z.string().optional(),
-  resource_access: z
-    .record(
-      z.string(),
-      z.object({
-        roles: z
-          .array(z.string())
-          .transform((roles) => roles.filter(isValidPermission)),
-      })
-    )
-    .optional(),
-  permissions: z
-    .array(z.string())
-    .transform((roles) => roles.filter(isValidPermission))
-    .optional(),
-  client_id: z.string().default("unknown"),
-  site_id: z.string().default("unknown"),
-});
-
-const buildUserFromToken = (input: unknown, tokens: Tokens): User => {
-  const payload = keycloakTokenPayloadSchema.parse(input);
+const buildUserFromToken = (
+  payload: z.infer<typeof keycloakTokenPayloadSchema>,
+  tokens: Tokens
+): User => {
   return {
     idpId: payload.sub,
     email: payload.email,
