@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { NotepadText, Plus, Trash } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -22,7 +22,6 @@ import type {
 } from "~/lib/models";
 import { createProductRequestSchema } from "~/lib/schema";
 import { ResponsiveDialog } from "../responsive-dialog";
-import { Badge } from "../ui/badge";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 import { DialogFooter } from "../ui/dialog";
 import { Input } from "../ui/input";
@@ -274,13 +273,16 @@ export function ProductRequestCard({ request }: { request: ProductRequest }) {
       <CardHeader>
         <CardDescription className="text-muted-foreground text-xs flex items-center gap-x-4 justify-between">
           <div className="flex items-center gap-x-2">
-            <Badge variant="default">{request.status}</Badge>
+            {/* <Badge variant="default">{request.status}</Badge> */}
+            <div className="text-foreground">
+              {formatDistanceToNow(request.createdOn)}
+            </div>
             <div>&mdash;</div>
             <div>{format(request.createdOn, "PPpp")}</div>
           </div>
-          <ProductRequestApprovalsDisplay
+          {/* <ProductRequestApprovalsDisplay
             approvals={request.productRequestApprovals ?? []}
-          />
+          /> */}
         </CardDescription>
       </CardHeader>
       <CardContent>

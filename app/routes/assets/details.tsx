@@ -48,7 +48,13 @@ import { DataTableColumnHeader } from "~/components/data-table/data-table-column
 import ProductCard from "~/components/products/product-card";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -261,13 +267,14 @@ export default function AssetDetails({
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Package />
-                    Requests
+                    Recent Requests
                   </div>
                   <NewSupplyRequestButton
                     assetId={asset.id}
                     parentProductId={asset.productId}
                   />
                 </CardTitle>
+                <CardDescription>Last 30 days</CardDescription>
               </CardHeader>
               <CardContent>
                 <ProductRequests

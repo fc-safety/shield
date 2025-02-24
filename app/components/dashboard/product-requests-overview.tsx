@@ -1,16 +1,19 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader } from "~/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { subDays } from "date-fns";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
-import useConfirmAction from "~/hooks/use-confirm-action";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { ProductRequest, ResultsPage } from "~/lib/models";
+import { stringifyQuery } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
-import {
-  ProductRequestApprovalsDisplay,
-  ProductRequestCard,
-} from "../assets/product-requests";
-import ConfirmationDialog from "../confirmation-dialog";
+import { ProductRequestCard } from "../assets/product-requests";
 import DataList from "../data-list";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
@@ -36,7 +39,12 @@ export default function ProductRequestsOverview() {
   return data ? (
     <>
       <Card>
-        <CardHeader>Product Requests</CardHeader>
+        <CardHeader>
+          <CardTitle>Recent Product Requests</CardTitle>
+          <CardDescription>
+            Requests shown from the last 30 days.
+          </CardDescription>
+        </CardHeader>
         <CardContent>
           <DataTable
             columns={[
@@ -50,13 +58,13 @@ export default function ProductRequestsOverview() {
                   <DisplayRelativeDate date={getValue() as string} />
                 ),
               },
-              {
-                accessorKey: "status",
-                id: "status",
-                header: ({ column, table }) => (
-                  <DataTableColumnHeader column={column} table={table} />
-                ),
-              },
+              // {
+              //   accessorKey: "status",
+              //   id: "status",
+              //   header: ({ column, table }) => (
+              //     <DataTableColumnHeader column={column} table={table} />
+              //   ),
+              // },
               {
                 accessorKey: "asset.name",
                 id: "asset",
@@ -83,47 +91,64 @@ export default function ProductRequestsOverview() {
                   );
                 },
               },
+              // TODO: Holding off on in-app product request interactions. Product requests for
+              // now are read-only.
+              // {
+              //   accessorFn: (request) =>
+              //     request.productRequestApprovals?.length ?? 0,
+              //   id: "reviews",
+              //   header: ({ column, table }) => (
+              //     <DataTableColumnHeader column={column} table={table} />
+              //   ),
+              //   cell: ({ row }) => {
+              //     const request = row.original;
+              //     return (
+              //       <ProductRequestApprovalsDisplay
+              //         approvals={request.productRequestApprovals ?? []}
+              //       />
+              //     );
+              //   },
+              // },
+              // {
+              //   id: "review",
+              //   cell: ({ row }) => {
+              //     const request = row.original;
+              //     const myApproval = request.productRequestApprovals?.find(
+              //       (a) => a.approver?.idpId === user?.idpId
+              //     );
+              //     return (
+              //       <Button
+              //         variant={
+              //           !myApproval
+              //             ? "secondary"
+              //             : myApproval.approved
+              //             ? "default"
+              //             : "destructive"
+              //         }
+              //         disabled={!!myApproval}
+              //         size="sm"
+              //         onClick={() => reviewRequest.openData(request)}
+              //       >
+              //         {!myApproval
+              //           ? "Review"
+              //           : myApproval.approved
+              //           ? "Approved"
+              //           : "Rejected"}
+              //       </Button>
+              //     );
+              //   },
+              // },
               {
-                accessorFn: (request) =>
-                  request.productRequestApprovals?.length ?? 0,
-                id: "reviews",
-                header: ({ column, table }) => (
-                  <DataTableColumnHeader column={column} table={table} />
-                ),
+                id: "details",
                 cell: ({ row }) => {
                   const request = row.original;
-                  return (
-                    <ProductRequestApprovalsDisplay
-                      approvals={request.productRequestApprovals ?? []}
-                    />
-                  );
-                },
-              },
-              {
-                id: "review",
-                cell: ({ row }) => {
-                  const request = row.original;
-                  const myApproval = request.productRequestApprovals?.find(
-                    (a) => a.approver?.idpId === user?.idpId
-                  );
                   return (
                     <Button
-                      variant={
-                        !myApproval
-                          ? "secondary"
-                          : myApproval.approved
-                          ? "default"
-                          : "destructive"
-                      }
-                      disabled={!!myApproval}
+                      variant="secondary"
                       size="sm"
                       onClick={() => reviewRequest.openData(request)}
                     >
-                      {!myApproval
-                        ? "Review"
-                        : myApproval.approved
-                        ? "Approved"
-                        : "Rejected"}
+                      Details
                     </Button>
                   );
                 },
@@ -155,34 +180,37 @@ export default function ProductRequestsOverview() {
 const getProductRequests = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>
 ) => {
-  const response = await fetch("/product-requests", {
+  const qs = stringifyQuery({
+    createdOn: { gte: subDays(new Date(), 30).toISOString() },
+  });
+  const response = await fetch(`/product-requests?${qs}`, {
     method: "GET",
   });
 
   return response.json() as Promise<ResultsPage<ProductRequest>>;
 };
 
-const reviewProductRequest = async (
-  fetch: (url: string, options: RequestInit) => Promise<Response>,
-  requestId: string,
-  approved: boolean
-) => {
-  const response = await fetch(`/product-requests/${requestId}/review`, {
-    method: "PATCH",
-    body: JSON.stringify({
-      productRequestApprovals: {
-        create: {
-          approved,
-        },
-      },
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+// const reviewProductRequest = async (
+//   fetch: (url: string, options: RequestInit) => Promise<Response>,
+//   requestId: string,
+//   approved: boolean
+// ) => {
+//   const response = await fetch(`/product-requests/${requestId}/review`, {
+//     method: "PATCH",
+//     body: JSON.stringify({
+//       productRequestApprovals: {
+//         create: {
+//           approved,
+//         },
+//       },
+//     }),
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//   });
 
-  return response.json();
-};
+//   return response.json();
+// };
 
 function ReviewProductRequestModal({
   open,
@@ -193,48 +221,49 @@ function ReviewProductRequestModal({
   onOpenChange: (open: boolean) => void;
   request: ProductRequest | null;
 }) {
-  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
+  // const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const queryClient = useQueryClient();
-  const { mutate: doReview, isPending: isSubmittingReview } = useMutation({
-    mutationFn: ({
-      requestId,
-      approved,
-    }: {
-      requestId: string;
-      approved: boolean;
-    }) => reviewProductRequest(fetch, requestId, approved),
-    onSuccess: () => {
-      onOpenChange(false);
-      queryClient.invalidateQueries({ queryKey: ["product-requests"] });
-    },
-  });
+  // const queryClient = useQueryClient();
+  // const { mutate: doReview, isPending: isSubmittingReview } = useMutation({
+  //   mutationFn: ({
+  //     requestId,
+  //     approved,
+  //   }: {
+  //     requestId: string;
+  //     approved: boolean;
+  //   }) => reviewProductRequest(fetch, requestId, approved),
+  //   onSuccess: () => {
+  //     onOpenChange(false);
+  //     queryClient.invalidateQueries({ queryKey: ["product-requests"] });
+  //   },
+  // });
 
-  const [confirmAction, setConfirmAction] = useConfirmAction();
+  // const [confirmAction, setConfirmAction] = useConfirmAction();
 
-  const handleReview = (approved: boolean) => {
-    if (!request?.id) {
-      return;
-    }
+  // const handleReview = (approved: boolean) => {
+  //   if (!request?.id) {
+  //     return;
+  //   }
 
-    setConfirmAction((draft) => {
-      draft.open = true;
-      draft.onConfirm = () => {
-        doReview({
-          requestId: request.id,
-          approved,
-        });
-      };
-      draft.title = `${approved ? "Approve" : "Reject"} this product request?`;
-      draft.destructive = !approved;
-      draft.confirmText = approved ? "Approve" : "Reject";
-    });
-  };
+  //   setConfirmAction((draft) => {
+  //     draft.open = true;
+  //     draft.onConfirm = () => {
+  //       doReview({
+  //         requestId: request.id,
+  //         approved,
+  //       });
+  //     };
+  //     draft.title = `${approved ? "Approve" : "Reject"} this product request?`;
+  //     draft.destructive = !approved;
+  //     draft.confirmText = approved ? "Approve" : "Reject";
+  //   });
+  // };
 
   return (
     <>
       <ResponsiveDialog
-        title="Review Product Request"
+        // title="Review Product Request"
+        title="Product Request Details"
         open={open}
         onOpenChange={onOpenChange}
         dialogClassName="sm:max-w-lg"
@@ -264,10 +293,11 @@ function ReviewProductRequestModal({
           </div>
           <DialogFooter className="flex items-center gap-2">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
-              Close
+              {/* Close */}
+              Done
             </Button>
-            <div className="flex-1"></div>
-            <Button
+            {/* <div className="flex-1"></div> */}
+            {/* <Button
               variant="destructive"
               disabled={isSubmittingReview}
               onClick={() => handleReview(false)}
@@ -280,11 +310,11 @@ function ReviewProductRequestModal({
               onClick={() => handleReview(true)}
             >
               Approve
-            </Button>
+            </Button> */}
           </DialogFooter>
         </>
       </ResponsiveDialog>
-      <ConfirmationDialog {...confirmAction} />
+      {/* <ConfirmationDialog {...confirmAction} /> */}
     </>
   );
 }

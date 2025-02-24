@@ -13,7 +13,6 @@ import {
 import ProductSelector from "../products/product-selector";
 import {
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -21,7 +20,6 @@ import {
   Form as FormProvider,
 } from "../ui/form";
 import { Input } from "../ui/input";
-import TagSelector from "./tag-selector";
 
 type TForm = z.infer<typeof updateAssetSchema | typeof createAssetSchema>;
 interface AssetDetailsFormProps {
@@ -48,13 +46,6 @@ export default function AssetDetailsForm({
     values: asset
       ? {
           ...asset,
-          tag: asset.tagId
-            ? {
-                connect: {
-                  id: asset.tagId,
-                },
-              }
-            : undefined,
           product: asset.productId
             ? {
                 connect: {
@@ -139,26 +130,6 @@ export default function AssetDetailsForm({
               <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="tag.connect.id"
-          render={({ field: { onChange, value, onBlur, disabled } }) => (
-            <FormItem>
-              <FormLabel>Tag</FormLabel>
-              <FormControl>
-                <TagSelector
-                  value={value}
-                  onValueChange={onChange}
-                  onBlur={onBlur}
-                  disabled={disabled}
-                  className="flex"
-                />
-              </FormControl>
-              <FormDescription></FormDescription>
               <FormMessage />
             </FormItem>
           )}

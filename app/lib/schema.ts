@@ -248,7 +248,6 @@ export const createAssetSchema = z.object({
       id: z.string(),
     }),
   }),
-  tag: optionalConnectSchema,
   site: optionalConnectSchema,
   client: optionalConnectSchema,
 });

@@ -103,9 +103,14 @@ export default function AssetsIndex({
             title="Tag Serial No."
           />
         ),
-        cell: ({ getValue }) => (
-          <CopyableText text={getValue() as string} hoverOnly />
-        ),
+        cell: ({ getValue }) => {
+          const text = getValue() as string;
+          return text ? (
+            <CopyableText text={getValue() as string} hoverOnly />
+          ) : (
+            <>&mdash;</>
+          );
+        },
       },
       {
         accessorFn: (row) =>
