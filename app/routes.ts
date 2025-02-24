@@ -7,6 +7,9 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
+  // Health routes
+  route("health", "./routes/health.tsx"),
+
   // Auth Routes
   route("login", "./routes/auth/login.tsx"),
   route("logout", "./routes/auth/logout.tsx"),
@@ -106,9 +109,6 @@ export default [
 
     // User routes
     route("account", "./routes/account.tsx"),
-
-    // Health routes
-    route("health", "./routes/health.tsx"),
 
     route("*", "./routes/404.tsx"),
   ]),
