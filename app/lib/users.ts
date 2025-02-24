@@ -59,7 +59,10 @@ export const keycloakTokenPayloadSchema = z.object({
   site_id: z.string().default("unknown"),
 });
 
-export const parseToken = <T>(token: string, schema: z.Schema<T>) => {
+export const parseToken = <S extends z.Schema>(
+  token: string,
+  schema: S
+): z.infer<S> => {
   try {
     const parsedTokenRaw = JSON.parse(atob(token.split(".")[1]));
     return schema.parse(parsedTokenRaw);
@@ -72,11 +75,18 @@ export const isTokenExpired = (
   token: string,
   bufferSeconds = DEFAULT_TOKEN_EXPIRATION_BUFFER_SECONDS
 ) => {
-  const parsedToken = parseToken(
-    token,
-    keycloakTokenPayloadSchema.pick({ exp: true })
-  );
-  return (parsedToken.exp - bufferSeconds) * 1000 < Date.now();
+  try {
+    const parsedToken = parseToken(
+      token,
+      keycloakTokenPayloadSchema.pick({ exp: true })
+    );
+    return (parsedToken.exp - bufferSeconds) * 1000 < Date.now();
+  } catch (error) {
+    if (error instanceof TokenParseError) {
+      return true;
+    }
+    throw error;
+  }
 };
 
 export function getUserDisplayName(user: {
