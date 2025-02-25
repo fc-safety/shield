@@ -196,6 +196,7 @@ interface SelectOptionsProps {
   onSearchValueChange?: (value: string) => void;
   loading?: boolean;
   shouldFilter?: boolean;
+  errorMessage?: string;
 }
 
 function SelectOptions({
@@ -208,6 +209,7 @@ function SelectOptions({
   onSearchValueChange = () => {},
   loading = false,
   shouldFilter = true,
+  errorMessage,
 }: SelectOptionsProps) {
   return (
     <Command shouldFilter={shouldFilter}>
@@ -220,7 +222,13 @@ function SelectOptions({
         <CommandEmpty>{noResultsText}</CommandEmpty>
         <CommandGroup>
           {loading ? (
-            <Loader2 className="animate-spin" />
+            <CommandItem disabled>
+              <Loader2 className="animate-spin" />
+            </CommandItem>
+          ) : options.length === 0 && errorMessage ? (
+            <CommandItem disabled className="text-xs italic">
+              {errorMessage}
+            </CommandItem>
           ) : (
             options.map((option) => (
               <CommandItem

@@ -1,12 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { useAuth } from "~/contexts/auth-context";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { InspectionRoute } from "~/lib/models";
 import {
   createInspectionRouteSchema,
   updateInspectionRouteSchema,
 } from "~/lib/schema";
+import { hasMultiSiteVisibility } from "~/lib/users";
+import SiteCombobox from "../clients/site-combobox";
 import { Button } from "../ui/button";
 import {
   Form,
@@ -44,6 +47,8 @@ export default function RouteDetailsForm({
   route,
   onSubmitted,
 }: RouteDetailsFormProps) {
+  const { user } = useAuth();
+
   const isNew = !route;
 
   const form = useForm<TForm>({
@@ -110,6 +115,28 @@ export default function RouteDetailsForm({
             </FormItem>
           )}
         />
+
+        {hasMultiSiteVisibility(user) && (
+          <FormField
+            control={form.control}
+            name="siteId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Site</FormLabel>
+                <FormControl>
+                  <SiteCombobox
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className="w-full"
+                    showClear={false}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <Button
           type="submit"

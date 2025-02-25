@@ -1,6 +1,7 @@
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
+import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import type { ResultsPage, Site } from "~/lib/models";
 import { buildPath, type QueryParams } from "~/lib/urls";
 import { ResponsiveCombobox } from "../responsive-combobox";
@@ -14,6 +15,7 @@ interface SiteComboboxProps {
   valueKey?: "id" | "externalId";
   disabled?: boolean;
   showClear?: boolean;
+  context?: ViewContext;
 }
 
 const fuse = new Fuse([] as Site[], { keys: ["name"] });
@@ -27,8 +29,9 @@ export default function SiteCombobox({
   valueKey = "id",
   disabled,
   showClear = true,
+  context,
 }: SiteComboboxProps) {
-  const fetcher = useFetcher<ResultsPage<Site>>();
+  const fetcher = useFetcher<DataOrError<ResultsPage<Site>>>();
   const prevClientId = useRef<string | null>(null);
 
   const preloadSites = useCallback(
@@ -39,15 +42,19 @@ export default function SiteCombobox({
       ) {
         const query: QueryParams = {
           limit: 10000,
+          _throw: "false",
         };
         if (clientId) {
           prevClientId.current = clientId;
           query.clientId = clientId;
         }
+        if (context) {
+          query._viewContext = context;
+        }
         fetcher.load(buildPath("/api/proxy/sites", query));
       }
     },
-    [fetcher]
+    [fetcher, context]
   );
 
   useEffect(() => {
@@ -56,10 +63,14 @@ export default function SiteCombobox({
 
   const [sites, setSites] = useState<Site[]>([]);
   const [search, setSearch] = useState("");
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (fetcher.data) {
-      setSites(fetcher.data.results);
+    if (fetcher.data?.data) {
+      setSites(fetcher.data.data.results);
+    } else if (fetcher.data?.error) {
+      console.error("Failed to fetch sites", fetcher.data.error);
+      setHasError(true);
     }
   }, [fetcher.data]);
 
@@ -92,6 +103,7 @@ export default function SiteCombobox({
       shouldFilter={false}
       showClear={showClear}
       disabled={disabled}
+      errorMessage={hasError ? "Something went wrong." : undefined}
     />
   );
 }

@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { format } from "date-fns";
 import {
   ArrowDown,
   ArrowUp,
@@ -52,6 +53,7 @@ import useConfirmAction from "~/hooks/use-confirm-action";
 import type { InspectionRoute, InspectionRoutePoint } from "~/lib/models";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
+import DataList from "../data-list";
 
 export default function InspectionRoutesPage({
   routes,
@@ -248,7 +250,27 @@ function RouteCard({ route }: { route: InspectionRoute }) {
             </Button>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-8">
+          <DataList
+            title="Details"
+            details={[
+              {
+                label: "Site",
+                value: route.site?.name,
+              },
+              {
+                label: "Created On",
+                value: format(route.createdOn, "PPpp"),
+              },
+              {
+                label: "Modified On",
+                value: format(route.modifiedOn, "PPpp"),
+              },
+            ]}
+            defaultValue={<>&mdash;</>}
+            fluid
+            className="w-max"
+          />
           <div className="flex flex-col gap-2">
             <h3 className="text-md font-semibold flex items-center gap-2">
               Route Points

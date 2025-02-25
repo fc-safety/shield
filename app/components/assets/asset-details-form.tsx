@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
+import { useAuth } from "~/contexts/auth-context";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Asset } from "~/lib/models";
 import {
@@ -10,6 +11,8 @@ import {
   updateAssetSchema,
   updateAssetSchemaResolver,
 } from "~/lib/schema";
+import { hasMultiSiteVisibility } from "~/lib/users";
+import SiteCombobox from "../clients/site-combobox";
 import ProductSelector from "../products/product-selector";
 import {
   FormControl,
@@ -39,6 +42,8 @@ export default function AssetDetailsForm({
   asset,
   onSubmitted,
 }: AssetDetailsFormProps) {
+  const { user } = useAuth();
+
   const isNew = !asset;
 
   const form = useForm<TForm>({
@@ -53,6 +58,12 @@ export default function AssetDetailsForm({
                 },
               }
             : undefined,
+          site: {
+            connect: {
+              id: asset.siteId,
+            },
+          },
+          client: undefined,
         }
       : FORM_DEFAULTS,
     mode: "onChange",
@@ -147,19 +158,27 @@ export default function AssetDetailsForm({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {hasMultiSiteVisibility(user) && (
+          <FormField
+            control={form.control}
+            name="site.connect.id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Site</FormLabel>
+                <FormControl>
+                  <SiteCombobox
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className="w-full"
+                    showClear={false}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="placement"

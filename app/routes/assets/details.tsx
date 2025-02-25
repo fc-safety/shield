@@ -231,16 +231,27 @@ export default function AssetDetails({
                     value: asset.serialNumber,
                   },
                   {
+                    label: "Setup Completed",
+                    value: asset.setupOn && format(asset.setupOn, "PPpp"),
+                  },
+                ]}
+              />
+            </div>
+            <div className="grid gap-4">
+              <Label>Location</Label>
+              <DataList
+                details={[
+                  {
+                    label: "Site",
+                    value: asset.site?.name,
+                  },
+                  {
                     label: "Location",
                     value: asset.location,
                   },
                   {
                     label: "Placement",
                     value: asset.placement,
-                  },
-                  {
-                    label: "Setup Completed",
-                    value: asset.setupOn && format(asset.setupOn, "PPpp"),
                   },
                 ]}
               />

@@ -62,7 +62,7 @@ export default function ProductCard({
                 {product.description ?? <>&mdash;</>}
                 {product.client && (
                   <span className="mt-2 text-xs text-muted-foreground">
-                    Client: {product.client.name}
+                    Owner: {product.client.name}
                   </span>
                 )}
               </p>

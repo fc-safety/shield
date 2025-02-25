@@ -33,7 +33,7 @@ import {
 } from "~/lib/model-utils";
 import type { Asset, ProductCategory } from "~/lib/models";
 import { createAssetSchema, createAssetSchemaResolver } from "~/lib/schema";
-import { can } from "~/lib/users";
+import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById, getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -156,13 +156,6 @@ export default function AssetsIndex({
         ),
       },
       {
-        accessorKey: "site.name",
-        id: "site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-      },
-      {
         accessorKey: "location",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
@@ -170,6 +163,13 @@ export default function AssetsIndex({
       },
       {
         accessorKey: "placement",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
+        accessorKey: "site.name",
+        id: "site",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
@@ -288,6 +288,7 @@ export default function AssetsIndex({
                 product_name: false,
                 location: true,
                 placement: false,
+                site: hasMultiSiteVisibility(user),
               },
             }}
             filters={({ table }) => [

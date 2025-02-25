@@ -22,14 +22,17 @@ export interface Asset extends BaseModel {
   location: string;
   placement: string;
   serialNumber: string;
-  siteId: string;
-  clientId: string;
   inspections?: Inspection[];
   setupQuestionResponses?: AssetQuestionResponse[];
   consumables?: Consumable[];
   alerts?: Alert[];
   productRequests?: ProductRequest[];
   inspectionRoutePoints?: InspectionRoutePoint[];
+
+  siteId: string;
+  site?: Site;
+  clientId: string;
+  client?: Client;
 
   // TODO: remove this
   status: string;

@@ -506,6 +506,7 @@ export const createInspectionRouteSchema = z.object({
       asset: optionalConnectSchema,
     })
   ),
+  siteId: z.string().optional(),
 });
 
 export const updateInspectionRouteSchema = createInspectionRouteSchema

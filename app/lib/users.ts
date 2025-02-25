@@ -7,6 +7,15 @@ import {
   type TVisibility,
 } from "./permissions";
 
+export const MULTI_CLIENT_VISIBILITIES: TVisibility[] = ["global"] as const;
+
+export const MULTI_SITE_VISIBILITIES: TVisibility[] = [
+  ...MULTI_CLIENT_VISIBILITIES,
+  "client-sites",
+  "site-group",
+  "multi-site",
+];
+
 export function isGlobalAdmin(user: User) {
   return visibility(user) === "global";
 }
@@ -21,6 +30,10 @@ export function visibility(user: User): TVisibility {
   }
 
   return "self";
+}
+
+export function hasMultiSiteVisibility(user: User) {
+  return MULTI_SITE_VISIBILITIES.includes(visibility(user));
 }
 
 const DEFAULT_TOKEN_EXPIRATION_BUFFER_SECONDS = 2;
