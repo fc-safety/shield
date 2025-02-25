@@ -8,6 +8,7 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
@@ -24,18 +25,17 @@ import SiteCombobox from "../clients/site-combobox";
 type TForm = z.infer<typeof updateTagSchema | typeof createTagSchema>;
 interface TagDetailsFormProps {
   tag?: Tag;
-  onSubmitted?: () => void;
+  onClose?: () => void;
 }
 
 const FORM_DEFAULTS = {
   serialNumber: "",
 } satisfies TForm;
 
-export default function TagDetailsForm({
-  tag,
-  onSubmitted,
-}: TagDetailsFormProps) {
+export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
   const isNew = !tag;
+
+  const [isAddingSequentialTag, setIsAddingSequentialTag] = useState(false);
 
   const form = useForm<TForm>({
     resolver: tag ? updateTagSchemaResolver : createTagSchemaResolver,
@@ -74,9 +74,20 @@ export default function TagDetailsForm({
   } = form;
 
   const clientId = watch("client.connect.id");
+  const serialNumber = watch("serialNumber");
+
+  const handleOnSubmitted = useCallback(() => {
+    if (isAddingSequentialTag) {
+      if (serialNumber) {
+        form.setValue("serialNumber", incrementTagSerialNumber(serialNumber));
+      }
+    } else {
+      onClose?.();
+    }
+  }, [isAddingSequentialTag, onClose, serialNumber, form]);
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
-    onSubmitted,
+    onSubmitted: handleOnSubmitted,
   });
 
   const handleSubmit = (data: TForm) => {
@@ -148,13 +159,54 @@ export default function TagDetailsForm({
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="submit"
+            disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
+          >
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+          <div className="flex-1"></div>
+          {isNew && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
+              onClick={() => {
+                setIsAddingSequentialTag(true);
+                form.handleSubmit(handleSubmit)();
+              }}
+            >
+              Save and add another
+            </Button>
+          )}
+        </div>
       </form>
     </FormProvider>
   );
 }
+
+const incrementTagSerialNumber = (serialNumber: string) => {
+  const trailingNumberMatch = serialNumber.match(/\d+$/);
+  if (!trailingNumberMatch) {
+    return serialNumber;
+  }
+
+  // Serial numbers will typically be all numbers, but may be padded with leading zeroes.
+  // Try to preserve the padding when incrementing.
+  let padSize: number | null = null;
+  if (
+    trailingNumberMatch[0].length === serialNumber.length &&
+    serialNumber.startsWith("0")
+  ) {
+    padSize = serialNumber.length;
+  }
+
+  const incrementedTrailingNumber = parseInt(trailingNumberMatch[0]) + 1;
+
+  if (padSize) {
+    return String(incrementedTrailingNumber).padStart(padSize, "0");
+  } else {
+    return serialNumber.replace(/\d+$/, incrementedTrailingNumber.toString());
+  }
+};

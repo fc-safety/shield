@@ -20,10 +20,18 @@ export default function InspectErrorBoundary({ error }: { error: unknown }) {
 
         {!isNil(error) && isRouteErrorResponse(error) && (
           <p className="mt-6 text-muted-foreground text-sm">
-            Error details: {error.data}
+            Error details: {parseErrorData(error.data)}
           </p>
         )}
       </CardContent>
     </Card>
   );
 }
+
+const parseErrorData = (data: unknown) => {
+  try {
+    return JSON.stringify(data);
+  } catch {
+    return String(data);
+  }
+};

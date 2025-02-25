@@ -62,7 +62,7 @@ export default function AssetCombobox({
       }
       loading={fetcher.state === "loading"}
       options={options}
-      onMouseEnter={preloadAssets}
+      onMouseOver={preloadAssets}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

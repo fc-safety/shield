@@ -16,6 +16,7 @@ export function useModalSubmit<T>({
   const fetcher = useFetcher();
   const errorReported = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submissionCaptured = useRef(false);
 
   const submit = (...args: Parameters<typeof fetcher.submit>) => {
     errorReported.current = false;
@@ -38,6 +39,7 @@ export function useModalSubmit<T>({
     if (options.query) {
       cleanedPath = buildPath(cleanedPath, options.query);
     }
+    submissionCaptured.current = false;
     return submit(data, {
       method: options.id ? "patch" : "post",
       action: cleanedPath,
@@ -46,7 +48,12 @@ export function useModalSubmit<T>({
   };
 
   useEffect(() => {
-    if (fetcher.data && fetcher.state === "idle") {
+    if (
+      fetcher.data &&
+      fetcher.state === "idle" &&
+      !submissionCaptured.current
+    ) {
+      submissionCaptured.current = true;
       onData?.(fetcher.data as T);
       if (fetcher.data.error) {
         if (!errorReported.current) {

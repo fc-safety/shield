@@ -83,7 +83,7 @@ export default function RoleCombobox({
       }
       loading={fetcher.state === "loading"}
       options={options}
-      onMouseEnter={preloadRoles}
+      onMouseOver={preloadRoles}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

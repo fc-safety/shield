@@ -28,7 +28,7 @@ interface ResponsiveComboboxProps
   onBlur?: () => void;
   displayValue?: (value: string) => ReactNode;
   placeholder?: string;
-  onMouseEnter?: ComponentProps<"button">["onMouseEnter"];
+  onMouseOver?: ComponentProps<"button">["onMouseOver"];
   className?: string;
   showClear?: boolean;
   disabled?: boolean;
@@ -41,7 +41,7 @@ export function ResponsiveCombobox({
   onValueChange,
   displayValue,
   placeholder,
-  onMouseEnter,
+  onMouseOver,
   onBlur,
   className,
   showClear = false,
@@ -77,7 +77,7 @@ export function ResponsiveCombobox({
         <Button
           variant="outline"
           className={cn("w-[150px] justify-between", className)}
-          onMouseEnter={onMouseEnter}
+          onMouseOver={onMouseOver}
           disabled={disabled}
         >
           {value ? (

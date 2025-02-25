@@ -85,7 +85,7 @@ export default function SiteCombobox({
       }
       loading={fetcher.state === "loading"}
       options={options}
-      onMouseEnter={() => preloadSites(clientId)}
+      onMouseOver={() => preloadSites(clientId)}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

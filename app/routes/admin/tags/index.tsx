@@ -16,10 +16,12 @@ import { buildUrl } from "~/lib/urls";
 import type { Route } from "./+types/index";
 
 export function loader({ request }: Route.LoaderArgs) {
-  return api.tags.list(request, { limit: 10000 }).mapTo((tags) => ({
-    tags,
-    appHost: APP_HOST,
-  }));
+  return api.tags
+    .list(request, { limit: 10000 }, { context: "admin" })
+    .mapTo((tags) => ({
+      tags,
+      appHost: APP_HOST,
+    }));
 }
 
 export default function AdminTagsIndex({
@@ -97,7 +99,6 @@ export default function AdminTagsIndex({
             <Button
               variant="secondary"
               size="sm"
-              disabled={!tag.asset}
               onClick={() => copyUrlForTagExternalId(getValue() as string)}
               title={tag.asset ? "Copy inspection link" : "No asset assigned"}
             >

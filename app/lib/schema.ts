@@ -225,7 +225,7 @@ export const updateProductSchemaResolver = zodResolver(updateProductSchema);
 
 export const createTagSchema = z.object({
   id: z.string().optional(),
-  serialNumber: z.string().min(10),
+  serialNumber: z.string().nonempty(),
   asset: optionalConnectSchema,
   site: optionalConnectSchema,
   client: optionalConnectSchema,

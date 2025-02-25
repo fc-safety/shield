@@ -62,7 +62,7 @@ export default function ClientCombobox({
       }
       loading={fetcher.state === "loading"}
       options={options}
-      onMouseEnter={preloadClients}
+      onMouseOver={preloadClients}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

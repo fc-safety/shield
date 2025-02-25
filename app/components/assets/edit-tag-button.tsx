@@ -32,7 +32,7 @@ export default function EditTagButton({ tag, trigger }: EditTagButtonProps) {
         <DialogHeader>
           <DialogTitle>{tag ? "Edit" : "Add New"} Tag</DialogTitle>
         </DialogHeader>
-        <TagDetailsForm onSubmitted={() => setOpen(false)} tag={tag} />
+        <TagDetailsForm onClose={() => setOpen(false)} tag={tag} />
       </DialogContent>
     </Dialog>
   );

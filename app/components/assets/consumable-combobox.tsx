@@ -69,7 +69,7 @@ export default function ConsumableCombobox({
       }
       loading={fetcher.state === "loading"}
       options={options}
-      onMouseEnter={preloadProducts}
+      onMouseOver={preloadProducts}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}
