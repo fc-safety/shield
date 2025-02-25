@@ -9,6 +9,7 @@ interface ClientComboboxProps {
   onValueChange?: (value: string | undefined) => void;
   onBlur?: () => void;
   className?: string;
+  disabled?: boolean;
 }
 
 const fuse = new Fuse([] as Client[], { keys: ["name"] });
@@ -18,6 +19,7 @@ export default function ClientCombobox({
   onValueChange,
   onBlur,
   className,
+  disabled,
 }: ClientComboboxProps) {
   const fetcher = useFetcher<ResultsPage<Client>>();
 
@@ -62,7 +64,8 @@ export default function ClientCombobox({
       }
       loading={fetcher.state === "loading"}
       options={options}
-      onMouseOver={preloadClients}
+      disabled={disabled}
+      onMouseOver={() => !disabled && preloadClients()}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

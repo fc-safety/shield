@@ -8,7 +8,7 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
@@ -27,6 +27,7 @@ import SiteCombobox from "../clients/site-combobox";
 import { CopyableText } from "../copyable-text";
 import DataList from "../data-list";
 import { Card, CardHeader } from "../ui/card";
+import AssetCombobox from "./asset-combobox";
 
 type TForm = z.infer<typeof updateTagSchema | typeof createTagSchema>;
 interface TagDetailsFormProps {
@@ -81,13 +82,28 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
     watch,
   } = form;
 
-  const clientId = watch("client.connect.id");
+  const clientId = watch("client")?.connect?.id;
+  const siteId = watch("site")?.connect?.id;
   const serialNumber = watch("serialNumber");
+
+  useEffect(() => {
+    if (!clientId) {
+      form.setValue("site", { disconnect: true }, { shouldValidate: true });
+      form.setValue("asset", { disconnect: true }, { shouldValidate: true });
+    }
+  }, [clientId, form]);
+
+  useEffect(() => {
+    if (!siteId) {
+      form.setValue("asset", { disconnect: true }, { shouldValidate: true });
+    }
+  }, [siteId, form]);
 
   const [recentlySavedTag, setRecentlySavedTag] = useState<Tag | null>(null);
 
   const handleOnSubmitted = useCallback(() => {
     if (isAddingSequentialTag) {
+      form.setValue("asset", undefined);
       if (serialNumber) {
         form.setValue("serialNumber", incrementTagSerialNumber(serialNumber));
         setIsAddingSequentialTag(false);
@@ -159,16 +175,20 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
         />
         <FormField
           control={form.control}
-          name="client.connect.id"
+          name="client"
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                {field.value ? "Assign client" : "Assigned client"}
+                {field.value?.connect?.id ? "Assigned client" : "Assign client"}
               </FormLabel>
               <FormControl>
                 <ClientCombobox
-                  value={field.value}
-                  onValueChange={field.onChange}
+                  value={field.value?.connect?.id}
+                  onValueChange={(id) =>
+                    field.onChange(
+                      id ? { connect: { id } } : { disconnect: true }
+                    )
+                  }
                   onBlur={field.onBlur}
                   className="w-full"
                 />
@@ -179,20 +199,53 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
         />
         <FormField
           control={form.control}
-          name="site.connect.id"
+          name="site"
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                {field.value ? "Assign site" : "Assigned site"}
+                {field.value?.connect?.id ? "Assigned site" : "Assign site"}
               </FormLabel>
               <FormControl>
                 <SiteCombobox
-                  value={field.value}
-                  onValueChange={field.onChange}
+                  value={field.value?.connect?.id}
+                  onValueChange={(id) =>
+                    field.onChange(
+                      id ? { connect: { id } } : { disconnect: true }
+                    )
+                  }
                   onBlur={field.onBlur}
                   className="w-full"
                   clientId={clientId}
                   disabled={!clientId}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="asset"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                {field.value?.connect?.id ? "Assigned asset" : "Assign asset"}
+              </FormLabel>
+              <FormControl>
+                <AssetCombobox
+                  value={field.value?.connect?.id}
+                  onValueChange={(id) =>
+                    field.onChange(
+                      id ? { connect: { id } } : { disconnect: true }
+                    )
+                  }
+                  onBlur={field.onBlur}
+                  className="w-full"
+                  optionQueryFilter={getAssetOptionQueryFilter(
+                    siteId,
+                    field.value?.connect?.id
+                  )}
+                  disabled={!siteId}
                 />
               </FormControl>
               <FormMessage />
@@ -249,4 +302,33 @@ const incrementTagSerialNumber = (serialNumber: string) => {
   } else {
     return serialNumber.replace(/\d+$/, incrementedTrailingNumber.toString());
   }
+};
+
+const getAssetOptionQueryFilter = (
+  siteId: string | undefined,
+  assetId: string | undefined
+) => {
+  if (!siteId) {
+    return {};
+  }
+
+  const baseFilter = {
+    site: {
+      id: siteId,
+    },
+    tagId: "_NULL",
+  };
+
+  if (!assetId) {
+    return baseFilter;
+  }
+
+  return {
+    OR: [
+      baseFilter,
+      {
+        id: assetId,
+      },
+    ],
+  };
 };

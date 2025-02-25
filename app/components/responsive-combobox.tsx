@@ -14,7 +14,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ChevronsUpDown, Loader2 } from "lucide-react";
-import { useState, type ComponentProps, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { cn } from "~/lib/utils";
@@ -66,6 +71,9 @@ export function ResponsiveCombobox({
     setInternalValue(value);
     onValueChange?.(value);
   };
+  useEffect(() => {
+    setInternalValue(valueProp);
+  }, [valueProp]);
 
   const renderInput = ({
     renderTrigger,
@@ -75,6 +83,7 @@ export function ResponsiveCombobox({
     <div className="flex items-center gap-2">
       {renderTrigger(
         <Button
+          type="button"
           variant="outline"
           className={cn("w-[150px] justify-between", className)}
           onMouseOver={onMouseOver}
@@ -89,7 +98,12 @@ export function ResponsiveCombobox({
         </Button>
       )}
       {showClear && value && (
-        <Button variant="ghost" size="sm" onClick={() => setValue(undefined)}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setValue(undefined)}
+        >
           Clear
         </Button>
       )}

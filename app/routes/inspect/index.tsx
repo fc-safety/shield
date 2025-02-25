@@ -5,7 +5,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +14,7 @@ import { isIPv4, isIPv6 } from "net";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray } from "react-hook-form";
 import { data, Form, redirect, useNavigate } from "react-router";
-import { useRemixForm } from "remix-hook-form";
+import { RemixFormProvider, useRemixForm } from "remix-hook-form";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import type { z } from "zod";
 import { api } from "~/.server/api";
@@ -379,7 +378,7 @@ export default function InspectIndex({
             )}
 
             {tag.asset && (
-              <FormProvider {...form}>
+              <RemixFormProvider {...form}>
                 <Form
                   className="space-y-4"
                   method={"post"}
@@ -449,7 +448,7 @@ export default function InspectIndex({
                     {isSubmitting ? "Sending data..." : "Complete Inspection"}
                   </Button>
                 </Form>
-              </FormProvider>
+              </RemixFormProvider>
             )}
           </CardContent>
         </Card>

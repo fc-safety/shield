@@ -11,6 +11,7 @@ interface RoleComboboxProps {
   className?: string;
   defaultByName?: string;
   showClear?: boolean;
+  disabled?: boolean;
 }
 
 const fuse = new Fuse([] as Role[], {
@@ -24,6 +25,7 @@ export default function RoleCombobox({
   className,
   defaultByName,
   showClear = false,
+  disabled,
 }: RoleComboboxProps) {
   const fetcher = useFetcher<Role[]>();
 
@@ -83,7 +85,8 @@ export default function RoleCombobox({
       }
       loading={fetcher.state === "loading"}
       options={options}
-      onMouseOver={preloadRoles}
+      disabled={disabled}
+      onMouseOver={() => !disabled && preloadRoles()}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

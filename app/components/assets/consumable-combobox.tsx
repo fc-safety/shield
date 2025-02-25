@@ -12,6 +12,7 @@ export default function ConsumableCombobox({
   onValueChange,
   onBlur,
   className,
+  disabled,
 }: {
   parentProductId: string;
   assetId?: string;
@@ -19,6 +20,7 @@ export default function ConsumableCombobox({
   onValueChange?: (value: string | undefined) => void;
   onBlur?: () => void;
   className?: string;
+  disabled?: boolean;
 }) {
   const fetcher = useFetcher<ResultsPage<Product>>();
 
@@ -69,7 +71,8 @@ export default function ConsumableCombobox({
       }
       loading={fetcher.state === "loading"}
       options={options}
-      onMouseOver={preloadProducts}
+      disabled={disabled}
+      onMouseOver={() => !disabled && preloadProducts()}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

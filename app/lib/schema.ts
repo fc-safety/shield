@@ -33,6 +33,26 @@ export const optionalConnectSchema = z
   .optional()
   .transform((v) => (v?.connect.id ? v : undefined));
 
+export const disconnectableSchema = z
+  .object({
+    connect: z.object({
+      id: z.string(),
+    }),
+    disconnect: z.boolean(),
+  })
+  .partial()
+  .transform(
+    (v): { connect?: { id: string }; disconnect?: boolean } | undefined => {
+      if (v.disconnect !== undefined) {
+        return {
+          disconnect: v.disconnect,
+        };
+      }
+
+      return v.connect?.id ? { connect: { id: v.connect.id } } : undefined;
+    }
+  );
+
 export const createClientSchema = z.object({
   externalId: z
     .string()
@@ -233,7 +253,12 @@ export const createTagSchema = z.object({
 export const createTagSchemaResolver = zodResolver(createTagSchema);
 
 export const updateTagSchema = createTagSchema
-  .extend({ id: z.string() })
+  .extend({
+    id: z.string(),
+    client: disconnectableSchema,
+    site: disconnectableSchema,
+    asset: disconnectableSchema,
+  })
   .partial();
 export const updateTagSchemaResolver = zodResolver(updateTagSchema);
 

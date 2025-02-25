@@ -20,6 +20,13 @@ const proxy = async ({
   const doThrow = query.get("_throw") !== "false";
   query.delete("_throw");
 
+  const viewContext = query.get("_viewContext");
+  query.delete("_viewContext");
+
+  if (viewContext) {
+    headers.set("x-view-context", viewContext);
+  }
+
   const awaitableData = authenticatedData(
     request,
     [

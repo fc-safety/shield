@@ -156,6 +156,13 @@ export default function AssetsIndex({
         ),
       },
       {
+        accessorKey: "site.name",
+        id: "site",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
         accessorKey: "location",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />

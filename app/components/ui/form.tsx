@@ -9,12 +9,12 @@ import {
   useFormContext,
 } from "react-hook-form";
 
-import { RemixFormProvider } from "remix-hook-form";
+import { FormProvider } from "react-hook-form";
 
 import { Label } from "~/components/ui/label";
 import { cn } from "~/lib/utils";
 
-const Form = RemixFormProvider;
+const Form = FormProvider;
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,

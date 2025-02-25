@@ -240,3 +240,17 @@ export const slugify = (str: string) => {
     .replace(/[^a-z0-9]/g, "-")
     .replace(/-+/g, "-");
 };
+
+export const objectsEqual = (a: unknown, b: unknown) => {
+  if (a === b) return true;
+  if (typeof a !== "object" || typeof b !== "object") return false;
+  if (a === null || b === null) return false;
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const key of keysA) {
+    if (!objectsEqual(a[key as keyof typeof a], b[key as keyof typeof b]))
+      return false;
+  }
+  return true;
+};

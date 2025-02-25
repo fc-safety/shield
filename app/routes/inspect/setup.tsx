@@ -5,7 +5,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  Form as FormProvider,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseISO } from "date-fns";
@@ -13,7 +12,7 @@ import { Nfc } from "lucide-react";
 import { useMemo } from "react";
 import { useFieldArray } from "react-hook-form";
 import { Form, Link } from "react-router";
-import { useRemixForm } from "remix-hook-form";
+import { RemixFormProvider, useRemixForm } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { guard } from "~/.server/guard";
@@ -210,7 +209,7 @@ export default function InspectSetup({
           )}
 
           {tag.asset && (
-            <FormProvider {...form}>
+            <RemixFormProvider {...form}>
               <Form
                 className="space-y-4"
                 method={"post"}
@@ -313,7 +312,7 @@ export default function InspectSetup({
                   </Button>
                 )}
               </Form>
-            </FormProvider>
+            </RemixFormProvider>
           )}
         </CardContent>
       </Card>

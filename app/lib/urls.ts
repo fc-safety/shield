@@ -13,7 +13,11 @@ export type PathParams<TPath extends string> = {
 
 type BaseQueryParamValue = string | number | null | undefined;
 export interface QueryParams {
-  [key: string]: BaseQueryParamValue | BaseQueryParamValue[] | QueryParams;
+  [key: string]:
+    | BaseQueryParamValue
+    | BaseQueryParamValue[]
+    | QueryParams
+    | QueryParams[];
 }
 
 export const stringifyQuery = qs.stringify;
