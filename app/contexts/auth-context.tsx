@@ -4,18 +4,21 @@ import type { User } from "~/.server/authenticator";
 const AuthContext = createContext<{
   user: User;
   apiUrl: string;
+  appHost: string;
 } | null>(null);
 
 export const AuthProvider = ({
   children,
   user,
   apiUrl,
+  appHost,
 }: PropsWithChildren<{
   user: User;
   apiUrl: string;
+  appHost: string;
 }>) => {
   return (
-    <AuthContext.Provider value={{ user, apiUrl }}>
+    <AuthContext.Provider value={{ user, apiUrl, appHost }}>
       {children}
     </AuthContext.Provider>
   );

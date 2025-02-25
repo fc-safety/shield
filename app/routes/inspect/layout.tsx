@@ -1,6 +1,6 @@
 import { FileSpreadsheet, Route as RouteIcon } from "lucide-react";
 import { data, Link, Outlet } from "react-router";
-import { API_BASE_URL } from "~/.server/config";
+import { API_BASE_URL, APP_HOST } from "~/.server/config";
 import { requireUserSession } from "~/.server/sessions";
 import {
   AppSidebar,
@@ -30,6 +30,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     {
       user,
       apiUrl: API_BASE_URL,
+      appHost: APP_HOST,
     },
     {
       headers: {
@@ -64,7 +65,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export default function Layout({
-  loaderData: { user, apiUrl },
+  loaderData: { user, apiUrl, appHost },
 }: Route.ComponentProps) {
   const groups: SidebarGroup[] = [
     {
@@ -88,7 +89,7 @@ export default function Layout({
   ];
 
   return (
-    <AuthProvider user={user} apiUrl={apiUrl}>
+    <AuthProvider user={user} apiUrl={apiUrl} appHost={appHost}>
       <SidebarProvider defaultOpenState={{ help: false }}>
         <HelpSidebarProvider>
           <AppSidebar

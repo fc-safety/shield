@@ -12,6 +12,7 @@ interface DataListProps {
   }[];
   defaultValue?: React.ReactNode;
   className?: string;
+  fluid?: boolean;
 }
 
 export default function DataList({
@@ -19,11 +20,17 @@ export default function DataList({
   details,
   defaultValue = "",
   className,
+  fluid = false,
 }: DataListProps) {
   return (
-    <div className={cn("grid gap-4", className)}>
+    <div className={cn("grid gap-4", fluid && "w-full", className)}>
       {title && <Label>{title}</Label>}
-      <dl className="grid grid-cols-2 gap-y-2 gap-x-4 sm:gap-x-8">
+      <dl
+        className={cn(
+          "grid gap-y-2 gap-x-4 sm:gap-x-8",
+          fluid ? "grid-cols-[auto_auto]" : "grid-cols-2"
+        )}
+      >
         {details
           .filter(({ hidden }) => !hidden)
           .map(({ label, value }) => (

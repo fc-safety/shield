@@ -16,7 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { data, Outlet } from "react-router";
-import { API_BASE_URL } from "~/.server/config";
+import { API_BASE_URL, APP_HOST } from "~/.server/config";
 import { requireUserSession } from "~/.server/sessions";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
@@ -36,6 +36,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     {
       user,
       apiUrl: API_BASE_URL,
+      appHost: APP_HOST,
     },
     {
       headers: {
@@ -46,7 +47,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Layout({
-  loaderData: { user, apiUrl },
+  loaderData: { user, apiUrl, appHost },
 }: Route.ComponentProps) {
   const groups: SidebarGroup[] = [
     {
@@ -146,7 +147,7 @@ export default function Layout({
   ];
 
   return (
-    <AuthProvider user={user} apiUrl={apiUrl}>
+    <AuthProvider user={user} apiUrl={apiUrl} appHost={appHost}>
       <SidebarProvider>
         <AppSidebar groups={groups} />
         <SidebarInset>

@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import type { DataOrError } from "~/.server/api-utils";
+import { useAuth } from "~/contexts/auth-context";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Tag } from "~/lib/models";
 import {
@@ -19,8 +21,12 @@ import {
   updateTagSchema,
   updateTagSchemaResolver,
 } from "~/lib/schema";
+import { buildUrl } from "~/lib/urls";
 import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
+import { CopyableText } from "../copyable-text";
+import DataList from "../data-list";
+import { Card, CardHeader } from "../ui/card";
 
 type TForm = z.infer<typeof updateTagSchema | typeof createTagSchema>;
 interface TagDetailsFormProps {
@@ -33,6 +39,8 @@ const FORM_DEFAULTS = {
 } satisfies TForm;
 
 export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
+  const { appHost } = useAuth();
+
   const isNew = !tag;
 
   const [isAddingSequentialTag, setIsAddingSequentialTag] = useState(false);
@@ -76,18 +84,24 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
   const clientId = watch("client.connect.id");
   const serialNumber = watch("serialNumber");
 
+  const [recentlySavedTag, setRecentlySavedTag] = useState<Tag | null>(null);
+
   const handleOnSubmitted = useCallback(() => {
     if (isAddingSequentialTag) {
       if (serialNumber) {
         form.setValue("serialNumber", incrementTagSerialNumber(serialNumber));
+        setIsAddingSequentialTag(false);
       }
     } else {
       onClose?.();
     }
   }, [isAddingSequentialTag, onClose, serialNumber, form]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit<
+    DataOrError<Tag>
+  >({
     onSubmitted: handleOnSubmitted,
+    onData: ({ data }) => setRecentlySavedTag(data ?? null),
   });
 
   const handleSubmit = (data: TForm) => {
@@ -103,6 +117,32 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
   return (
     <FormProvider {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+        {recentlySavedTag && (
+          <Card>
+            <CardHeader>
+              <DataList
+                title="Recently Saved Tag"
+                details={[
+                  {
+                    label: "Serial Number",
+                    value: recentlySavedTag.serialNumber,
+                  },
+                  {
+                    label: "Inspection URL",
+                    value: (
+                      <CopyableText
+                        text={buildUrl("/inspect", appHost, {
+                          extId: recentlySavedTag.externalId,
+                        }).toString()}
+                      />
+                    ),
+                  },
+                ]}
+                fluid
+              />
+            </CardHeader>
+          </Card>
+        )}
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}
