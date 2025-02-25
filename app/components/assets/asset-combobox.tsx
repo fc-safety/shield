@@ -10,6 +10,7 @@ interface AssetComboboxProps {
   onBlur?: () => void;
   className?: string;
   optionFilter?: (asset: Asset) => boolean;
+  disabled?: boolean;
 }
 
 const fuse = new Fuse([] as Asset[], { keys: ["name"] });
@@ -20,6 +21,7 @@ export default function AssetCombobox({
   onBlur,
   className,
   optionFilter = () => true,
+  disabled = false,
 }: AssetComboboxProps) {
   const fetcher = useFetcher<ResultsPage<Asset>>();
 
@@ -65,6 +67,7 @@ export default function AssetCombobox({
       onSearchValueChange={setSearch}
       className={className}
       shouldFilter={false}
+      disabled={disabled}
       showClear
     />
   );

@@ -10,11 +10,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter } from "date-fns";
-import { Loader2, Nfc, Route as RouteIcon, RouteOff } from "lucide-react";
+import { Loader2, Nfc } from "lucide-react";
 import { isIPv4, isIPv6 } from "net";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray } from "react-hook-form";
-import { data, Form, redirect } from "react-router";
+import { data, Form, redirect, useNavigate } from "react-router";
 import { useRemixForm } from "remix-hook-form";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import type { z } from "zod";
@@ -30,6 +30,7 @@ import {
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import DataList from "~/components/data-list";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
+import RouteProgressCard from "~/components/inspections/route-progress-card";
 import ProductCard from "~/components/products/product-card";
 import {
   AlertDialog,
@@ -49,15 +50,7 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
-import { Progress } from "~/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import type {
   AssetQuestion,
@@ -69,7 +62,6 @@ import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
 import {
   buildTitle,
-  cn,
   getSearchParams,
   getValidatedFormDataOrThrow,
   isNil,
@@ -137,7 +129,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
         );
       });
     })
-    .asRedirect(`next`);
+    .asRedirect("next?success");
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -217,6 +209,8 @@ const onlyInspectionQuestions = (questions: AssetQuestion[] | undefined) =>
 export default function InspectIndex({
   loaderData: { user, tag, activeSessions, matchingRoutes },
 }: Route.ComponentProps) {
+  const navigate = useNavigate();
+
   const questions = useMemo(
     () =>
       [
@@ -339,7 +333,7 @@ export default function InspectIndex({
     (() => {
       if (activeSessions) {
         const mySessions = activeSessions.filter(
-          (s) => s.lastInspector?.id === user.idpId
+          (s) => s.lastInspector?.idpId === user.idpId
         );
         if (mySessions.length === 1) {
           return mySessions[0];
@@ -357,33 +351,6 @@ export default function InspectIndex({
       : undefined
   );
 
-  const usingRoute = !!activeRoute && !routeDisabled;
-
-  const totalPointsInRoute = activeRoute?.inspectionRoutePoints?.length ?? 0;
-  const pointsCompletedInRoute = useMemo(() => {
-    if (
-      !activeSession?.completedInspectionRoutePoints ||
-      !activeRoute?.inspectionRoutePoints
-    ) {
-      return 0;
-    }
-
-    const assetsToComplete = new Set(
-      activeRoute.inspectionRoutePoints.map((p) => p.assetId)
-    );
-
-    for (const point of activeSession.completedInspectionRoutePoints) {
-      if (
-        point.inspectionRoutePoint?.assetId &&
-        assetsToComplete.has(point.inspectionRoutePoint.assetId)
-      ) {
-        assetsToComplete.delete(point.inspectionRoutePoint.assetId);
-      }
-    }
-
-    return activeRoute.inspectionRoutePoints.length - assetsToComplete.size;
-  }, [activeSession, activeRoute]);
-
   const actionQueryParams = useMemo(() => {
     if (routeDisabled) {
       return null;
@@ -400,89 +367,16 @@ export default function InspectIndex({
   return (
     <>
       <div className="grid gap-4">
-        <Card className="max-w-lg w-full">
-          <CardHeader className="grid gap-4">
-            <div className="flex items-center gap-2">
-              {usingRoute ? (
-                <RouteIcon className="size-5 text-primary" />
-              ) : (
-                <RouteOff className="size-5 text-muted-foreground" />
-              )}
-              <div
-                className={cn(
-                  "text-base font-semibold",
-                  usingRoute ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                {usingRoute ? "Route in Progress" : "No Route"}
-              </div>
-              <div className="flex-1"></div>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setRouteDisabled((prev) => !prev)}
-              >
-                {routeDisabled ? "Include in Route" : "Exclude from Route"}
-              </Button>
-            </div>
-            <div className="grid gap-2">
-              <div className="text-xs font-semibold">Route</div>
-              <div className="text-xs text-muted-foreground">
-                {!routeDisabled &&
-                (!activeSession || !activeRoute) &&
-                matchingRoutes &&
-                matchingRoutes.length > 0 ? (
-                  <Select
-                    value={activeRoute?.id}
-                    onValueChange={(value) => {
-                      const route = matchingRoutes.find(
-                        (route) => route.id === value
-                      );
-                      if (route) {
-                        setActiveRoute(route);
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a route" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {matchingRoutes.map((route) => (
-                        <SelectItem key={route.id} value={route.id}>
-                          {route.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : usingRoute ? (
-                  activeRoute.name
-                ) : (
-                  <span className="italic">
-                    {routeDisabled
-                      ? "This inspection will not be included in the route."
-                      : "No routes available for this asset."}
-                  </span>
-                )}
-              </div>
-            </div>
-            {usingRoute && (
-              <div className="grid gap-2">
-                <div className="text-xs font-semibold">
-                  Inspections Completed ({pointsCompletedInRoute}/
-                  {totalPointsInRoute})
-                </div>
-                <Progress
-                  value={
-                    totalPointsInRoute > 0
-                      ? (pointsCompletedInRoute / totalPointsInRoute) * 100
-                      : 0
-                  }
-                />
-              </div>
-            )}
-          </CardHeader>
-        </Card>
-        <Card className="max-w-lg w-full">
+        <RouteProgressCard
+          activeRoute={activeRoute}
+          setActiveRoute={setActiveRoute}
+          activeSession={activeSession}
+          matchingRoutes={matchingRoutes}
+          routeDisabled={routeDisabled}
+          setRouteDisabled={setRouteDisabled}
+          asset={tag.asset ?? undefined}
+        />
+        <Card>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center justify-between">
               Asset Inspection
@@ -629,7 +523,10 @@ export default function InspectIndex({
       </AlertDialog>
       <ConfirmSessionPrompt
         open={
-          !geolocationPending && activeSession === undefined && !!activeSessions
+          !geolocationPending &&
+          activeSession === undefined &&
+          !!activeSessions &&
+          activeSessions.length > 0
         }
         activeSessions={activeSessions}
         onContinue={setActiveSession}
@@ -662,7 +559,7 @@ export default function InspectIndex({
             >
               Inspect without route
             </AlertDialogCancel>
-            <AlertDialogAction>
+            <AlertDialogAction onClick={() => navigate("next")}>
               Continue to next asset in route
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -81,6 +81,7 @@ export const themeSessionResolver =
 
 export interface InspectionCookieValue {
   activeTag?: string;
+  tagActivatedOn?: string;
   activeSession?: string;
   activeRoute?: string;
 }

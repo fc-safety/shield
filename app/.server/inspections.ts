@@ -1,8 +1,10 @@
-import { isAfter } from "date-fns";
+import { add, isAfter, type Duration } from "date-fns";
 import { redirect } from "react-router";
 import { inspectionSessionStorage } from "~/.server/sessions";
 import type { InspectionRoute, InspectionSession } from "~/lib/models";
 import { getSearchParam } from "../lib/utils";
+
+const TAG_SESSION_DURATION: Duration = { hours: 1 };
 
 export const validateTagId = async (request: Request, redirectTo: string) => {
   let extId = getSearchParam(request, "extId");
@@ -12,6 +14,7 @@ export const validateTagId = async (request: Request, redirectTo: string) => {
 
   if (extId) {
     inspectionSession.set("activeTag", extId);
+    inspectionSession.set("tagActivatedOn", new Date().toISOString());
     throw redirect(redirectTo, {
       headers: {
         "Set-Cookie": await inspectionSessionStorage.commitSession(
@@ -21,6 +24,16 @@ export const validateTagId = async (request: Request, redirectTo: string) => {
     });
   }
   extId = inspectionSession.get("activeTag") ?? null;
+  const tagActivatedOn = inspectionSession.get("tagActivatedOn");
+
+  if (
+    !tagActivatedOn ||
+    isAfter(new Date(), add(new Date(tagActivatedOn), TAG_SESSION_DURATION))
+  ) {
+    throw new Response("Tag session expired.", {
+      status: 400,
+    });
+  }
 
   if (!extId) {
     throw new Response("No tag ID provided.", {

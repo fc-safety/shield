@@ -33,6 +33,11 @@ import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import GradientScrollArea from "~/components/gradient-scroll-area";
+import {
+  HelpSidebarContent,
+  HelpSidebarSection,
+} from "~/components/help-sidebar";
+import HelpbarTrigger from "~/components/helpbar-trigger";
 import EditRouteButton from "~/components/inspections/edit-route-button";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import { Button } from "~/components/ui/button";
@@ -57,9 +62,11 @@ export default function InspectionRoutes({
   loaderData: routes,
 }: Route.ComponentProps) {
   return (
-    <div className="grid gap-4 text-center w-full max-w-lg">
+    <div className="grid gap-4 text-center">
       <div className="grid gap-2">
-        <h2 className="text-2xl font-bold">Inspection Routes</h2>
+        <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
+          Inspection Routes
+        </h2>
         <p className="text-sm text-muted-foreground">
           Build routes to help your inspectors find your assets and ensure
           inspections get completed if the task gets picked up again on a
@@ -192,7 +199,19 @@ function RouteCard({ route }: { route: InspectionRoute }) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-2">
-            <h3 className="text-md font-semibold">Route Points</h3>
+            <h3 className="text-md font-semibold flex items-center gap-2">
+              Route Points
+              <HelpbarTrigger
+                content={
+                  <HelpSidebarContent>
+                    <HelpSidebarSection
+                      title="Adding Route Points"
+                      content="You can add route points by clicking the 'Manually Add Point' button or by scanning the NFC tag on the asset and adding the asset to a route via the inspection page."
+                    />
+                  </HelpSidebarContent>
+                }
+              />
+            </h3>
             {!points ||
               (points.length === 0 && (
                 <div className="text-sm text-muted-foreground">

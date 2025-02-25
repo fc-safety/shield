@@ -1,24 +1,42 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Nfc } from "lucide-react";
-import { useMemo } from "react";
+import { Copy, Nfc } from "lucide-react";
+import { useCallback, useMemo } from "react";
 import { Link } from "react-router";
+import { toast } from "sonner";
 import { api } from "~/.server/api";
+import { APP_HOST } from "~/.server/config";
 import NewTagButton from "~/components/assets/edit-tag-button";
-import { CopyableText } from "~/components/copyable-text";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Tag } from "~/lib/models";
+import { buildUrl } from "~/lib/urls";
 import type { Route } from "./+types/index";
 
 export function loader({ request }: Route.LoaderArgs) {
-  return api.tags.list(request, { limit: 10000 });
+  return api.tags.list(request, { limit: 10000 }).mapTo((tags) => ({
+    tags,
+    appHost: APP_HOST,
+  }));
 }
 
 export default function AdminTagsIndex({
-  loaderData: tags,
+  loaderData: { tags, appHost },
 }: Route.ComponentProps) {
+  const copyUrlForTagExternalId = useCallback(
+    (extId: string) => {
+      const url = buildUrl("/inspect", appHost, {
+        extId,
+      });
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        toast.success("Copied inspection URL to clipboard!");
+      });
+    },
+    [appHost]
+  );
+
   const columns: ColumnDef<Tag>[] = useMemo(
     () => [
       {
@@ -28,13 +46,6 @@ export default function AdminTagsIndex({
             {getValue() as string}
           </Link>
         ),
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-      },
-      {
-        accessorKey: "externalId",
-        cell: ({ getValue }) => <CopyableText text={getValue() as string} />,
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
@@ -74,8 +85,30 @@ export default function AdminTagsIndex({
         ),
         cell: ({ getValue }) => getValue() ?? <>&mdash;</>,
       },
+      {
+        accessorKey: "externalId",
+        id: "inspection link",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue, row }) => {
+          const tag = row.original;
+          return (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={!tag.asset}
+              onClick={() => copyUrlForTagExternalId(getValue() as string)}
+              title={tag.asset ? "Copy inspection link" : "No asset assigned"}
+            >
+              <Copy />
+              Copy
+            </Button>
+          );
+        },
+      },
     ],
-    []
+    [copyUrlForTagExternalId]
   );
 
   return (

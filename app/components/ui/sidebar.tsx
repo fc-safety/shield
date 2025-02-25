@@ -17,21 +17,19 @@ import {
 import { useIsMobile } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
 
-const SIDEBAR_COOKIE_NAME = "sidebar:state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
 type SidebarContext = {
-  state: "expanded" | "collapsed";
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  openMobile: boolean;
-  setOpenMobile: (open: boolean) => void;
+  state: { [key: string]: "expanded" | "collapsed" };
+  open: SidebarOpenState;
+  setOpen: React.Dispatch<React.SetStateAction<SidebarOpenState>>;
+  openMobile: string | undefined;
+  setOpenMobile: (openId: string | undefined) => void;
   isMobile: boolean;
-  toggleSidebar: () => void;
+  toggleSidebar: (id?: string) => void;
 };
 
 const SidebarContext = React.createContext<SidebarContext | null>(null);
@@ -45,19 +43,23 @@ function useSidebar() {
   return context;
 }
 
+interface SidebarOpenState {
+  [key: string]: boolean;
+}
+
 const SidebarProvider = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
-    defaultOpen?: boolean;
-    open?: boolean;
-    onOpenChange?: (open: boolean) => void;
+    defaultOpenState?: SidebarOpenState;
+    openState?: SidebarOpenState;
+    onOpenStateChange?: (openState: SidebarOpenState) => void;
   }
 >(
   (
     {
-      defaultOpen = true,
-      open: openProp,
-      onOpenChange: setOpenProp,
+      defaultOpenState = { default: true },
+      openState: openStateProp,
+      onOpenStateChange: setOpenStateProp,
       className,
       style,
       children,
@@ -66,33 +68,37 @@ const SidebarProvider = React.forwardRef<
     ref
   ) => {
     const isMobile = useIsMobile();
-    const [openMobile, setOpenMobile] = React.useState(false);
+    const [openMobile, setOpenMobile] = React.useState<string | undefined>();
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen);
-    const open = openProp ?? _open;
+    const [_open, _setOpen] = React.useState(defaultOpenState);
+    const open = openStateProp ?? _open;
     const setOpen = React.useCallback(
-      (value: boolean | ((value: boolean) => boolean)) => {
+      (
+        value:
+          | SidebarOpenState
+          | ((value: SidebarOpenState) => SidebarOpenState)
+      ) => {
         const openState = typeof value === "function" ? value(open) : value;
-        if (setOpenProp) {
-          setOpenProp(openState);
+        if (setOpenStateProp) {
+          setOpenStateProp(openState);
         } else {
           _setOpen(openState);
         }
-
-        // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
       },
-      [setOpenProp, open]
+      [setOpenStateProp, open]
     );
 
     // Helper to toggle the sidebar.
-    const toggleSidebar = React.useCallback(() => {
-      return isMobile
-        ? setOpenMobile((open) => !open)
-        : setOpen((open) => !open);
-    }, [isMobile, setOpen, setOpenMobile]);
+    const toggleSidebar = React.useCallback(
+      (id = "default") => {
+        return isMobile
+          ? setOpenMobile((openId) => (openId === id ? undefined : id))
+          : setOpen((openState) => ({ ...openState, [id]: !openState[id] }));
+      },
+      [isMobile, setOpen, setOpenMobile]
+    );
 
     // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
@@ -112,7 +118,12 @@ const SidebarProvider = React.forwardRef<
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
     // This makes it easier to style the sidebar with Tailwind classes.
-    const state = open ? "expanded" : "collapsed";
+    const state = Object.fromEntries(
+      Object.entries(open).map(([key, value]) => [
+        key,
+        value ? ("expanded" as const) : ("collapsed" as const),
+      ])
+    );
 
     const contextValue = React.useMemo<SidebarContext>(
       () => ({
@@ -157,6 +168,7 @@ SidebarProvider.displayName = "SidebarProvider";
 const Sidebar = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
+    name?: string;
     side?: "left" | "right";
     variant?: "sidebar" | "floating" | "inset";
     collapsible?: "offcanvas" | "icon" | "none";
@@ -164,6 +176,7 @@ const Sidebar = React.forwardRef<
 >(
   (
     {
+      name = "default",
       side = "left",
       variant = "sidebar",
       collapsible = "offcanvas",
@@ -192,7 +205,11 @@ const Sidebar = React.forwardRef<
 
     if (isMobile) {
       return (
-        <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+        <Sheet
+          open={openMobile === name}
+          onOpenChange={(open) => setOpenMobile(open ? name : undefined)}
+          {...props}
+        >
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
@@ -214,8 +231,8 @@ const Sidebar = React.forwardRef<
       <div
         ref={ref}
         className="group peer hidden md:block text-sidebar-foreground"
-        data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
+        data-state={state[name] ?? "collapsed"}
+        data-collapsible={state[name] === "collapsed" ? collapsible : ""}
         data-variant={variant}
         data-side={side}
       >
@@ -295,7 +312,7 @@ const SidebarRail = React.forwardRef<
       data-sidebar="rail"
       aria-label="Toggle Sidebar"
       tabIndex={-1}
-      onClick={toggleSidebar}
+      onClick={() => toggleSidebar()}
       title="Toggle Sidebar"
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",
@@ -534,6 +551,7 @@ const sidebarMenuButtonVariants = cva(
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & {
+    name?: string;
     asChild?: boolean;
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
@@ -541,6 +559,7 @@ const SidebarMenuButton = React.forwardRef<
 >(
   (
     {
+      name = "default",
       asChild = false,
       isActive = false,
       variant = "default",
@@ -560,6 +579,7 @@ const SidebarMenuButton = React.forwardRef<
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
+        data-name={name}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       />
@@ -581,7 +601,7 @@ const SidebarMenuButton = React.forwardRef<
         <TooltipContent
           side="right"
           align="center"
-          hidden={state !== "collapsed" || isMobile}
+          hidden={state[name] === "expanded" || isMobile}
           {...tooltip}
         />
       </Tooltip>

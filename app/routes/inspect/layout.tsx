@@ -10,6 +10,7 @@ import {
 import DefaultErrorBoundary from "~/components/default-error-boundary";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
+import HelpSidebar from "~/components/help-sidebar";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import {
@@ -18,6 +19,7 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
+import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -85,29 +87,32 @@ export default function Layout({
 
   return (
     <AuthProvider user={user} apiUrl={apiUrl}>
-      <SidebarProvider>
-        <AppSidebar
-          groups={groups}
-          userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
-            ...r,
-            url: `/inspect${r.url}`,
-          }))}
-        />
-        <SidebarInset>
-          <Header
-            homeTo="/inspect"
-            leftSlot={
-              <>
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-              </>
-            }
+      <SidebarProvider defaultOpenState={{ help: false }}>
+        <HelpSidebarProvider>
+          <AppSidebar
+            groups={groups}
+            userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
+              ...r,
+              url: `/inspect${r.url}`,
+            }))}
           />
-          <main className="flex flex-col items-center p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow">
-            <Outlet />
-          </main>
-          <Footer />
-        </SidebarInset>
+          <SidebarInset>
+            <Header
+              homeTo="/inspect"
+              leftSlot={
+                <>
+                  <SidebarTrigger className="-ml-1" />
+                  <Separator orientation="vertical" className="mr-2 h-4" />
+                </>
+              }
+            />
+            <section className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow w-full max-w-screen-lg self-center">
+              <Outlet />
+            </section>
+            <Footer />
+          </SidebarInset>
+          <HelpSidebar />
+        </HelpSidebarProvider>
       </SidebarProvider>
     </AuthProvider>
   );

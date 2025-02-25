@@ -1,21 +1,15 @@
 import { Frown, Nfc } from "lucide-react";
 import { isRouteErrorResponse } from "react-router";
 import { isNil } from "~/lib/utils";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 
 export default function InspectErrorBoundary({ error }: { error: unknown }) {
   return (
-    <Card className="max-w-lg w-full">
+    <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-4xl">
+        <div className="text-4xl">
           Oops <Frown className="inline size-8" />
-        </CardTitle>
+        </div>
         <CardDescription>Something didn&#39;t work.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-2">
