@@ -16,8 +16,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import { z } from "zod";
+import { useAuth } from "~/contexts/auth-context";
 import type { Alert } from "~/lib/models";
 import { resolveAlertSchema, resolveAlertSchemaResolver } from "~/lib/schema";
+import { can } from "~/lib/users";
 import DataList from "../data-list";
 import { Skeleton } from "../ui/skeleton";
 
@@ -71,6 +73,9 @@ function InspectionAlert({
   alert: Alert;
   loading?: boolean;
 }) {
+  const { user } = useAuth();
+  const canResolve = can(user, "resolve", "alerts");
+
   const fetcher = useFetcher();
 
   const form = useForm<TForm>({
@@ -179,7 +184,10 @@ function InspectionAlert({
               <FormItem>
                 <FormLabel>Resolution Note</FormLabel>
                 <FormControl>
-                  <Textarea {...field} readOnly={alert.resolved} />
+                  <Textarea
+                    {...field}
+                    readOnly={alert.resolved || !canResolve}
+                  />
                 </FormControl>
                 <FormDescription>
                   Make note of action taken to resolve this alert.
@@ -188,24 +196,26 @@ function InspectionAlert({
               </FormItem>
             )}
           ></FormField>
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={
-              fetcher.state === "submitting" ||
-              loading ||
-              !isValid ||
-              alert.resolved
-            }
-          >
-            {alert.resolved ? (
-              <>
-                <Check /> Resolved
-              </>
-            ) : (
-              <>Mark as Resolved</>
-            )}
-          </Button>
+          {canResolve && (
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={
+                fetcher.state === "submitting" ||
+                loading ||
+                !isValid ||
+                alert.resolved
+              }
+            >
+              {alert.resolved ? (
+                <>
+                  <Check /> Resolved
+                </>
+              ) : (
+                <>Mark as Resolved</>
+              )}
+            </Button>
+          )}
         </fetcher.Form>
       </FormProvider>
     </div>

@@ -20,6 +20,7 @@ import {
 } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
+import { can } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -76,10 +77,11 @@ export default function Layout({
           exact: true,
         },
         {
-          title: "Manage Routes",
+          title: "Routes",
           url: "/inspect/routes",
           icon: RouteIcon,
           exact: true,
+          hide: !can(user, "read", "inspection-routes"),
         },
       ],
     },

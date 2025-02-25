@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Check } from "lucide-react";
+import { Link } from "react-router";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Alert, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
@@ -43,7 +44,14 @@ export default function InspectionAlertsOverview() {
               cell: ({ row, getValue }) => {
                 const assetName = getValue() as string;
                 return (
-                  <span className="flex items-center gap-2">
+                  <Link
+                    to={
+                      row.original.asset
+                        ? `/assets/${row.original.asset.id}`
+                        : "#"
+                    }
+                    className="flex items-center gap-2 group"
+                  >
                     {row.original.asset?.product?.productCategory?.icon && (
                       <Icon
                         iconId={row.original.asset.product.productCategory.icon}
@@ -51,8 +59,8 @@ export default function InspectionAlertsOverview() {
                         className="text-lg"
                       />
                     )}
-                    {assetName}
-                  </span>
+                    <span className="group-hover:underline">{assetName}</span>
+                  </Link>
                 );
               },
             },

@@ -12,7 +12,8 @@ import EditManufacturerButton from "~/components/products/edit-manufacturer-butt
 import ProductCard from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
-import { isGlobalAdmin } from "~/lib/users";
+import { useAuth } from "~/contexts/auth-context";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
@@ -44,8 +45,13 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 };
 
 export default function ProductManufacturerDetails({
-  loaderData: { manufacturer, canEdit },
+  loaderData: { manufacturer },
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const canUpdate =
+    can(user, "update", "manufacturers") &&
+    (isGlobalAdmin(user) || manufacturer.client?.externalId === user.clientId);
+
   return (
     <div className="grid gap-4">
       <Card>
@@ -55,7 +61,7 @@ export default function ProductManufacturerDetails({
             <div className="inline-flex items-center gap-4">
               Manufacturer Details
               <div className="flex gap-2">
-                {canEdit && (
+                {canUpdate && (
                   <EditManufacturerButton
                     manufacturer={manufacturer}
                     trigger={

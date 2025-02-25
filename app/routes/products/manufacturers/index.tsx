@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, Factory, MoreHorizontal, Trash } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
@@ -22,11 +22,12 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
+import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Manufacturer } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
-import { isGlobalAdmin } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -58,6 +59,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function ProductManufacturers({
   loaderData: { manufacturers, onlyMyManufacturers },
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const canCreate = can(user, "create", "manufacturers");
+  const canDelete = useCallback(
+    (manufacturer: Manufacturer) =>
+      can(user, "delete", "manufacturers") &&
+      (isGlobalAdmin(user) ||
+        manufacturer.client?.externalId === user.clientId),
+    [user]
+  );
+
   const { submit: submitDelete } = useModalSubmit({
     defaultErrorMessage: "Error: Failed to delete manufacturer",
   });
@@ -145,6 +156,7 @@ export default function ProductManufacturers({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  disabled={!canDelete(manufacturer)}
                   onSelect={() =>
                     setDeleteAction((draft) => {
                       draft.open = true;
@@ -175,7 +187,7 @@ export default function ProductManufacturers({
         },
       },
     ],
-    [submitDelete, setDeleteAction]
+    [submitDelete, setDeleteAction, canDelete]
   );
   return (
     <>
@@ -203,7 +215,9 @@ export default function ProductManufacturers({
                 <Label htmlFor="onlyMyProducts">Only My Products</Label>
               </div>,
             ]}
-            actions={[<NewManufacturerButton key="add" />]}
+            actions={
+              canCreate ? [<NewManufacturerButton key="add" />] : undefined
+            }
           />
         </CardContent>
       </Card>

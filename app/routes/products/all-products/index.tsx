@@ -37,10 +37,11 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
+import { useAuth } from "~/contexts/auth-context";
 import { useQueryNavigate } from "~/hooks/use-query-navigate";
 import type { Manufacturer, ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
-import { isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
+import { can, isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -82,7 +83,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function AllProducts({
   loaderData: { products, isGlobalAdmin },
 }: Route.ComponentProps) {
-  // const navigate = useNavigate();
+  const { user } = useAuth();
+  const canCreate = can(user, "create", "products");
+
   const { setQuery, query } = useQueryNavigate();
 
   const grouping = useMemo(
@@ -203,7 +206,9 @@ export default function AllProducts({
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <EditProductButton canAssignOwnership={isGlobalAdmin} />
+            {canCreate && (
+              <EditProductButton canAssignOwnership={isGlobalAdmin} />
+            )}
           </div>
         </CardContent>
       </Card>

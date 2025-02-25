@@ -29,6 +29,7 @@ export interface Asset extends BaseModel {
   consumables?: Consumable[];
   alerts?: Alert[];
   productRequests?: ProductRequest[];
+  inspectionRoutePoints?: InspectionRoutePoint[];
 
   // TODO: remove this
   status: string;
@@ -95,6 +96,8 @@ export interface InspectionRoutePoint extends BaseModel {
   siteId: string;
   client?: Client;
   clientId: string;
+  inspectionRoute?: InspectionRoute;
+  inspectionRouteId: string;
 }
 
 export interface InspectionSession extends BaseModel {

@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Shapes, Trash } from "lucide-react";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/sessions";
@@ -22,11 +22,12 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
+import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
-import { isGlobalAdmin } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -57,6 +58,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function ProductCategories({
   loaderData: { productCategories, onlyMyProductCategories },
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const canCreate = can(user, "create", "product-categories");
+  const canDelete = useCallback(
+    (productCategory: ProductCategory) =>
+      can(user, "delete", "product-categories") &&
+      (isGlobalAdmin(user) ||
+        productCategory.client?.externalId === user.clientId),
+    [user]
+  );
+
   const { submit: submitDelete } = useModalSubmit({
     defaultErrorMessage: "Error: Failed to delete product category",
   });
@@ -168,6 +179,7 @@ export default function ProductCategories({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  disabled={!canDelete(category)}
                   onSelect={() =>
                     setDeleteAction((draft) => {
                       draft.open = true;
@@ -197,7 +209,7 @@ export default function ProductCategories({
         },
       },
     ],
-    [submitDelete, setDeleteAction]
+    [submitDelete, setDeleteAction, canDelete]
   );
   return (
     <>
@@ -212,7 +224,9 @@ export default function ProductCategories({
             columns={columns}
             data={productCategories}
             searchPlaceholder="Search categories..."
-            actions={[<EditProductCategoryButton key="add" />]}
+            actions={
+              canCreate ? [<EditProductCategoryButton key="add" />] : undefined
+            }
             externalFilters={[
               <div
                 key="onlyMyProductCategories"

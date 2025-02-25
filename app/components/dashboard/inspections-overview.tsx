@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Inspection, ResultsPage } from "~/lib/models";
 import { getUserDisplayName } from "~/lib/users";
@@ -43,7 +44,14 @@ export default function InspectionsOverview() {
               cell: ({ row, getValue }) => {
                 const assetName = getValue() as string;
                 return (
-                  <span className="flex items-center gap-2">
+                  <Link
+                    to={
+                      row.original.asset
+                        ? `/assets/${row.original.asset.id}`
+                        : "#"
+                    }
+                    className="flex items-center gap-2 group"
+                  >
                     {row.original.asset.product.productCategory.icon && (
                       <Icon
                         iconId={row.original.asset.product.productCategory.icon}
@@ -51,8 +59,8 @@ export default function InspectionsOverview() {
                         className="text-lg"
                       />
                     )}
-                    {assetName}
-                  </span>
+                    <span className="group-hover:underline">{assetName}</span>
+                  </Link>
                 );
               },
             },

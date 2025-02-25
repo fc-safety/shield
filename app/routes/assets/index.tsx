@@ -24,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import type { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
 import {
@@ -32,6 +33,7 @@ import {
 } from "~/lib/model-utils";
 import type { Asset, ProductCategory } from "~/lib/models";
 import { createAssetSchema, createAssetSchemaResolver } from "~/lib/schema";
+import { can } from "~/lib/users";
 import { dedupById, getValidatedFormDataOrThrow } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -50,6 +52,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
 export default function AssetsIndex({
   loaderData: assets,
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const canCreate = can(user, "create", "assets");
+  const canDelete = can(user, "delete", "assets");
+
   const [searchParams] = useSearchParams();
   const fetcher = useFetcher();
 
@@ -211,6 +217,7 @@ export default function AssetsIndex({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  disabled={!canDelete}
                   onSelect={() =>
                     setDeleteAction((draft) => {
                       draft.open = true;
@@ -240,7 +247,7 @@ export default function AssetsIndex({
         },
       },
     ],
-    [setDeleteAction, fetcher]
+    [setDeleteAction, fetcher, canDelete]
   );
 
   const allCategories = dedupById(
@@ -320,7 +327,7 @@ export default function AssetsIndex({
                 title: "Inspection Status",
               },
             ]}
-            actions={[<EditAssetButton key="add" />]}
+            actions={canCreate ? [<EditAssetButton key="add" />] : []}
           />
         </CardContent>
       </Card>

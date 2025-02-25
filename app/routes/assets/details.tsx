@@ -9,11 +9,13 @@ import {
 import {
   BellRing,
   Check,
+  CircleAlert,
   ClipboardCheck,
   CornerDownRight,
   MoreHorizontal,
   Package,
   Pencil,
+  Plus,
   Route as RouteIcon,
   SearchCheck,
   Shield,
@@ -45,6 +47,7 @@ import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import ProductCard from "~/components/products/product-card";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
@@ -64,6 +67,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -73,6 +77,7 @@ import {
 } from "~/lib/model-utils";
 import type { Alert, Asset, Consumable } from "~/lib/models";
 import { updateAssetSchema, updateAssetSchemaResolver } from "~/lib/schema";
+import { can } from "~/lib/users";
 import {
   buildTitleFromBreadcrumb,
   getSearchParam,
@@ -121,20 +126,72 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 export default function AssetDetails({
   loaderData: { asset, googleMapsApiKey, defaultTab },
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const canUpdate = can(user, "update", "assets");
+  const canReadInspections = can(user, "read", "inspections");
+  const canUpdateRoutes = can(user, "update", "inspection-routes");
+  const canCreateProductRequests = can(user, "create", "product-requests");
   return (
     <div className="grid gap-y-4 gap-x-2 sm:gap-x-4">
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(250px,_1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
         <StatusCard asset={asset} />
-        <BasicCard title="Inspection Route" icon={RouteIcon}>
-          <div className="space-y-4">
-            <p className="text-muted-foreground text-xs">
-              No route has been configured yet for this asset.
-            </p>
-            <Button type="submit" variant="secondary">
-              Create New Route
-            </Button>
-          </div>
-        </BasicCard>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <RouteIcon />
+              Inspection Route
+              <div className="flex-1"></div>
+              {canUpdateRoutes && (
+                <EditRoutePointButton
+                  asset={asset}
+                  filterRoute={(r) =>
+                    !asset.inspectionRoutePoints?.some(
+                      (p) => p.inspectionRouteId === r.id
+                    )
+                  }
+                  trigger={
+                    <Button variant="default" size="sm" className="shrink-0">
+                      <Plus />
+                      Add to Route
+                    </Button>
+                  }
+                />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {asset.inspectionRoutePoints &&
+              asset.inspectionRoutePoints.length > 1 && (
+                <p className="text-muted-foreground text-xs flex items-center gap-1 italic">
+                  <CircleAlert className="size-4" />
+                  This asset belongs to multiple routes.
+                </p>
+              )}
+            {asset.inspectionRoutePoints?.length ? (
+              <div className="grid divide-y divide-border">
+                {asset.inspectionRoutePoints.map((point) => (
+                  <div key={point.id} className="flex gap-3 items-center py-2">
+                    <div className="text-xs font-semibold rounded-full size-7 shrink-0 flex items-center justify-center bg-primary text-primary-foreground">
+                      {point.order + 1}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Name
+                      </span>
+                      <span className="text-sm">
+                        {point.inspectionRoute?.name ?? "Unknown Route"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-xs">
+                No route has been configured yet for this asset.
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
         <Card className="h-max">
@@ -144,14 +201,16 @@ export default function AssetDetails({
               <div className="inline-flex items-center gap-4">
                 Asset Details
                 <div className="flex gap-2">
-                  <EditAssetButton
-                    asset={asset}
-                    trigger={
-                      <Button variant="secondary" size="icon" type="button">
-                        <Pencil />
-                      </Button>
-                    }
-                  />
+                  {canUpdate && (
+                    <EditAssetButton
+                      asset={asset}
+                      trigger={
+                        <Button variant="secondary" size="icon" type="button">
+                          <Pencil />
+                        </Button>
+                      }
+                    />
+                  )}
                 </div>
               </div>
               <div className="flex-1"></div>
@@ -269,10 +328,12 @@ export default function AssetDetails({
                     <Package />
                     Recent Requests
                   </div>
-                  <NewSupplyRequestButton
-                    assetId={asset.id}
-                    parentProductId={asset.productId}
-                  />
+                  {canCreateProductRequests && (
+                    <NewSupplyRequestButton
+                      assetId={asset.id}
+                      parentProductId={asset.productId}
+                    />
+                  )}
                 </CardTitle>
                 <CardDescription>Last 30 days</CardDescription>
               </CardHeader>
@@ -311,19 +372,21 @@ export default function AssetDetails({
           </TabsContent>
         </Tabs>
       </div>
-      <Card id="inspections">
-        <CardHeader>
-          <CardTitle>
-            <SearchCheck /> Inspection History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AssetInspections
-            inspections={asset.inspections ?? []}
-            googleMapsApiKey={googleMapsApiKey}
-          />
-        </CardContent>
-      </Card>
+      {canReadInspections && (
+        <Card id="inspections">
+          <CardHeader>
+            <CardTitle>
+              <SearchCheck /> Inspection History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AssetInspections
+              inspections={asset.inspections ?? []}
+              googleMapsApiKey={googleMapsApiKey}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -386,6 +449,11 @@ function ConsumablesTable({
   consumables: Consumable[];
   asset: Asset;
 }) {
+  const { user } = useAuth();
+  const canCreate = can(user, "create", "consumables");
+  const canUpdate = can(user, "update", "consumables");
+  const canDelete = can(user, "delete", "consumables");
+
   const editConsumable = useOpenData<Consumable>();
 
   const { submit: submitDelete } = useModalSubmit({
@@ -443,6 +511,7 @@ function ConsumablesTable({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
+                  disabled={!canUpdate}
                   onSelect={() => editConsumable.openData(consumable)}
                 >
                   <Pencil />
@@ -450,6 +519,7 @@ function ConsumablesTable({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  disabled={!canDelete}
                   onSelect={() =>
                     setDeleteAction((draft) => {
                       draft.open = true;
@@ -476,7 +546,7 @@ function ConsumablesTable({
         },
       },
     ],
-    [setDeleteAction, submitDelete, editConsumable]
+    [setDeleteAction, submitDelete, editConsumable, canUpdate, canDelete]
   );
 
   return (
@@ -484,14 +554,23 @@ function ConsumablesTable({
       <DataTable
         columns={columns}
         data={consumables}
+        initialState={{
+          columnVisibility: {
+            actions: canUpdate || canDelete,
+          },
+        }}
         searchPlaceholder="Search consumables..."
-        actions={[
-          <EditConsumableButton
-            key="add"
-            assetId={asset.id}
-            parentProductId={asset.productId}
-          />,
-        ]}
+        actions={
+          canCreate
+            ? [
+                <EditConsumableButton
+                  key="add"
+                  assetId={asset.id}
+                  parentProductId={asset.productId}
+                />,
+              ]
+            : undefined
+        }
       />
       {editConsumable.data && (
         <EditConsumableButton

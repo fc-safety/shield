@@ -10,6 +10,7 @@ import {
   MessageCircleQuestion,
   Nfc,
   Package,
+  Route as RouteIcon,
   Shapes,
   Shield,
   Users,
@@ -25,7 +26,7 @@ import {
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
-import { isGlobalAdmin } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -60,6 +61,13 @@ export default function Layout({
           title: "Assets",
           url: "assets",
           icon: Shield,
+          hide: !can(user, "read", "assets"),
+        },
+        {
+          title: "Inspection Routes",
+          url: "inspection-routes",
+          icon: RouteIcon,
+          hide: !can(user, "read", "inspection-routes"),
         },
         {
           title: "Reports",
@@ -70,6 +78,7 @@ export default function Layout({
     },
     {
       groupTitle: "Products",
+      hide: !can(user, "read", "products"),
       items: [
         {
           title: "All Products",
@@ -80,11 +89,13 @@ export default function Layout({
           title: "Categories",
           url: "products/categories",
           icon: Shapes,
+          hide: !can(user, "read", "product-categories"),
         },
         {
           title: "Manufacturers",
           url: "products/manufacturers",
           icon: Factory,
+          hide: !can(user, "read", "manufacturers"),
         },
       ],
     },
@@ -95,22 +106,24 @@ export default function Layout({
           title: "Clients",
           url: "admin/clients",
           icon: Building2,
+          hide: !can(user, "read", "clients"),
         },
         {
           title: "Product Requests",
           url: "admin/product-requests",
           icon: Package,
+          hide: !can(user, "read", "product-requests"),
         },
         {
           title: "Tags",
           url: "admin/tags",
           icon: Nfc,
+          hide: !can(user, "read", "tags"),
         },
         {
           title: "Roles",
           url: "admin/roles",
           icon: Users,
-          hide: !user || !isGlobalAdmin(user),
         },
       ],
       hide: !user || !isGlobalAdmin(user),

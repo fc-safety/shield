@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useFetcher } from "react-router";
@@ -68,6 +69,7 @@ export default function RoutePointDetailsForm({
 }: RoutePointDetailsFormProps) {
   const isNew = !routePoint;
   const fetcher = useFetcher<ResultsPage<InspectionRoute>>();
+  const [routesLoading, setRoutesLoading] = useState(true);
 
   const preloadRoutes = useCallback(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
@@ -86,6 +88,7 @@ export default function RoutePointDetailsForm({
   useEffect(() => {
     if (fetcher.data) {
       setRoutes(fetcher.data.results.filter(filterRoute ?? (() => true)));
+      setRoutesLoading(false);
     }
   }, [fetcher.data, filterRoute]);
 
@@ -150,7 +153,9 @@ export default function RoutePointDetailsForm({
         <Input type="hidden" {...form.register("order")} hidden />
 
         {!routeProp &&
-          (routes.length > 0 ? (
+          (routesLoading ? (
+            <Loader2 className="animate-spin mx-auto" />
+          ) : routes.length > 0 ? (
             <FormField
               control={form.control}
               name="routeId"

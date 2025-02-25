@@ -22,11 +22,7 @@ import { api } from "~/.server/api";
 import { DataResponse, mergeInit } from "~/.server/api-utils";
 import { guard } from "~/.server/guard";
 import { validateTagId } from "~/.server/inspections";
-import {
-  getSession,
-  inspectionSessionStorage,
-  requireUserSession,
-} from "~/.server/sessions";
+import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import DataList from "~/components/data-list";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
@@ -52,7 +48,9 @@ import {
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Textarea } from "~/components/ui/textarea";
+import { useAuth } from "~/contexts/auth-context";
 import type {
+  Asset,
   AssetQuestion,
   InspectionRoute,
   InspectionSession,
@@ -134,7 +132,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await guard(request, (user) => can(user, "create", "inspections"));
-  const { user } = await requireUserSession(request);
 
   const extId = await validateTagId(request, "/inspect");
 
@@ -176,7 +173,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return data(
     {
-      user,
       tag: response.data,
       activeSessions,
       matchingRoutes,
@@ -207,10 +203,8 @@ const onlyInspectionQuestions = (questions: AssetQuestion[] | undefined) =>
   (questions ?? []).filter((question) => question.type === "INSPECTION");
 
 export default function InspectIndex({
-  loaderData: { user, tag, activeSessions, matchingRoutes },
+  loaderData: { tag, activeSessions, matchingRoutes },
 }: Route.ComponentProps) {
-  const navigate = useNavigate();
-
   const questions = useMemo(
     () =>
       [
@@ -325,56 +319,18 @@ export default function InspectIndex({
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  const [routeDisabled, setRouteDisabled] = useState(false);
-
-  const [activeSession, setActiveSession] = useState<
-    InspectionSession | undefined | null
-  >(
-    (() => {
-      if (activeSessions) {
-        const mySessions = activeSessions.filter(
-          (s) => s.lastInspector?.idpId === user.idpId
-        );
-        if (mySessions.length === 1) {
-          return mySessions[0];
-        }
-      }
-      return undefined;
-    })()
-  );
-
-  const [activeRoute, setActiveRoute] = useState<
-    InspectionRoute | undefined | null
-  >(
-    matchingRoutes && matchingRoutes.length === 1
-      ? matchingRoutes[0]
-      : undefined
-  );
-
-  const actionQueryParams = useMemo(() => {
-    if (routeDisabled) {
-      return null;
-    }
-
-    if (activeSession) {
-      return { sessionId: activeSession.id };
-    } else if (activeRoute) {
-      return { routeId: activeRoute.id };
-    }
-    return null;
-  }, [activeSession, activeRoute, routeDisabled]);
+  const [actionQueryParams, setActionQueryParams] =
+    useState<QueryParams | null>(null);
 
   return (
     <>
       <div className="grid gap-4">
-        <RouteProgressCard
-          activeRoute={activeRoute}
-          setActiveRoute={setActiveRoute}
-          activeSession={activeSession}
+        <InspectionRouteCard
+          activeSessions={activeSessions}
           matchingRoutes={matchingRoutes}
-          routeDisabled={routeDisabled}
-          setRouteDisabled={setRouteDisabled}
           asset={tag.asset ?? undefined}
+          userInteractionReady={!geolocationPending}
+          setActionQueryParams={setActionQueryParams}
         />
         <Card>
           <CardHeader>
@@ -521,9 +477,87 @@ export default function InspectIndex({
           </AlertDialogHeader>
         </AlertDialogContent>
       </AlertDialog>
+    </>
+  );
+}
+
+function InspectionRouteCard({
+  activeSessions,
+  matchingRoutes,
+  asset,
+  userInteractionReady,
+  setActionQueryParams,
+}: {
+  activeSessions: InspectionSession[] | null | undefined;
+  matchingRoutes: InspectionRoute[] | null | undefined;
+  asset: Asset | undefined;
+  userInteractionReady: boolean;
+  setActionQueryParams: (params: QueryParams | null) => void;
+}) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Allow user to disable route for this inspection.
+  const [routeDisabled, setRouteDisabled] = useState(false);
+
+  const [activeSession, setActiveSession] = useState<
+    InspectionSession | undefined | null
+  >();
+
+  // Automatically set active session based on user's last session. If the user
+  // has multiple sessions, or if another inspector has already started a session,
+  // the user will be prompted to confirm which session they would like to continue.
+  useEffect(() => {
+    if (activeSessions) {
+      const mySessions = activeSessions.filter(
+        (s) => s.lastInspector?.idpId === user.idpId
+      );
+      if (mySessions.length === 1) {
+        setActiveSession(mySessions[0]);
+      }
+    }
+  }, [user, activeSessions]);
+
+  const [activeRoute, setActiveRoute] = useState<
+    InspectionRoute | undefined | null
+  >();
+
+  // Similar to the active session, automatically set the active route if there is only
+  // one route for the asset. Otherwise, the user must select the route they would like
+  // to use.
+  useEffect(() => {
+    if (matchingRoutes && matchingRoutes.length === 1) {
+      setActiveRoute(matchingRoutes[0]);
+    }
+  }, [matchingRoutes]);
+
+  // In order to communicate to the backend which route and session are in use, set query
+  // params used in the form submission action.
+  useEffect(() => {
+    if (!routeDisabled) {
+      if (activeSession) {
+        setActionQueryParams({ sessionId: activeSession.id });
+      } else if (activeRoute) {
+        setActionQueryParams({ routeId: activeRoute.id });
+      }
+    }
+    return setActionQueryParams(null);
+  }, [activeSession, activeRoute, routeDisabled, setActionQueryParams]);
+
+  return (
+    <>
+      <RouteProgressCard
+        activeRoute={activeRoute}
+        setActiveRoute={setActiveRoute}
+        activeSession={activeSession}
+        matchingRoutes={matchingRoutes}
+        routeDisabled={routeDisabled}
+        setRouteDisabled={setRouteDisabled}
+        asset={asset}
+      />
       <ConfirmSessionPrompt
         open={
-          !geolocationPending &&
+          userInteractionReady &&
           activeSession === undefined &&
           !!activeSessions &&
           activeSessions.length > 0
@@ -534,12 +568,12 @@ export default function InspectIndex({
       />
       <AlertDialog
         open={
-          !geolocationPending &&
+          userInteractionReady &&
           !routeDisabled &&
           !!activeSession &&
           activeSession.completedInspectionRoutePoints &&
           activeSession.completedInspectionRoutePoints.some(
-            (p) => p.inspectionRoutePoint?.assetId === tag.asset?.id
+            (p) => p.inspectionRoutePoint?.assetId === asset?.id
           )
         }
       >

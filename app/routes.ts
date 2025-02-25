@@ -53,6 +53,7 @@ export default [
       index("./routes/assets/index.tsx"),
       route(":id", "./routes/assets/details.tsx"),
     ]),
+    route("inspection-routes", "./routes/inspection-routes.tsx"),
     route("reports", "./routes/reports/layout.tsx", [
       index("./routes/reports/index.tsx"),
       route(":id", "./routes/reports/details.tsx"),

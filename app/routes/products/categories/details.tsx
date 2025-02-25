@@ -3,7 +3,6 @@ import { format } from "date-fns";
 import { FireExtinguisher, Pencil, Shapes, ShieldQuestion } from "lucide-react";
 import { type UIMatch } from "react-router";
 import { api } from "~/.server/api";
-import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
 import Icon from "~/components/icons/icon";
@@ -13,7 +12,8 @@ import EditProductCategoryButton from "~/components/products/edit-product-catego
 import ProductCard from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
-import { isGlobalAdmin } from "~/lib/users";
+import { useAuth } from "~/contexts/auth-context";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
@@ -32,21 +32,22 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  const { user } = await requireUserSession(request);
-
   return api.productCategories.get(request, id).mapTo((productCategory) => {
     return {
       productCategory,
-      canEdit:
-        isGlobalAdmin(user) ||
-        productCategory.client?.externalId === user.clientId,
     };
   });
 };
 
 export default function ProductCategoryDetails({
-  loaderData: { productCategory, canEdit },
+  loaderData: { productCategory },
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const canUpdate =
+    can(user, "update", "product-categories") &&
+    (isGlobalAdmin(user) ||
+      productCategory.client?.externalId === user.clientId);
+
   return (
     <div className="grid gap-4">
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
@@ -57,7 +58,7 @@ export default function ProductCategoryDetails({
               <div className="inline-flex items-center gap-4">
                 Product Category Details
                 <div className="flex gap-2">
-                  {canEdit && (
+                  {canUpdate && (
                     <EditProductCategoryButton
                       productCategory={productCategory}
                       trigger={
@@ -138,7 +139,7 @@ export default function ProductCategoryDetails({
           <CardContent>
             <AssetQuestionsTable
               questions={productCategory.assetQuestions ?? []}
-              readOnly={!canEdit}
+              readOnly={!canUpdate}
               parentType="productCategory"
               parentId={productCategory.id}
             />

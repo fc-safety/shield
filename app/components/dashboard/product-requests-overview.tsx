@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { subDays } from "date-fns";
+import { Link } from "react-router";
 import {
   Card,
   CardContent,
@@ -74,7 +75,14 @@ export default function ProductRequestsOverview() {
                 cell: ({ row, getValue }) => {
                   const assetName = getValue() as string;
                   return (
-                    <span className="flex items-center gap-2">
+                    <Link
+                      to={
+                        row.original.asset
+                          ? `/assets/${row.original.asset.id}`
+                          : "#"
+                      }
+                      className="flex items-center gap-2 group"
+                    >
                       {row.original.asset?.product?.productCategory?.icon && (
                         <Icon
                           iconId={
@@ -86,8 +94,8 @@ export default function ProductRequestsOverview() {
                           className="text-lg"
                         />
                       )}
-                      {assetName}
-                    </span>
+                      <span className="group-hover:underline">{assetName}</span>
+                    </Link>
                   );
                 },
               },

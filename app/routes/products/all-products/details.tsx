@@ -32,11 +32,12 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
+import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Product } from "~/lib/models";
-import { isGlobalAdmin } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
@@ -60,17 +61,20 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return api.products.get(request, id).mapTo((product) => {
     return {
       product,
-      isGlobalAdmin: isGlobalAdmin(user),
       userClientId: user.clientId,
-      canEdit:
-        isGlobalAdmin(user) || product.client?.externalId === user.clientId,
     };
   });
 };
 
 export default function ProductDetails({
-  loaderData: { product, canEdit, isGlobalAdmin, userClientId },
+  loaderData: { product, userClientId },
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const globalAdmin = isGlobalAdmin(user);
+  const canUpdate =
+    can(user, "update", "products") &&
+    (isGlobalAdmin(user) || product.client?.externalId === user.clientId);
+
   return (
     <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
@@ -80,7 +84,7 @@ export default function ProductDetails({
             <div className="inline-flex items-center gap-4">
               Product Details
               <div className="flex gap-2">
-                {canEdit && (
+                {canUpdate && (
                   <EditProductButton
                     product={product}
                     trigger={
@@ -88,7 +92,7 @@ export default function ProductDetails({
                         <Pencil />
                       </Button>
                     }
-                    canAssignOwnership={isGlobalAdmin}
+                    canAssignOwnership={globalAdmin}
                   />
                 )}
               </div>
@@ -195,7 +199,7 @@ export default function ProductDetails({
           <CardContent>
             <AssetQuestionsTable
               questions={product.assetQuestions ?? []}
-              readOnly={!canEdit}
+              readOnly={!canUpdate}
               parentType="product"
               parentId={product.id}
             />
@@ -211,7 +215,7 @@ export default function ProductDetails({
                 Category Questions
               </span>
               <div className="flex-1"></div>
-              {(isGlobalAdmin ||
+              {(globalAdmin ||
                 product.productCategory.client?.externalId ===
                   userClientId) && (
                 <Button variant="link" asChild>
@@ -245,6 +249,11 @@ function SubproductsTable({
   subproducts: Product[];
   parentProduct: Product;
 }) {
+  const { user } = useAuth();
+  const canCreate = can(user, "create", "products");
+  const canUpdate = can(user, "update", "products");
+  const canDelete = can(user, "delete", "products");
+
   const editSubproduct = useOpenData<Product>();
 
   const { submit: submitDelete } = useModalSubmit({
@@ -301,6 +310,7 @@ function SubproductsTable({
                   <DropdownMenuContent align="end">
                     {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
                     <DropdownMenuItem
+                      disabled={!canUpdate}
                       onSelect={() => editSubproduct.openData(subproduct)}
                     >
                       <Pencil />
@@ -308,6 +318,7 @@ function SubproductsTable({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
+                      disabled={!canDelete}
                       onSelect={() =>
                         setDeleteAction((draft) => {
                           draft.open = true;
@@ -337,12 +348,21 @@ function SubproductsTable({
           },
         ]}
         data={subproducts ?? []}
-        actions={[
-          <EditProductButton
-            key="add-subproduct"
-            parentProduct={parentProduct}
-          />,
-        ]}
+        initialState={{
+          columnVisibility: {
+            actions: canUpdate || canDelete,
+          },
+        }}
+        actions={
+          canCreate
+            ? [
+                <EditProductButton
+                  key="add-subproduct"
+                  parentProduct={parentProduct}
+                />,
+              ]
+            : undefined
+        }
       />
       {editSubproduct.data && (
         <EditProductButton

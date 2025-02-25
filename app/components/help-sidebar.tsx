@@ -33,12 +33,17 @@ export function HelpSidebarSection({
   content,
 }: {
   title: string;
-  content: string;
+  content: string | string[];
 }) {
+  const contents = Array.isArray(content) ? content : [content];
   return (
-    <div className="grid gap-1">
+    <div className="grid gap-2">
       <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="text-sm text-muted-foreground">{content}</p>
+      {contents.map((c, index) => (
+        <p key={index} className="text-sm text-muted-foreground indent-2">
+          {c}
+        </p>
+      ))}
     </div>
   );
 }
