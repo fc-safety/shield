@@ -182,9 +182,6 @@ function ProductRequestForm({
     submit(data, {
       path: `/api/proxy/product-requests`,
       id: undefined,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

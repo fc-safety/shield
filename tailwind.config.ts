@@ -100,6 +100,10 @@ export default {
           DEFAULT: "hsl(var(--important))",
           foreground: "hsl(var(--important-foreground))",
         },
+        pending: {
+          DEFAULT: "hsl(var(--pending))",
+          foreground: "hsl(var(--pending-foreground))",
+        },
       },
     },
     screens: {

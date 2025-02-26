@@ -184,9 +184,6 @@ export default function SiteDetailsForm({
     submit(data, {
       path: "/api/proxy/sites",
       id: site?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

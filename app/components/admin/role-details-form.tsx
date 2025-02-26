@@ -55,9 +55,6 @@ export default function RoleDetailsForm({
     submit(data, {
       path: `/api/proxy/roles`,
       id: role?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

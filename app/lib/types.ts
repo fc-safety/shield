@@ -39,14 +39,18 @@ export interface GetPermissionsResponse {
 
 export interface ClientUser {
   id: string;
+  createdOn: string;
+  modifiedOn: string;
   idpId: string;
   active: boolean;
   firstName: string;
   lastName: string;
   name: string;
   email: string;
+  phoneNumber?: string;
   username?: string;
   siteExternalId: string;
   clientExternalId: string;
   roleName?: string;
+  position?: string;
 }

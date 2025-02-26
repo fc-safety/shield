@@ -76,6 +76,15 @@ export const disconnectableSchema = z
     }
   );
 
+export const fromAddressSchema = z.union([
+  z.string().email(),
+  z
+    .string()
+    .regex(
+      /^[A-Za-z0-9\s]+\s<[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}>$/
+    ),
+]);
+
 export const createClientSchema = z.object({
   externalId: z
     .string()
@@ -186,6 +195,11 @@ export const createUserSchema = z.object({
   firstName: z.string().nonempty(),
   lastName: z.string().nonempty(),
   email: z.string().email(),
+  phoneNumber: z
+    .string()
+    .regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number.")
+    .optional(),
+  position: z.string().optional(),
   siteExternalId: z.string().nonempty(),
 });
 export const createUserSchemaResolver = zodResolver(createUserSchema);
@@ -647,6 +661,10 @@ export const updatePermissionMappingSchema = z.object({
 export const updatePermissionMappingSchemaResolver = zodResolver(
   updatePermissionMappingSchema
 );
+
+export const globalSettingsSchema = z.object({
+  systemEmailFromAddress: fromAddressSchema,
+});
 
 // TODO: Below is old code, may need to be updated
 export const buildReportSchema = z.object({

@@ -124,9 +124,6 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
     submit(data, {
       path: "/api/proxy/tags",
       id: tag?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

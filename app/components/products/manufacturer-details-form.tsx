@@ -69,9 +69,6 @@ export default function ManufacturerDetailsForm({
     submit(data, {
       path: "/api/proxy/manufacturers",
       id: manufacturer?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

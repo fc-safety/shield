@@ -84,9 +84,6 @@ export default function ConsumableDetailsForm({
     submit(data, {
       path: `/api/proxy/consumables`,
       id: consumable?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

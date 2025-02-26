@@ -72,9 +72,6 @@ export default function AnsiCategoryDetailsForm({
     submit(data, {
       path: "/api/proxy/ansi-categories",
       id: ansiCategory?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

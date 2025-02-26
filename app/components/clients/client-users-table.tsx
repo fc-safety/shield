@@ -14,6 +14,7 @@ import { useOpenData } from "~/hooks/use-open-data";
 import type { Site } from "~/lib/models";
 import type { updateUserSchema } from "~/lib/schema";
 import type { ClientUser } from "~/lib/types";
+import { beautifyPhone } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
@@ -45,13 +46,12 @@ export default function ClientUsersTable({
   const editUser = useOpenData<ClientUser>();
   const updateRole = useOpenData<ClientUser>();
 
-  const { submit } = useModalSubmit();
+  const { createOrUpdateJson: submit } = useModalSubmit();
   const setUserActive = useCallback(
     (id: string, data: Pick<z.infer<typeof updateUserSchema>, "active">) => {
       submit(data, {
-        method: "patch",
-        action: `/api/proxy/clients/${clientId}/users/${id}?_throw=false`,
-        encType: "application/json",
+        path: `/api/proxy/clients/${clientId}/users`,
+        id,
       });
     },
     [clientId, submit]
@@ -79,6 +79,23 @@ export default function ClientUsersTable({
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
+      },
+      {
+        accessorKey: "phoneNumber",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => {
+          const phoneNumber = getValue() as string;
+          return phoneNumber ? beautifyPhone(phoneNumber) : <>&mdash;</>;
+        },
+      },
+      {
+        accessorKey: "position",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
       },
       {
         accessorKey: "roleName",

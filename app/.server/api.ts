@@ -12,6 +12,7 @@ import {
   type Product,
   type ProductCategory,
   type ProductRequest,
+  type SettingsBlock,
   type Site,
   type Tag,
 } from "~/lib/models";
@@ -21,6 +22,7 @@ import {
   createInspectionSchema,
   createProductRequestSchema,
   createRoleSchema,
+  globalSettingsSchema,
   resolveAlertSchema,
   updateAnsiCategorySchema,
   updateInspectionRouteSchema,
@@ -263,4 +265,11 @@ export const api = {
   roles: CRUD.for<Role, typeof createRoleSchema, typeof updateRoleSchema>(
     "/roles"
   ).all(),
+  settings: {
+    getGlobal: (request: Request) =>
+      authenticatedData<SettingsBlock<z.infer<typeof globalSettingsSchema>>>(
+        request,
+        [FetchOptions.url("/settings/global").get().build()]
+      ),
+  },
 };

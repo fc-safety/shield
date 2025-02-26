@@ -80,9 +80,6 @@ export default function ProductCategoryDetailsForm({
     submit(data, {
       path: "/api/proxy/product-categories",
       id: productCategory?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

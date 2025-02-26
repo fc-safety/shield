@@ -11,6 +11,7 @@ import {
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { api } from "~/.server/api";
+import ActiveIndicator2 from "~/components/active-indicator-2";
 import EditClientButton from "~/components/clients/edit-client-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { Button } from "~/components/ui/button";
@@ -51,6 +52,23 @@ export default function ClientsIndex({
   const columns: ColumnDef<Client>[] = useMemo(
     () => [
       {
+        accessorKey: "status",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => {
+          const status = (getValue() as string).toLowerCase() as Lowercase<
+            Client["status"]
+          >;
+          return (
+            <div className="capitalize flex items-center gap-2">
+              <ActiveIndicator2 active={status} />
+              {status}
+            </div>
+          );
+        },
+      },
+      {
         accessorKey: "name",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
@@ -67,16 +85,6 @@ export default function ClientsIndex({
         id: "sites",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
-        ),
-      },
-      {
-        accessorKey: "status",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-
-        cell: ({ getValue }) => (
-          <span className="capitalize">{String(getValue()).toLowerCase()}</span>
         ),
       },
       {

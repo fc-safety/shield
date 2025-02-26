@@ -3,6 +3,7 @@ import { format, isAfter } from "date-fns";
 import { Boxes, Building2, Pencil, Star, Users, Warehouse } from "lucide-react";
 import { Link, useRouteLoaderData } from "react-router";
 import { api } from "~/.server/api";
+import ActiveIndicator2 from "~/components/active-indicator-2";
 import ClientUsersTable from "~/components/clients/client-users-table";
 import EditClientButton from "~/components/clients/edit-client-button";
 import EditSiteButton from "~/components/clients/edit-site-button";
@@ -72,7 +73,18 @@ export default function ClientDetails({
                     details={[
                       {
                         label: "Status",
-                        value: client.status,
+                        value: (
+                          <div className="capitalize flex items-center gap-2">
+                            <ActiveIndicator2
+                              active={
+                                client.status.toLowerCase() as Lowercase<
+                                  Client["status"]
+                                >
+                              }
+                            />
+                            {client.status.toLowerCase()}
+                          </div>
+                        ),
                       },
                       {
                         label: "Name",

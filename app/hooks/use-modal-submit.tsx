@@ -21,29 +21,46 @@ export function useModalSubmit<T>({
   const submit = (...args: Parameters<typeof fetcher.submit>) => {
     errorReported.current = false;
     setIsSubmitting(true);
+    submissionCaptured.current = false;
     fetcher.submit(...args);
+  };
+
+  const submitJson = (
+    data: Parameters<typeof fetcher.submit>[0],
+    options: {
+      path: string;
+      query?: QueryParams;
+      throw?: boolean;
+      method?: NonNullable<Parameters<typeof fetcher.submit>[1]>["method"];
+    }
+  ) => {
+    const cleanedPath = buildPath(options.path, {
+      _throw: String(!!options.throw),
+      ...options.query,
+    });
+
+    return submit(data, {
+      method: options.method ?? "post",
+      action: cleanedPath,
+      encType: "application/json",
+    });
   };
 
   const createOrUpdateJson = (
     data: Parameters<typeof fetcher.submit>[0],
-    options: {
-      path: string;
+    options: Parameters<typeof submitJson>[1] & {
       id?: string | null;
-      query?: QueryParams;
     }
   ) => {
     let cleanedPath = options.path;
     if (options.id) {
       cleanedPath = `${cleanedPath.replace(/\/+$/, "")}/${options.id}`;
     }
-    if (options.query) {
-      cleanedPath = buildPath(cleanedPath, options.query);
-    }
-    submissionCaptured.current = false;
-    return submit(data, {
-      method: options.id ? "patch" : "post",
-      action: cleanedPath,
-      encType: "application/json",
+
+    return submitJson(data, {
+      ...options,
+      method: options.method ?? (options.id ? "patch" : "post"),
+      path: cleanedPath,
     });
   };
 
@@ -77,6 +94,7 @@ export function useModalSubmit<T>({
   return {
     fetcher,
     submit,
+    submitJson,
     createOrUpdateJson,
     isSubmitting,
   };

@@ -243,9 +243,6 @@ export default function AssetQuestionDetailForm({
     submit(data, {
       path: `/api/proxy/${resourceName}/${parentId}/questions`,
       id: assetQuestion?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

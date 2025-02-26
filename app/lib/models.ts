@@ -360,3 +360,8 @@ export interface ConsumableQuestionConfig extends BaseModel {
 
 export const ConsumableMappingTypes = ["EXPIRATION_DATE"] as const;
 export type ConsumableMappingType = (typeof ConsumableMappingTypes)[number];
+
+export interface SettingsBlock<T = Record<string, unknown>> extends BaseModel {
+  friendlyId: string;
+  data: T;
+}

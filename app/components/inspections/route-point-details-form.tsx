@@ -140,9 +140,6 @@ export default function RoutePointDetailsForm({
     submit(data, {
       path: `/api/proxy/inspection-routes/${routeId}/points`,
       id: routePoint?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

@@ -61,6 +61,9 @@ body {
     --urgent-foreground: 0 0% 98%;
     --important: 50.7 95.1% 47.8%;
     --important-foreground: 0 0% 37.6%;
+
+    --pending: 50.5 99.2% 47.3%;
+    --pending-foreground: 0 0% 98%;
   }
   .dark,
   :root[class~="dark"] {
@@ -111,6 +114,9 @@ body {
     --urgent-foreground: 0 85.7% 97.3%;
     --important: 44.8 100% 48.8%;
     --important-foreground: 0 0% 36.9%;
+
+    --pending: 50.4 99.2% 42.9%;
+    --pending-foreground: 0 0% 98%;
   }
 }
 

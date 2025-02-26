@@ -77,9 +77,6 @@ export default function RouteDetailsForm({
     submit(data, {
       path: "/api/proxy/inspection-routes",
       id: route?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

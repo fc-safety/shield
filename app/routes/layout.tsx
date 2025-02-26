@@ -11,6 +11,7 @@ import {
   Nfc,
   Package,
   Route as RouteIcon,
+  Settings,
   Shapes,
   Shield,
   Users,
@@ -20,12 +21,14 @@ import { API_BASE_URL, APP_HOST } from "~/.server/config";
 import { requireUserSession } from "~/.server/sessions";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
+import HelpSidebar from "~/components/help-sidebar";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
+import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import { can, isGlobalAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
@@ -126,6 +129,11 @@ export default function Layout({
           url: "admin/roles",
           icon: Users,
         },
+        {
+          title: "Settings",
+          url: "admin/settings",
+          icon: Settings,
+        },
       ],
       hide: !user || !isGlobalAdmin(user),
     },
@@ -148,22 +156,25 @@ export default function Layout({
 
   return (
     <AuthProvider user={user} apiUrl={apiUrl} appHost={appHost}>
-      <SidebarProvider>
-        <AppSidebar groups={groups} />
-        <SidebarInset>
-          <Header
-            leftSlot={
-              <>
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 h-4" />
-              </>
-            }
-          />
-          <main className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow">
-            <Outlet />
-          </main>
-          <Footer />
-        </SidebarInset>
+      <SidebarProvider defaultOpenState={{ help: false }}>
+        <HelpSidebarProvider>
+          <AppSidebar groups={groups} />
+          <SidebarInset>
+            <Header
+              leftSlot={
+                <>
+                  <SidebarTrigger className="-ml-1" />
+                  <Separator orientation="vertical" className="mr-2 h-4" />
+                </>
+              }
+            />
+            <main className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow">
+              <Outlet />
+            </main>
+            <Footer />
+          </SidebarInset>
+          <HelpSidebar />
+        </HelpSidebarProvider>
       </SidebarProvider>
     </AuthProvider>
   );

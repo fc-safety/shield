@@ -126,9 +126,6 @@ export default function ClientDetailsForm({
     submit(data, {
       path: "/api/proxy/clients",
       id: client?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

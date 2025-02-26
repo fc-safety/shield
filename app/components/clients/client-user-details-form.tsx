@@ -17,6 +17,7 @@ import {
   type updateUserSchema,
 } from "~/lib/schema";
 import type { ClientUser } from "~/lib/types";
+import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { Input } from "../ui/input";
 import SiteCombobox from "./site-combobox";
 
@@ -64,9 +65,6 @@ export default function ClientUserDetailsForm({
     submit(data, {
       path: `/api/proxy/clients/${clientId}/users`,
       id: user?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 
@@ -107,6 +105,39 @@ export default function ClientUserDetailsForm({
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input {...field} type="email" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name={"phoneNumber"}
+          render={({ field: { value, onChange, ...field } }) => (
+            <FormItem>
+              <FormLabel>Phone</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  value={beautifyPhone(value ?? "")}
+                  onChange={(e) =>
+                    onChange(stripPhone(beautifyPhone(e.target.value)))
+                  }
+                  type="phone"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="position"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Position</FormLabel>
+              <FormControl>
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

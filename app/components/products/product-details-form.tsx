@@ -164,9 +164,6 @@ export default function ProductDetailsForm({
       submit(data, {
         path: "/api/proxy/products",
         id: product?.id,
-        query: {
-          _throw: "false",
-        },
       });
 
     if (image) {

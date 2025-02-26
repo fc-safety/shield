@@ -81,9 +81,6 @@ export default function AssetDetailsForm({
     submit(data, {
       path: "/api/proxy/assets",
       id: asset?.id,
-      query: {
-        _throw: "false",
-      },
     });
   };
 

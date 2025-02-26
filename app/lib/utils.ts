@@ -254,3 +254,7 @@ export const objectsEqual = (a: unknown, b: unknown) => {
   }
   return true;
 };
+
+export function capitalize(active: string) {
+  return active.charAt(0).toUpperCase() + active.slice(1);
+}

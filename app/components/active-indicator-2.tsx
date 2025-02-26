@@ -1,29 +1,27 @@
-import { cn } from "~/lib/utils";
+import { capitalize, cn } from "~/lib/utils";
 
 export default function ActiveIndicator2({
-  active,
+  active: activeProp,
   className,
 }: {
-  active: boolean;
+  active: boolean | "active" | "inactive" | "pending";
   className?: string;
 }) {
+  const status =
+    activeProp === true
+      ? "active"
+      : activeProp === false
+      ? "inactive"
+      : activeProp;
   return (
-    // <span
-    //   title={active ? "Active" : "Inactive"}
-    //   className={cn("h-max w-max", className)}
-    // >
-    //   {active ? (
-    //     <Power className="size-4 text-primary" />
-    //   ) : (
-    //     <PowerOff className="size-4 text-muted-foreground" />
-    //   )}
-    // </span>
     <span
-      title={active ? "Active" : "Inactive"}
+      title={capitalize(status)}
       className={cn(
         "inline-block size-2.5 rounded-full border",
-        active
+        status === "active"
           ? "bg-primary border-primary"
+          : status === "pending"
+          ? "bg-pending border-pending"
           : "bg-muted border-muted-foreground/80",
         className
       )}
