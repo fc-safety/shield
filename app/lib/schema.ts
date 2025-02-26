@@ -242,6 +242,7 @@ export const createAnsiCategorySchema = z.object({
   name: z.string().nonempty(),
   description: z.string().optional(),
   color: z.string().optional(),
+  icon: z.string().optional(),
 });
 
 export const updateAnsiCategorySchema = createAnsiCategorySchema

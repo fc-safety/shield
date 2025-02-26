@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AnsiCategory, ResultsPage } from "~/lib/models";
+import Icon from "../icons/icon";
 import { ResponsiveCombobox } from "../responsive-combobox";
 import EditAnsiCategoryButton from "./edit-ansi-category-button";
 
@@ -100,10 +101,18 @@ export function AnsiCategoryDisplay({
   return (
     <div>
       <div className="flex items-center gap-2">
-        <div
-          className="size-4 rounded-sm"
-          style={{ backgroundColor: ansiCategory.color ?? "gray" }}
-        />
+        {ansiCategory.icon ? (
+          <Icon
+            iconId={ansiCategory.icon}
+            color={ansiCategory.color}
+            className="text-lg"
+          />
+        ) : (
+          <div
+            className="size-4 rounded-sm"
+            style={{ backgroundColor: ansiCategory.color ?? "gray" }}
+          />
+        )}
         {ansiCategory.name}
       </div>
     </div>

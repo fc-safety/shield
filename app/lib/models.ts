@@ -326,6 +326,7 @@ export interface AnsiCategory extends BaseModel {
   name: string;
   description: string | null;
   color: string | null;
+  icon: string | null;
 }
 
 export const ProductTypes = ["CONSUMABLE", "PRIMARY"] as const;

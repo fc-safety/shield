@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   type Alert,
+  type AnsiCategory,
   type Asset,
   type AssetQuestion,
   type Client,
@@ -15,11 +16,13 @@ import {
   type Tag,
 } from "~/lib/models";
 import {
+  createAnsiCategorySchema,
   createInspectionRouteSchema,
   createInspectionSchema,
   createProductRequestSchema,
   createRoleSchema,
   resolveAlertSchema,
+  updateAnsiCategorySchema,
   updateInspectionRouteSchema,
   updateRoleSchema,
   type baseSiteSchema,
@@ -239,7 +242,11 @@ export const api = {
           .build(),
       ]),
   },
-
+  ansiCategories: CRUD.for<
+    AnsiCategory,
+    typeof createAnsiCategorySchema,
+    typeof updateAnsiCategorySchema
+  >("/ansi-categories").all(),
   // CLIENTS & SITES
   clients: {
     ...CRUD.for<Client, typeof createClientSchema, typeof updateClientSchema>(

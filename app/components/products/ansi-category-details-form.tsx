@@ -7,6 +7,7 @@ import {
   createAnsiCategorySchema,
   updateAnsiCategorySchema,
 } from "~/lib/schema";
+import IconSelector from "../icons/icon-selector";
 import { Button } from "../ui/button";
 import {
   Form,
@@ -58,7 +59,10 @@ export default function AnsiCategoryDetailsForm({
 
   const {
     formState: { isDirty, isValid },
+    watch,
   } = form;
+
+  const color = watch("color");
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
     onSubmitted,
@@ -112,6 +116,25 @@ export default function AnsiCategoryDetailsForm({
               <FormLabel>Color</FormLabel>
               <FormControl>
                 <Input {...field} type="color" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="icon"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Icon</FormLabel>
+              <FormControl>
+                <IconSelector
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  color={color}
+                  className="flex"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

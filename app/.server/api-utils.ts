@@ -141,6 +141,16 @@ export class DataResponse<T> extends Promise<ReturnType<typeof data<T>>> {
     ) as DataResponse<Awaited<U>>;
   }
 
+  public mergeWith<U>(other: DataResponse<U>) {
+    return DataResponse.all([this, other]).then(
+      ([
+        { data: thisData, init: thisInit },
+        { data: otherData, init: otherInit },
+      ]) =>
+        data([thisData, otherData], mergeInit(thisInit, otherInit) ?? undefined)
+    ) as DataResponse<[T, U]>;
+  }
+
   public mergeInit(init: ResponseInit | null) {
     return this.then(({ data: thisData, init: thisInit }) =>
       data(thisData, mergeInit(thisInit, init) ?? undefined)

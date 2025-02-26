@@ -1,5 +1,12 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { CornerDownRight, MoreHorizontal, Shapes, Trash } from "lucide-react";
+import {
+  CornerDownRight,
+  HardHat,
+  MoreHorizontal,
+  Pencil,
+  Shapes,
+  Trash,
+} from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { api } from "~/.server/api";
@@ -10,6 +17,7 @@ import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
 import CustomTag from "~/components/products/custom-tag";
+import EditAnsiCategoryButton from "~/components/products/edit-ansi-category-button";
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -25,7 +33,8 @@ import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
-import type { ProductCategory } from "~/lib/models";
+import { useOpenData } from "~/hooks/use-open-data";
+import type { AnsiCategory, ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { getSearchParam } from "~/lib/utils";
@@ -49,14 +58,18 @@ export async function loader({ request }: Route.LoaderArgs) {
     };
   }
 
-  return api.productCategories.list(request, query).mapTo((r) => ({
-    productCategories: r.results,
-    onlyMyProductCategories,
-  }));
+  return api.productCategories
+    .list(request, query)
+    .mergeWith(api.ansiCategories.list(request, { limit: 10000 }))
+    .mapTo(([productCategoryResults, ansiCategoryResults]) => ({
+      productCategories: productCategoryResults.results,
+      ansiCategories: ansiCategoryResults.results,
+      onlyMyProductCategories,
+    }));
 }
 
 export default function ProductCategories({
-  loaderData: { productCategories, onlyMyProductCategories },
+  loaderData: { productCategories, ansiCategories, onlyMyProductCategories },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "product-categories");
@@ -213,41 +226,136 @@ export default function ProductCategories({
   );
   return (
     <>
+      <div className="grid gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <Shapes /> Product Categories
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={columns}
+              data={productCategories}
+              searchPlaceholder="Search categories..."
+              actions={
+                canCreate
+                  ? [<EditProductCategoryButton key="add" />]
+                  : undefined
+              }
+              externalFilters={[
+                <div
+                  key="onlyMyProductCategories"
+                  className="flex items-center space-x-2"
+                >
+                  <Switch
+                    id="onlyMyProductCategories"
+                    checked={onlyMyProductCategories}
+                    onCheckedChange={(checked) =>
+                      setOnlyMyProductCategories(checked)
+                    }
+                  />
+                  <Label htmlFor="onlyMyProductCategories">
+                    Only My Categories
+                  </Label>
+                </div>,
+              ]}
+            />
+          </CardContent>
+        </Card>
+        <AnsiCategoriesCard ansiCategories={ansiCategories} />
+      </div>
+      <ConfirmationDialog {...deleteAction} />
+    </>
+  );
+}
+
+function AnsiCategoriesCard({
+  ansiCategories,
+}: {
+  ansiCategories: AnsiCategory[];
+}) {
+  const editAnsiCategory = useOpenData<AnsiCategory>();
+
+  return (
+    <>
       <Card>
         <CardHeader>
           <CardTitle>
-            <Shapes /> Product Categories
+            <HardHat /> ANSI Categories
           </CardTitle>
         </CardHeader>
         <CardContent>
           <DataTable
-            columns={columns}
-            data={productCategories}
-            searchPlaceholder="Search categories..."
-            actions={
-              canCreate ? [<EditProductCategoryButton key="add" />] : undefined
-            }
-            externalFilters={[
-              <div
-                key="onlyMyProductCategories"
-                className="flex items-center space-x-2"
-              >
-                <Switch
-                  id="onlyMyProductCategories"
-                  checked={onlyMyProductCategories}
-                  onCheckedChange={(checked) =>
-                    setOnlyMyProductCategories(checked)
-                  }
-                />
-                <Label htmlFor="onlyMyProductCategories">
-                  Only My Categories
-                </Label>
-              </div>,
+            columns={[
+              {
+                id: "icon",
+                accessorFn: ({ icon }) => icon,
+                enableSorting: false,
+                header: ({ column, table }) => (
+                  <DataTableColumnHeader
+                    column={column}
+                    table={table}
+                    title="Icon"
+                  />
+                ),
+                cell: ({ row, getValue }) => {
+                  const icon = getValue() as string;
+                  return icon ? (
+                    <Icon
+                      iconId={icon}
+                      color={row.original.color}
+                      className="text-lg"
+                    />
+                  ) : (
+                    <div
+                      className="size-5 rounded-sm"
+                      style={{ backgroundColor: row.original.color ?? "gray" }}
+                    />
+                  );
+                },
+              },
+              {
+                accessorKey: "name",
+                header: ({ column, table }) => (
+                  <DataTableColumnHeader column={column} table={table} />
+                ),
+              },
+              {
+                accessorKey: "description",
+                header: ({ column, table }) => (
+                  <DataTableColumnHeader column={column} table={table} />
+                ),
+                cell: ({ getValue }) => (
+                  <span className="line-clamp-2">
+                    {(getValue() as string) || <>&mdash;</>}
+                  </span>
+                ),
+              },
+              {
+                id: "edit",
+                cell: ({ row }) => (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => editAnsiCategory.openData(row.original)}
+                  >
+                    <Pencil />
+                    Edit
+                  </Button>
+                ),
+              },
             ]}
+            data={ansiCategories}
           />
         </CardContent>
       </Card>
-      <ConfirmationDialog {...deleteAction} />
+      <EditAnsiCategoryButton
+        ansiCategory={editAnsiCategory.data ?? undefined}
+        open={editAnsiCategory.open}
+        onOpenChange={editAnsiCategory.setOpen}
+        trigger={<></>}
+      />
     </>
   );
 }
