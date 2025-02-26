@@ -25,6 +25,7 @@ import {
 } from "~/lib/schema";
 import { slugify } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
+import AnsiCategoryCombobox from "./ansi-category-combobox";
 import ManufacturerSelector from "./manufacturer-selector";
 import { ProductImage } from "./product-card";
 import ProductCategorySelector from "./product-category-selector";
@@ -96,6 +97,9 @@ export default function ProductDetailsForm({
             : undefined,
           parentProduct: parentProduct
             ? { connect: { id: parentProduct.id } }
+            : undefined,
+          ansiCategory: product.ansiCategory
+            ? { connect: { id: product.ansiCategory.id } }
             : undefined,
         }
       : FORM_DEFAULTS,
@@ -273,6 +277,26 @@ export default function ProductDetailsForm({
             </FormItem>
           )}
         />
+        {parentProduct && (
+          <FormField
+            control={form.control}
+            name="ansiCategory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ANSI Category</FormLabel>
+                <FormControl>
+                  <AnsiCategoryCombobox
+                    value={field.value?.connect?.id}
+                    onValueChange={(id) => field.onChange({ connect: { id } })}
+                    onBlur={field.onBlur}
+                    className="flex w-full"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="sku"

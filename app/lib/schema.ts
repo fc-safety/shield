@@ -33,6 +33,29 @@ export const optionalConnectSchema = z
   .optional()
   .transform((v) => (v?.connect.id ? v : undefined));
 
+export const optionalConnectOrCreateSchema = <S extends z.Schema>(
+  createSchema: S
+) =>
+  z
+    .object({
+      connect: z.object({
+        id: z.string().optional(),
+      }),
+      create: createSchema,
+    })
+    .partial()
+    .transform(
+      (v): { connect?: { id: string }; create?: z.infer<S> } | undefined => {
+        if (v.create !== undefined) {
+          return {
+            create: v.create,
+          };
+        }
+
+        return v.connect?.id ? { connect: { id: v.connect.id } } : undefined;
+      }
+    );
+
 export const disconnectableSchema = z
   .object({
     connect: z.object({
@@ -214,6 +237,17 @@ export const updateManufacturerSchemaResolver = zodResolver(
   updateManufacturerSchema
 );
 
+export const createAnsiCategorySchema = z.object({
+  id: z.string().optional(),
+  name: z.string().nonempty(),
+  description: z.string().optional(),
+  color: z.string().optional(),
+});
+
+export const updateAnsiCategorySchema = createAnsiCategorySchema
+  .extend({ id: z.string() })
+  .partial();
+
 export const createProductSchema = z.object({
   id: z.string().optional(),
   active: z.boolean().default(true),
@@ -235,6 +269,9 @@ export const createProductSchema = z.object({
   }),
   client: optionalConnectSchema,
   parentProduct: optionalConnectSchema,
+  ansiCategory: optionalConnectOrCreateSchema(
+    createAnsiCategorySchema
+  ).optional(),
 });
 export const createProductSchemaResolver = zodResolver(createProductSchema);
 

@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ChevronsUpDown, Loader2 } from "lucide-react";
+import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import {
   useEffect,
   useState,
@@ -197,6 +197,7 @@ interface SelectOptionsProps {
   loading?: boolean;
   shouldFilter?: boolean;
   errorMessage?: string;
+  onCreate?: () => void;
 }
 
 function SelectOptions({
@@ -210,6 +211,7 @@ function SelectOptions({
   loading = false,
   shouldFilter = true,
   errorMessage,
+  onCreate,
 }: SelectOptionsProps) {
   return (
     <Command shouldFilter={shouldFilter}>
@@ -221,6 +223,12 @@ function SelectOptions({
       <CommandList>
         <CommandEmpty>{noResultsText}</CommandEmpty>
         <CommandGroup>
+          {onCreate && (
+            <CommandItem onSelect={onCreate}>
+              <Plus />
+              Create New
+            </CommandItem>
+          )}
           {loading ? (
             <CommandItem disabled>
               <Loader2 className="animate-spin" />

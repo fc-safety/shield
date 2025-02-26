@@ -322,6 +322,12 @@ export interface Manufacturer extends BaseModel {
   client?: Client;
 }
 
+export interface AnsiCategory extends BaseModel {
+  name: string;
+  description: string | null;
+  color: string | null;
+}
+
 export const ProductTypes = ["CONSUMABLE", "PRIMARY"] as const;
 
 export interface Product extends BaseModel {
@@ -340,8 +346,9 @@ export interface Product extends BaseModel {
   assetQuestions?: AssetQuestion[];
   client?: Client | null;
 
-  // TODO: Add consumable support
   consumableProducts?: Product[];
+  ansiCategory?: AnsiCategory | null;
+  ansiCategoryId: string | null;
 }
 
 export interface ConsumableQuestionConfig extends BaseModel {

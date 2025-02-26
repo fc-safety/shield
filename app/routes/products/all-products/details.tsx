@@ -17,6 +17,7 @@ import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
 import AssetQuestionsTable from "~/components/products/asset-questions-table";
 import CustomTag from "~/components/products/custom-tag";
 import EditProductButton from "~/components/products/edit-product-button";
@@ -295,6 +296,23 @@ function SubproductsTable({
             ),
           },
           {
+            accessorKey: "ansiCategory.name",
+            id: "ansiCategory",
+            header: ({ column, table }) => (
+              <DataTableColumnHeader
+                column={column}
+                table={table}
+                title="ANSI"
+              />
+            ),
+            cell: ({ row }) =>
+              row.original.ansiCategory ? (
+                <AnsiCategoryDisplay ansiCategory={row.original.ansiCategory} />
+              ) : (
+                <>&mdash;</>
+              ),
+          },
+          {
             id: "actions",
             cell: ({ row }) => {
               const subproduct = row.original;
@@ -350,6 +368,9 @@ function SubproductsTable({
         data={subproducts ?? []}
         initialState={{
           columnVisibility: {
+            ansiCategory: subproducts.some(
+              (subproduct) => subproduct.ansiCategory
+            ),
             actions: canUpdate || canDelete,
           },
         }}

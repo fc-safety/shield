@@ -48,6 +48,7 @@ import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
+import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
 import ProductCard from "~/components/products/product-card";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
@@ -491,13 +492,15 @@ function ConsumablesTable({
         ),
         cell: ({ getValue }) => {
           const value = getValue() as string;
-          return (
+          return value && isValid(parseISO(value)) ? (
             <span title={format(value, "PPpp")}>
               {formatDistanceToNow(value, {
                 addSuffix: true,
                 includeSeconds: true,
               })}
             </span>
+          ) : (
+            <>&mdash;</>
           );
         },
       },
@@ -506,6 +509,21 @@ function ConsumablesTable({
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
+      },
+      {
+        accessorKey: "product.ansiCategory.name",
+        id: "ansiCategory",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} title="ANSI" />
+        ),
+        cell: ({ row }) =>
+          row.original.product.ansiCategory ? (
+            <AnsiCategoryDisplay
+              ansiCategory={row.original.product.ansiCategory}
+            />
+          ) : (
+            <>&mdash;</>
+          ),
       },
       {
         id: "actions",
