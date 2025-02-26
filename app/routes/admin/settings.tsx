@@ -42,7 +42,6 @@ export default function AdminSettings({
   loaderData: { data: settings },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const { fetch } = useAuthenticatedFetch();
 
   const form = useForm<TForm>({
     values: settings,
@@ -66,14 +65,6 @@ export default function AdminSettings({
     });
   };
 
-  const { mutate: sendTestEmail, isPending: isSendingTestEmail } = useMutation({
-    mutationFn: () =>
-      handleSendTestEmail(fetch, user.email, systemEmailFromAddress),
-    onSuccess: () => {
-      toast.success(`Test email sent successfully to ${user.email}!`);
-    },
-  });
-
   return (
     <Card>
       <CardHeader>
@@ -83,7 +74,7 @@ export default function AdminSettings({
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
-          <CardContent>
+          <CardContent className="space-y-4">
             <FormField
               control={form.control}
               name="systemEmailFromAddress"
@@ -93,27 +84,39 @@ export default function AdminSettings({
                   <FormControl>
                     <div className="flex items-center gap-2">
                       <Input {...field} />
-                      <Button
-                        variant="outline"
-                        type="button"
-                        onClick={() => sendTestEmail()}
-                        disabled={isSendingTestEmail}
-                      >
-                        {isSendingTestEmail ? (
-                          <Loader2 className="animate-spin" />
-                        ) : (
-                          <SendHorizonal />
-                        )}
-                        Test
-                      </Button>
+                      <SendTestEmailButton to={user.email} from={field.value} />
                     </div>
                   </FormControl>
                   <FormDescription>
-                    This address will be used to send emails from Shield. Can be
-                    an email address or a friendly name in the following format:
+                    The from address for all emails sent from Shield. Can be an
+                    email address or a friendly name in the following format:
                     <span className="px-1 py-0.5 bg-muted rounded-md ml-1">
                       Your Name &lt;sender@notify.fc-safety.com&gt;
                     </span>
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="productRequestToAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Product Request To Address</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Input {...field} />
+                      <SendTestEmailButton
+                        to={field.value}
+                        from={systemEmailFromAddress}
+                        template="new-product-request"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Product request emails will be sent to this address.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -134,12 +137,48 @@ export default function AdminSettings({
   );
 }
 
+function SendTestEmailButton({
+  to,
+  from,
+  template,
+}: {
+  to: string;
+  from: string;
+  template?: "test" | "new-product-request";
+}) {
+  const { fetch } = useAuthenticatedFetch();
+
+  const { mutate: sendTestEmail, isPending: isSendingTestEmail } = useMutation({
+    mutationFn: (to: string) => handleSendTestEmail(fetch, to, from, template),
+    onSuccess: (_, to) => {
+      toast.success(`Test email sent successfully to ${to}!`);
+    },
+  });
+
+  return (
+    <Button
+      variant="outline"
+      type="button"
+      onClick={() => sendTestEmail(to)}
+      disabled={isSendingTestEmail}
+    >
+      {isSendingTestEmail ? (
+        <Loader2 className="animate-spin" />
+      ) : (
+        <SendHorizonal />
+      )}
+      Test
+    </Button>
+  );
+}
+
 const handleSendTestEmail = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>,
   to: string,
-  from: string
+  from: string,
+  template: "test" | "new-product-request" = "test"
 ) =>
-  fetch("/notifications/send-test-email", {
+  fetch(`/notifications/send-test-email?template=${template}`, {
     method: "POST",
     body: JSON.stringify({ to, from }),
     headers: {

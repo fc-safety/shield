@@ -664,6 +664,7 @@ export const updatePermissionMappingSchemaResolver = zodResolver(
 
 export const globalSettingsSchema = z.object({
   systemEmailFromAddress: fromAddressSchema,
+  productRequestToAddress: z.string().email(),
 });
 
 // TODO: Below is old code, may need to be updated

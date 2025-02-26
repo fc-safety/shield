@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { getSelectColumn } from "~/components/data-table/columns";
@@ -157,11 +158,11 @@ export default function AdminProductRequestsIndex({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
-                <DropdownMenuItem>
-                  {/* <Link to={`/assets/${asset.id}`}> */}
-                  <CornerDownRight />
-                  Details
-                  {/* </Link> */}
+                <DropdownMenuItem asChild>
+                  <Link to={request.id}>
+                    <CornerDownRight />
+                    Details
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => updateStatus.openData([request])}
