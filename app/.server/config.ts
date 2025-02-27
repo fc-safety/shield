@@ -1,45 +1,41 @@
-const notEmpty = (value: string | undefined, errorMessage?: string) => {
-  if (value !== undefined && value !== "") {
-    return value;
-  }
+import { z } from "zod";
 
-  throw new Error(errorMessage || "String cannot be empty");
-};
+const configSchema = z.object({
+  // General
+  APP_HOST: z.string(),
 
-const getNotEmptyVar = (name: string) =>
-  notEmpty(process.env[name], `Environment variable ${name} is required`);
+  // Authentication
+  CLIENT_ID: z.string(),
+  CLIENT_SECRET: z.string(),
+  ISSUER_URL: z.string(),
+  USERINFO_URL: z.string(),
+  LOGOUT_URL: z.string(),
+  REDIRECT_URL: z.string(),
+  SESSION_SECRET: z.string(),
 
-// General
-export const APP_HOST = getNotEmptyVar("APP_HOST");
+  // API
+  API_BASE_URL: z.string().transform((value) => value.replace(/\/+$/, "")),
 
-// Authentication
-export const CLIENT_ID = getNotEmptyVar("CLIENT_ID");
-export const CLIENT_SECRET = getNotEmptyVar("CLIENT_SECRET");
-export const ISSUER_URL = getNotEmptyVar("ISSUER_URL");
-export const USERINFO_URL = getNotEmptyVar("USERINFO_URL");
-export const LOGOUT_URL = getNotEmptyVar("LOGOUT_URL");
-export const REDIRECT_URL = getNotEmptyVar("REDIRECT_URL");
-export const SESSION_SECRET = getNotEmptyVar("SESSION_SECRET");
+  // Cookies
+  COOKIE_SECRET: z.string(),
 
-// API
-export const API_BASE_URL = getNotEmptyVar("API_BASE_URL").replace(/\/+$/, "");
+  // Address Support
+  ZIPCODESTACK_API_KEY: z.string(),
 
-// Cookies
-export const COOKIE_SECRET = getNotEmptyVar("COOKIE_SECRET");
+  // Google Maps
+  GOOGLE_MAPS_API_KEY: z.string(),
 
-// Address Support
-export const ZIPCODESTACK_API_KEY = getNotEmptyVar("ZIPCODESTACK_API_KEY");
+  // AWS
+  AWS_ACCESS_KEY_ID: z.string(),
+  AWS_ACCESS_KEY_SECRET: z.string(),
+  AWS_REGION: z.string(),
+  AWS_PUBLIC_BUCKET: z.string(),
+  AWS_PUBLIC_CDN_URL: z.string(),
+  AWS_PRIVATE_BUCKET: z.string(),
+  AWS_PRIVATE_CDN_URL: z.string(),
+  AWS_PRIVATE_CDN_KEY_PAIR_ID: z.string(),
+  AWS_PRIVATE_CDN_PRIVATE_KEY: z.string(),
+  AWS_PRIVATE_OBJECT_EXPIRATION_SECONDS: z.coerce.number().default(60 * 60),
+});
 
-// Google Maps
-export const GOOGLE_MAPS_API_KEY = getNotEmptyVar("GOOGLE_MAPS_API_KEY");
-
-// AWS
-export const AWS_UPLOAD_PUBLIC_S3_ACCESS_KEY_ID = getNotEmptyVar(
-  "AWS_UPLOAD_PUBLIC_S3_ACCESS_KEY_ID"
-);
-export const AWS_SECRET_ACCESS_KEY = getNotEmptyVar(
-  "AWS_UPLOAD_PUBLIC_S3_SECRET_ACCESS_KEY"
-);
-export const AWS_REGION = getNotEmptyVar("AWS_REGION");
-export const AWS_PUBLIC_BUCKET = getNotEmptyVar("AWS_PUBLIC_BUCKET");
-export const AWS_PUBLIC_CDN_URL = getNotEmptyVar("AWS_PUBLIC_CDN_URL");
+export const config = configSchema.parse(process.env);

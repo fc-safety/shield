@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import { getSearchParams } from "~/lib/utils";
 import { type TPermission } from "../lib/permissions";
-import { CLIENT_ID, CLIENT_SECRET, ISSUER_URL, REDIRECT_URL } from "./config";
+import { config } from "./config";
 
 export interface Tokens {
   accessToken: string;
@@ -58,11 +58,11 @@ class KeycloakOAuth2Strategy<User> extends OAuth2Strategy<User> {
 }
 
 export const strategy = KeycloakOAuth2Strategy.discover<Tokens>(
-  ISSUER_URL,
+  config.ISSUER_URL,
   {
-    clientId: CLIENT_ID,
-    clientSecret: CLIENT_SECRET,
-    redirectURI: REDIRECT_URL,
+    clientId: config.CLIENT_ID,
+    clientSecret: config.CLIENT_SECRET,
+    redirectURI: config.REDIRECT_URL,
     scopes: ["openid", "email", "profile"], // optional
   },
   async ({ tokens }) => {

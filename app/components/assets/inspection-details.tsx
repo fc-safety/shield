@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Inspection } from "~/lib/models";
 import DataList from "../data-list";
+import DisplayInspectionValue from "./display-inspection-value";
 
 interface InspectionDetailsProps {
   inspection: Inspection;
@@ -115,7 +116,7 @@ export default function InspectionDetails({
             label: response.assetQuestion?.prompt ?? (
               <span className="italic">Unknown</span>
             ),
-            value: response.value,
+            value: <DisplayInspectionValue value={response.value} />,
           })) ?? []
         }
         defaultValue={<>&mdash;</>}

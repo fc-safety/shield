@@ -23,6 +23,7 @@ import {
   updateProductSchemaResolver,
   type updateProductSchema,
 } from "~/lib/schema";
+import { buildPath } from "~/lib/urls";
 import { slugify } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
 import AnsiCategoryCombobox from "./ansi-category-combobox";
@@ -133,10 +134,15 @@ export default function ProductDetailsForm({
   >({
     mutationFn: async ({ data, image }: { data: TForm; image: File }) => {
       const ext = image.type.split("/").pop();
+
+      // Build key from product (and parent product if it exists).
       const key = `product-images/${format(new Date(), "yyyy-MM-dd")}_${
         parentProduct?.name ? `${slugify(parentProduct.name)}_` : ""
       }${slugify(data.name ?? "unnamed")}${ext ? `.${ext}` : ""}`;
-      const getUrlResponse = await fetch(`/api/image-upload-url?key=${key}`);
+
+      const getUrlResponse = await fetch(
+        buildPath("/api/image-upload-url", { key, public: "" })
+      );
       if (getUrlResponse.ok) {
         const { getUrl, putUrl } = await getUrlResponse.json();
         const uploadResponse = await fetch(putUrl, {

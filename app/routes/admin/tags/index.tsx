@@ -5,7 +5,7 @@ import { useCallback, useMemo } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { api } from "~/.server/api";
-import { APP_HOST } from "~/.server/config";
+import { config } from "~/.server/config";
 import NewTagButton from "~/components/assets/edit-tag-button";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -20,7 +20,7 @@ export function loader({ request }: Route.LoaderArgs) {
     .list(request, { limit: 10000 }, { context: "admin" })
     .mapTo((tags) => ({
       tags,
-      appHost: APP_HOST,
+      appHost: config.APP_HOST,
     }));
 }
 

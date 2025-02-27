@@ -79,10 +79,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const activeRouteId = qp.get("routeId");
   if (activeRouteId) {
     inspectionSession.set("activeRoute", activeRouteId);
+  } else {
+    inspectionSession.unset("activeRoute");
   }
   const activeSessionId = qp.get("sessionId");
   if (activeSessionId) {
     inspectionSession.set("activeSession", activeSessionId);
+  } else {
+    inspectionSession.unset("activeSession");
   }
 
   // Prepare to pass active route and session to backend via query params.
@@ -536,11 +540,15 @@ function InspectionRouteCard({
     if (!routeDisabled) {
       if (activeSession) {
         setActionQueryParams({ sessionId: activeSession.id });
-      } else if (activeRoute) {
+        return;
+      }
+
+      if (activeRoute) {
         setActionQueryParams({ routeId: activeRoute.id });
+        return;
       }
     }
-    return setActionQueryParams(null);
+    setActionQueryParams(null);
   }, [activeSession, activeRoute, routeDisabled, setActionQueryParams]);
 
   return (

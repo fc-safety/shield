@@ -17,7 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { data, Outlet } from "react-router";
-import { API_BASE_URL, APP_HOST } from "~/.server/config";
+import { config } from "~/.server/config";
 import { requireUserSession } from "~/.server/sessions";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
@@ -38,8 +38,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   return data(
     {
       user,
-      apiUrl: API_BASE_URL,
-      appHost: APP_HOST,
+      apiUrl: config.API_BASE_URL,
+      appHost: config.APP_HOST,
     },
     {
       headers: {

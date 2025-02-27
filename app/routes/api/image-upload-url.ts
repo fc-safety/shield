@@ -1,47 +1,68 @@
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createId } from "@paralleldrive/cuid2";
-import {
-  AWS_PUBLIC_BUCKET,
-  AWS_PUBLIC_CDN_URL,
-  AWS_REGION,
-  AWS_SECRET_ACCESS_KEY,
-  AWS_UPLOAD_PUBLIC_S3_ACCESS_KEY_ID,
-} from "~/.server/config";
+import { api } from "~/.server/api";
+import { config } from "~/.server/config";
 import { requireUserSession } from "~/.server/sessions";
-import { getSearchParam } from "~/lib/utils";
+import { buildUrl } from "~/lib/urls";
+import { getSearchParams } from "~/lib/utils";
 import type { Route } from "./+types/image-upload-url";
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireUserSession(request);
+  let init: ResponseInit | null = null;
 
-  const keyStart = getSearchParam(request, "key") ?? "";
+  const searchParams = getSearchParams(request);
+
+  const keyStart = searchParams.get("key") ?? "";
+  const isPublic = searchParams.get("public") !== null;
+
+  const internalPrefix = "uploads/";
+
+  const key = `${internalPrefix}${uniquifyKey(keyStart)}`;
+
+  if (!isPublic) {
+    // If is private, store ownership information in the database.
+    const { init: thisInit } = await api.vaultOwnerships.create(request, {
+      key,
+    });
+    init = thisInit;
+  }
+
+  const putUrl = await getSignedUrl(
+    new S3Client({
+      region: config.AWS_REGION,
+      credentials: {
+        accessKeyId: config.AWS_ACCESS_KEY_ID,
+        secretAccessKey: config.AWS_ACCESS_KEY_SECRET,
+      },
+    }),
+    new PutObjectCommand({
+      Bucket: isPublic ? config.AWS_PUBLIC_BUCKET : config.AWS_PRIVATE_BUCKET,
+      Key: key,
+    })
+  );
+
+  // Public files can be accessed directly from the CDN, but private files
+  // need to be accessed via the vault ownership endpoint.
+  const getUrl = isPublic
+    ? `${config.AWS_PUBLIC_CDN_URL}/${key}`
+    : buildUrl(
+        `/action/access-vault/${encodeURIComponent(key)}`,
+        config.APP_HOST
+      );
+
+  return Response.json({ putUrl, getUrl }, init ?? undefined);
+}
+
+const uniquifyKey = (keyStart: string) => {
   let ext: string | undefined;
   let rest: string[] = [];
   if (keyStart.includes(".")) {
     [ext, ...rest] = keyStart.split(".").reverse();
   }
-  const key = `${rest.join("_")}_${createId()}${ext ? `.${ext}` : ""}`.replace(
+  return `${rest.join("_")}_${createId()}${ext ? `.${ext}` : ""}`.replace(
     /^\/+/,
     ""
   );
-
-  const keyWithPrefix = `uploads/${key}`;
-  const putUrl = await getSignedUrl(
-    new S3Client({
-      region: AWS_REGION,
-      credentials: {
-        accessKeyId: AWS_UPLOAD_PUBLIC_S3_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-      },
-    }),
-    new PutObjectCommand({
-      Bucket: AWS_PUBLIC_BUCKET,
-      Key: keyWithPrefix,
-    })
-  );
-
-  const getUrl = `${AWS_PUBLIC_CDN_URL}/${keyWithPrefix}`;
-
-  return Response.json({ putUrl, getUrl });
-}
+};

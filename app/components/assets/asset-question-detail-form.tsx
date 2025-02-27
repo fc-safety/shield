@@ -42,6 +42,7 @@ import {
   type createAssetQuestionSchema,
   type updateAssetQuestionSchema,
 } from "~/lib/schema";
+import type { ResponseValueImage } from "~/lib/types";
 import { cn, humanize } from "~/lib/utils";
 import AssetQuestionResponseTypeInput from "./asset-question-response-input";
 import ConsumableCombobox from "./consumable-combobox";
@@ -692,10 +693,12 @@ function AlertTriggerInput({
       </div>
       {(typeof operand === "string" || typeof operand === "number") && (
         <AssetQuestionResponseTypeInput
-          valueType={determineValueTypeFromOperator(
-            operator,
-            valueType ?? "BINARY"
-          )}
+          valueType={
+            determineValueTypeFromOperator(
+              operator,
+              valueType ?? "BINARY"
+            ) as Exclude<AssetQuestionResponseType, "IMAGE">
+          }
           onValueChange={handleChangeOperand}
           onBlur={onBlur}
           value={operand}
@@ -770,7 +773,10 @@ const allowedOperatorsForValueType: Record<
   IMAGE: ["empty", "notEmpty"],
 };
 
-const cleanOperand = (opr: string, opd: string | number | true) => {
+const cleanOperand = (
+  opr: string,
+  opd: string | number | true | ResponseValueImage
+) => {
   if (["empty", "notEmpty"].includes(opr)) {
     return true as const;
   }

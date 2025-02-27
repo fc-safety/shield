@@ -1,5 +1,5 @@
 import { authenticatedData } from "~/.server/api-utils";
-import { API_BASE_URL } from "~/.server/config";
+import { config } from "~/.server/config";
 import { buildUrl } from "~/lib/urls";
 import { getSearchParams, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/proxy";
@@ -33,7 +33,7 @@ const proxy = async ({
       {
         url: buildUrl(
           pathSplat,
-          API_BASE_URL,
+          config.API_BASE_URL,
           Object.fromEntries(query.entries())
         ),
         options: {

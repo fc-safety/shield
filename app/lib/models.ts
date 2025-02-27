@@ -1,3 +1,5 @@
+import type { ResponseValueImage } from "./types";
+
 export interface ResultsPage<T> {
   results: T[];
   count: number;
@@ -49,7 +51,7 @@ export interface Consumable extends BaseModel {
 }
 
 export interface AssetQuestionResponse extends BaseModel {
-  value: string | number;
+  value: string | number | ResponseValueImage;
   assetQuestion?: AssetQuestion;
   assetQuestionId: string;
 }
@@ -365,3 +367,21 @@ export interface SettingsBlock<T = Record<string, unknown>> extends BaseModel {
   friendlyId: string;
   data: T;
 }
+
+export interface VaultOwnership extends BaseModel {
+  key: string;
+  buckektName: string | null;
+  accessType: VaultAccessType;
+  ownerId: string;
+  siteId: string;
+  clientId: string;
+}
+
+export const VaultAccessTypes = [
+  "PUBLIC",
+  "CLIENT",
+  "CLIENT_SITE",
+  "CLIENT_OWNER",
+  "STRICT_OWNER",
+] as const;
+export type VaultAccessType = (typeof VaultAccessTypes)[number];

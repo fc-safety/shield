@@ -54,3 +54,7 @@ export interface ClientUser {
   roleName?: string;
   position?: string;
 }
+
+export interface ResponseValueImage {
+  urls: string[];
+}

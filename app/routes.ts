@@ -29,9 +29,10 @@ export default [
   ]),
 
   // Action Routes
-  ...prefix("action", [route("set-theme", "./routes/actions/set-theme.ts")]),
   ...prefix("action", [
+    route("set-theme", "./routes/actions/set-theme.ts"),
     route("refresh-auth", "./routes/actions/refresh-auth.ts"),
+    route("access-vault/*", "./routes/actions/access-vault.ts"),
   ]),
 
   // API Routes

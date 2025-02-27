@@ -1,6 +1,6 @@
 import { redirect, type Session } from "react-router";
 import { strategy } from "~/.server/authenticator";
-import { APP_HOST, CLIENT_ID, LOGOUT_URL } from "~/.server/config";
+import { config } from "~/.server/config";
 import { logger } from "~/.server/logger";
 import { userSessionStorage } from "~/.server/sessions";
 import { getSearchParam } from "~/lib/utils";
@@ -8,7 +8,8 @@ import type { Route } from "./+types/logout";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const returnTo = getSearchParam(request, "returnTo");
-  const postLogoutUrl = URL.parse(returnTo ?? "/", APP_HOST)?.toString() ?? "";
+  const postLogoutUrl =
+    URL.parse(returnTo ?? "/", config.APP_HOST)?.toString() ?? "";
 
   let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
   try {
@@ -34,8 +35,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     await strategy.then((s) => s.revokeToken(tokens.accessToken));
   }
 
-  const logoutUrl = URL.parse(LOGOUT_URL);
-  logoutUrl?.searchParams.set("client_id", CLIENT_ID);
+  const logoutUrl = URL.parse(config.LOGOUT_URL);
+  logoutUrl?.searchParams.set("client_id", config.CLIENT_ID);
   logoutUrl?.searchParams.set("post_logout_redirect_uri", postLogoutUrl);
 
   return redirect(logoutUrl?.toString() ?? "/", {

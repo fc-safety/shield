@@ -2,7 +2,7 @@ import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { ResultsPage } from "~/lib/models";
 import { buildUrl, type PathParams, type QueryParams } from "~/lib/urls";
-import { API_BASE_URL } from "./config";
+import { config } from "./config";
 import { logger } from "./logger";
 import {
   refreshTokensOrRelogin,
@@ -53,7 +53,7 @@ export class FetchOptions {
     path: TPath,
     params?: QueryParams & PathParams<TPath>
   ) {
-    return new FetchOptions(buildUrl(path, API_BASE_URL, params));
+    return new FetchOptions(buildUrl(path, config.API_BASE_URL, params));
   }
 
   public get() {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZIPCODESTACK_API_KEY } from "~/.server/config";
+import { config } from "~/.server/config";
 import type { Route } from "./+types/query-zip";
 
 //    "postal_code": "84651",
@@ -39,7 +39,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const url = `https://api.zipcodestack.com/v1/search?codes=${zip}&country=us`;
   const headers = new Headers({
-    apikey: ZIPCODESTACK_API_KEY,
+    apikey: config.ZIPCODESTACK_API_KEY,
   });
   const response = await fetch(url, { headers });
 

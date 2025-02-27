@@ -8,7 +8,7 @@ import {
 import { createThemeSessionResolver } from "remix-themes";
 import { isTokenExpired } from "~/lib/users";
 import { buildUser, strategy, type Tokens } from "./authenticator";
-import { COOKIE_SECRET, SESSION_SECRET } from "./config";
+import { config } from "./config";
 import { logger } from "./logger";
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -69,7 +69,7 @@ const themeSessionStorage = createCookieSessionStorage({
     path: "/",
     httpOnly: true,
     sameSite: "lax",
-    secrets: [COOKIE_SECRET],
+    secrets: [config.COOKIE_SECRET],
     ...(isProduction ? { domain, secure: true } : {}),
   },
 });
@@ -93,7 +93,7 @@ export const inspectionSessionStorage =
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secrets: [COOKIE_SECRET],
+      secrets: [config.COOKIE_SECRET],
       ...(isProduction ? { domain, secure: true } : {}),
     },
   });
@@ -109,7 +109,7 @@ export const userSessionStorage = createCookieSessionStorage<{
     path: "/",
     httpOnly: true,
     sameSite: "lax",
-    secrets: [SESSION_SECRET],
+    secrets: [config.SESSION_SECRET],
     ...(isProduction ? { domain, secure: true } : {}),
     decode: (value) => {
       // If decompression fails, return the original value.

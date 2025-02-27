@@ -15,6 +15,7 @@ import {
   type SettingsBlock,
   type Site,
   type Tag,
+  type VaultOwnership,
 } from "~/lib/models";
 import {
   createAnsiCategorySchema,
@@ -22,11 +23,13 @@ import {
   createInspectionSchema,
   createProductRequestSchema,
   createRoleSchema,
+  createVaultOwnershipSchema,
   globalSettingsSchema,
   resolveAlertSchema,
   updateAnsiCategorySchema,
   updateInspectionRouteSchema,
   updateRoleSchema,
+  updateVaultOwnershipSchema,
   type baseSiteSchema,
   type createAssetQuestionSchema,
   type createAssetSchema,
@@ -271,5 +274,16 @@ export const api = {
         request,
         [FetchOptions.url("/settings/global").get().build()]
       ),
+  },
+  vaultOwnerships: {
+    ...CRUD.for<
+      VaultOwnership,
+      typeof createVaultOwnershipSchema,
+      typeof updateVaultOwnershipSchema
+    >("/vault-ownerships").all(),
+    getByKey: (request: Request, key: string) =>
+      authenticatedData<VaultOwnership>(request, [
+        FetchOptions.url("/vault-ownerships/key/:key", { key }).get().build(),
+      ]),
   },
 };

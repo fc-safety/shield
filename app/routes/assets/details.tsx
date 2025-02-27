@@ -29,7 +29,7 @@ import { useMemo, type PropsWithChildren } from "react";
 import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
-import { GOOGLE_MAPS_API_KEY } from "~/.server/config";
+import { config } from "~/.server/config";
 import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
@@ -37,6 +37,7 @@ import {
   AlertsStatusBadge,
   InspectionStatusBadge,
 } from "~/components/assets/asset-status-badge";
+import DisplayInspectionValue from "~/components/assets/display-inspection-value";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import EditConsumableButton from "~/components/assets/edit-consumable-button";
 import ProductRequests, {
@@ -119,7 +120,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
   return api.assets.get(request, id).mapTo((asset) => ({
     asset,
-    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
     defaultTab: getSearchParam(request, "tab") ?? "consumables",
   }));
 };
@@ -270,9 +271,7 @@ export default function AssetDetails({
                             available.
                           </span>
                         ),
-                        value: isValid(parseISO(String(r.value)))
-                          ? format(String(r.value), "PPpp")
-                          : r.value,
+                        value: <DisplayInspectionValue value={r.value} />,
                       })) ?? []
                     }
                   />

@@ -7,9 +7,11 @@ import {
   InspectionStatuses,
   ProductRequestStatuses,
   ProductTypes,
+  VaultAccessTypes,
   type AssetQuestion,
   type AssetQuestionResponse,
 } from "./models";
+import type { ResponseValueImage } from "./types";
 
 export const addressSchema = z.object({
   id: z.string().optional(),
@@ -495,9 +497,13 @@ export const updateAssetQuestionSchemaResolver = zodResolver(
   updateAssetQuestionSchema
 );
 
+export const responseValueImageSchema = z.object({
+  urls: z.array(z.string()),
+}) satisfies z.Schema<ResponseValueImage>;
+
 export const createAssetQuestionResponseSchema = z.object({
   id: z.string().optional(),
-  value: z.union([z.string(), z.number().safe()]),
+  value: z.union([z.string(), z.number().safe(), responseValueImageSchema]),
   assetQuestionId: z.string().nonempty(),
 });
 export const createAssetQuestionResponseSchemaResolver = zodResolver(
@@ -527,6 +533,9 @@ const buildZodTypeFromQuestion = (question: AssetQuestion) => {
     return z.union([
       z.string().nonempty("This question is required"),
       z.number().safe(),
+      z.object({
+        urls: z.array(z.string()).min(1),
+      }),
     ]);
   }
 
@@ -666,6 +675,14 @@ export const globalSettingsSchema = z.object({
   systemEmailFromAddress: fromAddressSchema,
   productRequestToAddress: z.string().email(),
 });
+
+export const createVaultOwnershipSchema = z.object({
+  key: z.string().nonempty(),
+  bucketName: z.string().optional(),
+  accessType: z.enum(VaultAccessTypes).optional(),
+});
+
+export const updateVaultOwnershipSchema = createVaultOwnershipSchema.partial();
 
 // TODO: Below is old code, may need to be updated
 export const buildReportSchema = z.object({
