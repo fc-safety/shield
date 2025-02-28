@@ -13,6 +13,7 @@ interface DataListProps {
   defaultValue?: React.ReactNode;
   className?: string;
   fluid?: boolean;
+  emptyListMessage?: string;
 }
 
 export default function DataList({
@@ -21,6 +22,7 @@ export default function DataList({
   defaultValue = "",
   className,
   fluid = false,
+  emptyListMessage = "No data available.",
 }: DataListProps) {
   return (
     <div className={cn("grid gap-4", fluid && "w-full", className)}>
@@ -39,6 +41,11 @@ export default function DataList({
               <dd className="text-sm">{value || defaultValue}</dd>
             </Fragment>
           ))}
+        {details.length === 0 && (
+          <dd className="text-xs italic text-muted-foreground col-span-full text-center">
+            {emptyListMessage}
+          </dd>
+        )}
       </dl>
     </div>
   );

@@ -119,6 +119,7 @@ export default function InspectionDetails({
             value: <DisplayInspectionValue value={response.value} />,
           })) ?? []
         }
+        emptyListMessage="No questions were prompted in this inspection."
         defaultValue={<>&mdash;</>}
       />
       <DataList
