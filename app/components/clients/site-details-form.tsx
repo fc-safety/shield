@@ -14,7 +14,7 @@ import { useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { type ResultsPage, type Site } from "~/lib/models";
 import { baseSiteSchema, getSiteSchema } from "~/lib/schema";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
@@ -176,7 +176,7 @@ export default function SiteDetailsForm({
     );
   }, [subsitesFetcher.data]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

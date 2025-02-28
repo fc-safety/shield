@@ -29,7 +29,7 @@ import {
   HoverCardTrigger,
 } from "~/components/ui/hover-card";
 import useConfirmAction from "~/hooks/use-confirm-action";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client } from "~/lib/models";
 import { beautifyPhone } from "~/lib/utils";
 import type { Route } from "./+types/index";
@@ -41,7 +41,7 @@ export function loader({ request }: Route.LoaderArgs) {
 export default function ClientsIndex({
   loaderData: clients,
 }: Route.ComponentProps) {
-  const { submit: submitDelete } = useModalSubmit({
+  const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete client",
   });
 

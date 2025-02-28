@@ -17,7 +17,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Tag } from "~/lib/models";
 import { buildUrl } from "~/lib/urls";
@@ -44,7 +44,7 @@ export default function AdminTagsIndex({
 
   const editTag = useOpenData<Tag>();
 
-  const { submit: submitDelete } = useModalSubmit({
+  const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete tag",
   });
   const [deleteAction, setDeleteAction] = useConfirmAction({

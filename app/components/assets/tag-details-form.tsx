@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Tag } from "~/lib/models";
 import {
   createTagSchema,
@@ -124,7 +124,7 @@ export default function TagDetailsForm({
     }
   }, [isAddingSequentialTag, onClose, serialNumber, form]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit<
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher<
     DataOrError<Tag>
   >({
     onSubmitted: handleOnSubmitted,

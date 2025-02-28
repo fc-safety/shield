@@ -5,6 +5,7 @@ const AuthContext = createContext<{
   user: User;
   apiUrl: string;
   appHost: string;
+  googleMapsApiKey: string;
 } | null>(null);
 
 export const AuthProvider = ({
@@ -12,13 +13,15 @@ export const AuthProvider = ({
   user,
   apiUrl,
   appHost,
+  googleMapsApiKey,
 }: PropsWithChildren<{
   user: User;
   apiUrl: string;
   appHost: string;
+  googleMapsApiKey: string;
 }>) => {
   return (
-    <AuthContext.Provider value={{ user, apiUrl, appHost }}>
+    <AuthContext.Provider value={{ user, apiUrl, appHost, googleMapsApiKey }}>
       {children}
     </AuthContext.Provider>
   );

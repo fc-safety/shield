@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset } from "~/lib/models";
 import {
   createAssetSchema,
@@ -75,7 +75,7 @@ export default function AssetDetailsForm({
     formState: { isDirty, isValid },
   } = form;
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

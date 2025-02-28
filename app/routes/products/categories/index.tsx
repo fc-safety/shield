@@ -33,7 +33,7 @@ import { Label } from "~/components/ui/label";
 import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AnsiCategory, ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
@@ -82,7 +82,7 @@ export default function ProductCategories({
     [user]
   );
 
-  const { submit: submitDelete } = useModalSubmit({
+  const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete product category",
   });
   const navigate = useNavigate();
@@ -293,7 +293,7 @@ function AnsiCategoriesCard({
 
   const editAnsiCategory = useOpenData<AnsiCategory>();
 
-  const { submit: submitDelete } = useModalSubmit({
+  const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete ANSI category",
   });
   const [deleteAction, setDeleteAction] = useConfirmAction({

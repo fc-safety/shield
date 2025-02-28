@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
 import {
   createManufacturerSchemaResolver,
@@ -61,7 +61,7 @@ export default function ManufacturerDetailsForm({
     formState: { isDirty, isValid },
   } = form;
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

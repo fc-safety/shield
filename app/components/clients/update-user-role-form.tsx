@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import {
   assignUserRoleSchemaResolver,
   type assignUserRoleSchema,
@@ -44,7 +44,7 @@ export default function UpdateUserRoleForm({
     formState: { isDirty, isValid },
   } = form;
 
-  const { submit, isSubmitting } = useModalSubmit({
+  const { submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

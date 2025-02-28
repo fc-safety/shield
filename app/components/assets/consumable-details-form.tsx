@@ -1,7 +1,7 @@
 import { parseISO } from "date-fns";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Consumable } from "~/lib/models";
 import {
   createConsumableSchemaResolver,
@@ -76,7 +76,7 @@ export default function ConsumableDetailsForm({
     formState: { isDirty, isValid },
   } = form;
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

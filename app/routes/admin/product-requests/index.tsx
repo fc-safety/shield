@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import {
   ProductRequestStatuses,
@@ -304,7 +304,7 @@ function UpdateStatusForm({
     ["COMPLETE", "CANCELLED"].includes(r.status)
   );
 
-  const { submit, isSubmitting } = useModalSubmit({
+  const { submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

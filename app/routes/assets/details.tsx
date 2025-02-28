@@ -29,7 +29,6 @@ import { useMemo, type PropsWithChildren } from "react";
 import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
-import { config } from "~/.server/config";
 import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
@@ -71,7 +70,7 @@ import { Label } from "~/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import {
   getAssetAlertsStatus,
@@ -120,13 +119,12 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
   return api.assets.get(request, id).mapTo((asset) => ({
     asset,
-    googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
     defaultTab: getSearchParam(request, "tab") ?? "consumables",
   }));
 };
 
 export default function AssetDetails({
-  loaderData: { asset, googleMapsApiKey, defaultTab },
+  loaderData: { asset, defaultTab },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canUpdate = can(user, "update", "assets");
@@ -400,10 +398,7 @@ export default function AssetDetails({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <AssetInspections
-              inspections={asset.inspections ?? []}
-              googleMapsApiKey={googleMapsApiKey}
-            />
+            <AssetInspections inspections={asset.inspections ?? []} />
           </CardContent>
         </Card>
       )}
@@ -480,7 +475,7 @@ function ConsumablesTable({
 
   const editConsumable = useOpenData<Consumable>();
 
-  const { submit: submitDelete } = useModalSubmit({
+  const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete consumable",
   });
 

@@ -27,7 +27,7 @@ import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { globalSettingsSchema } from "~/lib/schema";
 import type { Route } from "./+types/settings";
 
@@ -56,7 +56,7 @@ export default function AdminSettings({
 
   const systemEmailFromAddress = watch("systemEmailFromAddress");
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit();
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher();
 
   const handleSubmit = (data: TForm) => {
     submit(data, {

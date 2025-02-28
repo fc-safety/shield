@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { toast } from "sonner";
 import { buildErrorDisplay } from "~/lib/error-handling";
 import { buildPath, type QueryParams } from "~/lib/urls";
 
-export function useModalSubmit<T>({
+export function useModalFetcher<T>({
   onSubmitted,
   onData,
   defaultErrorMessage,
@@ -16,14 +16,35 @@ export function useModalSubmit<T>({
   const fetcher = useFetcher();
   const errorReported = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const submissionCaptured = useRef(false);
+  const dataCaptured = useRef(false);
 
   const submit = (...args: Parameters<typeof fetcher.submit>) => {
     errorReported.current = false;
     setIsSubmitting(true);
-    submissionCaptured.current = false;
+    dataCaptured.current = false;
     fetcher.submit(...args);
   };
+
+  const rawLoad = useCallback(
+    (...args: Parameters<typeof fetcher.load>) => {
+      if (fetcher.state !== "idle") return;
+      errorReported.current = false;
+      dataCaptured.current = false;
+      fetcher.load(...args);
+    },
+    [fetcher]
+  );
+
+  const load = useCallback(
+    (options: { path: string; query?: QueryParams; throw?: boolean }) => {
+      const cleanedPath = buildPath(options.path, {
+        _throw: String(!!options.throw),
+        ...options.query,
+      });
+      rawLoad(cleanedPath);
+    },
+    [rawLoad]
+  );
 
   const submitJson = (
     data: Parameters<typeof fetcher.submit>[0],
@@ -65,12 +86,9 @@ export function useModalSubmit<T>({
   };
 
   useEffect(() => {
-    if (
-      fetcher.data &&
-      fetcher.state === "idle" &&
-      !submissionCaptured.current
-    ) {
-      submissionCaptured.current = true;
+    if (fetcher.data && fetcher.state === "idle" && !dataCaptured.current) {
+      console.debug("dataCaptured.current", fetcher.data);
+      dataCaptured.current = true;
       onData?.(fetcher.data as T);
       if (fetcher.data.error) {
         if (!errorReported.current) {
@@ -97,5 +115,8 @@ export function useModalSubmit<T>({
     submitJson,
     createOrUpdateJson,
     isSubmitting,
+    isLoading: fetcher.state !== "idle",
+    load,
+    data: fetcher.data as T | null,
   };
 }

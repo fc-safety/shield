@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useFetcher } from "react-router";
 import type { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type {
   Asset,
   InspectionRoute,
@@ -132,7 +132,7 @@ export default function RoutePointDetailsForm({
     return new Set(route.inspectionRoutePoints.map((point) => point.assetId));
   }, [route?.inspectionRoutePoints]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

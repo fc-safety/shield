@@ -15,7 +15,7 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import {
   type Manufacturer,
   type Product,
@@ -126,7 +126,7 @@ export default function ProductDetailsForm({
   const productType = watch("type");
 
   const { createOrUpdateJson: submit, isSubmitting: isSubmittingData } =
-    useModalSubmit({
+    useModalFetcher({
       onSubmitted,
     });
 

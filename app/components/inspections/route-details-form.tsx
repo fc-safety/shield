@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { InspectionRoute } from "~/lib/models";
 import {
   createInspectionRouteSchema,
@@ -69,7 +69,7 @@ export default function RouteDetailsForm({
     formState: { isDirty, isValid },
   } = form;
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

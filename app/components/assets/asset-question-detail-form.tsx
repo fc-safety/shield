@@ -23,7 +23,7 @@ import { Plus, Trash } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import type { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import {
   AlertLevels,
   AssetQuestionResponseTypes,
@@ -234,7 +234,7 @@ export default function AssetQuestionDetailForm({
     );
   };
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

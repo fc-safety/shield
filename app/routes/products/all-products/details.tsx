@@ -34,7 +34,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Product, ProductCategory } from "~/lib/models";
 import { can, isGlobalAdmin } from "~/lib/users";
@@ -290,7 +290,7 @@ function SubproductsTable({
 
   const editSubproduct = useOpenData<Product>();
 
-  const { submit: submitDelete } = useModalSubmit({
+  const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete subproduct",
   });
 

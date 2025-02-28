@@ -13,7 +13,7 @@ import {
   FormItem,
   FormMessage,
 } from "~/components/ui/form";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { GENERIC_MANUFACTURER_NAME } from "~/lib/constants";
 import type {
@@ -234,7 +234,7 @@ function ProductRequestForm({
     }
   }, [showTabs, ansiCategories]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

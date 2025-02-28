@@ -1,39 +1,18 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
-import { CornerDownRight, Loader2 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
-import { useFetcher } from "react-router";
+import { useMemo } from "react";
 import type { Inspection } from "~/lib/models";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
-import { ResponsiveDialog } from "../responsive-dialog";
-import { Button } from "../ui/button";
-import InspectionDetails from "./inspection-details";
+import AssetInspectionDialog from "./asset-inspection-dialog";
 
 interface AssetHistoryLogsProps {
   inspections: Inspection[];
-  googleMapsApiKey: string;
 }
 
 export default function AssetInspections({
   inspections,
-  googleMapsApiKey,
 }: AssetHistoryLogsProps) {
-  const [inspectionDetailsOpen, setInspectionDetailsOpen] = useState(false);
-  const fetcher = useFetcher<Inspection>();
-
-  const handlePreloadInspectionDetails = useCallback(
-    (id: string) => {
-      if (
-        fetcher.state === "idle" &&
-        (!fetcher.data || fetcher.data.id !== id)
-      ) {
-        fetcher.load(`/api/inspections/${id}`);
-      }
-    },
-    [fetcher]
-  );
-
   const columns: ColumnDef<Inspection>[] = useMemo(
     () => [
       {
@@ -69,52 +48,25 @@ export default function AssetInspections({
       {
         id: "details",
         cell: ({ row }) => (
-          <Button
-            variant="secondary"
-            size="sm"
-            type="button"
-            onMouseEnter={() => handlePreloadInspectionDetails(row.original.id)}
-            onClick={() => setInspectionDetailsOpen(true)}
-          >
-            <CornerDownRight />
-            Details
-          </Button>
+          <AssetInspectionDialog inspectionId={row.original.id} />
         ),
       },
     ],
-    [handlePreloadInspectionDetails]
+    []
   );
 
   return (
-    <>
-      <DataTable
-        data={inspections}
-        columns={columns}
-        initialState={{
-          sorting: [
-            {
-              id: "date",
-              desc: true,
-            },
-          ],
-        }}
-      />
-      <ResponsiveDialog
-        open={inspectionDetailsOpen}
-        onOpenChange={setInspectionDetailsOpen}
-        title="Inspection Details"
-        dialogClassName="sm:max-w-lg"
-        minWidth="578px"
-      >
-        {!fetcher.data || fetcher.state === "loading" ? (
-          <Loader2 className="animate-spin" />
-        ) : (
-          <InspectionDetails
-            inspection={fetcher.data}
-            googleMapsApiKey={googleMapsApiKey}
-          />
-        )}
-      </ResponsiveDialog>
-    </>
+    <DataTable
+      data={inspections}
+      columns={columns}
+      initialState={{
+        sorting: [
+          {
+            id: "date",
+            desc: true,
+          },
+        ],
+      }}
+    />
   );
 }

@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { Form } from "react-router";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
 import {
   createClientSchemaResolver,
@@ -120,7 +120,7 @@ export default function ClientDetailsForm({
     }
   }, [debouncedZip, client, setValue]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 

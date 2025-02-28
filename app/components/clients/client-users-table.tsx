@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { z } from "zod";
-import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Site } from "~/lib/models";
 import type { updateUserSchema } from "~/lib/schema";
@@ -46,7 +46,7 @@ export default function ClientUsersTable({
   const editUser = useOpenData<ClientUser>();
   const updateRole = useOpenData<ClientUser>();
 
-  const { createOrUpdateJson: submit } = useModalSubmit();
+  const { createOrUpdateJson: submit } = useModalFetcher();
   const setUserActive = useCallback(
     (id: string, data: Pick<z.infer<typeof updateUserSchema>, "active">) => {
       submit(data, {
