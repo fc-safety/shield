@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { GENERIC_MANUFACTURER_NAME } from "./constants";
 import {
   AssetQuestionResponseTypes,
   AssetQuestionTypes,
@@ -239,7 +240,15 @@ export const updateProductCategorySchemaResolver = zodResolver(
 export const createManufacturerSchema = z.object({
   id: z.string().optional(),
   active: z.boolean(),
-  name: z.string().nonempty(),
+  name: z
+    .string()
+    .nonempty()
+    .refine(
+      (name) => name.toLowerCase() !== GENERIC_MANUFACTURER_NAME.toLowerCase(),
+      {
+        message: "Manufacturer name cannot be generic.",
+      }
+    ),
   homeUrl: z.string().optional(),
   client: optionalConnectSchema,
 });

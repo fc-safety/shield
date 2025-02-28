@@ -1,15 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
-import type { Product } from "~/lib/models";
 import { ResponsiveDialog } from "../responsive-dialog";
-import ProductDetailsForm from "./product-details-form";
+import ProductDetailsForm, {
+  type ProductDetailsFormProps,
+} from "./product-details-form";
 
-interface EditProductButtonProps {
-  product?: Product;
+interface EditProductButtonProps
+  extends Omit<ProductDetailsFormProps, "onSubmitted"> {
   trigger?: React.ReactNode;
-  canAssignOwnership?: boolean;
-  parentProduct?: Product;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -17,10 +16,11 @@ interface EditProductButtonProps {
 export default function EditProductButton({
   product,
   trigger,
-  canAssignOwnership,
   parentProduct,
+  consumable,
   open: openProp,
   onOpenChange,
+  ...passThroughProps
 }: EditProductButtonProps) {
   const [open, setOpen] = useState(false);
 
@@ -29,7 +29,7 @@ export default function EditProductButton({
       open={openProp ?? open}
       onOpenChange={onOpenChange ?? setOpen}
       title={`${product ? "Edit" : "Add New"} ${
-        parentProduct ? "Subproduct" : "Product"
+        consumable || parentProduct ? "Subproduct" : "Product"
       }`}
       dialogClassName="sm:max-w-lg"
       trigger={
@@ -37,7 +37,7 @@ export default function EditProductButton({
           <Button type="button" size="sm">
             {product ? <Pencil /> : <Plus />}
             {product ? "Edit" : "Add"}{" "}
-            {parentProduct ? "Subproduct" : "Product"}
+            {consumable || parentProduct ? "Subproduct" : "Product"}
           </Button>
         )
       }
@@ -47,8 +47,9 @@ export default function EditProductButton({
           onOpenChange ? onOpenChange(false) : setOpen(false)
         }
         product={product}
-        canAssignOwnership={canAssignOwnership}
         parentProduct={parentProduct}
+        consumable={consumable}
+        {...passThroughProps}
       />
     </ResponsiveDialog>
   );

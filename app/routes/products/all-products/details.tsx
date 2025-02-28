@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Link, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
-import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator from "~/components/active-indicator";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -37,7 +36,7 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { useOpenData } from "~/hooks/use-open-data";
-import type { Product } from "~/lib/models";
+import type { Product, ProductCategory } from "~/lib/models";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
@@ -57,24 +56,25 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  const { user } = await requireUserSession(request);
-
   return api.products.get(request, id).mapTo((product) => {
     return {
       product,
-      userClientId: user.clientId,
     };
   });
 };
 
 export default function ProductDetails({
-  loaderData: { product, userClientId },
+  loaderData: { product },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const globalAdmin = isGlobalAdmin(user);
   const canUpdate =
     can(user, "update", "products") &&
     (isGlobalAdmin(user) || product.client?.externalId === user.clientId);
+  const getCanUpdateCategory = (productCategory: ProductCategory) =>
+    can(user, "update", "product-categories") &&
+    (isGlobalAdmin(user) ||
+      productCategory.client?.externalId === user.clientId);
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
@@ -194,6 +194,39 @@ export default function ProductDetails({
         <Card>
           <CardHeader>
             <CardTitle>
+              <SquareStack />
+              <span>
+                {product.productCategory.shortName ??
+                  product.productCategory.name}{" "}
+                Generic Subproducts
+              </span>
+              <div className="flex-1"></div>
+              {getCanUpdateCategory(product.productCategory) && (
+                <Button variant="link" asChild>
+                  <Link
+                    to={`/products/categories/${product.productCategory.id}`}
+                  >
+                    Manage Category
+                  </Link>
+                </Button>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SubproductsTable
+              readOnly
+              subproducts={
+                product.productCategory.products?.map((p) => ({
+                  ...p,
+                  productCategory: product.productCategory,
+                })) ?? []
+              }
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>
               <ShieldQuestion /> Questions
             </CardTitle>
           </CardHeader>
@@ -216,9 +249,7 @@ export default function ProductDetails({
                 Category Questions
               </span>
               <div className="flex-1"></div>
-              {(globalAdmin ||
-                product.productCategory.client?.externalId ===
-                  userClientId) && (
+              {getCanUpdateCategory(product.productCategory) && (
                 <Button variant="link" asChild>
                   <Link
                     to={`/products/categories/${product.productCategory.id}`}
@@ -246,9 +277,11 @@ export default function ProductDetails({
 function SubproductsTable({
   subproducts,
   parentProduct,
+  readOnly = false,
 }: {
   subproducts: Product[];
-  parentProduct: Product;
+  parentProduct?: Product;
+  readOnly?: boolean;
 }) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "products");
@@ -294,6 +327,7 @@ function SubproductsTable({
                 title="SKU"
               />
             ),
+            cell: ({ getValue }) => getValue() || <>&mdash;</>,
           },
           {
             accessorKey: "ansiCategory.name",
@@ -371,11 +405,11 @@ function SubproductsTable({
             ansiCategory: subproducts.some(
               (subproduct) => subproduct.ansiCategory
             ),
-            actions: canUpdate || canDelete,
+            actions: !readOnly && (canUpdate || canDelete),
           },
         }}
         actions={
-          canCreate
+          !readOnly && canCreate
             ? [
                 <EditProductButton
                   key="add-subproduct"

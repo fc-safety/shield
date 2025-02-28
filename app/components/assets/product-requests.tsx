@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/form";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import { useOpenData } from "~/hooks/use-open-data";
+import { GENERIC_MANUFACTURER_NAME } from "~/lib/constants";
 import type {
   AnsiCategory,
   Product,
@@ -23,6 +24,7 @@ import type {
   ResultsPage,
 } from "~/lib/models";
 import { createProductRequestSchema } from "~/lib/schema";
+import { buildPath } from "~/lib/urls";
 import { cn, dedupById } from "~/lib/utils";
 import { AnsiCategoryDisplay } from "../products/ansi-category-combobox";
 import { ResponsiveDialog } from "../responsive-dialog";
@@ -144,7 +146,23 @@ function ProductRequestForm({
 
   useEffect(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
-      fetcher.load(`/api/proxy/products/?parentProduct[id]=${parentProductId}`);
+      fetcher.load(
+        buildPath("/api/proxy/products/", {
+          OR: [
+            {
+              parentProduct: {
+                id: parentProductId,
+              },
+            },
+            {
+              manufacturer: {
+                name: GENERIC_MANUFACTURER_NAME,
+                parentProductId: "_NULL",
+              },
+            },
+          ],
+        })
+      );
     }
   }, [fetcher, parentProductId]);
 

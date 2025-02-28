@@ -16,7 +16,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
-import { type Product } from "~/lib/models";
+import {
+  type Manufacturer,
+  type Product,
+  type ProductCategory,
+} from "~/lib/models";
 import {
   createProductSchema,
   createProductSchemaResolver,
@@ -32,11 +36,14 @@ import { ProductImage } from "./product-card";
 import ProductCategorySelector from "./product-category-selector";
 
 type TForm = z.infer<typeof createProductSchema | typeof updateProductSchema>;
-interface ProductDetailsFormProps {
+export interface ProductDetailsFormProps {
   product?: Product;
   onSubmitted?: () => void;
   canAssignOwnership?: boolean;
   parentProduct?: Product;
+  productCategory?: ProductCategory;
+  manufacturer?: Manufacturer;
+  consumable?: boolean;
 }
 
 export default function ProductDetailsForm({
@@ -44,21 +51,25 @@ export default function ProductDetailsForm({
   onSubmitted,
   canAssignOwnership = false,
   parentProduct,
+  productCategory,
+  manufacturer,
+  consumable = false,
 }: ProductDetailsFormProps) {
   const isNew = !product;
+  const requireConsumable = Boolean(consumable || parentProduct);
 
   const FORM_DEFAULTS = {
     id: "",
     active: true,
-    type: parentProduct ? "CONSUMABLE" : "PRIMARY",
+    type: requireConsumable ? "CONSUMABLE" : "PRIMARY",
     productCategory: {
       connect: {
-        id: parentProduct?.productCategoryId ?? "",
+        id: productCategory?.id ?? parentProduct?.productCategoryId ?? "",
       },
     },
     manufacturer: {
       connect: {
-        id: parentProduct?.manufacturerId ?? "",
+        id: manufacturer?.id ?? parentProduct?.manufacturerId ?? "",
       },
     },
     name: "",
@@ -109,7 +120,10 @@ export default function ProductDetailsForm({
 
   const {
     formState: { isDirty, isValid },
+    watch,
   } = form;
+
+  const productType = watch("type");
 
   const { createOrUpdateJson: submit, isSubmitting: isSubmittingData } =
     useModalSubmit({
@@ -216,42 +230,46 @@ export default function ProductDetailsForm({
         />
         {!parentProduct && (
           <>
-            <FormField
-              control={form.control}
-              name="productCategory"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <FormControl>
-                    <ProductCategorySelector
-                      value={value?.connect.id}
-                      onValueChange={(id) => onChange({ connect: { id } })}
-                      onBlur={onBlur}
-                      className="flex"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="manufacturer"
-              render={({ field: { value, onChange, onBlur } }) => (
-                <FormItem>
-                  <FormLabel>Manufacturer</FormLabel>
-                  <FormControl>
-                    <ManufacturerSelector
-                      value={value?.connect.id}
-                      onValueChange={(id) => onChange({ connect: { id } })}
-                      onBlur={onBlur}
-                      className="flex"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!productCategory && (
+              <FormField
+                control={form.control}
+                name="productCategory"
+                render={({ field: { value, onChange, onBlur } }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <ProductCategorySelector
+                        value={value?.connect.id}
+                        onValueChange={(id) => onChange({ connect: { id } })}
+                        onBlur={onBlur}
+                        className="flex"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            {!manufacturer && (
+              <FormField
+                control={form.control}
+                name="manufacturer"
+                render={({ field: { value, onChange, onBlur } }) => (
+                  <FormItem>
+                    <FormLabel>Manufacturer</FormLabel>
+                    <FormControl>
+                      <ManufacturerSelector
+                        value={value?.connect.id}
+                        onValueChange={(id) => onChange({ connect: { id } })}
+                        onBlur={onBlur}
+                        className="flex"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </>
         )}
         <FormField
@@ -280,7 +298,7 @@ export default function ProductDetailsForm({
             </FormItem>
           )}
         />
-        {parentProduct && (
+        {(parentProduct || productType === "CONSUMABLE") && (
           <FormField
             control={form.control}
             name="ansiCategory"

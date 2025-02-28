@@ -8,6 +8,7 @@ import type { Product } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
 import Icon from "../icons/icon";
+import { AnsiCategoryDisplay } from "./ansi-category-combobox";
 
 interface ProductCardProps {
   product: Product | undefined;
@@ -67,24 +68,27 @@ export default function ProductCard({
                 )}
               </p>
               <div className="flex gap-2 items-center">
-                {displayCategory && (
-                  <>
-                    {product.productCategory.icon && (
-                      <Icon
-                        iconId={product.productCategory.icon}
-                        color={product.productCategory.color}
-                        className="text-xl"
-                      />
-                    )}
-                    <Badge
-                      className={cn("text-sm uppercase w-max")}
-                      variant="secondary"
-                    >
-                      {product.productCategory.shortName ??
-                        product.productCategory.name}
-                    </Badge>
-                  </>
-                )}
+                {displayCategory &&
+                  (product.ansiCategory ? (
+                    <AnsiCategoryDisplay ansiCategory={product.ansiCategory} />
+                  ) : (
+                    <>
+                      {product.productCategory.icon && (
+                        <Icon
+                          iconId={product.productCategory.icon}
+                          color={product.productCategory.color}
+                          className="text-xl"
+                        />
+                      )}
+                      <Badge
+                        className={cn("text-sm uppercase w-max")}
+                        variant="secondary"
+                      >
+                        {product.productCategory.shortName ??
+                          product.productCategory.name}
+                      </Badge>
+                    </>
+                  ))}
                 <div className="flex-1"></div>
                 <ActiveIndicator2
                   active={product.active}
