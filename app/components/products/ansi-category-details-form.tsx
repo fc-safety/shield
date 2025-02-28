@@ -77,7 +77,13 @@ export default function AnsiCategoryDetailsForm({
 
   return (
     <Form {...form}>
-      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.stopPropagation();
+          form.handleSubmit(handleSubmit)(e);
+        }}
+      >
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}

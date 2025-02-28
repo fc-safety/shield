@@ -74,7 +74,7 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
             : undefined,
         }
       : FORM_DEFAULTS,
-    mode: "onBlur",
+    mode: "onChange",
   });
 
   const {

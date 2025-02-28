@@ -40,7 +40,7 @@ type TForm = z.infer<
 > & {
   routeId?: string;
 };
-interface RoutePointDetailsFormProps {
+export interface RoutePointDetailsFormProps {
   route?: InspectionRoute;
   asset?: Asset;
   routePoint?: InspectionRoutePoint;

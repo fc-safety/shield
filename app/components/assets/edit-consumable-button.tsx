@@ -1,14 +1,8 @@
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { Consumable } from "~/lib/models";
+import { ResponsiveDialog } from "../responsive-dialog";
 import ConsumableDetailsForm from "./consumable-details-form";
 
 interface EditConsumableButtonProps {
@@ -30,30 +24,28 @@ export default function EditConsumableButton({
 }: EditConsumableButtonProps) {
   const [open, setOpen] = useState(false);
   return (
-    <Dialog open={openProp ?? open} onOpenChange={onOpenChange ?? setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
+    <ResponsiveDialog
+      open={openProp ?? open}
+      onOpenChange={onOpenChange ?? setOpen}
+      title={consumable ? "Edit Consumable" : "Add New Consumable"}
+      dialogClassName="sm:max-w-lg"
+      trigger={
+        trigger ?? (
           <Button type="button" size="sm">
             {consumable ? <Pencil /> : <Plus />}
             {consumable ? "Edit" : "Add"} Consumable
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {consumable ? "Edit" : "Add New"} Consumable
-          </DialogTitle>
-        </DialogHeader>
-        <ConsumableDetailsForm
-          onSubmitted={() =>
-            onOpenChange ? onOpenChange(false) : setOpen(false)
-          }
-          consumable={consumable}
-          assetId={assetId}
-          parentProductId={parentProductId}
-        />
-      </DialogContent>
-    </Dialog>
+        )
+      }
+    >
+      <ConsumableDetailsForm
+        onSubmitted={() =>
+          onOpenChange ? onOpenChange(false) : setOpen(false)
+        }
+        consumable={consumable}
+        assetId={assetId}
+        parentProductId={parentProductId}
+      />
+    </ResponsiveDialog>
   );
 }

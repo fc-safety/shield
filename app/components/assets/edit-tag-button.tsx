@@ -1,14 +1,8 @@
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { Tag } from "~/lib/models";
+import { ResponsiveDialog } from "../responsive-dialog";
 import TagDetailsForm from "./tag-details-form";
 
 interface EditTagButtonProps {
@@ -19,21 +13,21 @@ interface EditTagButtonProps {
 export default function EditTagButton({ tag, trigger }: EditTagButtonProps) {
   const [open, setOpen] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={setOpen}
+      title={tag ? "Edit Tag" : "Add New Tag"}
+      dialogClassName="sm:max-w-lg"
+      trigger={
+        trigger ?? (
           <Button type="button" size="sm">
             {tag ? <Pencil /> : <Plus />}
             {tag ? "Edit" : "Add"} Tag
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{tag ? "Edit" : "Add New"} Tag</DialogTitle>
-        </DialogHeader>
-        <TagDetailsForm onClose={() => setOpen(false)} tag={tag} />
-      </DialogContent>
-    </Dialog>
+        )
+      }
+    >
+      <TagDetailsForm onClose={() => setOpen(false)} tag={tag} />
+    </ResponsiveDialog>
   );
 }

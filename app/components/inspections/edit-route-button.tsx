@@ -1,14 +1,8 @@
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { InspectionRoute } from "~/lib/models";
+import { ResponsiveDialog } from "../responsive-dialog";
 import RouteDetailsForm from "./route-details-form";
 
 interface EditRouteButtonProps {
@@ -22,21 +16,21 @@ export default function EditRouteButton({
 }: EditRouteButtonProps) {
   const [open, setOpen] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={setOpen}
+      title={route ? "Edit Route" : "Add New Route"}
+      dialogClassName="sm:max-w-lg"
+      trigger={
+        trigger ?? (
           <Button type="button" size="sm">
             {route ? <Pencil /> : <Plus />}
             {route ? "Edit" : "Add"} Route
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{route ? "Edit" : "Add New"} Route</DialogTitle>
-        </DialogHeader>
-        <RouteDetailsForm onSubmitted={() => setOpen(false)} route={route} />
-      </DialogContent>
-    </Dialog>
+        )
+      }
+    >
+      <RouteDetailsForm onSubmitted={() => setOpen(false)} route={route} />
+    </ResponsiveDialog>
   );
 }

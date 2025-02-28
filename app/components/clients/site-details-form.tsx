@@ -24,7 +24,7 @@ import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
 
 type TForm = z.infer<typeof baseSiteSchema>;
-interface SiteDetailsFormProps {
+export interface SiteDetailsFormProps {
   site?: Site;
   clientId: string;
   parentSiteId?: string;

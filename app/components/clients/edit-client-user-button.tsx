@@ -1,16 +1,9 @@
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { ClientUser } from "~/lib/types";
+import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
 import ClientUserDetailsForm from "./client-user-details-form";
-
 interface EditUserButtonProps {
   user?: ClientUser;
   trigger?: React.ReactNode;
@@ -26,26 +19,26 @@ export default function EditUserButton({
 }: EditUserButtonProps) {
   const [open, setOpen] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger ?? (
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={setOpen}
+      title={user ? "Edit User" : "Add New User"}
+      dialogClassName="sm:max-w-lg"
+      trigger={
+        trigger ?? (
           <Button type="button" size="sm">
             {user ? <Pencil /> : <Plus />}
             {user ? "Edit" : "Add"} User
           </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{user ? "Edit" : "Add New"} User</DialogTitle>
-        </DialogHeader>
-        <ClientUserDetailsForm
-          onSubmitted={() => setOpen(false)}
-          user={user}
-          clientId={clientId}
-          siteExternalId={siteExternalId}
-        />
-      </DialogContent>
-    </Dialog>
+        )
+      }
+    >
+      <ClientUserDetailsForm
+        onSubmitted={() => setOpen(false)}
+        user={user}
+        clientId={clientId}
+        siteExternalId={siteExternalId}
+      />
+    </ResponsiveDialog>
   );
 }

@@ -1,28 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
-import type {
-  Asset,
-  InspectionRoute,
-  InspectionRoutePoint,
-} from "~/lib/models";
+import type { InspectionRoutePoint } from "~/lib/models";
 import { ResponsiveDialog } from "../responsive-dialog";
-import RoutePointDetailsForm from "./route-point-details-form";
+import RoutePointDetailsForm, {
+  type RoutePointDetailsFormProps,
+} from "./route-point-details-form";
 
-interface EditRoutePointButtonProps {
-  route?: InspectionRoute;
-  asset?: Asset;
+interface EditRoutePointButtonProps
+  extends Omit<RoutePointDetailsFormProps, "onSubmitted"> {
   routePoint?: InspectionRoutePoint;
   trigger?: React.ReactNode;
-  filterRoute?: (route: InspectionRoute) => boolean;
 }
 
 export default function EditRoutePointButton({
-  route,
-  asset,
   routePoint,
   trigger,
-  filterRoute,
+  ...passThroughProps
 }: EditRoutePointButtonProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -41,10 +35,8 @@ export default function EditRoutePointButton({
     >
       <RoutePointDetailsForm
         onSubmitted={() => setOpen(false)}
-        route={route}
-        asset={asset}
         routePoint={routePoint}
-        filterRoute={filterRoute}
+        {...passThroughProps}
       />
     </ResponsiveDialog>
   );
