@@ -93,16 +93,22 @@ export default function TagDetailsForm({
 
   useEffect(() => {
     if (!clientId) {
-      form.setValue("site", { disconnect: true }, { shouldValidate: true });
-      form.setValue("asset", { disconnect: true }, { shouldValidate: true });
+      form.setValue("site", isNew ? undefined : { disconnect: true }, {
+        shouldValidate: true,
+      });
+      form.setValue("asset", isNew ? undefined : { disconnect: true }, {
+        shouldValidate: true,
+      });
     }
-  }, [clientId, form]);
+  }, [clientId, form, isNew]);
 
   useEffect(() => {
     if (!siteId) {
-      form.setValue("asset", { disconnect: true }, { shouldValidate: true });
+      form.setValue("asset", isNew ? undefined : { disconnect: true }, {
+        shouldValidate: true,
+      });
     }
-  }, [siteId, form]);
+  }, [siteId, form, isNew]);
 
   const [recentlySavedTag, setRecentlySavedTag] = useState<Tag | null>(null);
 
@@ -122,7 +128,8 @@ export default function TagDetailsForm({
     DataOrError<Tag>
   >({
     onSubmitted: handleOnSubmitted,
-    onData: ({ data }) => setRecentlySavedTag(data ?? null),
+    onData: ({ data }) =>
+      isAddingSequentialTag && setRecentlySavedTag(data ?? null),
   });
 
   const handleSubmit = (data: TForm) => {
@@ -134,9 +141,15 @@ export default function TagDetailsForm({
 
   return (
     <FormProvider {...form}>
-      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          setIsAddingSequentialTag(false);
+          form.handleSubmit(handleSubmit)(e);
+        }}
+      >
         {recentlySavedTag && (
-          <Card>
+          <Card className="mt-4">
             <CardHeader>
               <DataList
                 title="Recently Saved Tag"
@@ -188,7 +201,11 @@ export default function TagDetailsForm({
                   value={field.value?.connect?.id}
                   onValueChange={(id) =>
                     field.onChange(
-                      id ? { connect: { id } } : { disconnect: true }
+                      id
+                        ? { connect: { id } }
+                        : isNew
+                        ? undefined
+                        : { disconnect: true }
                     )
                   }
                   onBlur={field.onBlur}
@@ -213,7 +230,11 @@ export default function TagDetailsForm({
                   value={field.value?.connect?.id}
                   onValueChange={(id) =>
                     field.onChange(
-                      id ? { connect: { id } } : { disconnect: true }
+                      id
+                        ? { connect: { id } }
+                        : isNew
+                        ? undefined
+                        : { disconnect: true }
                     )
                   }
                   onBlur={field.onBlur}
@@ -240,7 +261,11 @@ export default function TagDetailsForm({
                   value={field.value?.connect?.id}
                   onValueChange={(id) =>
                     field.onChange(
-                      id ? { connect: { id } } : { disconnect: true }
+                      id
+                        ? { connect: { id } }
+                        : isNew
+                        ? undefined
+                        : { disconnect: true }
                     )
                   }
                   onBlur={field.onBlur}

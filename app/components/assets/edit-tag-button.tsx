@@ -19,11 +19,15 @@ export default function EditTagButton({
   onOpenChange,
   ...passThroughProps
 }: EditTagButtonProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
+
   return (
     <ResponsiveDialog
-      open={openProp ?? open}
-      onOpenChange={onOpenChange ?? setOpen}
+      open={open}
+      onOpenChange={setOpen}
       title={tag ? "Edit Tag" : "Add New Tag"}
       dialogClassName="sm:max-w-lg"
       trigger={

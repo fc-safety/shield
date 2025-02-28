@@ -152,7 +152,9 @@ export default function AdminTagsIndex({
                   draft.open = true;
                   draft.title = "Delete tag";
                   draft.message = "Are you sure you want to delete this tag?";
-                  draft.requiredUserInput = row.original.serialNumber;
+                  draft.requiredUserInput = row.original.asset
+                    ? row.original.serialNumber
+                    : "";
                   draft.onConfirm = () => {
                     submitDelete(
                       {},
