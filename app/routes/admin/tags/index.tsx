@@ -1,18 +1,27 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Copy, Nfc } from "lucide-react";
+import { Copy, Nfc, Pencil, Trash } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { config } from "~/.server/config";
-import NewTagButton from "~/components/assets/edit-tag-button";
+import {
+  default as EditTagButton,
+  default as NewTagButton,
+} from "~/components/assets/edit-tag-button";
+import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { useAuth } from "~/contexts/auth-context";
+import useConfirmAction from "~/hooks/use-confirm-action";
+import { useModalSubmit } from "~/hooks/use-modal-submit";
+import { useOpenData } from "~/hooks/use-open-data";
 import type { Tag } from "~/lib/models";
 import { buildUrl } from "~/lib/urls";
+import { can } from "~/lib/users";
 import type { Route } from "./+types/index";
 
 export function loader({ request }: Route.LoaderArgs) {
@@ -27,6 +36,21 @@ export function loader({ request }: Route.LoaderArgs) {
 export default function AdminTagsIndex({
   loaderData: { tags, appHost },
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+
+  const canCreate = useMemo(() => can(user, "create", "tags"), [user]);
+  const canUpdate = useMemo(() => can(user, "update", "tags"), [user]);
+  const canDelete = useMemo(() => can(user, "delete", "tags"), [user]);
+
+  const editTag = useOpenData<Tag>();
+
+  const { submit: submitDelete } = useModalSubmit({
+    defaultErrorMessage: "Error: Failed to delete tag",
+  });
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
+
   const copyUrlForTagExternalId = useCallback(
     (extId: string) => {
       const url = buildUrl("/inspect", appHost, {
@@ -108,25 +132,86 @@ export default function AdminTagsIndex({
           );
         },
       },
+      {
+        id: "actions",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <Button
+              size="icon"
+              variant="secondary"
+              onClick={() => editTag.openData(row.original)}
+              disabled={!canUpdate}
+            >
+              <Pencil />
+            </Button>
+            <Button
+              size="icon"
+              variant="destructive"
+              onClick={() =>
+                setDeleteAction((draft) => {
+                  draft.open = true;
+                  draft.title = "Delete tag";
+                  draft.message = "Are you sure you want to delete this tag?";
+                  draft.requiredUserInput = row.original.serialNumber;
+                  draft.onConfirm = () => {
+                    submitDelete(
+                      {},
+                      {
+                        method: "delete",
+                        action: `/api/proxy/tags/${row.original.id}`,
+                      }
+                    );
+                  };
+                })
+              }
+              disabled={!canDelete}
+            >
+              <Trash />
+            </Button>
+          </div>
+        ),
+      },
     ],
-    [copyUrlForTagExternalId]
+    [
+      copyUrlForTagExternalId,
+      canUpdate,
+      canDelete,
+      editTag,
+      submitDelete,
+      setDeleteAction,
+    ]
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <Nfc /> Tags
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <DataTable
-          columns={columns}
-          data={tags.results}
-          searchPlaceholder="Search tags..."
-          actions={[<NewTagButton key="add" />]}
-        />
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <Nfc /> Tags
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={tags.results}
+            searchPlaceholder="Search tags..."
+            actions={canCreate ? [<NewTagButton key="add" />] : undefined}
+            initialState={{
+              columnVisibility: {
+                actions: canUpdate || canDelete,
+              },
+            }}
+          />
+        </CardContent>
+      </Card>
+      <EditTagButton
+        tag={editTag.data ?? undefined}
+        open={editTag.open}
+        onOpenChange={editTag.setOpen}
+        trigger={<></>}
+        context="admin"
+      />
+      <ConfirmationDialog {...deleteAction} />
+    </>
   );
 }

@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -75,13 +74,6 @@ export default function AssetDetailsForm({
   const {
     formState: { isDirty, isValid },
   } = form;
-
-  useEffect(() => {
-    console.debug({
-      isDirty,
-      isValid,
-    });
-  }, [isDirty, isValid]);
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
     onSubmitted,

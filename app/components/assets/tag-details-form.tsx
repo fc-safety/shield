@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { DataOrError } from "~/.server/api-utils";
+import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalSubmit } from "~/hooks/use-modal-submit";
 import type { Tag } from "~/lib/models";
@@ -30,16 +30,21 @@ import { Card, CardHeader } from "../ui/card";
 import AssetCombobox from "./asset-combobox";
 
 type TForm = z.infer<typeof updateTagSchema | typeof createTagSchema>;
-interface TagDetailsFormProps {
+export interface TagDetailsFormProps {
   tag?: Tag;
   onClose?: () => void;
+  context?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
   serialNumber: "",
 } satisfies TForm;
 
-export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
+export default function TagDetailsForm({
+  tag,
+  onClose,
+  context,
+}: TagDetailsFormProps) {
   const { appHost } = useAuth();
 
   const isNew = !tag;
@@ -188,6 +193,7 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
                   }
                   onBlur={field.onBlur}
                   className="w-full"
+                  context={context}
                 />
               </FormControl>
               <FormMessage />
@@ -214,6 +220,7 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
                   className="w-full"
                   clientId={clientId}
                   disabled={!clientId}
+                  context={context}
                 />
               </FormControl>
               <FormMessage />
@@ -243,6 +250,7 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
                     field.value?.connect?.id
                   )}
                   disabled={!siteId}
+                  context={context}
                 />
               </FormControl>
               <FormMessage />

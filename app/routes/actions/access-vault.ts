@@ -8,9 +8,7 @@ import { validateParam } from "~/lib/utils";
 import type { Route } from "./+types/access-vault";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  console.log("here");
   const key = validateParam(params, "*");
-  console.debug("key", key);
   const { data: vaultOwnershipRecord, init } =
     await api.vaultOwnerships.getByKey(request, key);
 

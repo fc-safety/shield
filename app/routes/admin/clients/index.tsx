@@ -35,7 +35,7 @@ import { beautifyPhone } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export function loader({ request }: Route.LoaderArgs) {
-  return api.clients.list(request, { limit: 10000 });
+  return api.clients.list(request, { limit: 10000 }, { context: "admin" });
 }
 
 export default function ClientsIndex({

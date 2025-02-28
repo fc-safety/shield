@@ -27,15 +27,16 @@ const proxy = async ({
     headers.set("x-view-context", viewContext);
   }
 
+  const url = buildUrl(
+    pathSplat,
+    config.API_BASE_URL,
+    Object.fromEntries(query.entries())
+  );
   const awaitableData = authenticatedData(
     request,
     [
       {
-        url: buildUrl(
-          pathSplat,
-          config.API_BASE_URL,
-          Object.fromEntries(query.entries())
-        ),
+        url,
         options: {
           method: method,
           body: method !== "GET" ? await request.text() : undefined,

@@ -3,19 +3,27 @@ import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { Tag } from "~/lib/models";
 import { ResponsiveDialog } from "../responsive-dialog";
-import TagDetailsForm from "./tag-details-form";
+import TagDetailsForm, { type TagDetailsFormProps } from "./tag-details-form";
 
-interface EditTagButtonProps {
+interface EditTagButtonProps extends Omit<TagDetailsFormProps, "onClose"> {
   tag?: Tag;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export default function EditTagButton({ tag, trigger }: EditTagButtonProps) {
+export default function EditTagButton({
+  tag,
+  trigger,
+  open: openProp,
+  onOpenChange,
+  ...passThroughProps
+}: EditTagButtonProps) {
   const [open, setOpen] = useState(false);
   return (
     <ResponsiveDialog
-      open={open}
-      onOpenChange={setOpen}
+      open={openProp ?? open}
+      onOpenChange={onOpenChange ?? setOpen}
       title={tag ? "Edit Tag" : "Add New Tag"}
       dialogClassName="sm:max-w-lg"
       trigger={
@@ -27,7 +35,11 @@ export default function EditTagButton({ tag, trigger }: EditTagButtonProps) {
         )
       }
     >
-      <TagDetailsForm onClose={() => setOpen(false)} tag={tag} />
+      <TagDetailsForm
+        onClose={() => setOpen(false)}
+        tag={tag}
+        {...passThroughProps}
+      />
     </ResponsiveDialog>
   );
 }

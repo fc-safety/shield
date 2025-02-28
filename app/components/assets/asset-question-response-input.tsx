@@ -116,7 +116,6 @@ function ImageUploadInput({
   );
 
   useEffect(() => {
-    console.log("valueProp", valueProp);
     if (valueProp) setValueInternal(valueProp);
   }, [valueProp]);
 
@@ -128,7 +127,6 @@ function ImageUploadInput({
   const { mutate: uploadImage, isPending: isUploadingImage } = useMutation({
     mutationFn: handleVaultUpload,
     onSuccess: (url) => {
-      console.debug("uploadImage success", url, "existing value", value);
       setValue({ ...value, urls: [...value.urls, url] });
     },
   });

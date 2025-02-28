@@ -1,7 +1,9 @@
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
+import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import type { Client, ResultsPage } from "~/lib/models";
+import { buildPath, type QueryParams } from "~/lib/urls";
 import { ResponsiveCombobox } from "../responsive-combobox";
 
 interface ClientComboboxProps {
@@ -10,6 +12,7 @@ interface ClientComboboxProps {
   onBlur?: () => void;
   className?: string;
   disabled?: boolean;
+  context?: ViewContext;
 }
 
 const fuse = new Fuse([] as Client[], { keys: ["name"] });
@@ -20,14 +23,22 @@ export default function ClientCombobox({
   onBlur,
   className,
   disabled,
+  context,
 }: ClientComboboxProps) {
-  const fetcher = useFetcher<ResultsPage<Client>>();
+  const fetcher = useFetcher<DataOrError<ResultsPage<Client>>>();
 
   const preloadClients = useCallback(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
-      fetcher.load("/api/proxy/clients?limit=10000");
+      const query: QueryParams = {
+        limit: 10000,
+        _throw: "false",
+      };
+      if (context) {
+        query._viewContext = context;
+      }
+      fetcher.load(buildPath("/api/proxy/clients", query));
     }
-  }, [fetcher]);
+  }, [fetcher, context]);
 
   useEffect(() => {
     if (value) preloadClients();
@@ -35,10 +46,14 @@ export default function ClientCombobox({
 
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    if (fetcher.data) {
-      setClients(fetcher.data.results);
+    if (fetcher.data?.data) {
+      setClients(fetcher.data.data.results);
+    } else if (fetcher.data?.error) {
+      console.error("Failed to fetch clients", fetcher.data.error);
+      setHasError(true);
     }
   }, [fetcher.data]);
 
@@ -71,6 +86,7 @@ export default function ClientCombobox({
       className={className}
       shouldFilter={false}
       showClear
+      errorMessage={hasError ? "Something went wrong." : undefined}
     />
   );
 }

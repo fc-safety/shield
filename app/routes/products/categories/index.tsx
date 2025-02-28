@@ -363,6 +363,7 @@ function AnsiCategoriesCard({
                       size="icon"
                       variant="secondary"
                       onClick={() => editAnsiCategory.openData(row.original)}
+                      disabled={!canUpdate}
                     >
                       <Pencil />
                     </Button>
@@ -386,6 +387,7 @@ function AnsiCategoriesCard({
                           };
                         })
                       }
+                      disabled={!canDelete}
                     >
                       <Trash />
                     </Button>
