@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -12,10 +13,12 @@ import {
   updateAssetSchemaResolver,
 } from "~/lib/schema";
 import { hasMultiSiteVisibility } from "~/lib/users";
+import { isEmpty } from "~/lib/utils";
 import SiteCombobox from "../clients/site-combobox";
 import ProductSelector from "../products/product-selector";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -72,6 +75,13 @@ export default function AssetDetailsForm({
   const {
     formState: { isDirty, isValid },
   } = form;
+
+  useEffect(() => {
+    console.debug({
+      isDirty,
+      isValid,
+    });
+  }, [isDirty, isValid]);
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalSubmit({
     onSubmitted,
@@ -198,6 +208,43 @@ export default function AssetDetailsForm({
               <FormControl>
                 <Input {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="inspectionCycle"
+          render={({ field: { value, ...field } }) => (
+            <FormItem>
+              <FormLabel>Inspection Cycle</FormLabel>
+              <FormControl>
+                <div className="flex items-center gap-2">
+                  <Input
+                    {...field}
+                    value={isEmpty(value) ? "" : value}
+                    type="number"
+                    min={1}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    disabled={isEmpty(value)}
+                    onClick={() =>
+                      form.setValue("inspectionCycle", null, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    Reset to client default
+                  </Button>
+                </div>
+              </FormControl>
+              <FormDescription>
+                The number of days between inspections for this asset.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

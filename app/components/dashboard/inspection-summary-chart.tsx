@@ -72,7 +72,8 @@ export function InspectionSummaryChart() {
       countBy(
         rawAssets.map((a) => {
           const status = getAssetInspectionStatus(
-            a.inspections ?? []
+            a.inspections ?? [],
+            a.inspectionCycle ?? a.client?.defaultInspectionCycle
           ).toLowerCase();
           return {
             status,

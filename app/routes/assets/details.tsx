@@ -233,10 +233,19 @@ export default function AssetDetails({
                     value: asset.serialNumber,
                   },
                   {
+                    label: "Inspection Cycle",
+                    value: asset.inspectionCycle
+                      ? `${asset.inspectionCycle} days`
+                      : asset.client?.defaultInspectionCycle
+                      ? `${asset.client?.defaultInspectionCycle} days (client default)`
+                      : null,
+                  },
+                  {
                     label: "Setup Completed",
                     value: asset.setupOn && format(asset.setupOn, "PPpp"),
                   },
                 ]}
+                defaultValue={<>&mdash;</>}
               />
             </div>
             <div className="grid gap-4">
@@ -435,7 +444,11 @@ function StatusCard({ asset }: { asset: Asset }) {
           </div>
           <InspectionStatusBadge
             status={
-              asset.inspections && getAssetInspectionStatus(asset.inspections)
+              asset.inspections &&
+              getAssetInspectionStatus(
+                asset.inspections,
+                asset.inspectionCycle ?? asset.client?.defaultInspectionCycle
+              )
             }
           />
         </div>

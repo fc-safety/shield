@@ -12,6 +12,9 @@ export function cn(...inputs: ClassValue[]) {
 export const isNil = (value: unknown): value is null | undefined =>
   value === undefined || value === null;
 
+export const isEmpty = (value: unknown): value is null | undefined | "" =>
+  isNil(value) || (typeof value === "string" && value.trim() === "");
+
 export const asArray = <T>(value: T | T[]): T[] =>
   isNil(value) ? [] : Array.isArray(value) ? value : [value];
 

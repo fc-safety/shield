@@ -83,7 +83,7 @@ export default function AdminSettings({
                   <FormLabel>System Email From Address</FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-2">
-                      <Input {...field} />
+                      <Input {...field} type="text" />
                       <SendTestEmailButton to={user.email} from={field.value} />
                     </div>
                   </FormControl>
@@ -107,7 +107,7 @@ export default function AdminSettings({
                   <FormLabel>Product Request To Address</FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-2">
-                      <Input {...field} />
+                      <Input {...field} type="email" />
                       <SendTestEmailButton
                         to={field.value}
                         from={systemEmailFromAddress}

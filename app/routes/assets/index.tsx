@@ -187,8 +187,12 @@ export default function AssetsIndex({
         ),
       },
       {
-        accessorFn: ({ inspections }) =>
-          inspections && getAssetInspectionStatus(inspections),
+        accessorFn: ({ inspections, inspectionCycle, client }) =>
+          inspections &&
+          getAssetInspectionStatus(
+            inspections,
+            inspectionCycle ?? client?.defaultInspectionCycle
+          ),
         id: "inspectionsStatus",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />

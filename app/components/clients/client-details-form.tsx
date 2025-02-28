@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -48,6 +49,7 @@ const FORM_DEFAULTS = {
   },
   status: "PENDING",
   phoneNumber: "",
+  defaultInspectionCycle: 30,
 } satisfies TForm;
 
 export default function ClientDetailsForm({
@@ -306,6 +308,22 @@ export default function ClientDetailsForm({
                   type="phone"
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name={"defaultInspectionCycle"}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Default Inspection Cycle</FormLabel>
+              <FormControl>
+                <Input {...field} type="number" />
+              </FormControl>
+              <FormDescription>
+                The default number of days each asset should be inspected.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}

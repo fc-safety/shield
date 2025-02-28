@@ -3,7 +3,8 @@ import { AlertsStatus, type AssetInspectionsStatus } from "./enums";
 import type { Alert, Inspection } from "./models";
 
 export const getAssetInspectionStatus = (
-  inspections: Inspection[]
+  inspections: Inspection[],
+  inspectionCycle: number = 30
 ): AssetInspectionsStatus => {
   const mostRecentInspection = inspections
     ?.sort((a, b) => (isAfter(a.createdOn, b.createdOn) ? -1 : 1))
@@ -13,8 +14,8 @@ export const getAssetInspectionStatus = (
     Date.now(),
     mostRecentInspection.createdOn
   );
-  if (daysSinceInspection < 30) return "OK";
-  if (daysSinceInspection < 90) return "OVERDUE";
+  if (daysSinceInspection < inspectionCycle) return "OK";
+  if (daysSinceInspection < inspectionCycle * 2) return "OVERDUE";
   return "EXPIRED";
 };
 

@@ -64,6 +64,7 @@ export default function AssetInspections({
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
+        cell: ({ getValue }) => getValue() || <>&mdash;</>,
       },
       {
         id: "details",

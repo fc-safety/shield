@@ -106,6 +106,7 @@ export const createClientSchema = z.object({
     .nullable(z.string())
     .optional()
     .transform((url) => url || undefined),
+  defaultInspectionCycle: z.coerce.number().default(30),
 });
 export const createClientSchemaResolver = zodResolver(createClientSchema);
 
@@ -322,6 +323,7 @@ export const createAssetSchema = z.object({
   location: z.string().nonempty(),
   placement: z.string().nonempty(),
   serialNumber: z.string().nonempty(),
+  inspectionCycle: z.coerce.number().nullable().optional(),
   product: z.object({
     connect: z.object({
       id: z.string(),

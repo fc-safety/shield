@@ -24,6 +24,7 @@ export interface Asset extends BaseModel {
   location: string;
   placement: string;
   serialNumber: string;
+  inspectionCycle: number | null;
   inspections?: Inspection[];
   setupQuestionResponses?: AssetQuestionResponse[];
   consumables?: Consumable[];
@@ -186,6 +187,7 @@ export interface Client extends BaseModel {
   addressId: string;
   phoneNumber: string;
   homeUrl?: string;
+  defaultInspectionCycle: number;
   sites?: Site[];
   _count?: { sites: number };
 }

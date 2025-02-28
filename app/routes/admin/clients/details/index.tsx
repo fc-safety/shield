@@ -100,6 +100,10 @@ export default function ClientDetails({
                           : "Started On",
                         value: format(client.startedOn, "PPpp"),
                       },
+                      {
+                        label: "Default Inspection Cycle",
+                        value: `${client.defaultInspectionCycle} days`,
+                      },
                     ]}
                     defaultValue={<>&mdash;</>}
                   />

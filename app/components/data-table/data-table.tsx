@@ -47,12 +47,14 @@ interface DataTableProps<TData, TValue>
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   initialState?: InitialTableState;
+  hidePagination?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   initialState,
+  hidePagination,
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
@@ -175,7 +177,7 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
+      {!hidePagination && <DataTablePagination table={table} />}
     </div>
   );
 }
