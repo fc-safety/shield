@@ -265,7 +265,7 @@ function ProductRequestForm({
                 className="mt-2"
               >
                 {showTabs && (
-                  <TabsList className="w-full grid grid-cols-[repeat(auto-fit,minmax(50px,_1fr))]">
+                  <TabsList className="w-full flex">
                     {ansiCategories.map((category) => (
                       <TabsTrigger
                         key={category.id}
@@ -279,7 +279,7 @@ function ProductRequestForm({
                               : "hsl(var(--foreground))",
                           } as React.CSSProperties
                         }
-                        className="data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)]"
+                        className="data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] grow"
                       >
                         {category.name}
                       </TabsTrigger>

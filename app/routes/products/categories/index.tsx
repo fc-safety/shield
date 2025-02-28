@@ -4,6 +4,7 @@ import {
   HardHat,
   MoreHorizontal,
   Pencil,
+  Plus,
   Shapes,
   Trash,
 } from "lucide-react";
@@ -275,7 +276,29 @@ function AnsiCategoriesCard({
 }: {
   ansiCategories: AnsiCategory[];
 }) {
+  const { user } = useAuth();
+
+  const canCreate = useMemo(
+    () => can(user, "create", "ansi-categories"),
+    [user]
+  );
+  const canUpdate = useMemo(
+    () => can(user, "update", "ansi-categories"),
+    [user]
+  );
+  const canDelete = useMemo(
+    () => can(user, "delete", "ansi-categories"),
+    [user]
+  );
+
   const editAnsiCategory = useOpenData<AnsiCategory>();
+
+  const { submit: submitDelete } = useModalSubmit({
+    defaultErrorMessage: "Error: Failed to delete ANSI category",
+  });
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
 
   return (
     <>
@@ -333,20 +356,63 @@ function AnsiCategoriesCard({
                 ),
               },
               {
-                id: "edit",
+                id: "actions",
                 cell: ({ row }) => (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => editAnsiCategory.openData(row.original)}
-                  >
-                    <Pencil />
-                    Edit
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={() => editAnsiCategory.openData(row.original)}
+                    >
+                      <Pencil />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={() =>
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete ANSI Category";
+                          draft.message = `Are you sure you want to delete ${row.original.name}?`;
+                          draft.requiredUserInput = row.original.name;
+                          draft.onConfirm = () => {
+                            submitDelete(
+                              {},
+                              {
+                                method: "delete",
+                                action: `/api/proxy/ansi-categories/${row.original.id}`,
+                              }
+                            );
+                          };
+                        })
+                      }
+                    >
+                      <Trash />
+                    </Button>
+                  </div>
                 ),
               },
             ]}
             data={ansiCategories}
+            initialState={{
+              columnVisibility: {
+                actions: canUpdate || canDelete,
+              },
+            }}
+            actions={
+              canCreate
+                ? [
+                    <Button
+                      key="add"
+                      size="sm"
+                      onClick={() => editAnsiCategory.openNew()}
+                    >
+                      <Plus />
+                      Add ANSI Category
+                    </Button>,
+                  ]
+                : undefined
+            }
           />
         </CardContent>
       </Card>
@@ -356,6 +422,7 @@ function AnsiCategoriesCard({
         onOpenChange={editAnsiCategory.setOpen}
         trigger={<></>}
       />
+      <ConfirmationDialog {...deleteAction} />
     </>
   );
 }
