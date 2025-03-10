@@ -105,7 +105,6 @@ export default function ConsumableDetailsForm({
                   value={field.value}
                   onValueChange={field.onChange}
                   onBlur={field.onBlur}
-                  assetId={assetId}
                   className="flex w-full"
                 />
               </FormControl>

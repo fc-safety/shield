@@ -7,7 +7,6 @@ import type { Product, ResultsPage } from "~/lib/models";
 const consumableSelectFuse = new Fuse([] as Product[], { keys: ["name"] });
 export default function ConsumableCombobox({
   parentProductId,
-  assetId,
   value,
   onValueChange,
   onBlur,
@@ -15,7 +14,6 @@ export default function ConsumableCombobox({
   disabled,
 }: {
   parentProductId: string;
-  assetId?: string;
   value?: string | undefined;
   onValueChange?: (value: string | undefined) => void;
   onBlur?: () => void;
@@ -29,13 +27,9 @@ export default function ConsumableCombobox({
 
   const preloadProducts = useCallback(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
-      fetcher.load(
-        `/api/proxy/products?parentProduct[id]=${parentProductId}&limit=1000${
-          assetId ? `&consumables[none][asset][id]=${assetId}` : ""
-        }`
-      );
+      fetcher.load(`/api/proxy/products?parentProduct[id]=${parentProductId}`);
     }
-  }, [fetcher, parentProductId, assetId]);
+  }, [fetcher, parentProductId]);
 
   useEffect(() => {
     if (value) preloadProducts();
