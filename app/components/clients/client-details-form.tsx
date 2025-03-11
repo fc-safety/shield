@@ -9,7 +9,7 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { isAfter, parseISO } from "date-fns";
+import { format, isAfter, isValid as isValidDate, parseISO } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "react-router";
@@ -25,7 +25,6 @@ import {
 } from "~/lib/schema";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
-import { DatePicker } from "../date-picker";
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
@@ -210,10 +209,17 @@ export default function ClientDetailsForm({
                   : "Started On"}
               </FormLabel>
               <FormControl>
-                <DatePicker
+                <Input
                   {...field}
-                  value={parseISO(value ?? "")}
-                  onValueChange={(d) => onChange(d?.toISOString())}
+                  type="date"
+                  value={
+                    isValidDate(parseISO(String(value)))
+                      ? format(parseISO(String(value)), "yyyy-MM-dd")
+                      : undefined
+                  }
+                  onChange={(e) => {
+                    onChange(parseISO(e.target.value).toISOString());
+                  }}
                 />
               </FormControl>
               <FormMessage />

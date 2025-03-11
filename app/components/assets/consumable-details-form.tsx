@@ -1,4 +1,4 @@
-import { parseISO } from "date-fns";
+import { format, isValid as isValidDate, parseISO } from "date-fns";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -9,7 +9,6 @@ import {
   type createConsumableSchema,
   type updateConsumableSchema,
 } from "~/lib/schema";
-import { DatePicker } from "../date-picker";
 import { Button } from "../ui/button";
 import {
   Form,
@@ -130,16 +129,21 @@ export default function ConsumableDetailsForm({
         <FormField
           control={form.control}
           name="expiresOn"
-          render={({ field }) => (
+          render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
               <FormLabel>Expires On</FormLabel>
               <FormControl>
-                <DatePicker
-                  value={field.value ? parseISO(field.value) : undefined}
-                  onValueChange={(date) => {
-                    field.onChange(date?.toISOString());
+                <Input
+                  type="date"
+                  {...field}
+                  value={
+                    isValidDate(parseISO(String(value)))
+                      ? format(parseISO(String(value)), "yyyy-MM-dd")
+                      : undefined
+                  }
+                  onChange={(e) => {
+                    onChange(parseISO(e.target.value).toISOString());
                   }}
-                  onBlur={field.onBlur}
                 />
               </FormControl>
               <FormMessage />

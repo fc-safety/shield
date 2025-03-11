@@ -1,4 +1,3 @@
-import { DatePicker } from "@/components/date-picker";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useMutation } from "@tanstack/react-query";
-import { format, isValid, parseISO } from "date-fns";
+import { format, isValid, parse, parseISO } from "date-fns";
 import { Loader2, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { AssetQuestionResponseType } from "~/lib/models";
@@ -65,16 +64,17 @@ export default function AssetQuestionResponseTypeInput<
       </SelectContent>
     </Select>
   ) : valueType === "DATE" ? (
-    <DatePicker
+    <Input
+      type="date"
       value={
-        isValid(parseISO(String(value))) ? parseISO(String(value)) : undefined
+        isValid(parseISO(String(value)))
+          ? format(parseISO(String(value)), "yyyy-MM-dd")
+          : isValid(parse(String(value), "yyyy-MM-dd", new Date()))
+          ? String(value)
+          : undefined
       }
-      onValueChange={(date) => {
-        if (date) {
-          onValueChange(date.toISOString() as TValue<T>);
-        } else {
-          onValueChange("" as TValue<T>);
-        }
+      onChange={(e) => {
+        onValueChange(parseISO(e.target.value).toISOString() as TValue<T>);
       }}
       onBlur={onBlur}
       disabled={disabled}

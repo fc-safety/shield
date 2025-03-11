@@ -87,7 +87,6 @@ export function useModalFetcher<T>({
 
   useEffect(() => {
     if (fetcher.data && fetcher.state === "idle" && !dataCaptured.current) {
-      console.debug("dataCaptured.current", fetcher.data);
       dataCaptured.current = true;
       onData?.(fetcher.data as T);
       if (fetcher.data.error) {

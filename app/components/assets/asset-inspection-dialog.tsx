@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -25,13 +25,6 @@ export default function AssetInspectionDialog({
   const { load, isLoading, data } = useModalFetcher<DataOrError<Inspection>>();
 
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    console.debug("mounting inspection dialog");
-    return () => {
-      console.debug("unmounting inspection dialog");
-    };
-  }, []);
 
   const preloadInspection = useCallback(
     (inspectionId: string) => {

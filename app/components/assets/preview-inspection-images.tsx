@@ -23,7 +23,9 @@ export default function PreviewInspectionImages({
               <>
                 <div className="font-semibold">Upload {idx + 1}</div>
                 <div className="flex-1"></div>
-                <div className="italic">{url.split(/(\/|(%2F))/g).pop()}</div>
+                <div className="italic text-xs" title={url}>
+                  {formatImgUrl(url)}
+                </div>
               </>
             )}
             <Button
@@ -62,3 +64,17 @@ export default function PreviewInspectionImages({
     </>
   );
 }
+
+const formatImgUrl = (url: string) => {
+  const MAX_LENGTH = 15;
+
+  const filename = url.split(/(\/|(%2F))/g).pop() ?? "";
+  const nameLength = filename.length;
+  if (nameLength > MAX_LENGTH) {
+    return `...${filename.slice(
+      Math.max(3, nameLength - (MAX_LENGTH + 3)),
+      nameLength
+    )}`;
+  }
+  return filename;
+};

@@ -11,7 +11,7 @@ export default function DisplayInspectionValue({
   return isImageValue(value) ? (
     <PreviewInspectionImages urls={value.urls} dense />
   ) : isDateValue(value) ? (
-    format(parseISO(value), "PPpp")
+    format(parseISO(value), "PP")
   ) : isNumberValue(value) ? (
     value
   ) : (

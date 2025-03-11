@@ -98,7 +98,7 @@ export default function ClientDetails({
                         label: isAfter(client.startedOn, new Date())
                           ? "Starts On"
                           : "Started On",
-                        value: format(client.startedOn, "PPpp"),
+                        value: format(client.startedOn, "PP"),
                       },
                       {
                         label: "Default Inspection Cycle",

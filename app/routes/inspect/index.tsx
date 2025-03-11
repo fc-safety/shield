@@ -460,15 +460,23 @@ export default function InspectIndex({
       <AlertDialog open={locationAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Enable Location</AlertDialogTitle>
+            <AlertDialogTitle>Location Required</AlertDialogTitle>
           </AlertDialogHeader>
           <p className="text-sm text-muted-foreground">
-            Information about your location is required before you can continue
-            completing the inspection.
+            To continue, your device location must be enabled for this page.
             <br />
             <br />
-            If you can no longer see the prompt to enable location, please
-            refresh the page.
+            <span className="inline-block font-bold italic mb-2">
+              What if I don&apos;t see a prompt to enable my location?
+            </span>
+            <br />
+            <ol className="list-decimal list-inside">
+              <li>
+                Ensure that location services are enabled for this browser in
+                your device&apos;s browser or system settings.
+              </li>
+              <li>Refresh this page.</li>
+            </ol>
           </p>
         </AlertDialogContent>
       </AlertDialog>
