@@ -16,7 +16,13 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef, useState, type CSSProperties } from "react";
-import { Table, TableBody, TableHeader, TableRow } from "../ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 import { DataTableCell, DataTableHead } from "./data-table";
 import {
   DataTableToolbar,
@@ -137,6 +143,7 @@ function VirtualizedTableBody<TData>({
   tableContainerRef: React.RefObject<HTMLDivElement>;
 }) {
   const { rows } = table.getRowModel();
+  const isEmtpy = !rows.length;
 
   // Important: Keep the row virtualizer in the lowest component possible to avoid unnecessary re-renders.
   const rowVirtualizer = useVirtualizer<HTMLDivElement, HTMLTableRowElement>({
@@ -156,36 +163,47 @@ function VirtualizedTableBody<TData>({
     <TableBody
       className="relative grid"
       style={{
-        height: `${rowVirtualizer.getTotalSize()}px`, //tells scrollbar how big the table is
+        height: !isEmtpy ? `${rowVirtualizer.getTotalSize()}px` : "auto", //tells scrollbar how big the table is
       }}
     >
-      {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-        const row = rows[virtualRow.index] as Row<TData>;
-        return (
-          <TableRow
-            key={row.id}
-            data-index={virtualRow.index} //needed for dynamic row height measurement
-            ref={(node) => rowVirtualizer.measureElement(node)} //measure dynamic row height
-            className="absolute w-full flex"
-            style={{
-              transform: `translateY(${virtualRow.start}px)`, //this should always be a `style` as it changes on scroll
-            }}
+      {!isEmtpy ? (
+        rowVirtualizer.getVirtualItems().map((virtualRow) => {
+          const row = rows[virtualRow.index] as Row<TData>;
+          return (
+            <TableRow
+              key={row.id}
+              data-index={virtualRow.index} //needed for dynamic row height measurement
+              ref={(node) => rowVirtualizer.measureElement(node)} //measure dynamic row height
+              className="absolute w-full flex"
+              style={{
+                transform: `translateY(${virtualRow.start}px)`, //this should always be a `style` as it changes on scroll
+              }}
+            >
+              {row.getVisibleCells().map((cell, idx) => (
+                <DataTableCell
+                  key={cell.id}
+                  row={row}
+                  cell={cell}
+                  idx={idx}
+                  style={{
+                    width: cell.column.getSize(),
+                  }}
+                  className="inline-flex shrink-0 items-center"
+                />
+              ))}
+            </TableRow>
+          );
+        })
+      ) : (
+        <TableRow className="flex w-full">
+          <TableCell
+            colSpan={table.getAllLeafColumns().length}
+            className="h-24 text-center inline-flex items-center justify-center flex-1"
           >
-            {row.getVisibleCells().map((cell, idx) => (
-              <DataTableCell
-                key={cell.id}
-                row={row}
-                cell={cell}
-                idx={idx}
-                style={{
-                  width: cell.column.getSize(),
-                }}
-                className="inline-flex shrink-0 items-center"
-              />
-            ))}
-          </TableRow>
-        );
-      })}
+            No results.
+          </TableCell>
+        </TableRow>
+      )}
     </TableBody>
   );
 }

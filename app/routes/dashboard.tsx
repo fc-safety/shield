@@ -18,7 +18,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export default function Dashboard() {
   return (
     <div className="flex flex-1 flex-col gap-4 grow">
-      <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,_minmax(525px,_1fr))] gap-2 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,_minmax(475px,_1fr))] gap-2 sm:gap-4">
         <InspectionSummaryChart />
         {/* <LocationReadinessChart /> */}
         <ProductRequestsOverview />
