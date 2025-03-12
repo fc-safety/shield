@@ -30,7 +30,6 @@ function RenderDefault({
       <Button
         type="button"
         variant="outline"
-        size="sm"
         className="w-full"
         disabled={disabled || isUploadingImage}
         onClick={(e) => {

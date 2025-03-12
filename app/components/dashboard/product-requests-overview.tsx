@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import type { ColumnDef } from "@tanstack/react-table";
 import { subDays } from "date-fns";
+import { useMemo } from "react";
 import { Link } from "react-router";
 import {
   Card,
@@ -16,8 +18,8 @@ import { stringifyQuery } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
 import { ProductRequestCard } from "../assets/product-requests";
 import DataList from "../data-list";
-import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
+import VirtualizedDataTable from "../data-table/virtualized-data-table";
 import DisplayRelativeDate from "../display-relative-date";
 import Icon from "../icons/icon";
 import { ResponsiveDialog } from "../responsive-dialog";
@@ -37,6 +39,116 @@ export default function ProductRequestsOverview() {
 
   const reviewRequest = useOpenData<ProductRequest>();
 
+  const columns: ColumnDef<ProductRequest>[] = useMemo(
+    () => [
+      {
+        accessorKey: "createdOn",
+        id: "orderedOn",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => (
+          <DisplayRelativeDate date={getValue() as string} />
+        ),
+      },
+      {
+        accessorKey: "status",
+        id: "status",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
+        accessorKey: "asset.name",
+        id: "asset",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ row, getValue }) => {
+          const assetName = getValue() as string;
+          return (
+            <Link
+              to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
+              className="flex items-center gap-2 group"
+            >
+              {row.original.asset?.product?.productCategory?.icon && (
+                <Icon
+                  iconId={row.original.asset.product.productCategory.icon}
+                  color={row.original.asset.product.productCategory.color}
+                  className="text-lg"
+                />
+              )}
+              <span className="group-hover:underline">{assetName}</span>
+            </Link>
+          );
+        },
+      },
+      // TODO: Holding off on in-app product request interactions. Product requests for
+      // now are read-only.
+      // {
+      //   accessorFn: (request) =>
+      //     request.productRequestApprovals?.length ?? 0,
+      //   id: "reviews",
+      //   header: ({ column, table }) => (
+      //     <DataTableColumnHeader column={column} table={table} />
+      //   ),
+      //   cell: ({ row }) => {
+      //     const request = row.original;
+      //     return (
+      //       <ProductRequestApprovalsDisplay
+      //         approvals={request.productRequestApprovals ?? []}
+      //       />
+      //     );
+      //   },
+      // },
+      // {
+      //   id: "review",
+      //   cell: ({ row }) => {
+      //     const request = row.original;
+      //     const myApproval = request.productRequestApprovals?.find(
+      //       (a) => a.approver?.idpId === user?.idpId
+      //     );
+      //     return (
+      //       <Button
+      //         variant={
+      //           !myApproval
+      //             ? "secondary"
+      //             : myApproval.approved
+      //             ? "default"
+      //             : "destructive"
+      //         }
+      //         disabled={!!myApproval}
+      //         size="sm"
+      //         onClick={() => reviewRequest.openData(request)}
+      //       >
+      //         {!myApproval
+      //           ? "Review"
+      //           : myApproval.approved
+      //           ? "Approved"
+      //           : "Rejected"}
+      //       </Button>
+      //     );
+      //   },
+      // },
+      {
+        id: "details",
+        cell: ({ row }) => {
+          const request = row.original;
+          return (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => reviewRequest.openData(request)}
+            >
+              Details
+            </Button>
+          );
+        },
+      },
+    ],
+    [reviewRequest]
+  );
+
   return data ? (
     <>
       <Card>
@@ -46,122 +158,11 @@ export default function ProductRequestsOverview() {
             Requests shown from the last 30 days.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={[
-              {
-                accessorKey: "createdOn",
-                id: "orderedOn",
-                header: ({ column, table }) => (
-                  <DataTableColumnHeader column={column} table={table} />
-                ),
-                cell: ({ getValue }) => (
-                  <DisplayRelativeDate date={getValue() as string} />
-                ),
-              },
-              // {
-              //   accessorKey: "status",
-              //   id: "status",
-              //   header: ({ column, table }) => (
-              //     <DataTableColumnHeader column={column} table={table} />
-              //   ),
-              // },
-              {
-                accessorKey: "asset.name",
-                id: "asset",
-                header: ({ column, table }) => (
-                  <DataTableColumnHeader column={column} table={table} />
-                ),
-                cell: ({ row, getValue }) => {
-                  const assetName = getValue() as string;
-                  return (
-                    <Link
-                      to={
-                        row.original.asset
-                          ? `/assets/${row.original.asset.id}`
-                          : "#"
-                      }
-                      className="flex items-center gap-2 group"
-                    >
-                      {row.original.asset?.product?.productCategory?.icon && (
-                        <Icon
-                          iconId={
-                            row.original.asset.product.productCategory.icon
-                          }
-                          color={
-                            row.original.asset.product.productCategory.color
-                          }
-                          className="text-lg"
-                        />
-                      )}
-                      <span className="group-hover:underline">{assetName}</span>
-                    </Link>
-                  );
-                },
-              },
-              // TODO: Holding off on in-app product request interactions. Product requests for
-              // now are read-only.
-              // {
-              //   accessorFn: (request) =>
-              //     request.productRequestApprovals?.length ?? 0,
-              //   id: "reviews",
-              //   header: ({ column, table }) => (
-              //     <DataTableColumnHeader column={column} table={table} />
-              //   ),
-              //   cell: ({ row }) => {
-              //     const request = row.original;
-              //     return (
-              //       <ProductRequestApprovalsDisplay
-              //         approvals={request.productRequestApprovals ?? []}
-              //       />
-              //     );
-              //   },
-              // },
-              // {
-              //   id: "review",
-              //   cell: ({ row }) => {
-              //     const request = row.original;
-              //     const myApproval = request.productRequestApprovals?.find(
-              //       (a) => a.approver?.idpId === user?.idpId
-              //     );
-              //     return (
-              //       <Button
-              //         variant={
-              //           !myApproval
-              //             ? "secondary"
-              //             : myApproval.approved
-              //             ? "default"
-              //             : "destructive"
-              //         }
-              //         disabled={!!myApproval}
-              //         size="sm"
-              //         onClick={() => reviewRequest.openData(request)}
-              //       >
-              //         {!myApproval
-              //           ? "Review"
-              //           : myApproval.approved
-              //           ? "Approved"
-              //           : "Rejected"}
-              //       </Button>
-              //     );
-              //   },
-              // },
-              {
-                id: "details",
-                cell: ({ row }) => {
-                  const request = row.original;
-                  return (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => reviewRequest.openData(request)}
-                    >
-                      Details
-                    </Button>
-                  );
-                },
-              },
-            ]}
+        <CardContent className="bg-inherit">
+          <VirtualizedDataTable
+            height="100%"
+            maxHeight={400}
+            columns={columns}
             initialState={{
               sorting: [{ id: "orderedOn", desc: true }],
               columnVisibility: {

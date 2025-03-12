@@ -3,6 +3,7 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router";
 import { Cell, Label, Pie, PieChart } from "recharts";
 
+import { useMediaQuery } from "usehooks-ts";
 import {
   Card,
   CardContent,
@@ -96,6 +97,8 @@ export function InspectionSummaryChart() {
 
   const navigate = useNavigate();
 
+  const isScreenXs = useMediaQuery("(max-width: 539px)");
+
   return data ? (
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
@@ -116,7 +119,7 @@ export function InspectionSummaryChart() {
               data={data}
               dataKey="totalAssets"
               nameKey="status"
-              innerRadius={80}
+              innerRadius={isScreenXs ? 70 : 80}
               strokeWidth={5}
               onClick={(d) =>
                 navigate(

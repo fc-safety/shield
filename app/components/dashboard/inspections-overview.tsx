@@ -6,8 +6,8 @@ import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Inspection, ResultsPage } from "~/lib/models";
 import { getUserDisplayName } from "~/lib/users";
 import AssetInspectionDialog from "../assets/asset-inspection-dialog";
-import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
+import VirtualizedDataTable from "../data-table/virtualized-data-table";
 import DisplayRelativeDate from "../display-relative-date";
 import Icon from "../icons/icon";
 import { Card, CardContent, CardHeader } from "../ui/card";
@@ -80,8 +80,10 @@ export default function InspectionsOverview() {
   return data ? (
     <Card>
       <CardHeader>Inspections Overview</CardHeader>
-      <CardContent>
-        <DataTable
+      <CardContent className="bg-inherit">
+        <VirtualizedDataTable
+          height="100%"
+          maxHeight={400}
           columns={columns}
           initialState={{
             sorting: [{ id: "date", desc: true }],

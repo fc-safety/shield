@@ -1,10 +1,14 @@
 import {
+  type Cell,
   type ColumnDef,
   type ColumnFiltersState,
   type ColumnOrderState,
+  type Header,
   type InitialTableState,
+  type Row,
   type RowData,
   type SortingState,
+  type Table as TTable,
   type VisibilityState,
   flexRender,
   getCoreRowModel,
@@ -34,6 +38,7 @@ import {
 } from "./data-table-toolbar";
 
 import "@tanstack/react-table";
+import type { ComponentProps } from "react";
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -107,30 +112,12 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header, idx) => {
                   return (
-                    <TableHead
+                    <DataTableHead
                       key={header.id}
-                      colSpan={header.colSpan}
-                      className={cn(
-                        idx === 0 ? "pl-4" : "",
-                        idx === table.getVisibleFlatColumns().length - 1
-                          ? "pr-4"
-                          : "",
-                        header.column.columnDef.meta?.align === "center"
-                          ? "text-center"
-                          : header.column.columnDef.meta?.align === "right"
-                          ? "text-right"
-                          : header.column.columnDef.meta?.align === "left"
-                          ? "text-left"
-                          : null
-                      )}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
+                      header={header}
+                      idx={idx}
+                      table={table}
+                    />
                   );
                 })}
               </TableRow>
@@ -144,25 +131,12 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell, idx) => (
-                    <TableCell
+                    <DataTableCell
                       key={cell.id}
-                      className={cn(
-                        idx === 0 ? "pl-4" : "",
-                        idx === row.getVisibleCells().length - 1 ? "pr-4" : "",
-                        cell.column.columnDef.meta?.align === "center"
-                          ? "text-center"
-                          : cell.column.columnDef.meta?.align === "right"
-                          ? "text-right"
-                          : cell.column.columnDef.meta?.align === "left"
-                          ? "text-left"
-                          : null
-                      )}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+                      cell={cell}
+                      idx={idx}
+                      row={row}
+                    />
                   ))}
                 </TableRow>
               ))
@@ -181,5 +155,73 @@ export function DataTable<TData, TValue>({
       </div>
       {!hidePagination && <DataTablePagination table={table} />}
     </div>
+  );
+}
+
+export function DataTableHead<TData, TValue>({
+  header,
+  idx,
+  table,
+  className,
+  ...props
+}: {
+  header: Header<TData, TValue>;
+  idx: number;
+  table: TTable<TData>;
+} & ComponentProps<typeof TableHead>) {
+  return (
+    <TableHead
+      colSpan={header.colSpan}
+      className={cn(
+        idx === 0 ? "pl-4" : "",
+        idx === table.getVisibleFlatColumns().length - 1 ? "pr-4" : "",
+        header.column.columnDef.meta?.align === "center"
+          ? "text-center"
+          : header.column.columnDef.meta?.align === "right"
+          ? "text-right"
+          : header.column.columnDef.meta?.align === "left"
+          ? "text-left"
+          : null,
+        className
+      )}
+      {...props}
+    >
+      {header.isPlaceholder
+        ? null
+        : flexRender(header.column.columnDef.header, header.getContext())}
+    </TableHead>
+  );
+}
+
+export function DataTableCell<TData, TValue>({
+  cell,
+  idx,
+  row,
+  className,
+  ...props
+}: {
+  cell: Cell<TData, TValue>;
+  idx: number;
+  row: Row<TData>;
+} & ComponentProps<typeof TableCell>) {
+  return (
+    <TableCell
+      key={cell.id}
+      className={cn(
+        idx === 0 ? "pl-4" : "",
+        idx === row.getVisibleCells().length - 1 ? "pr-4" : "",
+        cell.column.columnDef.meta?.align === "center"
+          ? "text-center"
+          : cell.column.columnDef.meta?.align === "right"
+          ? "text-right"
+          : cell.column.columnDef.meta?.align === "left"
+          ? "text-left"
+          : null,
+        className
+      )}
+      {...props}
+    >
+      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+    </TableCell>
   );
 }

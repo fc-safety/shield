@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Image } from "lucide-react";
+import { AlertCircle, CheckCircle, Plus, RefreshCw } from "lucide-react";
 import { data, redirect } from "react-router";
 import { Fragment } from "react/jsx-runtime";
 import { toast } from "sonner";
@@ -152,6 +152,7 @@ export default function InspectNext({
 
   return (
     <div className="grid gap-4">
+      {session && <RouteProgressCard activeSession={session} />}
       {showSuccessfulInspection && (
         <Card className="text-center">
           <CardHeader>
@@ -171,7 +172,7 @@ export default function InspectNext({
           </CardHeader>
           <CardContent className="grid gap-4 place-items-center">
             {inspection?.alerts?.length && (
-              <div className="grid gap-2 place-items-center text-start max-w-md">
+              <div className="grid gap-4 place-items-center text-start max-w-md">
                 <Alert variant="warning">
                   <AlertCircle className="size-4" />
                   <AlertTitle>Alerts Triggered</AlertTitle>
@@ -180,11 +181,12 @@ export default function InspectNext({
                     asset may need attention.
                   </AlertDescription>
                 </Alert>
-                <p className="text-sm text-muted-foreground">
-                  To help in resolving these alerts, please upload a photo for
-                  each alert when applicable.
+                <p className="text-xs text-center">
+                  To help in resolving these alerts, please upload a photo, when
+                  applicable, for each alert.
                 </p>
                 <div className="grid gap-2 w-full">
+                  <h3 className="text-sm font-semibold">Alerts</h3>
                   {inspection.alerts.map((a) => (
                     <div
                       key={a.id}
@@ -226,14 +228,17 @@ export default function InspectNext({
                             "yyyy-MM-dd"
                           )}${ext ? `.${ext}` : ""}`
                         }
-                        renderAddButtonText="Add Photo"
-                        renderAddButtonIcon={Image}
+                        renderAddButtonText={
+                          a.inspectionImageUrl ? "Replace Photo" : "Add Photo"
+                        }
+                        renderAddButtonIcon={
+                          a.inspectionImageUrl ? RefreshCw : Plus
+                        }
                         accept="image/*"
                         value={a.inspectionImageUrl ?? undefined}
                         onValueChange={(value) => {
                           handleAttachInspectionImage(a.id, value);
                         }}
-                        disabled={!!a.inspectionImageUrl}
                       />
                     </div>
                   ))}
@@ -259,7 +264,6 @@ export default function InspectNext({
           </CardContent>
         </Card>
       )}
-      {session && <RouteProgressCard activeSession={session} />}
       {nextAsset && (
         <Card>
           <CardHeader>
