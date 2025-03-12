@@ -6,10 +6,7 @@ import { Link } from "react-router";
 import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { config } from "~/.server/config";
-import {
-  default as EditTagButton,
-  default as NewTagButton,
-} from "~/components/assets/edit-tag-button";
+import EditTagButton from "~/components/assets/edit-tag-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -197,7 +194,11 @@ export default function AdminTagsIndex({
             columns={columns}
             data={tags.results}
             searchPlaceholder="Search tags..."
-            actions={canCreate ? [<NewTagButton key="add" />] : undefined}
+            actions={
+              canCreate
+                ? [<EditTagButton key="add" viewContext="admin" />]
+                : undefined
+            }
             initialState={{
               columnVisibility: {
                 actions: canUpdate || canDelete,
@@ -211,7 +212,7 @@ export default function AdminTagsIndex({
         open={editTag.open}
         onOpenChange={editTag.setOpen}
         trigger={<></>}
-        context="admin"
+        viewContext="admin"
       />
       <ConfirmationDialog {...deleteAction} />
     </>

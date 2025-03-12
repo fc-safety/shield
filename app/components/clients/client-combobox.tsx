@@ -12,7 +12,8 @@ interface ClientComboboxProps {
   onBlur?: () => void;
   className?: string;
   disabled?: boolean;
-  context?: ViewContext;
+  viewContext?: ViewContext;
+  showClear?: boolean;
 }
 
 const fuse = new Fuse([] as Client[], { keys: ["name"] });
@@ -23,7 +24,8 @@ export default function ClientCombobox({
   onBlur,
   className,
   disabled,
-  context,
+  viewContext,
+  showClear,
 }: ClientComboboxProps) {
   const fetcher = useFetcher<DataOrError<ResultsPage<Client>>>();
 
@@ -33,12 +35,12 @@ export default function ClientCombobox({
         limit: 10000,
         _throw: "false",
       };
-      if (context) {
-        query._viewContext = context;
+      if (viewContext) {
+        query._viewContext = viewContext;
       }
       fetcher.load(buildPath("/api/proxy/clients", query));
     }
-  }, [fetcher, context]);
+  }, [fetcher, viewContext]);
 
   useEffect(() => {
     if (value) preloadClients();
@@ -85,7 +87,7 @@ export default function ClientCombobox({
       onSearchValueChange={setSearch}
       className={className}
       shouldFilter={false}
-      showClear
+      showClear={showClear}
       errorMessage={hasError ? "Something went wrong." : undefined}
     />
   );

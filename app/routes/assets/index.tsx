@@ -320,22 +320,22 @@ export default function AssetsIndex({
                 column: table.getColumn("inspectionsStatus"),
                 options: [
                   {
-                    label: "Ready",
-                    value: "OK",
+                    label: "Compliant",
+                    value: "COMPLIANT",
                   },
                   {
-                    label: "Overdue",
-                    value: "OVERDUE",
+                    label: "Due Soon",
+                    value: "DUE_SOON",
                   },
                   {
-                    label: "Expired",
-                    value: "EXPIRED",
+                    label: "Non-Compliant",
+                    value: "NON_COMPLIANT",
                   },
                   {
                     label: "Never Inspected",
                     value: "NEVER",
                   },
-                ],
+                ] satisfies { label: string; value: AssetInspectionsStatus }[],
                 title: "Inspection Status",
               },
             ]}

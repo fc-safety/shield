@@ -111,26 +111,31 @@ export const action = async ({ request }: Route.ActionArgs) => {
         params: queryParams,
       }
     )
-    .mapWith(({ session }) => {
-      return new DataResponse(async (resolve) => {
-        // If session object is returned, make sure to store it for later use.
-        if (session) {
-          inspectionSession.set("activeSession", session.id);
-        }
+    .mapWith(({ inspection, session }) => {
+      return new DataResponse<{ inspection: typeof inspection }>(
+        async (resolve) => {
+          // If session object is returned, make sure to store it for later use.
+          if (session) {
+            inspectionSession.set("activeSession", session.id);
+          }
 
-        // Update session cookie.
-        resolve(
-          data(null, {
-            headers: {
-              "Set-Cookie": await inspectionSessionStorage.commitSession(
-                inspectionSession
-              ),
-            },
-          })
-        );
-      });
+          // Update session cookie.
+          resolve(
+            data(
+              { inspection },
+              {
+                headers: {
+                  "Set-Cookie": await inspectionSessionStorage.commitSession(
+                    inspectionSession
+                  ),
+                },
+              }
+            )
+          );
+        }
+      );
     })
-    .asRedirect("next?success");
+    .asRedirect((data) => `next?success&inspectionId=${data.inspection.id}`);
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -608,7 +613,11 @@ function InspectionRouteCard({
             >
               Inspect without route
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => navigate("next")}>
+            <AlertDialogAction
+              onClick={() =>
+                navigate("next?sessionId=" + (activeSession?.id ?? ""))
+              }
+            >
               Continue to next asset in route
             </AlertDialogAction>
           </AlertDialogFooter>

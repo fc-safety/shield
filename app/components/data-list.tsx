@@ -30,7 +30,7 @@ export default function DataList({
       <dl
         className={cn(
           "grid gap-y-2 gap-x-4 sm:gap-x-8",
-          fluid ? "grid-cols-[auto_auto]" : "grid-cols-2"
+          fluid ? "grid-cols-[auto_1fr]" : "grid-cols-2"
         )}
       >
         {details

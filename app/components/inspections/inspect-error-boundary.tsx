@@ -1,9 +1,13 @@
 import { Frown, Nfc } from "lucide-react";
 import { isRouteErrorResponse } from "react-router";
+import { useAuth } from "~/contexts/auth-context";
+import { isGlobalAdmin } from "~/lib/users";
 import { isNil } from "~/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 
 export default function InspectErrorBoundary({ error }: { error: unknown }) {
+  const { user } = useAuth();
+
   return (
     <Card>
       <CardHeader className="text-center">
@@ -21,6 +25,12 @@ export default function InspectErrorBoundary({ error }: { error: unknown }) {
         {!isNil(error) && isRouteErrorResponse(error) && (
           <p className="mt-6 text-muted-foreground text-sm">
             Error details: {parseErrorData(error.data)}
+          </p>
+        )}
+        {isGlobalAdmin(user) && (
+          <p className="mt-6 text-muted-foreground text-xs font-semibold">
+            Note for admins: You can only inspect assets belonging to your own
+            client.
           </p>
         )}
       </CardContent>

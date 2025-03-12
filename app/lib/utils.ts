@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { isAfter } from "date-fns";
 import type { FieldValues, Resolver } from "react-hook-form";
 import type { LoaderFunctionArgs, MetaDescriptor } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
@@ -260,4 +261,13 @@ export const objectsEqual = (a: unknown, b: unknown) => {
 
 export function capitalize(active: string) {
   return active.charAt(0).toUpperCase() + active.slice(1);
+}
+
+export function dateSort<
+  T extends Record<K, string | number | Date>,
+  K extends keyof T
+>(key: K, desc = true) {
+  return (a: T, b: T) => {
+    return isAfter(a[key], b[key]) ? (desc ? -1 : 1) : desc ? 1 : -1;
+  };
 }

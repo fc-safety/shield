@@ -75,6 +75,8 @@ export default {
         },
 
         // Custom colors
+
+        // OLD (Deprecated) Inspection Status Colors
         ["status-ok"]: {
           DEFAULT: "hsl(var(--status-ok))",
           foreground: "hsl(var(--status-ok-foreground))",
@@ -90,6 +92,20 @@ export default {
         ["status-never"]: {
           DEFAULT: "hsl(var(--status-never))",
           foreground: "hsl(var(--status-never-foreground))",
+        },
+
+        // NEW Inspection Status Colors
+        ["status-compliant"]: {
+          DEFAULT: "hsl(var(--status-compliant))",
+          foreground: "hsl(var(--status-compliant-foreground))",
+        },
+        ["status-due-soon"]: {
+          DEFAULT: "hsl(var(--status-due-soon))",
+          foreground: "hsl(var(--status-due-soon-foreground))",
+        },
+        ["status-non-compliant"]: {
+          DEFAULT: "hsl(var(--status-non-compliant))",
+          foreground: "hsl(var(--status-non-compliant-foreground))",
         },
 
         urgent: {

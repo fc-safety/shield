@@ -30,10 +30,10 @@ import { Card, CardHeader } from "../ui/card";
 import AssetCombobox from "./asset-combobox";
 
 type TForm = z.infer<typeof updateTagSchema | typeof createTagSchema>;
-export interface TagDetailsFormProps {
+interface TagDetailsFormProps {
   tag?: Tag;
   onClose?: () => void;
-  context?: ViewContext;
+  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -43,7 +43,7 @@ const FORM_DEFAULTS = {
 export default function TagDetailsForm({
   tag,
   onClose,
-  context,
+  viewContext,
 }: TagDetailsFormProps) {
   const { appHost } = useAuth();
 
@@ -210,7 +210,7 @@ export default function TagDetailsForm({
                   }
                   onBlur={field.onBlur}
                   className="w-full"
-                  context={context}
+                  viewContext={viewContext}
                 />
               </FormControl>
               <FormMessage />
@@ -241,7 +241,7 @@ export default function TagDetailsForm({
                   className="w-full"
                   clientId={clientId}
                   disabled={!clientId}
-                  context={context}
+                  viewContext={viewContext}
                 />
               </FormControl>
               <FormMessage />
@@ -275,7 +275,9 @@ export default function TagDetailsForm({
                     field.value?.connect?.id
                   )}
                   disabled={!siteId}
-                  context={context}
+                  viewContext={viewContext}
+                  clientId={clientId}
+                  siteId={siteId}
                 />
               </FormControl>
               <FormMessage />

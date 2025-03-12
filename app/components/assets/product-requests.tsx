@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, formatDistanceToNow } from "date-fns";
 import { CirclePlus, Image, NotepadText, Trash } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import type { z } from "zod";
+import type { DataOrError } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -25,7 +26,7 @@ import type {
 } from "~/lib/models";
 import { createProductRequestSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
-import { cn, dedupById } from "~/lib/utils";
+import { cn, dateSort, dedupById } from "~/lib/utils";
 import { AnsiCategoryDisplay } from "../products/ansi-category-combobox";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
@@ -56,20 +57,19 @@ export default function ProductRequests({
         </p>
       )}
 
-      {productRequests.map((request) => (
-        <ProductRequestCard key={request.id} request={request} />
-      ))}
+      {productRequests
+        .slice()
+        .sort(dateSort("createdOn"))
+        .map((request) => (
+          <ProductRequestCard key={request.id} request={request} />
+        ))}
     </div>
   );
 }
 
 export function NewSupplyRequestButton({
-  assetId,
-  parentProductId,
-}: {
-  assetId: string;
-  parentProductId: string;
-}) {
+  ...props
+}: ComponentProps<typeof ProductRequestForm>) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -92,8 +92,7 @@ export function NewSupplyRequestButton({
       dialogClassName="sm:max-w-xl"
       render={({ isDesktop }) => (
         <ProductRequestForm
-          assetId={assetId}
-          parentProductId={parentProductId}
+          {...props}
           renderSubmitButton={({ isSubmitting, disabled }) => {
             const btn = (
               <Button type="submit" disabled={disabled || isSubmitting}>
@@ -118,20 +117,24 @@ const resolver = zodResolver(createProductRequestSchema);
 function ProductRequestForm({
   assetId,
   parentProductId,
+  productCategoryId,
   renderSubmitButton = ({ isSubmitting, disabled }) => (
     <Button type="submit" disabled={disabled || isSubmitting}>
       {isSubmitting ? "Submitting..." : "Submit"}
     </Button>
   ),
   onSubmitted = () => {},
+  onSuccess = () => {},
 }: {
   assetId: string;
   parentProductId: string;
+  productCategoryId: string;
   renderSubmitButton?: (options: {
     isSubmitting: boolean;
     disabled: boolean;
   }) => React.ReactNode;
   onSubmitted?: () => void;
+  onSuccess?: (data: ProductRequest) => void;
 }) {
   const previewImage = useOpenData<string>();
 
@@ -159,12 +162,15 @@ function ProductRequestForm({
                 name: GENERIC_MANUFACTURER_NAME,
                 parentProductId: "_NULL",
               },
+              productCategory: {
+                id: productCategoryId,
+              },
             },
           ],
         })
       );
     }
-  }, [fetcher, parentProductId]);
+  }, [fetcher, parentProductId, productCategoryId]);
 
   useEffect(() => {
     if (fetcher.data) {
@@ -229,13 +235,18 @@ function ProductRequestForm({
   const showTabs = ansiCategories.length > 1;
   const [selectedTab, setSelectedTab] = useState(ansiCategories.at(0)?.id);
   useEffect(() => {
-    if (showTabs) {
-      setSelectedTab(ansiCategories.at(0)?.id);
-    }
-  }, [showTabs, ansiCategories]);
+    setSelectedTab(ansiCategories.at(0)?.id);
+  }, [ansiCategories]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher<
+    DataOrError<ProductRequest>
+  >({
     onSubmitted,
+    onData: (data) => {
+      if (data.data) {
+        onSuccess(data.data);
+      }
+    },
   });
 
   const handleSubmit = (data: TForm) => {
@@ -277,9 +288,11 @@ function ProductRequestForm({
                             "--tab-active-color": category.color
                               ? getContrastTextColor(category.color)
                               : "hsl(var(--foreground))",
+                            "--tab-inactive-color":
+                              category.color ?? "hsl(var(--muted-foreground))",
                           } as React.CSSProperties
                         }
-                        className="data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] grow"
+                        className="text-[var(--tab-inactive-color)] data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] grow font-bold"
                       >
                         {category.name}
                       </TabsTrigger>
@@ -310,6 +323,11 @@ function ProductRequestForm({
                   </TabsContent>
                 ))}
               </Tabs>
+            )}
+            {ansiCategories.length === 0 && (
+              <p className="text-muted-foreground text-xs">
+                No consumables available for this product.
+              </p>
             )}
           </div>
 
@@ -353,7 +371,7 @@ function ProductRequestForm({
               ))}
             </div>
             {productRequestItems.length === 0 && (
-              <p className="text-muted-foreground text-sm">No order items.</p>
+              <p className="text-muted-foreground text-xs">No order items.</p>
             )}
           </div>
           {renderSubmitButton({ isSubmitting, disabled: !isDirty || !isValid })}
@@ -514,11 +532,51 @@ export function ProductRequestApprovalsDisplay({
   );
 }
 
+type RGB = { r: number; g: number; b: number };
+
+function parseCssColorToRgb(color: string): RGB | null {
+  const ctx = document.createElement("canvas").getContext("2d");
+  if (!ctx) return null;
+
+  let cleanedColor = color.trim();
+  const varMatch = cleanedColor.match(/(var\((--[^)]+)\))/);
+  if (varMatch) {
+    const computedVarValue = getComputedStyle(
+      document.documentElement
+    ).getPropertyValue(varMatch[2]);
+    cleanedColor = cleanedColor.replace(varMatch[1], computedVarValue);
+  }
+
+  ctx.fillStyle = cleanedColor; // Let the browser parse the color
+  const computedColor = ctx.fillStyle; // Get the computed value
+
+  // Extract RGB components
+  let match = computedColor.match(/^rgb(a?)\((\d+),\s*(\d+),\s*(\d+)/);
+  if (match) {
+    return {
+      r: parseInt(match[2], 10),
+      g: parseInt(match[3], 10),
+      b: parseInt(match[4], 10),
+    };
+  }
+
+  match = computedColor.match(
+    /^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$/
+  );
+  if (match) {
+    return {
+      r: parseInt(match[1], 16),
+      g: parseInt(match[2], 16),
+      b: parseInt(match[3], 16),
+    };
+  }
+  return null;
+}
+
 const getContrastTextColor = (bgColor: string) => {
-  const hex = bgColor.replace("#", "");
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
+  const bgClr = parseCssColorToRgb(bgColor);
+  if (!bgClr) return "black";
+  const { r, g, b } = bgClr;
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.5 ? "black" : "white";
 };

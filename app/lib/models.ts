@@ -79,6 +79,7 @@ export interface Inspection extends BaseModel {
   locationAccuracy?: number;
   comments?: string;
   responses?: AssetQuestionResponse[];
+  alerts?: Alert[];
 }
 
 export const InspectionStatuses = ["PENDING", "COMPLETE"] as const;
@@ -263,6 +264,7 @@ export interface Alert extends BaseModel {
   assetAlertCriterionId: string;
   resolved: boolean;
   resolutionNote: string | null;
+  inspectionImageUrl: string | null;
   site?: Site;
   siteId: string;
   client?: Client;

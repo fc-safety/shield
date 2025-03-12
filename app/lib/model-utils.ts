@@ -14,9 +14,13 @@ export const getAssetInspectionStatus = (
     Date.now(),
     mostRecentInspection.createdOn
   );
-  if (daysSinceInspection < inspectionCycle) return "OK";
-  if (daysSinceInspection < inspectionCycle * 2) return "OVERDUE";
-  return "EXPIRED";
+  const dueSoonThreshold = Math.max(
+    inspectionCycle - 7,
+    Math.floor(inspectionCycle / 2)
+  );
+  if (daysSinceInspection < dueSoonThreshold) return "COMPLIANT";
+  if (daysSinceInspection < inspectionCycle) return "DUE_SOON";
+  return "NON_COMPLIANT";
 };
 
 export const getAssetAlertsStatus = (alerts: Alert[]): AlertsStatus => {

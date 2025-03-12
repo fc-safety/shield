@@ -2,7 +2,7 @@ import { add, isAfter, type Duration } from "date-fns";
 import { redirect } from "react-router";
 import { inspectionSessionStorage } from "~/.server/sessions";
 import type { InspectionRoute, InspectionSession } from "~/lib/models";
-import { getSearchParam } from "../lib/utils";
+import { dateSort, getSearchParam } from "../lib/utils";
 
 const TAG_SESSION_DURATION: Duration = { hours: 1 };
 
@@ -66,9 +66,7 @@ export const getNextPointFromSession = (
     thisRoute.inspectionRoutePoints.sort((a, b) => a.order - b.order) ?? [];
 
   const sortedCompletedPoints =
-    session.completedInspectionRoutePoints.sort((a, b) =>
-      isAfter(a.createdOn, b.createdOn) ? -1 : 1
-    ) ?? [];
+    session.completedInspectionRoutePoints.sort(dateSort("createdOn")) ?? [];
 
   // Create a set of completed point assetIds for quick lookup.
   const completedPointAssetIds = new Set(

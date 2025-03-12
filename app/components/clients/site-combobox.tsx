@@ -15,7 +15,7 @@ interface SiteComboboxProps {
   valueKey?: "id" | "externalId";
   disabled?: boolean;
   showClear?: boolean;
-  context?: ViewContext;
+  viewContext?: ViewContext;
 }
 
 const fuse = new Fuse([] as Site[], { keys: ["name"] });
@@ -29,7 +29,7 @@ export default function SiteCombobox({
   valueKey = "id",
   disabled,
   showClear = true,
-  context,
+  viewContext,
 }: SiteComboboxProps) {
   const fetcher = useFetcher<DataOrError<ResultsPage<Site>>>();
   const prevClientId = useRef<string | null>(null);
@@ -48,13 +48,13 @@ export default function SiteCombobox({
           prevClientId.current = clientId;
           query.clientId = clientId;
         }
-        if (context) {
-          query._viewContext = context;
+        if (viewContext) {
+          query._viewContext = viewContext;
         }
         fetcher.load(buildPath("/api/proxy/sites", query));
       }
     },
-    [fetcher, context]
+    [fetcher, viewContext]
   );
 
   useEffect(() => {

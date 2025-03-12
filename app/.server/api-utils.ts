@@ -157,8 +157,13 @@ export class DataResponse<T> extends Promise<ReturnType<typeof data<T>>> {
     ) as DataResponse<T>;
   }
 
-  public async asRedirect(url: string) {
-    return this.then(({ init }) => redirect(url, init ?? undefined));
+  public async asRedirect(url: string | ((data: T) => string)) {
+    return this.then(({ data: thisData, init }) =>
+      redirect(
+        typeof url === "function" ? url(thisData) : url,
+        init ?? undefined
+      )
+    );
   }
 
   public catchResponse(): DataResponse<DataOrError<T>> {

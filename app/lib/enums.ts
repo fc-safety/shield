@@ -5,9 +5,9 @@ export enum AlertsStatus {
 }
 
 export const AssetInspectionsStatuses = [
-  "EXPIRED",
-  "OVERDUE",
-  "OK",
+  "COMPLIANT",
+  "DUE_SOON",
+  "NON_COMPLIANT",
   "NEVER",
 ] as const;
 export type AssetInspectionsStatus = (typeof AssetInspectionsStatuses)[number];

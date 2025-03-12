@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
 import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
@@ -11,8 +12,9 @@ import {
   updateAssetSchema,
   updateAssetSchemaResolver,
 } from "~/lib/schema";
-import { hasMultiSiteVisibility } from "~/lib/users";
+import { hasMultiSiteVisibility, isGlobalAdmin } from "~/lib/users";
 import { isEmpty } from "~/lib/utils";
+import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
 import ProductSelector from "../products/product-selector";
 import {
@@ -30,6 +32,9 @@ type TForm = z.infer<typeof updateAssetSchema | typeof createAssetSchema>;
 interface AssetDetailsFormProps {
   asset?: Asset;
   onSubmitted?: () => void;
+  clientId?: string;
+  siteId?: string;
+  context?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -43,6 +48,9 @@ const FORM_DEFAULTS = {
 export default function AssetDetailsForm({
   asset,
   onSubmitted,
+  clientId,
+  siteId,
+  context,
 }: AssetDetailsFormProps) {
   const { user } = useAuth();
 
@@ -67,13 +75,32 @@ export default function AssetDetailsForm({
           },
           client: undefined,
         }
-      : FORM_DEFAULTS,
+      : {
+          ...FORM_DEFAULTS,
+          client: clientId
+            ? {
+                connect: {
+                  id: clientId,
+                },
+              }
+            : undefined,
+          site: siteId
+            ? {
+                connect: {
+                  id: siteId,
+                },
+              }
+            : undefined,
+        },
     mode: "onChange",
   });
 
   const {
     formState: { isDirty, isValid },
+    watch,
   } = form;
+
+  const formClientId = watch("client.connect.id");
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
@@ -88,7 +115,13 @@ export default function AssetDetailsForm({
 
   return (
     <FormProvider {...form}>
-      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.stopPropagation();
+          form.handleSubmit(handleSubmit)(e);
+        }}
+      >
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}
@@ -157,7 +190,29 @@ export default function AssetDetailsForm({
             </FormItem>
           )}
         />
-        {hasMultiSiteVisibility(user) && (
+        {isGlobalAdmin(user) && context === "admin" && !clientId && (
+          <FormField
+            control={form.control}
+            name="client.connect.id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Client</FormLabel>
+                <FormControl>
+                  <ClientCombobox
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className="w-full"
+                    showClear={false}
+                    viewContext={context}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {hasMultiSiteVisibility(user) && !siteId && (
           <FormField
             control={form.control}
             name="site.connect.id"
@@ -171,6 +226,13 @@ export default function AssetDetailsForm({
                     onBlur={field.onBlur}
                     className="w-full"
                     showClear={false}
+                    clientId={formClientId}
+                    disabled={
+                      isGlobalAdmin(user) &&
+                      context === "admin" &&
+                      !!formClientId
+                    }
+                    viewContext={context}
                   />
                 </FormControl>
                 <FormMessage />

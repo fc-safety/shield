@@ -291,6 +291,7 @@ export default function InspectSetup({
                   disabled={
                     isSetup || isSubmitting || (isSetup && !isDirty) || !isValid
                   }
+                  variant={isSetup ? "secondary" : "default"}
                   className={cn("w-full", isSubmitting && "animate-pulse")}
                 >
                   {isSubmitting
@@ -301,7 +302,7 @@ export default function InspectSetup({
                 </Button>
                 {isSetup && (
                   <Button
-                    variant="secondary"
+                    variant="default"
                     asChild
                     type="button"
                     className="w-full"

@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
-import { useState } from "react";
+import React, { useState, type ComponentProps } from "react";
 import type { Tag } from "~/lib/models";
 import { ResponsiveDialog } from "../responsive-dialog";
-import TagDetailsForm, { type TagDetailsFormProps } from "./tag-details-form";
+import TagDetailsForm from "./tag-details-form";
 
-interface EditTagButtonProps extends Omit<TagDetailsFormProps, "onClose"> {
+interface EditTagButtonProps
+  extends Omit<ComponentProps<typeof TagDetailsForm>, "onClose"> {
   tag?: Tag;
   trigger?: React.ReactNode;
   open?: boolean;

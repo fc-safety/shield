@@ -47,7 +47,7 @@ export default function ProductDetails({
                       <Pencil />
                     </Button>
                   }
-                  context="admin"
+                  viewContext="admin"
                 />
               </div>
             </div>

@@ -48,6 +48,7 @@ interface DataTableProps<TData, TValue>
   data: TData[];
   initialState?: InitialTableState;
   hidePagination?: boolean;
+  hideToolbar?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -55,6 +56,7 @@ export function DataTable<TData, TValue>({
   data,
   initialState,
   hidePagination,
+  hideToolbar,
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
@@ -97,7 +99,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <DataTableToolbar table={table} {...passThroughProps} />
+      {!hideToolbar && <DataTableToolbar table={table} {...passThroughProps} />}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

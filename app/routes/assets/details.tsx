@@ -1,11 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  format,
-  formatDistanceToNow,
-  isAfter,
-  isValid,
-  parseISO,
-} from "date-fns";
+import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 import {
   BellRing,
   Check,
@@ -81,6 +75,7 @@ import { updateAssetSchema, updateAssetSchemaResolver } from "~/lib/schema";
 import { can } from "~/lib/users";
 import {
   buildTitleFromBreadcrumb,
+  dateSort,
   getSearchParam,
   getValidatedFormDataOrThrow,
   validateParam,
@@ -350,6 +345,7 @@ export default function AssetDetails({
                     <NewSupplyRequestButton
                       assetId={asset.id}
                       parentProductId={asset.productId}
+                      productCategoryId={asset.product.productCategoryId}
                     />
                   )}
                 </CardTitle>
@@ -687,9 +683,7 @@ function AlertsTable({ alerts }: { alerts: Alert[] }) {
     <>
       <DataTable
         columns={columns}
-        data={alerts.sort((a, b) =>
-          isAfter(b.createdOn, a.createdOn) ? 1 : -1
-        )}
+        data={alerts.sort(dateSort("createdOn"))}
         searchPlaceholder="Search alerts..."
       />
     </>

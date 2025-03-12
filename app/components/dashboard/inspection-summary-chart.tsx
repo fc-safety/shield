@@ -40,17 +40,17 @@ const chartConfig = {
   totalAssets: {
     label: "Total Assets",
   },
-  ok: {
-    label: <StatusLink status="ok" label="Compliant" />,
-    color: "hsl(var(--status-ok))",
+  compliant: {
+    label: <StatusLink status="compliant" label="Compliant" />,
+    color: "hsl(var(--status-compliant))",
   },
-  overdue: {
-    label: <StatusLink status="overdue" />,
-    color: "hsl(var(--status-overdue))",
+  dueSoon: {
+    label: <StatusLink status="due-soon" />,
+    color: "hsl(var(--status-due-soon))",
   },
-  expired: {
-    label: <StatusLink status="expired" />,
-    color: "hsl(var(--status-expired))",
+  nonCompliant: {
+    label: <StatusLink status="non-compliant" />,
+    color: "hsl(var(--status-non-compliant))",
   },
   never: {
     label: <StatusLink status="never" />,
@@ -74,7 +74,9 @@ export function InspectionSummaryChart() {
           const status = getAssetInspectionStatus(
             a.inspections ?? [],
             a.inspectionCycle ?? a.client?.defaultInspectionCycle
-          ).toLowerCase();
+          )
+            .toLowerCase()
+            .replace("_", "-");
           return {
             status,
           };
