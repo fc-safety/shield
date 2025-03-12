@@ -96,7 +96,7 @@ export function NewSupplyRequestButton({
           renderSubmitButton={({ isSubmitting, disabled }) => {
             const btn = (
               <Button type="submit" disabled={disabled || isSubmitting}>
-                {isSubmitting ? "Submitting..." : "Submit Order"}
+                {isSubmitting ? "Submitting..." : "Submit Request"}
               </Button>
             );
 

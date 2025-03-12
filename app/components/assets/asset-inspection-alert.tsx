@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { Check, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
+import { Check, Image, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
@@ -21,7 +21,15 @@ import type { Alert } from "~/lib/models";
 import { resolveAlertSchema, resolveAlertSchemaResolver } from "~/lib/schema";
 import { can } from "~/lib/users";
 import DataList from "../data-list";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { Skeleton } from "../ui/skeleton";
+import DisplayInspectionValue from "./display-inspection-value";
 
 interface AssetInspectionAlertProps {
   assetId: string;
@@ -129,10 +137,17 @@ function InspectionAlert({
           },
           {
             label: "Answer",
-            value:
-              alert.assetQuestionResponse?.assetQuestion?.valueType === "DATE"
-                ? format(alert.assetQuestionResponse?.value, "PP")
-                : alert.assetQuestionResponse?.value,
+            value: alert.assetQuestionResponse?.value && (
+              <DisplayInspectionValue
+                value={alert.assetQuestionResponse?.value}
+              />
+            ),
+          },
+          {
+            label: "Inspection Image",
+            value: alert.inspectionImageUrl && (
+              <InspectionImage url={alert.inspectionImageUrl} />
+            ),
           },
         ]}
         defaultValue={<>&mdash;</>}
@@ -219,5 +234,23 @@ function InspectionAlert({
         </fetcher.Form>
       </FormProvider>
     </div>
+  );
+}
+
+function InspectionImage({ url }: { url: string }) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="secondary" size="sm">
+          <Image /> Preview
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Preview</DialogTitle>
+        </DialogHeader>
+        <img src={url} alt="Preview" className="w-full rounded-lg" />
+      </DialogContent>
+    </Dialog>
   );
 }

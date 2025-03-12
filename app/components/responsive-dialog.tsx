@@ -92,7 +92,9 @@ export function ResponsiveDialog({
             <DrawerTitle>{title}</DrawerTitle>
             <DrawerDescription>{description}</DrawerDescription>
           </DrawerHeader>
-          <div className="px-4">{children}</div>
+          <div className="px-4">
+            {render ? render({ isDesktop, open, onOpenChange }) : children}
+          </div>
           <DrawerFooter className="pt-2">
             <DrawerClose asChild>{cancelTrigger}</DrawerClose>
           </DrawerFooter>
