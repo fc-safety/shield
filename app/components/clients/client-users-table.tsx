@@ -187,6 +187,7 @@ export default function ClientUsersTable({
             key="add"
             clientId={clientId}
             siteExternalId={siteExternalId}
+            viewContext="admin"
           />,
         ]}
       />

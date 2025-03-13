@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import {
   createUserSchemaResolver,
@@ -27,6 +28,7 @@ interface ClientUserDetailsFormProps {
   onSubmitted?: () => void;
   clientId: string;
   siteExternalId?: string;
+  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -41,6 +43,7 @@ export default function ClientUserDetailsForm({
   onSubmitted,
   clientId,
   siteExternalId,
+  viewContext,
 }: ClientUserDetailsFormProps) {
   const isNew = !user;
 
@@ -159,6 +162,7 @@ export default function ClientUserDetailsForm({
                     className="w-full"
                     valueKey="externalId"
                     showClear={false}
+                    viewContext={viewContext}
                   />
                 </FormControl>
                 <FormMessage />
