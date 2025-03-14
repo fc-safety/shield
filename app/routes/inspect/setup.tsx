@@ -48,9 +48,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
+  const extId = await validateTagId(request, "/inspect/setup");
   await guard(request, (user) => can(user, "setup", "assets"));
 
-  const extId = await validateTagId(request, "/inspect/setup");
   return api.tags.getByExternalId(request, extId).mapTo((data) => ({
     tag: data,
   }));
@@ -162,7 +162,7 @@ export default function InspectSetup({
 
   return (
     <>
-      <Card className="max-w-lg w-full">
+      <Card>
         <CardHeader>
           <CardTitle className="text-2xl flex items-center justify-between">
             Asset Inspection Setup

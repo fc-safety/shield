@@ -106,6 +106,11 @@ export function InspectionSummaryChart() {
         {/* <CardDescription>January - June 2024</CardDescription> */}
       </CardHeader>
       <CardContent className="flex-1 pb-0">
+        {data.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="text-muted-foreground">No assets found.</div>
+          </div>
+        )}
         <ChartContainer
           config={chartConfig}
           className="w-full aspect-square max-h-[350px]"

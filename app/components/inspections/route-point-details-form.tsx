@@ -204,6 +204,10 @@ export default function RoutePointDetailsForm({
                     onBlur={field.onBlur}
                     optionFilter={(asset) => !includedAssetIds.has(asset.id)}
                     disabled={!route}
+                    siteId={route?.siteId}
+                    optionQueryFilter={{
+                      siteId: route?.siteId,
+                    }}
                   />
                 </FormControl>
                 <FormMessage />
