@@ -21,7 +21,7 @@ import {
 } from "~/components/ui/chart";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { getAssetInspectionStatus } from "~/lib/model-utils";
-import type { Asset } from "~/lib/models";
+import type { Asset, ResultsPage } from "~/lib/models";
 import { countBy } from "~/lib/utils";
 import BlankDashboardTile from "./blank-dashboard-tile";
 import ErrorDashboardTile from "./error-dashboard-tile";
@@ -64,7 +64,7 @@ export function InspectionSummaryChart() {
 
   const { data: rawAssets, error } = useQuery({
     queryKey: ["assets-with-latest-inspection"],
-    queryFn: () => getAssetsWithLatestInspection(fetch),
+    queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
   });
 
   const data = React.useMemo(
@@ -190,9 +190,9 @@ export function InspectionSummaryChart() {
 const getAssetsWithLatestInspection = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>
 ) => {
-  const response = await fetch("/assets/latest-inspection", {
+  const response = await fetch("/assets/latest-inspection?limit=10000", {
     method: "GET",
   });
 
-  return response.json() as Promise<Asset[]>;
+  return response.json() as Promise<ResultsPage<Asset>>;
 };

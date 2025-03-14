@@ -8,6 +8,7 @@ export interface Role {
   name: string;
   description?: string;
   permissions: string[];
+  notificationGroups: string[];
   createdOn: string;
   updatedOn: string;
 }
@@ -35,6 +36,12 @@ export interface GetPermissionsResponse {
     visibility: PermissionsGroup;
     resources: PermissionsGroup;
   };
+}
+
+export interface NotificationGroup {
+  id: string;
+  name: string;
+  description: string;
 }
 
 export interface ClientUser {

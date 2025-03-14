@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import Fuse from "fuse.js";
 import { MinusSquare, Pencil, PlusSquare } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useFetcher, type UIMatch } from "react-router";
+import { type UIMatch } from "react-router";
 import type { z } from "zod";
 import { create } from "zustand";
 import {
@@ -14,7 +14,13 @@ import {
 import EditRoleButton from "~/components/admin/edit-role-button";
 import DataList from "~/components/data-list";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
   Collapsible,
@@ -24,9 +30,11 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { type updatePermissionMappingSchema } from "~/lib/schema";
 import type {
   GetPermissionsResponse,
+  NotificationGroup,
   Permission,
   PermissionsGroup,
   Role,
@@ -50,16 +58,25 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   return authenticatedData<{
     role: Role;
     permissions: GetPermissionsResponse;
+    notificationGroups: NotificationGroup[];
   }>(
     request,
     [
       FetchOptions.url("/roles/:id", { id }).get().build(),
       FetchOptions.url("/roles/permissions").get().build(),
+      FetchOptions.url("/roles/notification-groups").get().build(),
     ],
     {
-      getData: async ([rolesResponse, permissionsResponse]) => ({
+      getData: async ([
+        rolesResponse,
+        permissionsResponse,
+        notificationGroupsResponse,
+      ]) => ({
         role: await defaultDataGetter([rolesResponse]),
         permissions: await defaultDataGetter([permissionsResponse]),
+        notificationGroups: await defaultDataGetter([
+          notificationGroupsResponse,
+        ]),
       }),
     }
   );
@@ -106,15 +123,22 @@ export default function AdminRoleDetails({
   loaderData: {
     role,
     permissions: { permissions, permissionsFlat },
+    notificationGroups,
   },
 }: Route.ComponentProps) {
+  const [assignedNotificationGroups, setAssignedNotificationGroups] = useState<
+    string[]
+  >(role.notificationGroups);
   const { search, setSearch, selection, setSelection } = usePermissionsStore();
-  const permissionsFetcher = useFetcher();
 
   useEffect(() => {
     setSearch("");
     setSelection(role.permissions);
   }, [role, setSelection, setSearch]);
+
+  useEffect(() => {
+    setAssignedNotificationGroups(role.notificationGroups);
+  }, [role]);
 
   const permissionGroupComponents = Object.values(permissions).map((group) => (
     <PermissionsGroup key={group.title} permissionsGroup={group} />
@@ -125,10 +149,32 @@ export default function AdminRoleDetails({
     [search, permissionsFlat]
   );
 
+  const isNotificationGroupsDirty =
+    assignedNotificationGroups.length < role.notificationGroups.length ||
+    assignedNotificationGroups.some(
+      (id) => !role.notificationGroups.includes(id)
+    );
+
   const isPermissionsDirty =
     role.permissions.length < selection.size ||
     role.permissions.some((id) => !selection.has(id));
 
+  const {
+    submitJson: submitNotificationGroups,
+    isSubmitting: isSavingNotificationGroups,
+  } = useModalFetcher();
+  const handleSaveNotificationGroups = () => {
+    submitNotificationGroups(
+      { notificationGroupIds: assignedNotificationGroups },
+      {
+        method: "post",
+        path: `/api/proxy/roles/${role.id}/update-notification-groups`,
+      }
+    );
+  };
+
+  const { submitJson: submitPermissions, isSubmitting: isSavingPermissions } =
+    useModalFetcher();
   const handleSavePermissions = () => {
     const alreadyGrantedSet = new Set(role.permissions);
 
@@ -147,10 +193,9 @@ export default function AdminRoleDetails({
       }
     }
 
-    permissionsFetcher.submit(updatePermissionsMapping, {
+    submitPermissions(updatePermissionsMapping, {
       method: "post",
-      action: `/api/proxy/roles/${role.id}/update-permissions`,
-      encType: "application/json",
+      path: `/api/proxy/roles/${role.id}/update-permissions`,
     });
   };
 
@@ -199,18 +244,67 @@ export default function AdminRoleDetails({
         </CardContent>
       </Card>
       <Card>
+        <div className="flex items-center justify-between gap-2">
+          <CardHeader>
+            <CardTitle>Notification Groups</CardTitle>
+            <CardDescription>
+              Users assigned to this role will receive notifications from each
+              of the selected notification groups.
+            </CardDescription>
+          </CardHeader>
+          <Button
+            disabled={!isNotificationGroupsDirty || isSavingNotificationGroups}
+            onClick={handleSaveNotificationGroups}
+            className="mr-4 sm:mr-6"
+          >
+            {isSavingNotificationGroups ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+        <CardContent>
+          <div className="grid gap-2">
+            {notificationGroups.map((group) => (
+              <div key={group.id} className="flex items-center gap-4">
+                <Checkbox
+                  id={`notification-group-${group.id}`}
+                  checked={assignedNotificationGroups.includes(group.id)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setAssignedNotificationGroups([
+                        ...assignedNotificationGroups,
+                        group.id,
+                      ]);
+                    } else {
+                      setAssignedNotificationGroups(
+                        assignedNotificationGroups.filter(
+                          (id) => id !== group.id
+                        )
+                      );
+                    }
+                  }}
+                />
+                <Label
+                  className="grid"
+                  htmlFor={`notification-group-${group.id}`}
+                >
+                  <div className="text-sm">{group.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {group.description}
+                  </div>
+                </Label>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             Permissions
             <Button
-              disabled={
-                !isPermissionsDirty || permissionsFetcher.state === "submitting"
-              }
+              disabled={!isPermissionsDirty || isSavingPermissions}
               onClick={handleSavePermissions}
             >
-              {permissionsFetcher.state === "submitting"
-                ? "Saving..."
-                : "Save Changes"}
+              {isSavingPermissions ? "Saving..." : "Save Changes"}
             </Button>
           </CardTitle>
         </CardHeader>
