@@ -12,8 +12,8 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { useMemo } from "react";
-import { useFetcher } from "react-router";
 import useConfirmAction from "~/hooks/use-confirm-action";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AssetQuestion } from "~/lib/models";
 import ActiveIndicator2 from "../active-indicator-2";
@@ -36,7 +36,7 @@ export default function AssetQuestionsTable({
 }: AssetQuestionsTableProps) {
   const editQuestion = useOpenData<AssetQuestion>();
 
-  const fetcher = useFetcher();
+  const { submitJson: submitDelete } = useModalFetcher();
 
   const [deleteAction, setDeleteAction] = useConfirmAction();
 
@@ -125,11 +125,15 @@ export default function AssetQuestionsTable({
                     draft.title = "Delete Question";
                     draft.message = `Are you sure you want to delete the question "${question.prompt}"?`;
                     draft.onConfirm = () => {
-                      fetcher.submit(
+                      const resourceName =
+                        parentType === "product"
+                          ? "products"
+                          : "product-categories";
+                      submitDelete(
                         {},
                         {
                           method: "delete",
-                          action: `?action=delete-asset-question&questionId=${question.id}`,
+                          path: `/api/proxy/${resourceName}/${parentId}/questions/${question.id}`,
                         }
                       );
                     };
