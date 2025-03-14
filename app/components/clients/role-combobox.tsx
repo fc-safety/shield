@@ -12,6 +12,7 @@ interface RoleComboboxProps {
   defaultByName?: string;
   showClear?: boolean;
   disabled?: boolean;
+  onRoleChange?: (role: Role | undefined) => void;
 }
 
 const fuse = new Fuse([] as Role[], {
@@ -26,6 +27,7 @@ export default function RoleCombobox({
   defaultByName,
   showClear = false,
   disabled,
+  onRoleChange,
 }: RoleComboboxProps) {
   const fetcher = useFetcher<Role[]>();
 
@@ -74,6 +76,10 @@ export default function RoleCombobox({
 
     return "";
   }, [valueProp, defaultByName, roles]);
+
+  useEffect(() => {
+    onRoleChange?.(roles.find((r) => value && r.id === value));
+  }, [value, roles, onRoleChange]);
 
   return (
     <ResponsiveCombobox

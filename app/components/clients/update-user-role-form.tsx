@@ -7,14 +7,18 @@ import {
   FormMessage,
   Form as FormProvider,
 } from "@/components/ui/form";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { VISIBILITY } from "~/lib/permissions";
 import {
   assignUserRoleSchemaResolver,
   type assignUserRoleSchema,
 } from "~/lib/schema";
-import type { ClientUser } from "~/lib/types";
+import type { ClientUser, Role } from "~/lib/types";
+import ConfirmationDialog from "../confirmation-dialog";
 import RoleCombobox from "./role-combobox";
 
 type TForm = z.infer<typeof assignUserRoleSchema>;
@@ -44,47 +48,79 @@ export default function UpdateUserRoleForm({
     formState: { isDirty, isValid },
   } = form;
 
-  const { submit, isSubmitting } = useModalFetcher({
+  const { submitJson: submitUserRole, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 
+  const [selectedRole, setSelectedRole] = useState<Role | undefined>(undefined);
+  const [assignGlobalAdminAction, setAssignGlobalAdminAction] =
+    useConfirmAction({});
+
   const handleSubmit = (data: TForm) => {
-    submit(data, {
-      method: "POST",
-      action: `/api/proxy/clients/${clientId}/users/${user.id}/assign-role?_throw=false`,
-      encType: "application/json",
-    });
+    const doSubmit = () =>
+      submitUserRole(data, {
+        method: "POST",
+        path: `/api/proxy/clients/${clientId}/users/${user.id}/assign-role?_throw=false`,
+      });
+
+    if (
+      selectedRole &&
+      selectedRole.id === data.roleId &&
+      selectedRole.permissions.some((p) => p === VISIBILITY.GLOBAL)
+    ) {
+      setAssignGlobalAdminAction((draft) => {
+        draft.open = true;
+        draft.title = "Assign Global Admin Role";
+        draft.message =
+          "Are you sure you want to make the user a global admin? Doing so will give them full access to view and manage data for all clients.";
+        draft.requiredUserInput = user.email;
+        draft.onConfirm = () => {
+          doSubmit();
+        };
+      });
+    } else {
+      doSubmit();
+    }
   };
+
   return (
-    <FormProvider {...form}>
-      <form
-        className="space-y-8"
-        method="post"
-        onSubmit={form.handleSubmit(handleSubmit)}
-      >
-        <FormField
-          control={form.control}
-          name="roleId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <FormControl>
-                <RoleCombobox
-                  value={field.value}
-                  defaultByName={user.roleName}
-                  onValueChange={field.onChange}
-                  onBlur={field.onBlur}
-                  className="w-full"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={!isDirty || !isValid || isSubmitting}>
-          {user.roleName ? "Resassign" : "Assign"}
-        </Button>
-      </form>
-    </FormProvider>
+    <>
+      <FormProvider {...form}>
+        <form
+          className="space-y-8"
+          method="post"
+          onSubmit={form.handleSubmit(handleSubmit)}
+        >
+          <FormField
+            control={form.control}
+            name="roleId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Role</FormLabel>
+                <FormControl>
+                  <RoleCombobox
+                    value={field.value}
+                    defaultByName={user.roleName}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className="w-full"
+                    onRoleChange={setSelectedRole}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" disabled={!isDirty || !isValid || isSubmitting}>
+            {isSubmitting
+              ? "Processing..."
+              : user.roleName
+              ? "Reassign"
+              : "Assign"}
+          </Button>
+        </form>
+      </FormProvider>
+      <ConfirmationDialog {...assignGlobalAdminAction} />
+    </>
   );
 }
