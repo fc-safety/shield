@@ -29,7 +29,9 @@ import ErrorDashboardTile from "./error-dashboard-tile";
 const StatusLink = ({ status, label }: { status: string; label?: string }) => {
   return (
     <Link
-      to={`/assets?inspectionsStatus=${status.toUpperCase()}`}
+      to={`/assets?inspectionsStatus=${status
+        .toUpperCase()
+        .replace(/-/g, "_")}`}
       className="transition-colors hover:text-muted-foreground capitalize"
     >
       {label || status}
@@ -45,16 +47,16 @@ const chartConfig = {
     label: <StatusLink status="compliant" label="Compliant" />,
     color: "hsl(var(--status-compliant))",
   },
-  dueSoon: {
-    label: <StatusLink status="due-soon" />,
+  ["due-soon"]: {
+    label: <StatusLink status="due_soon" label="Due Soon" />,
     color: "hsl(var(--status-due-soon))",
   },
-  nonCompliant: {
-    label: <StatusLink status="non-compliant" />,
+  ["non-compliant"]: {
+    label: <StatusLink status="non-compliant" label="Non-Compliant" />,
     color: "hsl(var(--status-non-compliant))",
   },
   never: {
-    label: <StatusLink status="never" />,
+    label: <StatusLink status="never" label="Never" />,
     color: "hsl(var(--status-never))",
   },
 } satisfies ChartConfig;
