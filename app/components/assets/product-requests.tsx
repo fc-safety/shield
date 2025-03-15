@@ -273,10 +273,10 @@ function ProductRequestForm({
               <Tabs
                 value={selectedTab}
                 onValueChange={setSelectedTab}
-                className="mt-2"
+                className="mt-2 max-w-[calc(100vw-2rem)] overflow-x-auto"
               >
                 {showTabs && (
-                  <TabsList className="w-full flex">
+                  <TabsList className="w-full flex min-w-fit">
                     {ansiCategories.map((category) => (
                       <TabsTrigger
                         key={category.id}
