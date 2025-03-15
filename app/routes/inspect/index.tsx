@@ -18,9 +18,12 @@ import { RemixFormProvider, useRemixForm } from "remix-hook-form";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import type { z } from "zod";
 import { api } from "~/.server/api";
-import { DataResponse, mergeInit } from "~/.server/api-utils";
+import { DataResponse } from "~/.server/api-utils";
 import { guard } from "~/.server/guard";
-import { validateTagId } from "~/.server/inspections";
+import {
+  getInspectionRouteAndSessionData,
+  validateTagId,
+} from "~/.server/inspections";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import DataList from "~/components/data-list";
@@ -144,7 +147,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const extId = await validateTagId(request, "/inspect");
 
   const response = await api.tags.getByExternalId(request, extId);
-  let init = response.init;
 
   if (response.data.asset && !response.data.asset.setupOn) {
     return redirect(
@@ -153,39 +155,24 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     );
   }
 
-  let activeSessions: InspectionSession[] | null = null;
-  let matchingRoutes: InspectionRoute[] | null = null;
-  if (response.data.asset) {
-    const { data: _activeSessions, init: thisInit } =
-      await api.inspections.getActiveSessionsForAsset(
-        request,
-        response.data.asset.id
-      );
-    activeSessions = _activeSessions;
-    init = mergeInit(init, thisInit);
-
-    if (activeSessions.length === 0) {
-      const { data: _matchingRoutes, init: thisInit } =
-        await api.inspectionRoutes.getForAssetId(
-          request,
-          response.data.asset.id
-        );
-      matchingRoutes = _matchingRoutes;
-      init = mergeInit(init, thisInit);
-    } else {
-      matchingRoutes = activeSessions
-        .map((session) => session.inspectionRoute)
-        .filter((r): r is InspectionRoute => !!r);
-    }
+  if (response.data.asset?.id) {
+    return getInspectionRouteAndSessionData(
+      request,
+      response.data.asset?.id,
+      response.init ?? undefined
+    ).mapTo((result) => ({
+      tag: response.data,
+      ...result,
+    }));
   }
 
   return data(
     {
       tag: response.data,
-      activeSessions,
-      matchingRoutes,
+      activeSessions: null,
+      matchingRoutes: null,
     },
-    init ?? undefined
+    response.init ?? undefined
   );
 };
 

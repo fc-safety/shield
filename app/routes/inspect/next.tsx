@@ -171,7 +171,7 @@ export default function InspectNext({
             </div>
           </CardHeader>
           <CardContent className="grid gap-4 place-items-center">
-            {inspection?.alerts?.length && (
+            {!!inspection?.alerts?.length && (
               <div className="grid gap-4 place-items-center text-start max-w-md">
                 <Alert variant="warning">
                   <AlertCircle className="size-4" />

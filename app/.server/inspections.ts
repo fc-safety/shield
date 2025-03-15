@@ -1,8 +1,10 @@
 import { add, isAfter, type Duration } from "date-fns";
-import { redirect } from "react-router";
+import { data, redirect } from "react-router";
 import { inspectionSessionStorage } from "~/.server/sessions";
 import type { InspectionRoute, InspectionSession } from "~/lib/models";
 import { dateSort, getSearchParam } from "../lib/utils";
+import { api } from "./api";
+import { DataResponse, mergeInit } from "./api-utils";
 
 const TAG_SESSION_DURATION: Duration = { hours: 1 };
 
@@ -99,4 +101,43 @@ export const getNextPointFromSession = (
   }
 
   return { nextPoint, routeCompleted };
+};
+
+export const getInspectionRouteAndSessionData = (
+  request: Request,
+  assetId: string,
+  init?: ResponseInit
+) => {
+  const getData = async () => {
+    let matchingRoutes: InspectionRoute[] | null = null;
+    let _init: ResponseInit | null = init ?? null;
+
+    const { data: activeSessions, init: thisInit } =
+      await api.inspections.getActiveSessionsForAsset(request, assetId);
+    _init = mergeInit(_init, thisInit);
+
+    if (activeSessions.length === 0) {
+      const { data: _matchingRoutes, init: thisInit } =
+        await api.inspectionRoutes.getForAssetId(request, assetId);
+      matchingRoutes = _matchingRoutes;
+      _init = mergeInit(_init, thisInit);
+    } else {
+      matchingRoutes = activeSessions
+        .map((session) => session.inspectionRoute)
+        .filter((r): r is InspectionRoute => !!r);
+    }
+
+    return data(
+      {
+        activeSessions,
+        matchingRoutes,
+      },
+      _init ?? undefined
+    );
+  };
+
+  return new DataResponse<{
+    activeSessions: InspectionSession[];
+    matchingRoutes: InspectionRoute[];
+  }>((resolve) => resolve(getData()));
 };

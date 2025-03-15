@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useFetcher } from "react-router";
+import { Link, useFetcher, type To } from "react-router";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type {
@@ -46,6 +46,7 @@ export interface RoutePointDetailsFormProps {
   routePoint?: InspectionRoutePoint;
   onSubmitted?: () => void;
   filterRoute?: (route: InspectionRoute) => boolean;
+  linkToRoutes?: To;
 }
 
 const createInspectionRouteSchemaResolver = zodResolver(
@@ -66,6 +67,7 @@ export default function RoutePointDetailsForm({
   routePoint,
   onSubmitted,
   filterRoute,
+  linkToRoutes = "routes",
 }: RoutePointDetailsFormProps) {
   const isNew = !routePoint;
   const fetcher = useFetcher<ResultsPage<InspectionRoute>>();
@@ -184,7 +186,7 @@ export default function RoutePointDetailsForm({
             <div className="flex flex-col items-center text-sm text-muted-foreground my-4">
               <div>No new routes available for this asset.</div>
               <Button variant="link" asChild>
-                <Link to="routes">Create a new route</Link>
+                <Link to={linkToRoutes}>Create a new route</Link>
               </Button>
             </div>
           ))}
