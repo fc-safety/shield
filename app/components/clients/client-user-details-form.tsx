@@ -163,6 +163,7 @@ export default function ClientUserDetailsForm({
                     valueKey="externalId"
                     showClear={false}
                     viewContext={viewContext}
+                    includeSiteGroups
                   />
                 </FormControl>
                 <FormMessage />

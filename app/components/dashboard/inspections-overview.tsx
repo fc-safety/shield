@@ -102,7 +102,7 @@ export default function InspectionsOverview() {
 const getRecentInspections = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>
 ) => {
-  const response = await fetch("/inspections", {
+  const response = await fetch("/inspections?limit=10000", {
     method: "GET",
   });
 

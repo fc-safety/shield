@@ -139,7 +139,7 @@ export default function InspectionAlertsOverview() {
 const getInspectionAlerts = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>
 ) => {
-  const response = await fetch("/alerts", {
+  const response = await fetch("/alerts?limit=10000", {
     method: "GET",
   });
 

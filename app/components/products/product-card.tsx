@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageOff, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, type To } from "react-router";
 import { getImageWithBackgroundFillColor } from "~/.client/image-utils";
 import type { Product } from "~/lib/models";
@@ -37,6 +37,7 @@ export default function ProductCard({
             name={product.name}
             imageUrl={product.imageUrl}
             custom={!!product.client}
+            navigateTo={navigateTo}
           />
           <div className="grow flex flex-col">
             <CardHeader>
@@ -114,17 +115,36 @@ export function ProductImage({
   imageUrl,
   className,
   custom = false,
+  navigateTo,
 }: {
   name: string;
   imageUrl?: string | null;
   className?: string;
   custom?: boolean;
+  navigateTo?: To;
 }) {
   const [imageContext, setImageContext] = useState<{
     dataUrl: string;
     backgroundColor: string;
   }>();
   const [getDataUrlFailed, setGetDataUrlFailed] = useState(false);
+
+  const Container = useCallback(
+    ({
+      children,
+      ...props
+    }: Omit<React.ComponentProps<typeof Link>, "to"> &
+      React.ComponentProps<"div">) => {
+      return navigateTo ? (
+        <Link to={navigateTo} {...props}>
+          {children}
+        </Link>
+      ) : (
+        <div {...props}>{children}</div>
+      );
+    },
+    [navigateTo]
+  );
 
   useEffect(() => {
     if (imageUrl) {
@@ -138,7 +158,7 @@ export function ProductImage({
   }, [imageUrl]);
 
   return (
-    <div
+    <Container
       className={cn(
         "rounded-l-xl w-48 min-h-48 shrink-0 overflow-hidden border-r flex flex-col",
         className
@@ -177,7 +197,7 @@ export function ProductImage({
       ) : (
         <DefaultProductImage />
       )}
-    </div>
+    </Container>
   );
 }
 

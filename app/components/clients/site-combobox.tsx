@@ -16,6 +16,7 @@ interface SiteComboboxProps {
   disabled?: boolean;
   showClear?: boolean;
   viewContext?: ViewContext;
+  includeSiteGroups?: boolean;
 }
 
 const fuse = new Fuse([] as Site[], { keys: ["name"] });
@@ -30,16 +31,21 @@ export default function SiteCombobox({
   disabled,
   showClear = true,
   viewContext,
+  includeSiteGroups = false,
 }: SiteComboboxProps) {
   const fetcher = useFetcher<DataOrError<ResultsPage<Site>>>();
   const prevClientId = useRef<string | null>(null);
+  const prevIncludeSiteGroups = useRef<boolean>(false);
 
   const preloadSites = useCallback(
     (clientId?: string) => {
       if (
         fetcher.state === "idle" &&
-        ((clientId && clientId !== prevClientId.current) || !fetcher.data)
+        ((clientId && clientId !== prevClientId.current) ||
+          includeSiteGroups !== prevIncludeSiteGroups.current ||
+          !fetcher.data)
       ) {
+        prevIncludeSiteGroups.current = includeSiteGroups;
         const query: QueryParams = {
           limit: 10000,
           _throw: "false",
@@ -51,10 +57,15 @@ export default function SiteCombobox({
         if (viewContext) {
           query._viewContext = viewContext;
         }
-        fetcher.load(buildPath("/api/proxy/sites", query));
+        if (!includeSiteGroups) {
+          // This special query ensures that only sites without children are returned.
+          query.subsites = { none: "" };
+        }
+        const url = buildPath("/api/proxy/sites", query);
+        fetcher.load(url);
       }
     },
-    [fetcher, viewContext]
+    [fetcher, viewContext, includeSiteGroups]
   );
 
   useEffect(() => {

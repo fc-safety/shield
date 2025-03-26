@@ -221,7 +221,7 @@ function RouteCard({ route }: { route: InspectionRoute }) {
 
   return (
     <>
-      <Card className="text-start">
+      <Card className="text-start" id={`route-id-${route.id}`}>
         <CardHeader className="flex-row gap-2">
           <CardHeader className="p-0 sm:p-0">
             <CardTitle>{route.name}</CardTitle>

@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
-import { type UIMatch } from "react-router";
+import { Link, type UIMatch } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator from "~/components/active-indicator";
@@ -173,9 +173,12 @@ export default function AssetDetails({
                       <span className="text-xs font-semibold text-muted-foreground">
                         Name
                       </span>
-                      <span className="text-sm">
+                      <Link
+                        to={`/inspection-routes/#route-id-${point.inspectionRouteId}`}
+                        className="text-sm hover:underline"
+                      >
                         {point.inspectionRoute?.name ?? "Unknown Route"}
-                      </span>
+                      </Link>
                     </div>
                   </div>
                 ))}

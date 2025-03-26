@@ -191,6 +191,7 @@ const getProductRequests = async (
 ) => {
   const qs = stringifyQuery({
     createdOn: { gte: subDays(new Date(), 30).toISOString() },
+    limit: 10000,
   });
   const response = await fetch(`/product-requests?${qs}`, {
     method: "GET",

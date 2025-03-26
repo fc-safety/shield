@@ -26,6 +26,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from "~/components/ui/sidebar";
 import { useAuth } from "~/contexts/auth-context";
 
@@ -68,6 +69,7 @@ export function AppSidebar({
   userRoutes?: (Omit<SidebarMenuItem, "children" | "url"> & { url: string })[];
 }) {
   const { user } = useAuth();
+  const { setOpenMobile } = useSidebar();
 
   const matches = useMatches();
 
@@ -133,6 +135,7 @@ export function AppSidebar({
                                       <NavLink
                                         to={subItem.url}
                                         end={subItem.exact}
+                                        onClick={() => setOpenMobile(undefined)}
                                       >
                                         {({ isActive }) => (
                                           <SidebarMenuSubButton
@@ -161,7 +164,11 @@ export function AppSidebar({
                         </Collapsible>
                       ) : item.url ? (
                         <SidebarMenuItem key={item.title}>
-                          <NavLink to={item.url} end={item.exact}>
+                          <NavLink
+                            to={item.url}
+                            end={item.exact}
+                            onClick={() => setOpenMobile(undefined)}
+                          >
                             {({ isActive }) => (
                               <SidebarMenuButton
                                 asChild
