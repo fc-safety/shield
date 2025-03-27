@@ -1,3 +1,10 @@
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  InfoIcon,
+  Loader2Icon,
+  XCircleIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
 import { cn } from "~/lib/utils";
@@ -11,6 +18,15 @@ const Toaster = ({ className, ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className={cn("toaster group", className)}
+      icons={{
+        success: (
+          <CheckCircleIcon className="size-4 text-primary animate-pop-once" />
+        ),
+        error: <XCircleIcon className="size-4 text-destructive" />,
+        loading: <Loader2Icon className="size-4 animate-spin" />,
+        info: <InfoIcon className="size-4" />,
+        warning: <AlertTriangleIcon className="size-4 text-important" />,
+      }}
       toastOptions={{
         classNames: {
           toast:

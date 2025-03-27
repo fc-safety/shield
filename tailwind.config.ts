@@ -121,6 +121,16 @@ export default {
           foreground: "hsl(var(--pending-foreground))",
         },
       },
+      keyframes: {
+        pop: {
+          "0%": { transform: "scale(0.8)", opacity: "0" },
+          "50%": { transform: "scale(1.2)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+      },
+      animation: {
+        "pop-once": "pop 600ms ease-out forwards",
+      },
     },
     screens: {
       sm: "640px",

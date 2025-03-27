@@ -1,6 +1,8 @@
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useRemixForm } from "remix-hook-form";
+import { useForm } from "react-hook-form";
+import { useFetcher } from "react-router";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -23,28 +25,58 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import type { ResultsPage } from "~/lib/models";
+import type { ClientUser } from "~/lib/types";
+import { buildPath } from "~/lib/urls";
 import { cn } from "~/lib/utils";
 
-type Person = {
-  id: string;
-  name: string;
-  email: string;
+type TForm = {
+  recipients: ClientUser[];
 };
 
-export function SendNotificationsForm() {
+interface SendNotificationsFormProps {
+  siteExternalId?: string;
+  endpointPath: string;
+}
+
+export function SendNotificationsForm({
+  siteExternalId,
+  endpointPath,
+}: SendNotificationsFormProps) {
   const [open, setOpen] = useState(false);
-  const users: Person[] = [];
-  const notificationsForm = useRemixForm({
+
+  const fetcher = useFetcher<ResultsPage<ClientUser>>();
+
+  const preloadUsers = useCallback(() => {
+    if (fetcher.state === "idle" && !fetcher.data) {
+      const url = buildPath("/api/proxy/users", {
+        limit: 10000,
+        siteExternalId,
+      });
+      fetcher.load(url);
+    }
+  }, [fetcher, siteExternalId]);
+
+  const [users, setUsers] = useState<ClientUser[]>([]);
+
+  useEffect(() => {
+    if (fetcher.data) {
+      setUsers(fetcher.data.results);
+    }
+  }, [fetcher.data]);
+
+  const notificationsForm = useForm<TForm>({
     defaultValues: {
-      recipients: [] as Person[],
+      recipients: [],
     },
   });
   const { watch, setValue } = notificationsForm;
 
   const recipients = watch("recipients");
 
-  const [selectionQueue, setSelectionQueue] = useState<Person[]>([]);
-  const [deselectionQueue, setDeselectionQueue] = useState<Person[]>([]);
+  const [selectionQueue, setSelectionQueue] = useState<ClientUser[]>([]);
+  const [deselectionQueue, setDeselectionQueue] = useState<ClientUser[]>([]);
 
   const flushSelectedQueue = useCallback(() => {
     if (selectionQueue.length > 0) {
@@ -66,12 +98,34 @@ export function SendNotificationsForm() {
     }
   }, [open, flushSelectedQueue]);
 
+  const { submitJson, isSubmitting } = useModalFetcher({
+    onSubmitted: () => {
+      setValue("recipients", []);
+      toast.success("Notifications sent successfully!");
+    },
+  });
+
+  const handleSubmit = useCallback(
+    (data: TForm) => {
+      submitJson(
+        {
+          userIds: data.recipients.map((r) => r.id),
+        },
+        {
+          method: "post",
+          path: endpointPath,
+        }
+      );
+    },
+    [submitJson, endpointPath]
+  );
   return (
     <Form {...notificationsForm}>
       <form
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
+          notificationsForm.handleSubmit(handleSubmit)(e);
         }}
       >
         <FormField
@@ -90,6 +144,7 @@ export function SendNotificationsForm() {
                       role="combobox"
                       aria-expanded={open}
                       className="w-full justify-between"
+                      onMouseOver={() => preloadUsers()}
                     >
                       <span className="overflow-hidden whitespace-nowrap overflow-ellipsis">
                         {value.length > 0
@@ -105,6 +160,11 @@ export function SendNotificationsForm() {
                       <CommandList>
                         <CommandEmpty>No results found.</CommandEmpty>
                         <CommandGroup>
+                          {fetcher.state === "loading" && (
+                            <CommandItem disabled>
+                              <Loader2 className="animate-spin" />
+                            </CommandItem>
+                          )}
                           {value.map((v) => {
                             const inQueue =
                               deselectionQueue.findIndex((q) => q.id === v.id) >
@@ -172,9 +232,9 @@ export function SendNotificationsForm() {
           <Button
             type="submit"
             variant={recipients.length > 0 ? "default" : "secondary"}
-            disabled={recipients.length === 0}
+            disabled={recipients.length === 0 || isSubmitting}
           >
-            Send
+            {isSubmitting ? "Sending..." : "Send"}
           </Button>
           {recipients.length > 0 && (
             <Button

@@ -18,6 +18,7 @@ import {
   Thermometer,
   Trash,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
 import { Link, type UIMatch } from "react-router";
@@ -75,6 +76,7 @@ import { updateAssetSchema, updateAssetSchemaResolver } from "~/lib/schema";
 import { can } from "~/lib/users";
 import {
   buildTitleFromBreadcrumb,
+  cn,
   dateSort,
   getSearchParam,
   getValidatedFormDataOrThrow,
@@ -126,6 +128,9 @@ export default function AssetDetails({
   const canReadInspections = can(user, "read", "inspections");
   const canUpdateRoutes = can(user, "update", "inspection-routes");
   const canCreateProductRequests = can(user, "create", "product-requests");
+  const canSendNotificationsToTeam =
+    can(user, "read", "users") && can(user, "notify", "users");
+
   return (
     <div className="grid gap-y-4 gap-x-2 sm:gap-x-4">
       <div className="grid grid-cols-[repeat(auto-fit,_minmax(250px,_1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
@@ -372,16 +377,22 @@ export default function AssetDetails({
             </BasicCard>
           </TabsContent>
           <TabsContent value="alerts">
-            <BasicCard
-              title="Notifications"
-              className="rounded-b-none"
-              icon={BellRing}
-            >
-              <SendNotificationsForm />
-            </BasicCard>
+            {canSendNotificationsToTeam && (
+              <BasicCard
+                title="Notify Your Team"
+                description="Send an inspection reminder notification to select users on your team."
+                className="rounded-b-none"
+                icon={BellRing}
+              >
+                <SendNotificationsForm
+                  siteExternalId={asset.site?.externalId}
+                  endpointPath={`/api/proxy/assets/${asset.id}/send-reminder-notifications`}
+                />
+              </BasicCard>
+            )}
             <BasicCard
               title="Alert History"
-              className="rounded-t-none"
+              className={cn(canSendNotificationsToTeam && "rounded-t-none")}
               icon={ShieldAlert}
             >
               <AlertsTable alerts={asset.alerts ?? []} />
@@ -407,12 +418,14 @@ export default function AssetDetails({
 
 function BasicCard({
   title,
+  description,
   icon: IconComponent,
   className,
   children,
 }: PropsWithChildren<{
   title: string;
-  icon?: React.ComponentType;
+  description?: string;
+  icon?: LucideIcon;
   className?: string;
 }>) {
   return (
@@ -421,6 +434,7 @@ function BasicCard({
         <CardTitle>
           {IconComponent && <IconComponent />} {title}
         </CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>

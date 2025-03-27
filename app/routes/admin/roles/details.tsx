@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import Fuse from "fuse.js";
 import { MinusSquare, Pencil, PlusSquare } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { type UIMatch } from "react-router";
+import { useBeforeUnload, useBlocker, type UIMatch } from "react-router";
 import type { z } from "zod";
 import { create } from "zustand";
 import {
@@ -198,6 +198,28 @@ export default function AdminRoleDetails({
       path: `/api/proxy/roles/${role.id}/update-permissions`,
     });
   };
+
+  const shouldBlock = useMemo(
+    () => isPermissionsDirty || isNotificationGroupsDirty,
+    [isPermissionsDirty, isNotificationGroupsDirty]
+  );
+  const blocker = useBlocker(shouldBlock);
+  useBeforeUnload((e) => {
+    if (shouldBlock) {
+      e.preventDefault();
+      e.returnValue = true;
+    }
+  });
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      const confirmed = confirm(
+        "You have unsaved changes. Are you sure you want to leave?"
+      );
+      if (confirmed) {
+        blocker.proceed();
+      }
+    }
+  }, [blocker]);
 
   return (
     <div className="grid gap-4">

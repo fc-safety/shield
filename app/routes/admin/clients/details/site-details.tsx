@@ -32,9 +32,16 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const siteId = validateParam(params, "siteId");
   return api.sites.get(request, siteId).mapWith((site) =>
-    api.clients
-      .users(site.clientId)
-      .list(request, { siteId: site.externalId, limit: 10000 })
+    api.users
+      .list(
+        request,
+        {
+          clientId: site.clientId,
+          siteExternalId: site.externalId,
+          limit: 10000,
+        },
+        { context: "admin" }
+      )
       .catchResponse()
       .mapTo((dataOrError) => {
         // Catch 403s from the API. If access is forbidden, only hide the users part and not the entire page.

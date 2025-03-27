@@ -23,9 +23,8 @@ import type { Route } from "./+types/index";
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  return api.clients
-    .users(id)
-    .list(request, { limit: 10000 })
+  return api.users
+    .list(request, { limit: 10000, clientId: id }, { context: "admin" })
     .catch((e) => {
       if (e instanceof Response && e.status === 403) {
         return null;

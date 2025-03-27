@@ -257,9 +257,8 @@ export const api = {
     ...CRUD.for<Client, typeof createClientSchema, typeof updateClientSchema>(
       "/clients"
     ).all(),
-    users: (clientId: string) =>
-      CRUD.for<ClientUser, never, never>(`/clients/${clientId}/users`).all(),
   },
+  users: CRUD.for<ClientUser, never, never>(`/users`).all(),
   sites: CRUD.for<Site, typeof baseSiteSchema, typeof baseSiteSchema>(
     "/sites"
   ).except(["list"]),
