@@ -1,7 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 import {
-  BellRing,
   Check,
   CircleAlert,
   ClipboardCheck,
@@ -45,7 +44,6 @@ import { DataTableColumnHeader } from "~/components/data-table/data-table-column
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
 import ProductCard from "~/components/products/product-card";
-import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -76,7 +74,6 @@ import { updateAssetSchema, updateAssetSchemaResolver } from "~/lib/schema";
 import { can } from "~/lib/users";
 import {
   buildTitleFromBreadcrumb,
-  cn,
   dateSort,
   getSearchParam,
   getValidatedFormDataOrThrow,
@@ -128,8 +125,6 @@ export default function AssetDetails({
   const canReadInspections = can(user, "read", "inspections");
   const canUpdateRoutes = can(user, "update", "inspection-routes");
   const canCreateProductRequests = can(user, "create", "product-requests");
-  const canSendNotificationsToTeam =
-    can(user, "read", "users") && can(user, "notify", "users");
 
   return (
     <div className="grid gap-y-4 gap-x-2 sm:gap-x-4">
@@ -377,24 +372,7 @@ export default function AssetDetails({
             </BasicCard>
           </TabsContent>
           <TabsContent value="alerts">
-            {canSendNotificationsToTeam && (
-              <BasicCard
-                title="Notify Your Team"
-                description="Send an inspection reminder notification to select users on your team."
-                className="rounded-b-none"
-                icon={BellRing}
-              >
-                <SendNotificationsForm
-                  siteExternalId={asset.site?.externalId}
-                  endpointPath={`/api/proxy/assets/${asset.id}/send-reminder-notifications`}
-                />
-              </BasicCard>
-            )}
-            <BasicCard
-              title="Alert History"
-              className={cn(canSendNotificationsToTeam && "rounded-t-none")}
-              icon={ShieldAlert}
-            >
+            <BasicCard title="Alert History" icon={ShieldAlert}>
               <AlertsTable alerts={asset.alerts ?? []} />
             </BasicCard>
           </TabsContent>
@@ -408,7 +386,10 @@ export default function AssetDetails({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <AssetInspections inspections={asset.inspections ?? []} />
+            <AssetInspections
+              asset={asset}
+              inspections={asset.inspections ?? []}
+            />
           </CardContent>
         </Card>
       )}

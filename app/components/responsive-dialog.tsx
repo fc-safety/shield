@@ -30,7 +30,7 @@ interface ResponsiveDialogProps extends React.PropsWithChildren {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   trigger?: React.ReactNode;
-  title?: string;
+  title?: React.ReactNode;
   description?: string;
   cancelTrigger?: React.ReactNode;
   minWidth?: string;

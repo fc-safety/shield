@@ -66,8 +66,11 @@ export default function ClientUserDetailsForm({
 
   const handleSubmit = (data: TForm) => {
     submit(data, {
-      path: `/api/proxy/clients/${clientId}/users`,
+      path: "/api/proxy/users",
       id: user?.id,
+      query: {
+        clientId,
+      },
     });
   };
 

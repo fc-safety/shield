@@ -50,8 +50,11 @@ export default function ClientUsersTable({
   const setUserActive = useCallback(
     (id: string, data: Pick<z.infer<typeof updateUserSchema>, "active">) => {
       submit(data, {
-        path: `/api/proxy/clients/${clientId}/users`,
+        path: "/api/proxy/users",
         id,
+        query: {
+          clientId,
+        },
       });
     },
     [clientId, submit]

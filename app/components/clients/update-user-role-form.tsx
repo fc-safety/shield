@@ -18,6 +18,7 @@ import {
   type assignUserRoleSchema,
 } from "~/lib/schema";
 import type { ClientUser, Role } from "~/lib/types";
+import { buildPath } from "~/lib/urls";
 import ConfirmationDialog from "../confirmation-dialog";
 import RoleCombobox from "./role-combobox";
 
@@ -60,7 +61,12 @@ export default function UpdateUserRoleForm({
     const doSubmit = () =>
       submitUserRole(data, {
         method: "POST",
-        path: `/api/proxy/clients/${clientId}/users/${user.id}/assign-role?_throw=false`,
+        path: buildPath(`/api/proxy/users/:id/assign-role`, {
+          id: user.id,
+        }),
+        query: {
+          clientId,
+        },
       });
 
     if (

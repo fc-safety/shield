@@ -38,11 +38,13 @@ type TForm = {
 interface SendNotificationsFormProps {
   siteExternalId?: string;
   endpointPath: string;
+  onSent?: () => void;
 }
 
 export function SendNotificationsForm({
   siteExternalId,
   endpointPath,
+  onSent,
 }: SendNotificationsFormProps) {
   const [open, setOpen] = useState(false);
 
@@ -102,6 +104,7 @@ export function SendNotificationsForm({
     onSubmitted: () => {
       setValue("recipients", []);
       toast.success("Notifications sent successfully!");
+      onSent?.();
     },
   });
 
