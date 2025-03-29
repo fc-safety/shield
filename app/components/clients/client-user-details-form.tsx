@@ -71,6 +71,7 @@ export default function ClientUserDetailsForm({
       query: {
         clientId,
       },
+      viewContext,
     });
   };
 

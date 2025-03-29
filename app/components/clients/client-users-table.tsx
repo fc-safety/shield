@@ -204,6 +204,7 @@ export default function ClientUsersTable({
           siteExternalId={siteExternalId}
           user={editUser.data ?? undefined}
           onSubmitted={() => editUser.setOpen(false)}
+          viewContext="admin"
         />
       </ResponsiveDialog>
       {updateRole.data && (
@@ -216,6 +217,7 @@ export default function ClientUsersTable({
             user={updateRole.data}
             clientId={clientId}
             onSubmitted={() => updateRole.setOpen(false)}
+            viewContext="admin"
           />
         </ResponsiveDialog>
       )}

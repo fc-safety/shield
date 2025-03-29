@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { toast } from "sonner";
+import type { ViewContext } from "~/.server/api-utils";
 import { buildErrorDisplay } from "~/lib/error-handling";
 import { buildPath, type QueryParams } from "~/lib/urls";
 
@@ -53,10 +54,12 @@ export function useModalFetcher<T>({
       query?: QueryParams;
       throw?: boolean;
       method?: NonNullable<Parameters<typeof fetcher.submit>[1]>["method"];
+      viewContext?: ViewContext;
     }
   ) => {
     const cleanedPath = buildPath(options.path, {
       _throw: String(!!options.throw),
+      _viewContext: options.viewContext,
       ...options.query,
     });
 

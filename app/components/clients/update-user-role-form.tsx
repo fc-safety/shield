@@ -10,6 +10,7 @@ import {
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { VISIBILITY } from "~/lib/permissions";
@@ -28,6 +29,7 @@ interface UpdateUserRoleFormProps {
   user: ClientUser;
   clientId: string;
   onSubmitted?: () => void;
+  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -38,6 +40,7 @@ export default function UpdateUserRoleForm({
   user,
   clientId,
   onSubmitted,
+  viewContext,
 }: UpdateUserRoleFormProps) {
   const form = useForm<TForm>({
     resolver: assignUserRoleSchemaResolver,
@@ -67,6 +70,7 @@ export default function UpdateUserRoleForm({
         query: {
           clientId,
         },
+        viewContext,
       });
 
     if (
