@@ -64,19 +64,19 @@ export default function AssetsIndex({
   });
 
   const columnFilters = useMemo(() => {
-    if (searchParams.has("inspectionsStatus")) {
+    if (searchParams.has("inspectionStatus")) {
       return [
         {
-          id: "inspectionsStatus",
-          value: searchParams.get("inspectionsStatus"),
+          id: "inspectionStatus",
+          value: searchParams.get("inspectionStatus"),
         },
       ];
     }
     return [];
   }, [searchParams]);
 
-  const columns: ColumnDef<Asset>[] = useMemo(
-    () => [
+  const columns = useMemo(
+    (): ColumnDef<Asset>[] => [
       {
         accessorKey: "active",
         header: ({ column, table }) => (
@@ -188,12 +188,11 @@ export default function AssetsIndex({
       },
       {
         accessorFn: ({ inspections, inspectionCycle, client }) =>
-          inspections &&
           getAssetInspectionStatus(
-            inspections,
+            inspections ?? [],
             inspectionCycle ?? client?.defaultInspectionCycle
           ),
-        id: "inspectionsStatus",
+        id: "inspectionStatus",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
@@ -204,6 +203,16 @@ export default function AssetsIndex({
             />
           </Link>
         ),
+        filterFn: (row, id, filterValue) => {
+          const status = getAssetInspectionStatus(
+            row.original.inspections ?? [],
+            row.original.inspectionCycle ??
+              row.original.client?.defaultInspectionCycle
+          );
+          return Array.isArray(filterValue)
+            ? filterValue.includes(status)
+            : filterValue === status;
+        },
       },
       {
         id: "actions",
@@ -317,7 +326,7 @@ export default function AssetsIndex({
                 title: "Manufacturer",
               },
               {
-                column: table.getColumn("inspectionsStatus"),
+                column: table.getColumn("inspectionStatus"),
                 options: [
                   {
                     label: "Compliant",

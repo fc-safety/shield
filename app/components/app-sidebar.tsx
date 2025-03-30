@@ -5,6 +5,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronRight, ChevronUp, LogOut, User2, UserCog } from "lucide-react";
 import { Link, NavLink, useMatches } from "react-router";
+import { useTheme } from "remix-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +72,8 @@ export function AppSidebar({
   const { user } = useAuth();
   const { setOpenMobile } = useSidebar();
 
+  const [theme] = useTheme();
+
   const matches = useMatches();
 
   return (
@@ -78,14 +81,18 @@ export function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild className="gap-1.5">
               <Link to="/">
                 <img
-                  src="https://fc-safety.com/wp-content/uploads/2017/08/favicon.png"
+                  src={
+                    theme === "dark"
+                      ? "https://content.fc-safety.com/fc_shield_logo_small_dark.png"
+                      : "https://content.fc-safety.com/fc_shield_logo_small_light.png"
+                  }
                   alt=""
-                  className="w-10 -translate-y-[0.15rem]"
+                  className="w-8"
                 />
-                <span>Shield</span>
+                <span className="text-2xl uppercase font-light">Shield</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

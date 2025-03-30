@@ -29,9 +29,7 @@ import ErrorDashboardTile from "./error-dashboard-tile";
 const StatusLink = ({ status, label }: { status: string; label?: string }) => {
   return (
     <Link
-      to={`/assets?inspectionsStatus=${status
-        .toUpperCase()
-        .replace(/-/g, "_")}`}
+      to={`/assets?inspectionStatus=${status.toUpperCase().replace(/-/g, "_")}`}
       className="transition-colors hover:text-muted-foreground capitalize"
     >
       {label || status}
@@ -130,7 +128,7 @@ export function InspectionSummaryChart() {
               strokeWidth={5}
               onClick={(d) =>
                 navigate(
-                  `/assets?inspectionsStatus=${d.payload.status.toUpperCase()}`
+                  `/assets?inspectionStatus=${d.payload.status.toUpperCase()}`
                 )
               }
             >
