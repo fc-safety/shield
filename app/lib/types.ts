@@ -66,9 +66,34 @@ export interface ResponseValueImage {
   urls: string[];
 }
 
+export interface Job<TData> {
+  name: string;
+  data: TData;
+  opts: {
+    attempts: number;
+    backoff: {
+      delay: number;
+      type: "exponential";
+    };
+  };
+  id: string;
+  progress: number;
+  returnvalue: unknown;
+  stacktrace: string[];
+  delay: number;
+  priority: number;
+  attemptsStarted: number;
+  attemptsMade: number;
+  timestamp: number;
+  queueQualifiedName: string;
+  finishedOn: number;
+  processedOn: number;
+  failedReason: string;
+}
+
 export interface JobQueue {
   queueName: string;
-  failedJobs: unknown[];
-  waitingJobs: unknown[];
-  activeJobs: unknown[];
+  failedJobs: Job<unknown>[];
+  waitingJobs: Job<unknown>[];
+  activeJobs: Job<unknown>[];
 }
