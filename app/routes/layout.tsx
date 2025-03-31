@@ -14,6 +14,7 @@ import {
   Settings,
   Shapes,
   Shield,
+  Terminal,
   Users,
 } from "lucide-react";
 import { data, Outlet } from "react-router";
@@ -134,6 +135,17 @@ export default function Layout({
           title: "Settings",
           url: "admin/settings",
           icon: Settings,
+        },
+        {
+          title: "Advanced",
+          url: "admin/advanced",
+          icon: Terminal,
+          children: [
+            {
+              title: "Jobs",
+              url: "admin/advanced/jobs",
+            },
+          ],
         },
       ],
       hide: !user || !isGlobalAdmin(user),

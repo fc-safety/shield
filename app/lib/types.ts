@@ -65,3 +65,10 @@ export interface ClientUser {
 export interface ResponseValueImage {
   urls: string[];
 }
+
+export interface JobQueue {
+  queueName: string;
+  failedJobs: unknown[];
+  waitingJobs: unknown[];
+  activeJobs: unknown[];
+}

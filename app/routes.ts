@@ -104,6 +104,10 @@ export default [
         route(":id", "./routes/admin/roles/details.tsx"),
       ]),
       route("settings", "./routes/admin/settings.tsx"),
+      route("advanced", "./routes/admin/advanced/layout.tsx", [
+        index("./routes/admin/advanced/index.tsx"),
+        route("jobs", "./routes/admin/advanced/jobs.tsx"),
+      ]),
     ]),
 
     // Help routes
