@@ -77,7 +77,7 @@ export function AppSidebar({
   const matches = useMatches();
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="z-20">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
