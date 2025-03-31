@@ -1,16 +1,17 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { RotateCcw, X } from "lucide-react";
+import { RotateCw, X } from "lucide-react";
 import { useCallback, useMemo } from "react";
-import { api } from "~/.server/api";
+import { toast } from "sonner";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import VirtualizedTable from "~/components/data-table/virtualized-data-table";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import type { Job } from "~/lib/types";
-import { buildTitleFromBreadcrumb } from "~/lib/utils";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import type { Job, JobQueue } from "~/lib/types";
+import { buildTitleFromBreadcrumb, cn } from "~/lib/utils";
 import type { Route } from "./+types/jobs";
 export const handle = {
   breadcrumb: () => ({
@@ -22,46 +23,69 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
-  return api.notifications.getJobQueues(request);
+export const loader = async () => {
+  return {};
 };
 
-export default function AdminAdvancedJobs({
-  loaderData: jobQueues,
-}: Route.ComponentProps) {
-  const { submitJson: submitRetryJob } = useModalFetcher();
-  const handleRetryJob = useCallback(
-    (jobId: string, queueName: string) => {
-      submitRetryJob(
-        {},
-        {
-          path: "/api/proxy/notifications/job-queues/:queueName/retry-job/:jobId",
-          query: {
-            queueName,
-            jobId,
-          },
-        }
-      );
-    },
-    [submitRetryJob]
-  );
+export default function AdminAdvancedJobs() {
+  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { submitJson: submitRemoveJob } = useModalFetcher();
-  const handleRemoveJob = useCallback(
-    (jobId: string, queueName: string) => {
-      submitRemoveJob(
-        {},
+  const queryClient = useQueryClient();
+  const { data: jobQueues } = useQuery({
+    queryKey: ["job-queues"],
+    queryFn: () => getJobQueues(fetch),
+    refetchInterval: 5000,
+  });
+
+  const {
+    mutate: retryJob,
+    isPending: isRetryJobPending,
+    variables: retryJobVariables,
+  } = useMutation({
+    mutationFn: ({
+      queueName,
+      jobId,
+    }: {
+      queueName: string;
+      jobId: string;
+    }) => {
+      return fetch(
+        `/notifications/job-queues/${queueName}/retry-job/${jobId}`,
         {
-          path: "/api/proxy/notifications/job-queues/:queueName/remove-job/:jobId",
-          query: {
-            queueName,
-            jobId,
-          },
+          method: "POST",
         }
       );
     },
-    [submitRemoveJob]
-  );
+    onSuccess: (_data, { jobId }) => {
+      queryClient.invalidateQueries({ queryKey: ["job-queues"] });
+      toast.success(`Request to retry job ${jobId} was sent.`);
+    },
+  });
+
+  const {
+    mutate: removeJob,
+    isPending: isRemoveJobPending,
+    variables: removeJobVariables,
+  } = useMutation({
+    mutationFn: ({
+      queueName,
+      jobId,
+    }: {
+      queueName: string;
+      jobId: string;
+    }) => {
+      return fetch(
+        `/notifications/job-queues/${queueName}/remove-job/${jobId}`,
+        {
+          method: "POST",
+        }
+      );
+    },
+    onSuccess: (_data, { jobId, queueName }) => {
+      queryClient.invalidateQueries({ queryKey: ["job-queues"] });
+      toast.success(`Job ${jobId} was removed from queue ${queueName}.`);
+    },
+  });
 
   const commonJobColumns = useMemo(
     (): ColumnDef<Job<unknown>>[] => [
@@ -145,21 +169,34 @@ export default function AdminAdvancedJobs({
         id: "actions",
         cell: ({ row }) => {
           const job = row.original;
+          const isRetrying =
+            isRetryJobPending &&
+            retryJobVariables?.jobId === job.id &&
+            retryJobVariables?.queueName === queueName;
+
+          const isRemoving =
+            isRemoveJobPending &&
+            removeJobVariables?.jobId === job.id &&
+            removeJobVariables?.queueName === queueName;
+
           return (
             <div className="flex gap-2">
               <Button
                 variant="secondary"
                 size="icon"
                 title="Retry job"
-                onClick={() => handleRetryJob(job.id, queueName)}
+                onClick={() => retryJob({ jobId: job.id, queueName })}
+                disabled={isRetrying}
               >
-                <RotateCcw />
+                <RotateCw className={cn(isRetrying ? "animate-spin" : "")} />
               </Button>
               <Button
                 variant="destructive"
                 size="icon"
                 title="Remove job"
-                onClick={() => handleRemoveJob(job.id, queueName)}
+                onClick={() => removeJob({ jobId: job.id, queueName })}
+                disabled={isRemoving}
+                className={cn(isRemoving ? "animate-pulse" : "")}
               >
                 <X />
               </Button>
@@ -168,7 +205,15 @@ export default function AdminAdvancedJobs({
         },
       },
     ],
-    [commonJobColumns, handleRetryJob, handleRemoveJob]
+    [
+      commonJobColumns,
+      retryJob,
+      isRetryJobPending,
+      retryJobVariables,
+      removeJob,
+      isRemoveJobPending,
+      removeJobVariables,
+    ]
   );
 
   const waitingJobColumns = useMemo(
@@ -184,36 +229,50 @@ export default function AdminAdvancedJobs({
   return (
     <div className="flex flex-col gap-8">
       <h1 className="text-2xl font-bold">Jobs</h1>
-      {jobQueues.map((jobQueue) => (
-        <Card key={jobQueue.queueName}>
-          <CardHeader>
-            <CardTitle>Queue name: {jobQueue.queueName}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4 bg-inherit">
-            <h2>Failed jobs</h2>
-            <VirtualizedTable
-              height={"100%"}
-              maxHeight={500}
-              columns={failedJobColumns(jobQueue.queueName)}
-              data={jobQueue.failedJobs}
-            />
-            <h2>Waiting jobs</h2>
-            <VirtualizedTable
-              height={"100%"}
-              maxHeight={500}
-              columns={waitingJobColumns}
-              data={jobQueue.waitingJobs}
-            />
-            <h2>Active jobs</h2>
-            <VirtualizedTable
-              height={"100%"}
-              maxHeight={500}
-              columns={activeJobColumns}
-              data={jobQueue.activeJobs}
-            />
-          </CardContent>
-        </Card>
-      ))}
+      {jobQueues ? (
+        jobQueues.map((jobQueue) => (
+          <Card key={jobQueue.queueName}>
+            <CardHeader>
+              <CardTitle>Queue name: {jobQueue.queueName}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4 bg-inherit">
+              <h2>Failed jobs</h2>
+              <VirtualizedTable
+                height={"100%"}
+                maxHeight={500}
+                columns={failedJobColumns(jobQueue.queueName)}
+                data={jobQueue.failedJobs}
+              />
+              <h2>Waiting jobs</h2>
+              <VirtualizedTable
+                height={"100%"}
+                maxHeight={500}
+                columns={waitingJobColumns}
+                data={jobQueue.waitingJobs}
+              />
+              <h2>Active jobs</h2>
+              <VirtualizedTable
+                height={"100%"}
+                maxHeight={500}
+                columns={activeJobColumns}
+                data={jobQueue.activeJobs}
+              />
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <div className="rounded-lg w-full h-72 animate-pulse bg-card"></div>
+      )}
     </div>
   );
 }
+
+const getJobQueues = async (
+  fetch: (url: string, options: RequestInit) => Promise<Response>
+) => {
+  const response = await fetch("/notifications/job-queues", {
+    method: "GET",
+  });
+
+  return response.json() as Promise<JobQueue[]>;
+};

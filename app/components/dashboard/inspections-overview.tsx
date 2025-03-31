@@ -11,13 +11,12 @@ import VirtualizedDataTable from "../data-table/virtualized-data-table";
 import DisplayRelativeDate from "../display-relative-date";
 import Icon from "../icons/icon";
 import { Card, CardContent, CardHeader } from "../ui/card";
-import BlankDashboardTile from "./blank-dashboard-tile";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
 export default function InspectionsOverview() {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["recent-inspections"],
     queryFn: () => getRecentInspections(fetch),
   });
@@ -77,7 +76,9 @@ export default function InspectionsOverview() {
     []
   );
 
-  return data ? (
+  return error ? (
+    <ErrorDashboardTile />
+  ) : (
     <Card>
       <CardHeader>Inspections Overview</CardHeader>
       <CardContent className="bg-inherit">
@@ -88,14 +89,11 @@ export default function InspectionsOverview() {
           initialState={{
             sorting: [{ id: "date", desc: true }],
           }}
-          data={data.results}
+          data={data?.results ?? []}
+          loading={isLoading}
         />
       </CardContent>
     </Card>
-  ) : error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <BlankDashboardTile className="animate-pulse" />
   );
 }
 

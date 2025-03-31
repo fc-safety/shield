@@ -47,7 +47,7 @@ import {
   type updateProductSchema,
   type updateTagSchema,
 } from "~/lib/schema";
-import type { ClientUser, JobQueue, Role } from "~/lib/types";
+import type { ClientUser, Role } from "~/lib/types";
 import { authenticatedData, CRUD, FetchOptions } from "./api-utils";
 
 const backendCreateInspectionSchema = createInspectionSchema.extend({
@@ -283,12 +283,6 @@ export const api = {
     getByKey: (request: Request, key: string) =>
       authenticatedData<VaultOwnership>(request, [
         FetchOptions.url("/vault-ownerships/key/:key", { key }).get().build(),
-      ]),
-  },
-  notifications: {
-    getJobQueues: (request: Request) =>
-      authenticatedData<JobQueue[]>(request, [
-        FetchOptions.url("/notifications/job-queues").get().build(),
       ]),
   },
 };

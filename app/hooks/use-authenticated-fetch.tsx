@@ -46,7 +46,7 @@ export function useAuthenticatedFetch() {
   }, [fetcher.state, fetcher.data]);
 
   const fetchAuthenticated = useCallback(
-    async (url: string, options: RequestInit) => {
+    async (url: string, options?: RequestInit) => {
       if (!isAbsoluteUrl(url)) {
         url = buildUrl(url, apiUrl).toString();
       }

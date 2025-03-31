@@ -37,6 +37,7 @@ interface Props<TData, TValue>
   data: TData[];
   initialState?: InitialTableState;
   hideToolbar?: boolean;
+  loading?: boolean;
 }
 
 export default function VirtualizedTable<TData, TValue>({
@@ -46,6 +47,7 @@ export default function VirtualizedTable<TData, TValue>({
   data,
   initialState,
   hideToolbar,
+  loading,
   ...passThroughProps
 }: Props<TData, TValue>) {
   // The virtualizer will need a reference to the scrollable container element
@@ -129,6 +131,7 @@ export default function VirtualizedTable<TData, TValue>({
         <VirtualizedTableBody
           table={table}
           tableContainerRef={tableContainerRef}
+          loading={loading}
         />
       </Table>
     </div>
@@ -138,9 +141,11 @@ export default function VirtualizedTable<TData, TValue>({
 function VirtualizedTableBody<TData>({
   table,
   tableContainerRef,
+  loading,
 }: {
   table: TTable<TData>;
   tableContainerRef: React.RefObject<HTMLDivElement>;
+  loading?: boolean;
 }) {
   const { rows } = table.getRowModel();
   const isEmtpy = !rows.length;
@@ -166,7 +171,7 @@ function VirtualizedTableBody<TData>({
         height: !isEmtpy ? `${rowVirtualizer.getTotalSize()}px` : "auto", //tells scrollbar how big the table is
       }}
     >
-      {!isEmtpy ? (
+      {!isEmtpy && !loading ? (
         rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const row = rows[virtualRow.index] as Row<TData>;
           return (
@@ -200,7 +205,7 @@ function VirtualizedTableBody<TData>({
             colSpan={table.getAllLeafColumns().length}
             className="h-24 text-center inline-flex items-center justify-center flex-1"
           >
-            No results.
+            {loading ? "Loading..." : "No results."}
           </TableCell>
         </TableRow>
       )}

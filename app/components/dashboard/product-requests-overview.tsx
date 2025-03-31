@@ -25,14 +25,13 @@ import Icon from "../icons/icon";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
 import { DialogFooter } from "../ui/dialog";
-import BlankDashboardTile from "./blank-dashboard-tile";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
 export default function ProductRequestsOverview() {
   const { user } = useAuth();
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["product-requests"],
     queryFn: () => getProductRequests(fetch),
   });
@@ -149,7 +148,9 @@ export default function ProductRequestsOverview() {
     [reviewRequest]
   );
 
-  return data ? (
+  return error ? (
+    <ErrorDashboardTile />
+  ) : (
     <>
       <Card>
         <CardHeader>
@@ -169,7 +170,8 @@ export default function ProductRequestsOverview() {
                 review: can(user, "review", "product-requests"),
               },
             }}
-            data={data.results}
+            data={data?.results ?? []}
+            loading={isLoading}
           />
         </CardContent>
       </Card>
@@ -179,10 +181,6 @@ export default function ProductRequestsOverview() {
         request={reviewRequest.data}
       />
     </>
-  ) : error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <BlankDashboardTile className="animate-pulse" />
   );
 }
 

@@ -13,12 +13,11 @@ import DisplayRelativeDate from "../display-relative-date";
 import Icon from "../icons/icon";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
-import BlankDashboardTile from "./blank-dashboard-tile";
 import ErrorDashboardTile from "./error-dashboard-tile";
 export default function InspectionAlertsOverview() {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ["inspection-alerts"],
     queryFn: () => getInspectionAlerts(fetch),
   });
@@ -115,7 +114,9 @@ export default function InspectionAlertsOverview() {
     []
   );
 
-  return data ? (
+  return error ? (
+    <ErrorDashboardTile />
+  ) : (
     <Card>
       <CardHeader>Inspection Alerts</CardHeader>
       <CardContent className="bg-inherit">
@@ -123,17 +124,14 @@ export default function InspectionAlertsOverview() {
           height="100%"
           maxHeight={400}
           columns={columns}
-          data={data.results}
+          data={data?.results ?? []}
+          loading={isLoading}
           initialState={{
             sorting: [{ id: "date", desc: true }],
           }}
         />
       </CardContent>
     </Card>
-  ) : error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <BlankDashboardTile className="animate-pulse" />
   );
 }
 const getInspectionAlerts = async (
