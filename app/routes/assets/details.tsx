@@ -553,7 +553,7 @@ function ConsumablesTable({
                   onSelect={() =>
                     setDeleteAction((draft) => {
                       draft.open = true;
-                      draft.title = "Delete Subproduct";
+                      draft.title = "Delete Supply";
                       draft.message = `Are you sure you want to remove ${consumable.product.name} from this asset?`;
                       draft.onConfirm = () => {
                         submitDelete(

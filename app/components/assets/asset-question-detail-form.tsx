@@ -402,7 +402,7 @@ export default function AssetQuestionDetailForm({
                     }
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Subproduct</FormLabel>
+                        <FormLabel>Supply</FormLabel>
                         <FormControl>
                           <ConsumableCombobox
                             parentProductId={parentId}

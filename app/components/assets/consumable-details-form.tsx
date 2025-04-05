@@ -66,6 +66,9 @@ export default function ConsumableDetailsForm({
           product: {
             connect: { id: consumable.productId },
           },
+          site: {
+            connect: { id: consumable.siteId },
+          },
         }
       : FORM_DEFAULTS,
     mode: "onBlur",
@@ -97,7 +100,7 @@ export default function ConsumableDetailsForm({
           name="product.connect.id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Subproduct</FormLabel>
+              <FormLabel>Supply</FormLabel>
               <FormControl>
                 <ConsumableCombobox
                   parentProductId={parentProductId}

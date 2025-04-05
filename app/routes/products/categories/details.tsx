@@ -174,7 +174,7 @@ export default function ProductCategoryDetails({
                 p.manufacturerId === genericManufacturer.id
             ) ?? []
           }
-          title="Generic Subproducts"
+          title="Generic Supplies"
           icon={SquareStack}
           productCategory={productCategory}
           manufacturer={genericManufacturer}

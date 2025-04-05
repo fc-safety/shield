@@ -29,7 +29,7 @@ export default function EditProductButton({
       open={openProp ?? open}
       onOpenChange={onOpenChange ?? setOpen}
       title={`${product ? "Edit" : "Add New"} ${
-        consumable || parentProduct ? "Subproduct" : "Product"
+        consumable || parentProduct ? "Supply" : "Product"
       }`}
       dialogClassName="sm:max-w-lg"
       trigger={
@@ -37,7 +37,7 @@ export default function EditProductButton({
           <Button type="button" size="sm">
             {product ? <Pencil /> : <Plus />}
             {product ? "Edit" : "Add"}{" "}
-            {consumable || parentProduct ? "Subproduct" : "Product"}
+            {consumable || parentProduct ? "Supply" : "Product"}
           </Button>
         )
       }

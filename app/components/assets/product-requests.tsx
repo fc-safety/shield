@@ -139,13 +139,13 @@ function ProductRequestForm({
   const previewImage = useOpenData<string>();
 
   const fetcher = useFetcher<ResultsPage<Product>>();
-  const subproductsLoading =
+  const suppliesLoading =
     fetcher.state === "loading" || (fetcher.state === "idle" && !fetcher.data);
 
-  const [subproducts, setSubproducts] = useState<Product[]>([]);
-  const subproductMap = useMemo(() => {
-    return new Map(subproducts.map((product) => [product.id, product]));
-  }, [subproducts]);
+  const [supplies, setSupplies] = useState<Product[]>([]);
+  const supplyMap = useMemo(() => {
+    return new Map(supplies.map((product) => [product.id, product]));
+  }, [supplies]);
 
   useEffect(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
@@ -174,7 +174,7 @@ function ProductRequestForm({
 
   useEffect(() => {
     if (fetcher.data) {
-      setSubproducts(fetcher.data.results);
+      setSupplies(fetcher.data.results);
     }
   }, [fetcher.data]);
 
@@ -209,19 +209,19 @@ function ProductRequestForm({
   });
 
   const availableConsumables = useMemo(() => {
-    return subproducts.filter(
+    return supplies.filter(
       (p) => !productRequestItems.some((i) => i.productId === p.id)
     );
-  }, [subproducts, productRequestItems]);
+  }, [supplies, productRequestItems]);
 
   const ansiCategories = useMemo(() => {
     const categories: Pick<AnsiCategory, "id" | "name" | "color">[] = dedupById(
-      subproducts
+      supplies
         .map((p) => p.ansiCategory)
         .filter((c): c is NonNullable<typeof c> => !!c)
     );
 
-    if (subproducts.some((p) => !p.ansiCategory)) {
+    if (supplies.some((p) => !p.ansiCategory)) {
       categories.push({
         id: "other",
         name: "Other",
@@ -230,7 +230,7 @@ function ProductRequestForm({
     }
 
     return categories;
-  }, [subproducts]);
+  }, [supplies]);
 
   const showTabs = ansiCategories.length > 1;
   const [selectedTab, setSelectedTab] = useState(ansiCategories.at(0)?.id);
@@ -265,7 +265,7 @@ function ProductRequestForm({
         >
           <div>
             <h3 className="font-medium text-sm">Available Consumables</h3>
-            {subproductsLoading ? (
+            {suppliesLoading ? (
               <div className="mt-2">
                 <Skeleton className="h-12 w-full" />
               </div>
@@ -357,7 +357,7 @@ function ProductRequestForm({
                             min={1}
                           />
                           <ProductRequestItem
-                            product={subproductMap.get(item.productId)!}
+                            product={supplyMap.get(item.productId)!}
                             onPreviewImage={previewImage.openData}
                             className="col-span-2 grid-cols-subgrid"
                             showAnsiCategory

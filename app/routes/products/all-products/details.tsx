@@ -181,12 +181,12 @@ export default function ProductDetails({
         <Card>
           <CardHeader>
             <CardTitle>
-              <SquareStack /> Subproducts
+              <SquareStack /> Supplies
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <SubproductsTable
-              subproducts={product.consumableProducts ?? []}
+            <SuppliesTable
+              supplies={product.consumableProducts ?? []}
               parentProduct={product}
             />
           </CardContent>
@@ -198,7 +198,7 @@ export default function ProductDetails({
               <span>
                 {product.productCategory.shortName ??
                   product.productCategory.name}{" "}
-                Generic Subproducts
+                Generic Supplies
               </span>
               <div className="flex-1"></div>
               {getCanUpdateCategory(product.productCategory) && (
@@ -213,9 +213,9 @@ export default function ProductDetails({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <SubproductsTable
+            <SuppliesTable
               readOnly
-              subproducts={
+              supplies={
                 product.productCategory.products?.map((p) => ({
                   ...p,
                   productCategory: product.productCategory,
@@ -274,12 +274,12 @@ export default function ProductDetails({
   );
 }
 
-function SubproductsTable({
-  subproducts,
+function SuppliesTable({
+  supplies,
   parentProduct,
   readOnly = false,
 }: {
-  subproducts: Product[];
+  supplies: Product[];
   parentProduct?: Product;
   readOnly?: boolean;
 }) {
@@ -288,10 +288,10 @@ function SubproductsTable({
   const canUpdate = can(user, "update", "products");
   const canDelete = can(user, "delete", "products");
 
-  const editSubproduct = useOpenData<Product>();
+  const editSupply = useOpenData<Product>();
 
   const { submit: submitDelete } = useModalFetcher({
-    defaultErrorMessage: "Error: Failed to delete subproduct",
+    defaultErrorMessage: "Error: Failed to delete supply",
   });
 
   const [deleteAction, setDeleteAction] = useConfirmAction({
@@ -349,7 +349,7 @@ function SubproductsTable({
           {
             id: "actions",
             cell: ({ row }) => {
-              const subproduct = row.original;
+              const supply = row.original;
 
               return (
                 <DropdownMenu>
@@ -363,7 +363,7 @@ function SubproductsTable({
                     {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
                     <DropdownMenuItem
                       disabled={!canUpdate}
-                      onSelect={() => editSubproduct.openData(subproduct)}
+                      onSelect={() => editSupply.openData(supply)}
                     >
                       <Pencil />
                       Edit
@@ -374,16 +374,15 @@ function SubproductsTable({
                       onSelect={() =>
                         setDeleteAction((draft) => {
                           draft.open = true;
-                          draft.title = "Delete Subproduct";
-                          draft.message = `Are you sure you want to delete ${subproduct.name}?`;
-                          draft.requiredUserInput =
-                            subproduct.name || subproduct.id;
+                          draft.title = "Delete Supply";
+                          draft.message = `Are you sure you want to delete ${supply.name}?`;
+                          draft.requiredUserInput = supply.name || supply.id;
                           draft.onConfirm = () => {
                             submitDelete(
                               {},
                               {
                                 method: "delete",
-                                action: `/api/proxy/products/${subproduct.id}`,
+                                action: `/api/proxy/products/${supply.id}`,
                               }
                             );
                           };
@@ -399,12 +398,10 @@ function SubproductsTable({
             },
           },
         ]}
-        data={subproducts ?? []}
+        data={supplies ?? []}
         initialState={{
           columnVisibility: {
-            ansiCategory: subproducts.some(
-              (subproduct) => subproduct.ansiCategory
-            ),
+            ansiCategory: supplies.some((supply) => supply.ansiCategory),
             actions: !readOnly && (canUpdate || canDelete),
           },
         }}
@@ -412,18 +409,18 @@ function SubproductsTable({
           !readOnly && canCreate
             ? [
                 <EditProductButton
-                  key="add-subproduct"
+                  key="add-supply"
                   parentProduct={parentProduct}
                 />,
               ]
             : undefined
         }
       />
-      {editSubproduct.data && (
+      {editSupply.data && (
         <EditProductButton
-          open={editSubproduct.open}
-          onOpenChange={editSubproduct.setOpen}
-          product={editSubproduct.data}
+          open={editSupply.open}
+          onOpenChange={editSupply.setOpen}
+          product={editSupply.data}
           parentProduct={parentProduct}
           trigger={<></>}
         />
