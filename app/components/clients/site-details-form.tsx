@@ -11,12 +11,13 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useFetcher } from "react-router";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
+import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { type ResultsPage, type Site } from "~/lib/models";
 import { baseSiteSchema, getSiteSchema } from "~/lib/schema";
+import { type QueryParams } from "~/lib/urls";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
 import { Checkbox } from "../ui/checkbox";
@@ -30,6 +31,7 @@ export interface SiteDetailsFormProps {
   parentSiteId?: string;
   onSubmitted?: () => void;
   isSiteGroup?: boolean;
+  viewContext?: ViewContext;
 }
 
 export default function SiteDetailsForm({
@@ -38,11 +40,11 @@ export default function SiteDetailsForm({
   parentSiteId,
   onSubmitted,
   isSiteGroup = false,
+  viewContext = "user",
 }: SiteDetailsFormProps) {
   const isNew = !site;
   const currentlyPopulatedZip = useRef<string | null>(null);
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
-  const subsitesFetcher = useFetcher<ResultsPage<Site>>();
   const [subsites, setSubsites] = useState<Site[] | undefined>();
 
   const FORM_DEFAULTS = useMemo(
@@ -153,28 +155,50 @@ export default function SiteDetailsForm({
     }
   }, [debouncedZip, site, setValue]);
 
+  const {
+    load: subsitesLoad,
+    data: subsitesData,
+    isLoading: subsitesLoading,
+  } = useModalFetcher<DataOrError<ResultsPage<Site>>>();
   const handleSubsitesLoad = useCallback(() => {
-    if (subsitesFetcher.state === "idle" && !subsitesFetcher.data) {
-      subsitesFetcher.load(
-        `/api/proxy/sites?${
-          site?.id
-            ? `OR[0][parentSiteId]=${site?.id}&OR[1][parentSiteId]=null`
-            : "parentSiteId=null"
-        }`
-      );
+    if (!subsitesLoading && !subsitesData) {
+      const query: QueryParams = {
+        limit: 10000,
+        clientId,
+        _throw: "false",
+        _viewContext: viewContext,
+      };
+      if (site?.id) {
+        query.OR = [
+          {
+            parentSiteId: site.id,
+          },
+          {
+            parentSiteId: "_NULL",
+          },
+        ];
+      } else {
+        query.parentSiteId = "_NULL";
+      }
+      subsitesLoad({ path: "/api/proxy/sites", query });
     }
-  }, [site, subsitesFetcher]);
+  }, [
+    site,
+    subsitesLoad,
+    viewContext,
+    clientId,
+    subsitesLoading,
+    subsitesData,
+  ]);
 
   useEffect(() => {
     handleSubsitesLoad();
   }, [handleSubsitesLoad]);
 
   useEffect(() => {
-    if (!subsitesFetcher.data) return;
-    setSubsites(
-      subsitesFetcher.data.results.filter((s) => !s._count?.subsites)
-    );
-  }, [subsitesFetcher.data]);
+    if (!subsitesData?.data) return;
+    setSubsites(subsitesData.data.results.filter((s) => !s._count?.subsites));
+  }, [subsitesData]);
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
     onSubmitted,
@@ -362,7 +386,7 @@ export default function SiteDetailsForm({
                 <FormLabel>Subsites</FormLabel>
                 <FormControl>
                   <div className="space-y-4">
-                    {subsitesFetcher.state === "loading" &&
+                    {subsitesLoading &&
                       Array.from({ length: site?.subsites?.length ?? 1 }).map(
                         (_, i) => <Skeleton key={i} className="w-full h-6" />
                       )}

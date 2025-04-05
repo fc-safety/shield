@@ -84,6 +84,7 @@ export default function SiteDetails({
                     </Button>
                   }
                   isSiteGroup={isSiteGroup}
+                  viewContext="admin"
                 />
               </div>
             </div>

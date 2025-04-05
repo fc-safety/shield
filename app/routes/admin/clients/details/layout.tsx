@@ -16,7 +16,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export function loader({ params, request }: Route.LoaderArgs) {
   const id = validateParam(params, "id");
 
-  return api.clients.get(request, id);
+  return api.clients.get(request, id, { context: "admin" });
 }
 
 export default function AdminClientDetailsLayout() {

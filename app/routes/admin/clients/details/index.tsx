@@ -252,7 +252,14 @@ function ClientSiteGroupsTable({
         data={sites}
         columns={columns}
         searchPlaceholder="Search site groups..."
-        actions={[<EditSiteButton key="add" clientId={clientId} isSiteGroup />]}
+        actions={[
+          <EditSiteButton
+            key="add"
+            clientId={clientId}
+            isSiteGroup
+            viewContext="admin"
+          />,
+        ]}
       />
     </>
   );

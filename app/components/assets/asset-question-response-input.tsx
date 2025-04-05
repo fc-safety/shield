@@ -7,12 +7,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useMutation } from "@tanstack/react-query";
-import { format, isValid, parse, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { Loader2, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { AssetQuestionResponseType } from "~/lib/models";
 import type { ResponseValueImage } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
+import { formatDateAsTimestamp, formatTimestampAsDate } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import PreviewInspectionImages from "./preview-inspection-images";
@@ -66,15 +67,9 @@ export default function AssetQuestionResponseTypeInput<
   ) : valueType === "DATE" ? (
     <Input
       type="date"
-      value={
-        isValid(parseISO(String(value)))
-          ? format(parseISO(String(value)), "yyyy-MM-dd")
-          : isValid(parse(String(value), "yyyy-MM-dd", new Date()))
-          ? String(value)
-          : undefined
-      }
+      value={formatTimestampAsDate(String(value))}
       onChange={(e) => {
-        onValueChange(parseISO(e.target.value).toISOString() as TValue<T>);
+        onValueChange(formatDateAsTimestamp(e.target.value) as TValue<T>);
       }}
       onBlur={onBlur}
       disabled={disabled}

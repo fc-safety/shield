@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
-import { isAfter } from "date-fns";
+import { format, isAfter, isValid, parse, parseISO } from "date-fns";
 import type { FieldValues, Resolver } from "react-hook-form";
 import type { LoaderFunctionArgs, MetaDescriptor } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
@@ -270,4 +270,18 @@ export function dateSort<
   return (a: T, b: T) => {
     return isAfter(a[key], b[key]) ? (desc ? -1 : 1) : desc ? 1 : -1;
   };
+}
+
+export function formatTimestampAsDate(rawTimestamp: string) {
+  const timestamp = String(rawTimestamp);
+  return isValid(parseISO(timestamp))
+    ? format(parseISO(timestamp), "yyyy-MM-dd")
+    : isValid(parse(timestamp, "yyyy-MM-dd", new Date()))
+    ? timestamp
+    : undefined;
+}
+
+export function formatDateAsTimestamp(rawDate: string) {
+  const date = String(rawDate);
+  return parseISO(date).toISOString();
 }

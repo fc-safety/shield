@@ -25,8 +25,8 @@ export default function AssetInspections({
   const canSendNotificationsToTeam =
     can(user, "read", "users") && can(user, "notify", "users");
 
-  const columns: ColumnDef<Inspection>[] = useMemo(
-    () => [
+  const columns = useMemo(
+    (): ColumnDef<Inspection>[] => [
       {
         accessorKey: "createdOn",
         id: "date",

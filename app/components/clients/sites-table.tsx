@@ -85,6 +85,7 @@ export default function SitesTable({
             key="add"
             clientId={clientId}
             parentSiteId={parentSiteId}
+            viewContext="admin"
           />,
         ]}
       />
