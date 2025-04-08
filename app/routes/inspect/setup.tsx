@@ -109,7 +109,14 @@ export default function InspectSetup({
   loaderData: { tag, matchingRoutes },
 }: Route.ComponentProps) {
   const isSetup = !!tag.asset?.setupOn;
+
   const { user } = useAuth();
+  const canUpdateInspectionRoutes = can(user, "update", "inspection-routes");
+
+  const showRouteCard =
+    (!!matchingRoutes && matchingRoutes.length > 0) ||
+    canUpdateInspectionRoutes;
+
   const questions = useMemo(
     () =>
       [
@@ -191,51 +198,54 @@ export default function InspectSetup({
   return (
     <>
       <div className="grid gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Route Information</CardTitle>
-          </CardHeader>
-          <CardContent className="flex gap-2 justify-between items-center">
-            {matchingRoutes?.length ? (
-              <div className="text-sm">
-                <div className="mb-2">
-                  This asset is currently part of {matchingRoutes.length} route
-                  {matchingRoutes.length === 1 ? "" : "s"}:
-                </div>
-                {matchingRoutes.map((route) => (
-                  <div
-                    key={route.id}
-                    className="flex items-center gap-2 font-semibold"
-                  >
-                    <ArrowRight className="size-4 inline-block" />
-                    <div>{route.name}</div>
+        {showRouteCard && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Route Information</CardTitle>
+            </CardHeader>
+            <CardContent className="flex gap-2 justify-between items-center">
+              {matchingRoutes?.length ? (
+                <div className="text-sm">
+                  <div className="mb-2">
+                    This asset is currently part of {matchingRoutes.length}{" "}
+                    route
+                    {matchingRoutes.length === 1 ? "" : "s"}:
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-xs italic text-muted-foreground">
-                No routes available for this asset.
-              </div>
-            )}
-            {can(user, "update", "inspection-routes") &&
-              tag.asset &&
-              !isNil(matchingRoutes) && (
-                <EditRoutePointButton
-                  asset={tag.asset}
-                  filterRoute={(r) =>
-                    !matchingRoutes.some((mr) => mr.id === r.id)
-                  }
-                  trigger={
-                    <Button variant="default" size="sm" className="shrink-0">
-                      <Plus />
-                      Add to Route
-                    </Button>
-                  }
-                  linkToRoutes={"/inspect/routes"}
-                />
+                  {matchingRoutes.map((route) => (
+                    <div
+                      key={route.id}
+                      className="flex items-center gap-2 font-semibold"
+                    >
+                      <ArrowRight className="size-4 inline-block" />
+                      <div>{route.name}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs italic text-muted-foreground">
+                  No routes available for this asset.
+                </div>
               )}
-          </CardContent>
-        </Card>
+              {canUpdateInspectionRoutes &&
+                tag.asset &&
+                !isNil(matchingRoutes) && (
+                  <EditRoutePointButton
+                    asset={tag.asset}
+                    filterRoute={(r) =>
+                      !matchingRoutes.some((mr) => mr.id === r.id)
+                    }
+                    trigger={
+                      <Button variant="default" size="sm" className="shrink-0">
+                        <Plus />
+                        Add to Route
+                      </Button>
+                    }
+                    linkToRoutes={"/inspect/routes"}
+                  />
+                )}
+            </CardContent>
+          </Card>
+        )}
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl flex items-center justify-between">

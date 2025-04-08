@@ -1,7 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, formatDistanceToNow } from "date-fns";
 import { CirclePlus, Image, NotepadText, Trash } from "lucide-react";
-import { useEffect, useMemo, useState, type ComponentProps } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import type { z } from "zod";
@@ -14,6 +20,7 @@ import {
   FormItem,
   FormMessage,
 } from "~/components/ui/form";
+import useIsOverflowing from "~/hooks/use-is-overflowing";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { GENERIC_MANUFACTURER_NAME } from "~/lib/constants";
@@ -22,6 +29,7 @@ import type {
   Product,
   ProductRequest,
   ProductRequestApproval,
+  ProductRequestItem,
   ResultsPage,
 } from "~/lib/models";
 import { createProductRequestSchema } from "~/lib/schema";
@@ -208,12 +216,6 @@ function ProductRequestForm({
     name: "productRequestItems.createMany.data",
   });
 
-  const availableConsumables = useMemo(() => {
-    return supplies.filter(
-      (p) => !productRequestItems.some((i) => i.productId === p.id)
-    );
-  }, [supplies, productRequestItems]);
-
   const ansiCategories = useMemo(() => {
     const categories: Pick<AnsiCategory, "id" | "name" | "color">[] = dedupById(
       supplies
@@ -231,12 +233,6 @@ function ProductRequestForm({
 
     return categories;
   }, [supplies]);
-
-  const showTabs = ansiCategories.length > 1;
-  const [selectedTab, setSelectedTab] = useState(ansiCategories.at(0)?.id);
-  useEffect(() => {
-    setSelectedTab(ansiCategories.at(0)?.id);
-  }, [ansiCategories]);
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher<
     DataOrError<ProductRequest>
@@ -270,59 +266,13 @@ function ProductRequestForm({
                 <Skeleton className="h-12 w-full" />
               </div>
             ) : (
-              <Tabs
-                value={selectedTab}
-                onValueChange={setSelectedTab}
-                className="mt-2 max-w-[calc(100vw-2rem)] overflow-x-auto"
-              >
-                {showTabs && (
-                  <TabsList className="w-full flex min-w-fit">
-                    {ansiCategories.map((category) => (
-                      <TabsTrigger
-                        key={category.id}
-                        value={category.id}
-                        style={
-                          {
-                            "--tab-active-bg":
-                              category.color ?? "hsl(var(--background))",
-                            "--tab-active-color": category.color
-                              ? getContrastTextColor(category.color)
-                              : "hsl(var(--foreground))",
-                            "--tab-inactive-color":
-                              category.color ?? "hsl(var(--muted-foreground))",
-                          } as React.CSSProperties
-                        }
-                        className="text-[var(--tab-inactive-color)] data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] grow font-bold"
-                      >
-                        {category.name}
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                )}
-                {ansiCategories.map((category) => (
-                  <TabsContent key={category.id} value={category.id}>
-                    <AvailableConsumables
-                      consumables={
-                        showTabs
-                          ? availableConsumables.filter(
-                              (p) =>
-                                p.ansiCategory?.id === category.id ||
-                                (!p.ansiCategory && category.id === "other")
-                            )
-                          : availableConsumables
-                      }
-                      onAdd={(productId) =>
-                        append({
-                          productId: productId,
-                          quantity: 1,
-                        })
-                      }
-                      onPreviewImage={previewImage.openData}
-                      showAnsiCategory={!showTabs}
-                    />
-                  </TabsContent>
-                ))}
-              </Tabs>
+              <ConsumableSelectTabs
+                ansiCategories={ansiCategories}
+                supplies={supplies}
+                productRequestItems={productRequestItems}
+                append={append}
+                onPreviewImage={previewImage.openData}
+              />
             )}
             {ansiCategories.length === 0 && (
               <p className="text-muted-foreground text-xs">
@@ -390,6 +340,119 @@ function ProductRequestForm({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function ConsumableSelectTabs({
+  ansiCategories,
+  supplies,
+  productRequestItems,
+  append,
+  onPreviewImage,
+}: {
+  ansiCategories: Pick<AnsiCategory, "id" | "name" | "color">[];
+  supplies: Product[];
+  productRequestItems: TForm["productRequestItems"]["createMany"]["data"];
+  append: (
+    item: TForm["productRequestItems"]["createMany"]["data"][number]
+  ) => void;
+  onPreviewImage: (url: string) => void;
+}) {
+  const availableConsumables = useMemo(() => {
+    return supplies.filter(
+      (p) => !productRequestItems.some((i) => i.productId === p.id)
+    );
+  }, [supplies, productRequestItems]);
+
+  const showTabs = ansiCategories.length > 1;
+  const [selectedTab, setSelectedTab] = useState(ansiCategories.at(0)?.id);
+  useEffect(() => {
+    setSelectedTab(ansiCategories.at(0)?.id);
+  }, [ansiCategories]);
+
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const {
+    isOverflowingX: isTabsDivOverflowingX,
+    isScrollMaxedX: isTabsScrollMaxedX,
+  } = useIsOverflowing({
+    ref: tabsRef,
+  });
+
+  return (
+    <Tabs
+      value={selectedTab}
+      onValueChange={setSelectedTab}
+      className="mt-2 max-w-[calc(100vw-2rem)]"
+    >
+      {showTabs && isTabsDivOverflowingX && (
+        <div className="text-xs w-full text-end pb-1 text-muted-foreground">
+          Scroll to view more categories &rarr;
+        </div>
+      )}
+      <div className="w-full relative">
+        <div
+          className={cn(
+            "w-full overflow-x-auto relative hidden",
+            showTabs && "block"
+          )}
+          ref={tabsRef}
+        >
+          <TabsList className="w-full min-w-fit">
+            {ansiCategories.map((category) => (
+              <TabsTrigger
+                key={category.id}
+                value={category.id}
+                style={
+                  {
+                    "--tab-active-bg":
+                      category.color ?? "hsl(var(--background))",
+                    "--tab-active-color": category.color
+                      ? getContrastTextColor(category.color)
+                      : "hsl(var(--foreground))",
+                    "--tab-inactive-color":
+                      category.color ?? "hsl(var(--muted-foreground))",
+                  } as React.CSSProperties
+                }
+                className="text-[var(--tab-inactive-color)] data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] grow flex shrink-0 font-bold"
+              >
+                {category.name}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        {isTabsDivOverflowingX && (
+          <div
+            className={cn(
+              "absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-background to-transparent pointer-events-none transition-all",
+              isTabsScrollMaxedX && "translate-x-full"
+            )}
+          />
+        )}
+      </div>
+      {ansiCategories.map((category) => (
+        <TabsContent key={category.id} value={category.id}>
+          <AvailableConsumables
+            consumables={
+              showTabs
+                ? availableConsumables.filter(
+                    (p) =>
+                      p.ansiCategory?.id === category.id ||
+                      (!p.ansiCategory && category.id === "other")
+                  )
+                : availableConsumables
+            }
+            onAdd={(productId) =>
+              append({
+                productId: productId,
+                quantity: 1,
+              })
+            }
+            onPreviewImage={onPreviewImage}
+            showAnsiCategory={!showTabs}
+          />
+        </TabsContent>
+      ))}
+    </Tabs>
   );
 }
 

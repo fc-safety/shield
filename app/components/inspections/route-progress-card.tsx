@@ -37,11 +37,17 @@ export default function RouteProgressCard({
   className?: string;
 }) {
   const { user } = useAuth();
+  const canUpdateInspectionRoutes = can(user, "update", "inspection-routes");
 
   const activeRoute = useMemo(
     () => activeRouteProp ?? activeSession?.inspectionRoute,
     [activeRouteProp, activeSession]
   );
+
+  const showRouteCard =
+    !!activeRoute ||
+    (!!matchingRoutes && matchingRoutes.length > 0) ||
+    canUpdateInspectionRoutes;
 
   const usingRoute = !!activeRoute && !routeDisabled;
 
@@ -70,7 +76,7 @@ export default function RouteProgressCard({
     return activeRoute.inspectionRoutePoints.length - assetsToComplete.size;
   }, [activeSession, activeRoute]);
 
-  return (
+  return !showRouteCard ? null : (
     <Card className={cn(className)}>
       <CardHeader className="grid gap-4">
         <div className="flex items-center gap-2">
@@ -142,22 +148,20 @@ export default function RouteProgressCard({
                 </span>
               )}
             </div>
-            {can(user, "update", "inspection-routes") &&
-              asset &&
-              !isNil(matchingRoutes) && (
-                <EditRoutePointButton
-                  asset={asset}
-                  filterRoute={(r) =>
-                    !matchingRoutes.some((mr) => mr.id === r.id)
-                  }
-                  trigger={
-                    <Button variant="default" size="sm" className="shrink-0">
-                      <Plus />
-                      Add to Route
-                    </Button>
-                  }
-                />
-              )}
+            {canUpdateInspectionRoutes && asset && !isNil(matchingRoutes) && (
+              <EditRoutePointButton
+                asset={asset}
+                filterRoute={(r) =>
+                  !matchingRoutes.some((mr) => mr.id === r.id)
+                }
+                trigger={
+                  <Button variant="default" size="sm" className="shrink-0">
+                    <Plus />
+                    Add to Route
+                  </Button>
+                }
+              />
+            )}
           </div>
         </div>
         {usingRoute && (

@@ -443,9 +443,14 @@ function PermissionsGroup({
         <CollapsibleContent>
           <div className="grid gap-2 px-4 py-2">
             {permissionsGroup.children ? (
-              permissionsGroup.children.map((child) => (
-                <PermissionsGroup key={child.title} permissionsGroup={child} />
-              ))
+              permissionsGroup.children
+                .sort((g1, g2) => g1.title.localeCompare(g2.title))
+                .map((child) => (
+                  <PermissionsGroup
+                    key={child.title}
+                    permissionsGroup={child}
+                  />
+                ))
             ) : filteredPermissions ? (
               <DisplayPermissions
                 many={permissionsGroup.many}
