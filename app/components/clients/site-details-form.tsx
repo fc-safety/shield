@@ -23,6 +23,7 @@ import { CopyableInput } from "../copyable-input";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
+import SiteCombobox from "./site-combobox";
 
 type TForm = z.infer<typeof baseSiteSchema>;
 export interface SiteDetailsFormProps {
@@ -377,7 +378,7 @@ export default function SiteDetailsForm({
             </FormItem>
           )}
         />
-        {isSiteGroup && (
+        {isSiteGroup ? (
           <FormField
             control={form.control}
             name={isNew ? "subsites.connect" : "subsites.set"}
@@ -424,6 +425,27 @@ export default function SiteDetailsForm({
                       </FormItem>
                     ))}
                   </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        ) : (
+          <FormField
+            control={form.control}
+            name={"parentSite.connect.id"}
+            render={({ field: { value, onChange } }) => (
+              <FormItem>
+                <FormLabel>Site Group</FormLabel>
+                <FormControl>
+                  <SiteCombobox
+                    value={value}
+                    onValueChange={onChange}
+                    clientId={clientId}
+                    viewContext={viewContext}
+                    includeSiteGroups="exclusively"
+                    showClear={false}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

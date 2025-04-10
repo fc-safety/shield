@@ -15,7 +15,7 @@ import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { ProductRequest, ResultsPage } from "~/lib/models";
 import { stringifyQuery } from "~/lib/urls";
-import { can, getUserDisplayName } from "~/lib/users";
+import { can, getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import { ProductRequestCard } from "../assets/product-requests";
 import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
@@ -81,6 +81,13 @@ export default function ProductRequestsOverview() {
             </Link>
           );
         },
+      },
+      {
+        accessorKey: "site.name",
+        id: "site",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
       },
       // TODO: Holding off on in-app product request interactions. Product requests for
       // now are read-only.
@@ -167,6 +174,7 @@ export default function ProductRequestsOverview() {
             initialState={{
               sorting: [{ id: "orderedOn", desc: true }],
               columnVisibility: {
+                site: hasMultiSiteVisibility(user),
                 review: can(user, "review", "product-requests"),
               },
             }}

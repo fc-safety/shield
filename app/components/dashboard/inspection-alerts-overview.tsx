@@ -3,8 +3,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Check, CornerDownRight } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
+import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Alert, ResultsPage } from "~/lib/models";
+import { hasMultiSiteVisibility } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import AssetInspectionAlert from "../assets/asset-inspection-alert";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
@@ -14,7 +16,9 @@ import Icon from "../icons/icon";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import ErrorDashboardTile from "./error-dashboard-tile";
+
 export default function InspectionAlertsOverview() {
+  const { user } = useAuth();
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
   const { data, error, isLoading } = useQuery({
@@ -58,6 +62,13 @@ export default function InspectionAlertsOverview() {
             </Link>
           );
         },
+      },
+      {
+        accessorKey: "site.name",
+        id: "site",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
       },
       {
         accessorKey: "alertLevel",
@@ -128,6 +139,9 @@ export default function InspectionAlertsOverview() {
           loading={isLoading}
           initialState={{
             sorting: [{ id: "date", desc: true }],
+            columnVisibility: {
+              asset: hasMultiSiteVisibility(user),
+            },
           }}
         />
       </CardContent>

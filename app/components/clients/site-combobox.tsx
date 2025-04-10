@@ -16,7 +16,7 @@ interface SiteComboboxProps {
   disabled?: boolean;
   showClear?: boolean;
   viewContext?: ViewContext;
-  includeSiteGroups?: boolean;
+  includeSiteGroups?: boolean | "exclusively";
 }
 
 const fuse = new Fuse([] as Site[], { keys: ["name"] });
@@ -35,7 +35,7 @@ export default function SiteCombobox({
 }: SiteComboboxProps) {
   const fetcher = useFetcher<DataOrError<ResultsPage<Site>>>();
   const prevClientId = useRef<string | null>(null);
-  const prevIncludeSiteGroups = useRef<boolean>(false);
+  const prevIncludeSiteGroups = useRef<boolean | "exclusively">(false);
 
   const preloadSites = useCallback(
     (clientId?: string) => {
@@ -60,6 +60,9 @@ export default function SiteCombobox({
         if (!includeSiteGroups) {
           // This special query ensures that only sites without children are returned.
           query.subsites = { none: "" };
+        } else if (includeSiteGroups === "exclusively") {
+          // This special query ensures that only sites with children are returned.
+          query.subsites = { some: "" };
         }
         const url = buildPath("/api/proxy/sites", query);
         fetcher.load(url);

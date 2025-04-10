@@ -2,9 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { Link } from "react-router";
+import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Inspection, ResultsPage } from "~/lib/models";
-import { getUserDisplayName } from "~/lib/users";
+import { getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import AssetInspectionDialog from "../assets/asset-inspection-dialog";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import VirtualizedDataTable from "../data-table/virtualized-data-table";
@@ -14,6 +15,8 @@ import { Card, CardContent, CardHeader } from "../ui/card";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
 export default function InspectionsOverview() {
+  const { user } = useAuth();
+
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
   const { data, error, isLoading } = useQuery({
@@ -59,6 +62,13 @@ export default function InspectionsOverview() {
         },
       },
       {
+        accessorKey: "site.name",
+        id: "site",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+      },
+      {
         accessorFn: (inspection) =>
           inspection.inspector && getUserDisplayName(inspection.inspector),
         id: "inspector",
@@ -88,6 +98,9 @@ export default function InspectionsOverview() {
           columns={columns}
           initialState={{
             sorting: [{ id: "date", desc: true }],
+            columnVisibility: {
+              site: hasMultiSiteVisibility(user),
+            },
           }}
           data={data?.results ?? []}
           loading={isLoading}
