@@ -31,7 +31,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const siteId = validateParam(params, "siteId");
-  return api.sites.get(request, siteId).mapWith((site) =>
+  return api.sites.get(request, siteId, { context: "admin" }).mapWith((site) =>
     api.users
       .list(
         request,

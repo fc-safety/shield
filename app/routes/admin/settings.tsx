@@ -189,5 +189,5 @@ const handleSendTestEmail = async (
       throw res;
     }
 
-    return res.json();
+    return null;
   });

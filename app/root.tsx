@@ -54,6 +54,43 @@ export const links: Route.LinksFunction = () => [
     crossOrigin: "anonymous",
     referrerPolicy: "no-referrer",
   },
+  { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+  // Fallback to png if svg is not supported
+  {
+    rel: "icon",
+    type: "image/png",
+    sizes: "32x32",
+    href: "/favicon.png",
+    media: "(prefers-color-scheme: light)",
+  },
+  {
+    rel: "icon",
+    type: "image/png",
+    sizes: "32x32",
+    href: "/favicon-dark.png",
+    media: "(prefers-color-scheme: dark)",
+  },
+  // Fallback icon
+  { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon.png" },
+  // Apple Touch Icon
+  {
+    rel: "apple-touch-icon",
+    sizes: "180x180",
+    href: "/apple_touch_icon-180x180.png",
+    media: "(prefers-color-scheme: light)",
+  },
+  {
+    rel: "apple-touch-icon",
+    sizes: "180x180",
+    href: "/apple_touch_icon-180x180-dark.png",
+    media: "(prefers-color-scheme: dark)",
+  },
+  // Apple Touch Icon Fallback
+  {
+    rel: "apple-touch-icon",
+    sizes: "180x180",
+    href: "/apple_touch_icon-180x180.png",
+  },
 ];
 
 export const meta: Route.MetaFunction = () => {

@@ -157,7 +157,7 @@ export default function ClientUserDetailsForm({
             name="siteExternalId"
             render={({ field: { value, onChange } }) => (
               <FormItem>
-                <FormLabel>Site</FormLabel>
+                <FormLabel>Site or Site Group</FormLabel>
                 <FormControl>
                   <SiteCombobox
                     value={value}
