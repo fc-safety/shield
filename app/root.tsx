@@ -60,7 +60,7 @@ export const links: Route.LinksFunction = () => [
     rel: "icon",
     type: "image/png",
     sizes: "32x32",
-    href: "/favicon.png",
+    href: "/favicon-light.png",
     media: "(prefers-color-scheme: light)",
   },
   {
