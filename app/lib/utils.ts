@@ -30,20 +30,17 @@ export const countBy = <
     objs
       .reduce((acc, obj) => {
         const value = obj[key];
-        let count = acc.get(value);
-        if (count === undefined) {
-          count = 0;
-          acc.set(value, count);
-        }
-        return acc.set(value, count + 1);
-      }, new Map<T[TKey], number>())
+        const countedObjs = acc.get(value) ?? [];
+        return acc.set(value, [...countedObjs, obj]);
+      }, new Map<T[TKey], T[]>())
       .entries()
   ).map(
-    ([value, count]) =>
+    ([value, countedObjs]) =>
       ({
         [key]: value,
-        count,
-      } as Record<TKey, T[TKey]> & { count: number })
+        count: countedObjs.length,
+        items: countedObjs,
+      } as Record<TKey, T[TKey]> & { count: number; items: T[] })
   );
 
 export const dedupById = <T extends { id: string }>(items: T[]) => [

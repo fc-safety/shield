@@ -36,9 +36,6 @@ export interface Asset extends BaseModel {
   site?: Site;
   clientId: string;
   client?: Client;
-
-  // TODO: remove this
-  status: string;
 }
 
 export interface Consumable extends BaseModel {
@@ -47,8 +44,11 @@ export interface Consumable extends BaseModel {
   product: Product;
   productId: string;
   expiresOn: string | null;
+  quantity: number;
   siteId: string;
+  site?: Site;
   clientId: string;
+  client?: Client;
 }
 
 export interface AssetQuestionResponse extends BaseModel {
@@ -80,6 +80,10 @@ export interface Inspection extends BaseModel {
   comments?: string;
   responses?: AssetQuestionResponse[];
   alerts?: Alert[];
+  siteId: string;
+  site?: Site;
+  clientId: string;
+  client?: Client;
 }
 
 export const InspectionStatuses = ["PENDING", "COMPLETE"] as const;
@@ -166,6 +170,31 @@ export interface ProductRequestItem extends BaseModel {
   product: Product;
   quantity: number;
   addedBy: Person;
+}
+
+export const QueryReportTypes = [
+  "ASSETS",
+  "INSPECTIONS",
+  "CONSUMABLES",
+  "ALERTS",
+] as const;
+export type QueryReportType = (typeof QueryReportTypes)[number];
+
+export interface QueryReportColumn {
+  displayName: string;
+  propertyName: string;
+  sort: {
+    direction: "asc" | "desc";
+    priority: number;
+  };
+}
+export interface QueryReport extends BaseModel {
+  name: string;
+  description?: string | null;
+  type: QueryReportType;
+  startDate: string;
+  endDate?: string | null;
+  columns: QueryReportColumn[];
 }
 
 export interface Address {
@@ -263,6 +292,7 @@ export interface Alert extends BaseModel {
   assetAlertCriterion?: AssetAlertCriterion;
   assetAlertCriterionId: string;
   resolved: boolean;
+  resolvedOn: string | null;
   resolutionNote: string | null;
   inspectionImageUrl: string | null;
   site?: Site;

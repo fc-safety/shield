@@ -64,15 +64,20 @@ export default function AssetsIndex({
   });
 
   const columnFilters = useMemo(() => {
+    const filters: { id: string; value: string }[] = [];
     if (searchParams.has("inspectionStatus")) {
-      return [
-        {
-          id: "inspectionStatus",
-          value: searchParams.get("inspectionStatus"),
-        },
-      ];
+      filters.push({
+        id: "inspectionStatus",
+        value: searchParams.get("inspectionStatus") ?? "",
+      });
     }
-    return [];
+    if (searchParams.has("siteId")) {
+      filters.push({
+        id: "site",
+        value: searchParams.get("siteId") ?? "",
+      });
+    }
+    return filters;
   }, [searchParams]);
 
   const columns = useMemo(
@@ -173,6 +178,18 @@ export default function AssetsIndex({
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
+        cell: ({ row }) => {
+          const site = row.original.site;
+          return site ? site.name : <>&mdash;</>;
+        },
+        filterFn: (row, _, filterValue) => {
+          // Access the ID from the original row data
+          const id = row.original.site?.id;
+          // Filter based on the ID
+          return Array.isArray(filterValue)
+            ? filterValue.includes(id)
+            : id === filterValue;
+        },
       },
       {
         accessorFn: ({ alerts }) => getAssetAlertsStatus(alerts ?? []),
@@ -346,6 +363,22 @@ export default function AssetsIndex({
                   },
                 ] satisfies { label: string; value: AssetInspectionsStatus }[],
                 title: "Inspection Status",
+              },
+              {
+                column: table.getColumn("site"),
+                options: Object.values(
+                  assets.results
+                    .map((asset) => asset.site)
+                    .filter((site): site is NonNullable<typeof site> => !!site)
+                    .reduce((acc, site) => {
+                      acc[site.id] = {
+                        label: site.name,
+                        value: site.id,
+                      };
+                      return acc;
+                    }, {} as Record<string, { label: string; value: string }>)
+                ),
+                title: "Site",
               },
             ]}
             actions={canCreate ? [<EditAssetButton key="add" />] : []}

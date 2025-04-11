@@ -1,6 +1,7 @@
+import { ComplianceBySiteChart } from "~/components/dashboard/compliance-by-site-chart";
 import InspectionAlertsOverview from "~/components/dashboard/inspection-alerts-overview";
-import { InspectionSummaryChart } from "~/components/dashboard/inspection-summary-chart";
 import InspectionsOverview from "~/components/dashboard/inspections-overview";
+import { OverallComplianceChart } from "~/components/dashboard/overall-compliance-chart";
 import ProductRequestsOverview from "~/components/dashboard/product-requests-overview";
 import { useAuth } from "~/contexts/auth-context";
 import { can } from "~/lib/users";
@@ -34,7 +35,8 @@ export default function Dashboard() {
   return (
     <div className="flex flex-1 flex-col gap-4 grow">
       <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,_minmax(475px,_1fr))] gap-2 sm:gap-4">
-        {canReadAssets && <InspectionSummaryChart />}
+        {canReadAssets && <OverallComplianceChart />}
+        {canReadAssets && <ComplianceBySiteChart />}
         {/* <LocationReadinessChart /> */}
         {canReadProductRequests && <ProductRequestsOverview />}
         {canReadInspections && <InspectionsOverview />}

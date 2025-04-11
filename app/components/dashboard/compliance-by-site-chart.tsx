@@ -1,0 +1,201 @@
+import { useQuery } from "@tanstack/react-query";
+import type { EChartsOption } from "echarts";
+import * as React from "react";
+import { useMemo } from "react";
+import { useNavigate } from "react-router";
+import { useTheme } from "remix-themes";
+import { Card, CardContent } from "~/components/ui/card";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import { useThemeValues } from "~/hooks/use-theme-values";
+import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
+import { getAssetInspectionStatus } from "~/lib/model-utils";
+import type { Asset, ResultsPage, Site } from "~/lib/models";
+import { countBy } from "~/lib/utils";
+import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
+import BlankDashboardTile from "./blank-dashboard-tile";
+import ErrorDashboardTile from "./error-dashboard-tile";
+
+export function ComplianceBySiteChart() {
+  const [theme] = useTheme();
+  const themeValues = useThemeValues();
+
+  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
+
+  const navigate = useNavigate();
+
+  const { data: rawAssets, error } = useQuery({
+    queryKey: ["assets-with-latest-inspection"],
+    queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
+  });
+
+  const { data: mySites } = useQuery({
+    queryKey: ["my-sites"],
+    queryFn: () => getMySites(fetch).then((r) => r.results),
+  });
+  const mySitesById = React.useMemo(
+    () =>
+      mySites &&
+      Object.fromEntries(
+        mySites
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((s) => [s.id, s])
+      ),
+    [mySites]
+  );
+
+  const series = React.useMemo(
+    (): EChartsOption["series"] =>
+      rawAssets && mySitesById && themeValues !== null
+        ? countBy(
+            rawAssets.map((a) => {
+              const status = getAssetInspectionStatus(
+                a.inspections ?? [],
+                a.inspectionCycle ?? a.client?.defaultInspectionCycle
+              );
+              return {
+                asset: a,
+                status,
+              };
+            }),
+            "status"
+          )
+            .sort(sortByStatus())
+            .map(({ status, items }) => {
+              const assets = items.map(({ asset }) => asset);
+              const countsBySiteArray = countBy(assets, "siteId");
+              const countsBySiteId = Object.fromEntries(
+                countsBySiteArray.map(({ siteId, count }) => [siteId, count])
+              );
+
+              return {
+                id: status,
+                name: getStatusLabel(status),
+                type: "bar",
+                stack: "total",
+                label: {
+                  show: true,
+                },
+                emphasis: {
+                  focus: "series",
+                },
+                itemStyle: {
+                  color: themeValues[status],
+                },
+                data: Object.entries(mySitesById).map(([siteId, site]) => ({
+                  id: siteId,
+                  name: site.name,
+                  value: countsBySiteId[siteId] ?? 0,
+                })),
+              } satisfies NonNullable<EChartsOption["series"]>;
+            })
+        : undefined,
+    [rawAssets, themeValues, mySitesById]
+  );
+
+  const chartOption = useMemo(
+    (): ReactEChartsProps["option"] => ({
+      // Global chart text style
+      textStyle: {
+        fontFamily: themeValues?.fontFamily,
+      },
+      // Tooltip when hovering over a slice of the pie chart
+      tooltip: {
+        trigger: "axis",
+        axisPointer: {
+          // Use axis to trigger tooltip
+          type: "shadow", // 'shadow' as default; can also be 'line' or 'shadow'
+        },
+      },
+      // Legend at the bottom of the chart
+      legend: {
+        bottom: "0%",
+        left: "center",
+        formatter: "{name}",
+      },
+      // Background color of the chart
+      backgroundColor: "transparent",
+      // Title of the chart
+      title: {
+        text: "Compliance by Site",
+        subtext: `Inspection compliance statuses for each site`,
+        left: "center",
+        top: "0%",
+        textStyle: {
+          fontSize: 16,
+          fontWeight: 600,
+        },
+        subtextStyle: {
+          fontSize: 14,
+          color: themeValues?.mutedForeground,
+        },
+        itemGap: 8,
+      },
+      // Specifies how to draw the bar chart within the container
+      grid: {
+        left: "3%",
+        right: "4%",
+        bottom: "8%",
+        containLabel: true,
+      },
+      xAxis: {
+        type: "value",
+      },
+      yAxis: {
+        type: "category",
+        data: mySitesById ? Object.values(mySitesById).map((s) => s.name) : [],
+      },
+      series,
+    }),
+    [series, themeValues, mySitesById]
+  );
+
+  return series ? (
+    <Card className="flex flex-col">
+      <CardContent className="flex-1 pt-4 sm:pt-6 flex flex-col items-center">
+        {Array.isArray(series) && series.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="text-muted-foreground">No assets found.</div>
+          </div>
+        )}
+        <ReactECharts
+          theme={theme ?? undefined}
+          option={chartOption}
+          onClick={(e) => {
+            const siteId = (e.data as { id: string }).id;
+            navigate(`/assets?inspectionStatus=${e.seriesId}&siteId=${siteId}`);
+          }}
+          className="w-full h-full"
+          style={{
+            minHeight:
+              400 + (mySitesById ? Object.keys(mySitesById).length : 3) * 20,
+          }}
+        />
+      </CardContent>
+    </Card>
+  ) : error ? (
+    <ErrorDashboardTile />
+  ) : (
+    <BlankDashboardTile className="animate-pulse" />
+  );
+}
+
+const getAssetsWithLatestInspection = async (
+  fetch: (url: string, options: RequestInit) => Promise<Response>
+) => {
+  const response = await fetch("/assets/latest-inspection?limit=10000", {
+    method: "GET",
+  });
+
+  return response.json() as Promise<ResultsPage<Asset>>;
+};
+
+const getMySites = async (
+  fetch: (url: string, options: RequestInit) => Promise<Response>
+) => {
+  const response = await fetch("/sites?subsites[none]=", {
+    method: "GET",
+  });
+
+  return response.json() as Promise<ResultsPage<Site>>;
+};
