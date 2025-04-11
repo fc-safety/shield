@@ -18,6 +18,7 @@ export interface ReactEChartsProps {
   loading?: boolean;
   theme?: "light" | "dark";
   onClick?: (event: ECElementEvent) => void;
+  getChart?: (chart: ECharts) => void;
 }
 
 export function ReactECharts({
@@ -28,6 +29,7 @@ export function ReactECharts({
   loading,
   theme,
   onClick,
+  getChart,
 }: ReactEChartsProps): JSX.Element {
   const chartRef = useRef<HTMLDivElement>(null);
 
@@ -38,17 +40,23 @@ export function ReactECharts({
       chart = init(chartRef.current, theme, { renderer: "canvas" });
     }
 
-    // Add chart resize listener
-    // ResizeObserver is leading to a bit janky UX
+    // Observe changes in chart container size and resize chart
+    // as needed.
     function resizeChart() {
       chart?.resize();
     }
-    window.addEventListener("resize", resizeChart);
+    const resizeObserver = new ResizeObserver(resizeChart);
+    let unobserve: () => void;
+    if (chartRef.current) {
+      const element = chartRef.current;
+      resizeObserver.observe(element);
+      unobserve = () => resizeObserver.unobserve(element);
+    }
 
     // Return cleanup function
     return () => {
       chart?.dispose();
-      window.removeEventListener("resize", resizeChart);
+      unobserve?.();
     };
   }, [theme]);
 
@@ -78,6 +86,15 @@ export function ReactECharts({
       };
     }
   }, [onClick]);
+
+  useEffect(() => {
+    if (chartRef.current !== null && getChart) {
+      const chart = getInstanceByDom(chartRef.current);
+      if (chart) {
+        getChart(chart);
+      }
+    }
+  }, [getChart]);
 
   return (
     <div

@@ -77,6 +77,12 @@ export default function AssetsIndex({
         value: searchParams.get("siteId") ?? "",
       });
     }
+    if (searchParams.has("productCategoryId")) {
+      filters.push({
+        id: "category",
+        value: searchParams.get("productCategoryId") ?? "",
+      });
+    }
     return filters;
   }, [searchParams]);
 
@@ -124,27 +130,33 @@ export default function AssetsIndex({
         },
       },
       {
-        accessorFn: (row) =>
-          row.product?.productCategory?.shortName ??
-          row.product?.productCategory?.name,
+        accessorFn: (row) => row.product?.productCategory?.name,
         id: "category",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
-        cell: ({ row, getValue }) => {
-          const category = getValue() as string;
+        cell: ({ row }) => {
+          const category = row.original.product?.productCategory;
           return (
             <span className="flex items-center gap-2">
-              {row.original.product?.productCategory?.icon && (
+              {category?.icon && (
                 <Icon
-                  iconId={row.original.product.productCategory.icon}
-                  color={row.original.product.productCategory.color}
+                  iconId={category.icon}
+                  color={category.color}
                   className="text-lg"
                 />
               )}
-              {category ?? <>&mdash;</>}
+              {category?.shortName ?? category?.name ?? <>&mdash;</>}
             </span>
           );
+        },
+        filterFn: (row, _, filterValue) => {
+          // Access the ID from the original row data
+          const id = row.original.product?.productCategoryId;
+          // Filter based on the ID
+          return Array.isArray(filterValue)
+            ? filterValue.includes(id)
+            : id === filterValue;
         },
       },
       {
@@ -324,12 +336,10 @@ export default function AssetsIndex({
             filters={({ table }) => [
               {
                 column: table.getColumn("category"),
-                options: allCategories
-                  .map(getCategoryName)
-                  .map((categoryName) => ({
-                    label: categoryName,
-                    value: categoryName,
-                  })),
+                options: allCategories.map((category) => ({
+                  label: getCategoryName(category),
+                  value: category.id,
+                })),
                 title: "Category",
               },
               {

@@ -77,6 +77,17 @@ const themeSessionStorage = createCookieSessionStorage({
 export const themeSessionResolver =
   createThemeSessionResolver(themeSessionStorage);
 
+// APP STATE STORAGE
+export const appStateSessionStorage = createCookieSessionStorage<
+  Record<string, string>
+>({
+  cookie: {
+    name: "__appState",
+    path: "/",
+    sameSite: "lax",
+  },
+});
+
 // INSPECTION STORAGE
 
 export interface InspectionCookieValue {

@@ -29,7 +29,7 @@ export function ComplianceBySiteChart() {
   });
 
   const { data: mySites } = useQuery({
-    queryKey: ["my-sites"],
+    queryKey: ["my-sites-200"],
     queryFn: () => getMySites(fetch).then((r) => r.results),
   });
   const mySitesById = React.useMemo(
@@ -118,7 +118,7 @@ export function ComplianceBySiteChart() {
       // Title of the chart
       title: {
         text: "Compliance by Site",
-        subtext: `Inspection compliance statuses for each site`,
+        subtext: `You are viewing the compliance status of assets broken down by site.`,
         left: "center",
         top: "0%",
         textStyle: {
@@ -126,6 +126,8 @@ export function ComplianceBySiteChart() {
           fontWeight: 600,
         },
         subtextStyle: {
+          width: 320,
+          overflow: "break",
           fontSize: 14,
           color: themeValues?.mutedForeground,
         },
@@ -136,6 +138,7 @@ export function ComplianceBySiteChart() {
         left: "3%",
         right: "4%",
         bottom: "8%",
+        top: "16%",
         containLabel: true,
       },
       xAxis: {
@@ -193,7 +196,7 @@ const getAssetsWithLatestInspection = async (
 const getMySites = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>
 ) => {
-  const response = await fetch("/sites?subsites[none]=", {
+  const response = await fetch("/sites?limit=200&subsites[none]=", {
     method: "GET",
   });
 

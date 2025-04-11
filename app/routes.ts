@@ -33,6 +33,7 @@ export default [
     route("set-theme", "./routes/actions/set-theme.ts"),
     route("refresh-auth", "./routes/actions/refresh-auth.ts"),
     route("access-vault/*", "./routes/actions/access-vault.ts"),
+    route("set-app-state", "./routes/actions/set-app-state.ts"),
   ]),
 
   // API Routes

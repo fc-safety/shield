@@ -87,7 +87,7 @@ export function OverallComplianceChart() {
       // Title of the chart
       title: {
         text: "Overall Compliance",
-        subtext: `Inspection compliance for all ${totalAssets} assets`,
+        subtext: `You are viewing the compliance status of a total of ${totalAssets} assets.`,
         left: "center",
         top: "0%",
         textStyle: {
@@ -95,11 +95,14 @@ export function OverallComplianceChart() {
           fontWeight: 600,
         },
         subtextStyle: {
+          width: 320,
+          overflow: "break",
           fontSize: 14,
           color: themeValues?.mutedForeground,
         },
         itemGap: 8,
       },
+
       series: [
         {
           name: "Inspection Status",
@@ -131,6 +134,7 @@ export function OverallComplianceChart() {
             show: true,
           },
           data: data || [],
+          top: 16,
           center: ["50%", "50%"],
         },
       ],

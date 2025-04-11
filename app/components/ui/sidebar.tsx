@@ -2,6 +2,8 @@ import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 import * as React from "react";
+import { useEffect } from "react";
+import { useLoaderData } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -67,12 +69,17 @@ const SidebarProvider = React.forwardRef<
     },
     ref
   ) => {
+    const { sidebarState } = useLoaderData();
+
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState<string | undefined>();
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpenState);
+    const [_open, _setOpen] = React.useState({
+      ...defaultOpenState,
+      ...sidebarState,
+    });
     const open = openStateProp ?? _open;
     const setOpen = React.useCallback(
       (
@@ -124,6 +131,13 @@ const SidebarProvider = React.forwardRef<
         value ? ("expanded" as const) : ("collapsed" as const),
       ])
     );
+
+    useEffect(() => {
+      fetch("/action/set-app-state", {
+        method: "POST",
+        body: JSON.stringify({ sidebarState: JSON.stringify(open) }),
+      });
+    }, [open]);
 
     const contextValue = React.useMemo<SidebarContext>(
       () => ({
