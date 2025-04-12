@@ -15,7 +15,10 @@ import {
   ThemeProvider,
   useTheme,
 } from "remix-themes";
-import { themeSessionResolver } from "~/.server/sessions";
+import {
+  appStateSessionStorage,
+  themeSessionResolver,
+} from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import DefaultErrorBoundary from "./components/default-error-boundary";
@@ -23,6 +26,7 @@ import Footer from "./components/footer";
 import Header from "./components/header";
 import { Button } from "./components/ui/button";
 import { Toaster } from "./components/ui/sonner";
+import { AppStateProvider } from "./contexts/app-state-context";
 import QueryContext from "./contexts/query-context";
 import globalStyles from "./global.css?url";
 import { FONT_AWESOME_VERSION } from "./lib/constants";
@@ -30,8 +34,13 @@ import styles from "./tailwind.css?url";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
+
+  const appStateSession = await appStateSessionStorage.getSession(
+    request.headers.get("cookie")
+  );
   return data({
     theme: getTheme(),
+    appState: appStateSession.data,
   });
 }
 
@@ -126,9 +135,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       specifiedTheme={data?.theme ?? null}
       themeAction="/action/set-theme"
     >
-      <QueryContext>
-        <BaseLayout>{children}</BaseLayout>
-      </QueryContext>
+      <AppStateProvider appState={data?.appState ?? {}}>
+        <QueryContext>
+          <BaseLayout>{children}</BaseLayout>
+        </QueryContext>
+      </AppStateProvider>
     </ThemeProvider>
   );
 }

@@ -1,5 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
-import { format, isAfter, isValid, parse, parseISO } from "date-fns";
+import { endOfDay, format, isAfter, isValid, parse, parseISO } from "date-fns";
 import type { FieldValues, Resolver } from "react-hook-form";
 import type { LoaderFunctionArgs, MetaDescriptor } from "react-router";
 import { getValidatedFormData } from "remix-hook-form";
@@ -278,7 +278,10 @@ export function formatTimestampAsDate(rawTimestamp: string) {
     : undefined;
 }
 
-export function formatDateAsTimestamp(rawDate: string) {
+export function formatDateAsTimestamp(rawDate: string, atEndOfDay = false) {
   const date = String(rawDate);
-  return parseISO(date).toISOString();
+  const parsedDate = parseISO(date);
+  return atEndOfDay
+    ? endOfDay(parsedDate).toISOString()
+    : parsedDate.toISOString();
 }

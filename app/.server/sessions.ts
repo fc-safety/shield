@@ -79,7 +79,7 @@ export const themeSessionResolver =
 
 // APP STATE STORAGE
 export const appStateSessionStorage = createCookieSessionStorage<
-  Record<string, string>
+  Record<string, unknown>
 >({
   cookie: {
     name: "__appState",

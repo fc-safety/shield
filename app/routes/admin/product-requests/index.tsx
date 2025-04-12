@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import { ProductRequestStatusBadge } from "~/components/assets/product-request-status-badge";
 import { getSelectColumn } from "~/components/data-table/columns";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -88,6 +89,11 @@ export default function AdminProductRequestsIndex({
         id: "status",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => (
+          <ProductRequestStatusBadge
+            status={getValue() as ProductRequestStatus}
+          />
         ),
       },
       {

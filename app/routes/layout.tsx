@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { data, Outlet } from "react-router";
 import { config } from "~/.server/config";
-import { appStateSessionStorage, requireUserSession } from "~/.server/sessions";
+import { requireUserSession } from "~/.server/sessions";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
@@ -36,21 +36,12 @@ import type { Route } from "./+types/layout";
 export async function loader({ request }: Route.LoaderArgs) {
   const { user, session, getSessionToken } = await requireUserSession(request);
 
-  const appStateSession = await appStateSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
-  const sidebarStateRaw = appStateSession.get("sidebarState");
-  const sidebarState: Record<string, boolean> | null = sidebarStateRaw
-    ? JSON.parse(sidebarStateRaw)
-    : {};
-
   return data(
     {
       user,
       apiUrl: config.API_BASE_URL,
       appHost: config.APP_HOST,
       googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
-      sidebarState,
     },
     {
       headers: {

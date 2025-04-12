@@ -8,7 +8,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const data = await request.json();
   for (const [key, value] of Object.entries(data)) {
-    appStateSession.set(key, String(value));
+    appStateSession.set(key, value);
   }
 
   return new Response(null, {

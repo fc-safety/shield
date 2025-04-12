@@ -1,4 +1,5 @@
 import {
+  endOfDay,
   endOfMonth,
   endOfWeek,
   endOfYear,
@@ -37,7 +38,7 @@ export default function DateRangeSelect({
   title = "Select Date Range",
 }: DateRangeSelectProps) {
   const [internalValue, setInternalValue] = useState<DateRange>(
-    QUICK_DATE_RANGES[0].value
+    getQuickRangeValue(QUICK_DATE_RANGES[0])
   );
   const [_externalValue, _setExternalValue] = useState<DateRange>(
     valueProp ?? internalValue
@@ -102,7 +103,7 @@ export default function DateRangeSelect({
                     key={quickDateRange.label}
                     variant={isActive ? "default" : "outline"}
                     onClick={() => {
-                      setInternalValue(quickDateRange.value);
+                      setInternalValue(getQuickRangeValue(quickDateRange));
                     }}
                     size="sm"
                     type="button"
@@ -124,7 +125,7 @@ export default function DateRangeSelect({
                 onChange={(e) =>
                   setInternalValue({
                     ...internalValue,
-                    from: formatDateAsTimestamp(e.target.value),
+                    from: formatDateAsTimestamp(e.target.value, false),
                   })
                 }
               />
@@ -138,7 +139,7 @@ export default function DateRangeSelect({
                 onChange={(e) =>
                   setInternalValue({
                     ...internalValue,
-                    to: formatDateAsTimestamp(e.target.value),
+                    to: formatDateAsTimestamp(e.target.value, true),
                   })
                 }
               />
@@ -172,8 +173,8 @@ export default function DateRangeSelect({
 interface QuickDateRange {
   label: string;
   value: {
-    from: string;
-    to: string;
+    from: () => string;
+    to: () => string;
   };
 }
 
@@ -181,71 +182,78 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
   {
     label: "Last 7 days",
     value: {
-      from: subDays(new Date(), 7).toISOString(),
-      to: new Date().toISOString(),
+      from: () => subDays(new Date(), 7).toISOString(),
+      to: () => endOfDay(new Date()).toISOString(),
     },
   },
   {
     label: "This Week",
     value: {
-      from: startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(),
-      to: endOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(),
+      from: () => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(),
+      to: () => endOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(),
     },
   },
   {
     label: "Last 30 days",
     value: {
-      from: subDays(new Date(), 30).toISOString(),
-      to: new Date().toISOString(),
+      from: () => subDays(new Date(), 30).toISOString(),
+      to: () => endOfDay(new Date()).toISOString(),
     },
   },
   {
     label: "This Month",
     value: {
-      from: startOfMonth(new Date()).toISOString(),
-      to: endOfMonth(new Date()).toISOString(),
+      from: () => startOfMonth(new Date()).toISOString(),
+      to: () => endOfMonth(new Date()).toISOString(),
     },
   },
   {
     label: "Last Month",
     value: {
-      from: subMonths(new Date(), 1).toISOString(),
-      to: endOfMonth(subMonths(new Date(), 1)).toISOString(),
+      from: () => subMonths(new Date(), 1).toISOString(),
+      to: () => endOfMonth(subMonths(new Date(), 1)).toISOString(),
     },
   },
   {
     label: "Last 3 months",
     value: {
-      from: subMonths(new Date(), 3).toISOString(),
-      to: new Date().toISOString(),
+      from: () => subMonths(new Date(), 3).toISOString(),
+      to: () => endOfDay(new Date()).toISOString(),
     },
   },
   {
     label: "Last 6 months",
     value: {
-      from: subMonths(new Date(), 6).toISOString(),
-      to: new Date().toISOString(),
+      from: () => subMonths(new Date(), 6).toISOString(),
+      to: () => endOfDay(new Date()).toISOString(),
     },
   },
   {
     label: "Last 12 months",
     value: {
-      from: subMonths(new Date(), 12).toISOString(),
-      to: new Date().toISOString(),
+      from: () => subMonths(new Date(), 12).toISOString(),
+      to: () => endOfDay(new Date()).toISOString(),
     },
   },
   {
     label: "This Year",
     value: {
-      from: startOfYear(new Date()).toISOString(),
-      to: endOfYear(new Date()).toISOString(),
+      from: () => startOfYear(new Date()).toISOString(),
+      to: () => endOfYear(new Date()).toISOString(),
     },
   },
 ];
 
+const getQuickRangeValue = (quickRange: QuickDateRange) => {
+  return {
+    from: quickRange.value.from(),
+    to: quickRange.value.to(),
+  };
+};
+
 const isQuickRangeActive = (value: DateRange, quickRange: QuickDateRange) => {
   return (
-    isSameDay(value.from, quickRange.value.from) &&
-    isSameDay(value.to ?? new Date(), quickRange.value.to)
+    isSameDay(value.from, quickRange.value.from()) &&
+    isSameDay(value.to ?? new Date(), quickRange.value.to())
   );
 };

@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
+import { useAppState } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -35,6 +36,7 @@ import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DateRangeSelect from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
+import GradientScrollArea from "../gradient-scroll-area";
 import Icon from "../icons/icon";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
@@ -43,22 +45,20 @@ import { Skeleton } from "../ui/skeleton";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
 export default function ProductRequestsOverview() {
+  const { appState, setAppState } = useAppState();
+
   const { user } = useAuth();
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const [productRequestsQuery, setProductRequestsQuery] = useImmer<
-    QueryParams & {
+  const [productRequestsQuery, setProductRequestsQuery] = useImmer(
+    appState.productRequestsQuery ?? {
       createdOn: {
-        gte: string;
-        lte?: string;
-      };
+        gte: subDays(new Date(), 30).toISOString(),
+        lte: new Date().toISOString(),
+      },
     }
-  >({
-    createdOn: {
-      gte: subDays(new Date(), 30).toISOString(),
-      lte: new Date().toISOString(),
-    },
-  });
+  );
+
   const { data, error, isLoading } = useQuery({
     queryKey: ["product-requests", productRequestsQuery] as const,
     queryFn: ({ queryKey }) => getProductRequests(fetch, queryKey[1]),
@@ -285,20 +285,24 @@ export default function ProductRequestsOverview() {
                   : undefined
               }
               onValueChange={(dateRange) => {
-                setProductRequestsQuery((draft) => {
-                  draft.createdOn = {
+                const newProductRequestsQuery = {
+                  ...productRequestsQuery,
+                  createdOn: {
                     gte: dateRange.from,
                     lte: dateRange.to,
-                  };
-                });
+                  },
+                };
+                console.log("newProductRequestsQuery", newProductRequestsQuery);
+                setProductRequestsQuery(newProductRequestsQuery);
+                setAppState({ productRequestsQuery: newProductRequestsQuery });
               }}
             />
           </div>
-          <div className="h-full max-h-[400px] overflow-y-auto">
+          <GradientScrollArea className="h-[400px]">
             {isLoading ? (
               <Skeleton className="h-36 w-full" />
             ) : isEmpty ? (
-              <p className="text-center text-sm text-muted-foreground py-4">
+              <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
                 No product requests found.
               </p>
             ) : null}
@@ -353,7 +357,7 @@ export default function ProductRequestsOverview() {
                 </div>
               );
             })}
-          </div>
+          </GradientScrollArea>
         </CardContent>
       </Card>
       <ReviewProductRequestModal

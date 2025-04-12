@@ -3,7 +3,6 @@ import { type VariantProps, cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 import * as React from "react";
 import { useEffect } from "react";
-import { useLoaderData } from "react-router";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -16,6 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { useAppState } from "~/contexts/app-state-context";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
 
@@ -69,7 +69,7 @@ const SidebarProvider = React.forwardRef<
     },
     ref
   ) => {
-    const { sidebarState } = useLoaderData();
+    const { appState, setAppState } = useAppState();
 
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState<string | undefined>();
@@ -78,7 +78,7 @@ const SidebarProvider = React.forwardRef<
     // We use openProp and setOpenProp for control from outside the component.
     const [_open, _setOpen] = React.useState({
       ...defaultOpenState,
-      ...sidebarState,
+      ...appState?.sidebarState,
     });
     const open = openStateProp ?? _open;
     const setOpen = React.useCallback(
@@ -133,11 +133,8 @@ const SidebarProvider = React.forwardRef<
     );
 
     useEffect(() => {
-      fetch("/action/set-app-state", {
-        method: "POST",
-        body: JSON.stringify({ sidebarState: JSON.stringify(open) }),
-      });
-    }, [open]);
+      setAppState({ sidebarState: open });
+    }, [open, setAppState]);
 
     const contextValue = React.useMemo<SidebarContext>(
       () => ({
