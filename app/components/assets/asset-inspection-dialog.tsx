@@ -50,6 +50,7 @@ export default function AssetInspectionDialog({
             size="sm"
             type="button"
             onMouseEnter={() => preloadInspection(inspectionId)}
+            onTouchStart={() => preloadInspection(inspectionId)}
             onClick={() => setOpen(true)}
           >
             Details

@@ -93,6 +93,7 @@ export default function RoleCombobox({
       options={options}
       disabled={disabled}
       onMouseOver={() => !disabled && preloadRoles()}
+      onTouchStart={() => !disabled && preloadRoles()}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

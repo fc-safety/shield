@@ -312,6 +312,7 @@ export default function ProductSelector({
             disabled={disabled || readOnly}
             className={cn(className)}
             onMouseEnter={handlePreload}
+            onTouchStart={handlePreload}
           >
             <Search />
             Find Product
@@ -328,7 +329,12 @@ export default function ProductSelector({
             className="w-full"
           />
         </div>
-        <ScrollArea className="h-96 border-b border-t px-6 self-stretch">
+        <ScrollArea
+          classNames={{
+            root: "h-96 border-b border-t px-6 self-stretch",
+            viewport: "-mx-[1px] px-[1px]",
+          }}
+        >
           {currentStep?.step}
         </ScrollArea>
         <div className="flex justify-between px-6">

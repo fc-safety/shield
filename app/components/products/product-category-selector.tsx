@@ -99,6 +99,7 @@ export default function ProductCategorySelector({
             disabled={disabled}
             className={cn(className)}
             onMouseEnter={handlePreload}
+            onTouchStart={handlePreload}
           >
             <Search />
             Select Category
@@ -109,7 +110,12 @@ export default function ProductCategorySelector({
         <DialogHeader className="px-6">
           <DialogTitle>Find Category</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-96 border-b border-t px-6 self-stretch">
+        <ScrollArea
+          classNames={{
+            root: "h-96 border-b border-t px-6 self-stretch",
+            viewport: "-mx-[1px] px-[1px]",
+          }}
+        >
           <RadioGroup
             defaultValue="card"
             className="grid grid-cols-2 gap-4 py-2"

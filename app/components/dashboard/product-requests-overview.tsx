@@ -1,8 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import type { ColumnDef } from "@tanstack/react-table";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type Cell,
+  type ColumnDef,
+} from "@tanstack/react-table";
 import { subDays } from "date-fns";
 import { useMemo } from "react";
 import { Link } from "react-router";
+import { useImmer } from "use-immer";
 import {
   Card,
   CardContent,
@@ -13,33 +22,52 @@ import {
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useOpenData } from "~/hooks/use-open-data";
-import type { ProductRequest, ResultsPage } from "~/lib/models";
-import { stringifyQuery } from "~/lib/urls";
+import type {
+  ProductRequest,
+  ProductRequestStatus,
+  ResultsPage,
+} from "~/lib/models";
+import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
+import { ProductRequestStatusBadge } from "../assets/product-request-status-badge";
 import { ProductRequestCard } from "../assets/product-requests";
 import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
-import VirtualizedDataTable from "../data-table/virtualized-data-table";
+import DateRangeSelect from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
 import Icon from "../icons/icon";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
 import { DialogFooter } from "../ui/dialog";
+import { Skeleton } from "../ui/skeleton";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
 export default function ProductRequestsOverview() {
   const { user } = useAuth();
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
+  const [productRequestsQuery, setProductRequestsQuery] = useImmer<
+    QueryParams & {
+      createdOn: {
+        gte: string;
+        lte?: string;
+      };
+    }
+  >({
+    createdOn: {
+      gte: subDays(new Date(), 30).toISOString(),
+      lte: new Date().toISOString(),
+    },
+  });
   const { data, error, isLoading } = useQuery({
-    queryKey: ["product-requests"],
-    queryFn: () => getProductRequests(fetch),
+    queryKey: ["product-requests", productRequestsQuery] as const,
+    queryFn: ({ queryKey }) => getProductRequests(fetch, queryKey[1]),
   });
 
   const reviewRequest = useOpenData<ProductRequest>();
 
-  const columns: ColumnDef<ProductRequest>[] = useMemo(
-    () => [
+  const columns = useMemo(
+    (): ColumnDef<ProductRequest>[] => [
       {
         accessorKey: "createdOn",
         id: "orderedOn",
@@ -55,6 +83,11 @@ export default function ProductRequestsOverview() {
         id: "status",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ getValue }) => (
+          <ProductRequestStatusBadge
+            status={getValue() as ProductRequestStatus}
+          />
         ),
       },
       {
@@ -88,6 +121,46 @@ export default function ProductRequestsOverview() {
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
+      },
+      {
+        accessorKey: "productRequestItems",
+        id: "items",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ row }) => {
+          const items = row.original.productRequestItems;
+          return (
+            <span>
+              {items.slice(0, MAX_ITEMS_IN_SUMMARY).map((i, idx) => (
+                <span key={i.id}>
+                  {idx > 0 && ", "}
+                  <span className="font-bold">{i.quantity}x</span>{" "}
+                  {i.product?.name}
+                </span>
+              ))}
+              {items.length > MAX_ITEMS_IN_SUMMARY && (
+                <>
+                  ,{" "}
+                  <span className="text-muted-foreground italic">
+                    + {items.length - MAX_ITEMS_IN_SUMMARY} more
+                  </span>
+                </>
+              )}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "requestor",
+        id: "requestor",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} />
+        ),
+        cell: ({ row }) => {
+          const requestor = row.original.requestor;
+          return getUserDisplayName(requestor);
+        },
       },
       // TODO: Holding off on in-app product request interactions. Product requests for
       // now are read-only.
@@ -141,19 +214,39 @@ export default function ProductRequestsOverview() {
         cell: ({ row }) => {
           const request = row.original;
           return (
-            <Button
-              variant="secondary"
-              size="sm"
+            <button
+              type="button"
               onClick={() => reviewRequest.openData(request)}
+              className="underline text-xs font-semibold"
             >
-              Details
-            </Button>
+              more
+            </button>
           );
         },
       },
     ],
     [reviewRequest]
   );
+
+  const productRequests = useMemo(() => data?.results ?? [], [data]);
+  const table = useReactTable({
+    data: productRequests,
+    columns,
+    initialState: {
+      sorting: [{ id: "orderedOn", desc: true }],
+      columnVisibility: {
+        site: hasMultiSiteVisibility(user),
+        review: can(user, "review", "product-requests"),
+      },
+    },
+    enableRowSelection: true,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
+  const { rows } = table.getRowModel();
+  const isEmpty = !rows.length;
 
   return error ? (
     <ErrorDashboardTile />
@@ -166,8 +259,8 @@ export default function ProductRequestsOverview() {
             Requests shown from the last 30 days.
           </CardDescription>
         </CardHeader>
-        <CardContent className="bg-inherit">
-          <VirtualizedDataTable
+        <CardContent className="bg-inherit space-y-4">
+          {/* <VirtualizedDataTable
             height="100%"
             maxHeight={400}
             columns={columns}
@@ -180,7 +273,87 @@ export default function ProductRequestsOverview() {
             }}
             data={data?.results ?? []}
             loading={isLoading}
-          />
+          /> */}
+          <div className="flex gap-2">
+            <DateRangeSelect
+              value={
+                productRequestsQuery.createdOn?.gte
+                  ? {
+                      from: productRequestsQuery.createdOn?.gte,
+                      to: productRequestsQuery.createdOn?.lte,
+                    }
+                  : undefined
+              }
+              onValueChange={(dateRange) => {
+                setProductRequestsQuery((draft) => {
+                  draft.createdOn = {
+                    gte: dateRange.from,
+                    lte: dateRange.to,
+                  };
+                });
+              }}
+            />
+          </div>
+          <div className="h-full max-h-[400px] overflow-y-auto">
+            {isLoading ? (
+              <Skeleton className="h-36 w-full" />
+            ) : isEmpty ? (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                No product requests found.
+              </p>
+            ) : null}
+            {rows.map((row) => {
+              const productRequest = row.original;
+              const cells = row.getVisibleCells().reduce((acc, cell) => {
+                acc[String(cell.column.id)] = cell;
+                return acc;
+              }, {} as Record<string, Cell<ProductRequest, unknown>>);
+
+              return (
+                <div
+                  key={productRequest.id}
+                  className="py-2 flex flex-col gap-1 border-t border-border"
+                >
+                  <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
+                    {renderCell(cells.orderedOn)}
+                    {renderCell(cells.status)}
+                  </div>
+                  <div>
+                    <DataList
+                      details={[
+                        {
+                          label: "Site",
+                          value: renderCell(cells.site),
+                          hidden: !cells.site,
+                        },
+                        {
+                          label: "Requestor",
+                          value: renderCell(cells.requestor),
+                          hidden: !cells.requestor,
+                        },
+                        {
+                          label: "Asset",
+                          value: renderCell(cells.asset),
+                          hidden: !cells.asset,
+                        },
+                        {
+                          label: "Items",
+                          value: renderCell(cells.items),
+                          hidden: !cells.items,
+                        },
+                      ]}
+                      defaultValue={<>&mdash;</>}
+                      fluid
+                      classNames={{
+                        details: "gap-0.5",
+                      }}
+                    />
+                  </div>
+                  <div className="flex">{renderCell(cells.details)}</div>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
       <ReviewProductRequestModal
@@ -193,10 +366,12 @@ export default function ProductRequestsOverview() {
 }
 
 const getProductRequests = async (
-  fetch: (url: string, options: RequestInit) => Promise<Response>
+  fetch: (url: string, options: RequestInit) => Promise<Response>,
+  queryParams: QueryParams
 ) => {
   const qs = stringifyQuery({
-    createdOn: { gte: subDays(new Date(), 30).toISOString() },
+    // createdOn: { gte: subDays(new Date(), 30).toISOString() },
+    ...queryParams,
     limit: 10000,
   });
   const response = await fetch(`/product-requests?${qs}`, {
@@ -334,3 +509,8 @@ function ReviewProductRequestModal({
     </>
   );
 }
+
+const MAX_ITEMS_IN_SUMMARY = 5;
+
+const renderCell = (cell: Cell<ProductRequest, unknown> | undefined | null) =>
+  cell ? flexRender(cell.column.columnDef.cell, cell.getContext()) : null;

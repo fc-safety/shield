@@ -24,6 +24,7 @@ import Header from "./components/header";
 import { Button } from "./components/ui/button";
 import { Toaster } from "./components/ui/sonner";
 import QueryContext from "./contexts/query-context";
+import globalStyles from "./global.css?url";
 import { FONT_AWESOME_VERSION } from "./lib/constants";
 import styles from "./tailwind.css?url";
 
@@ -46,6 +47,7 @@ export const links: Route.LinksFunction = () => [
   //   href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   // },
   { rel: "stylesheet", href: styles },
+  { rel: "stylesheet", href: globalStyles },
   {
     rel: "stylesheet",
     href: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/${FONT_AWESOME_VERSION}/css/all.min.css`,

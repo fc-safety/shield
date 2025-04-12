@@ -3,14 +3,36 @@ import { useEventListener, useResizeObserver } from "usehooks-ts";
 
 export default function useIsOverflowing({
   ref,
+  scrollbarOffsetX = 0,
+  scrollbarOffsetY = 0,
 }: {
   ref: React.RefObject<HTMLDivElement>;
+  scrollbarOffsetX?: number;
+  scrollbarOffsetY?: number;
 }) {
-  const { height: viewportHeight = 0, width: viewportWidth = 0 } =
-    useResizeObserver({
-      ref,
-      box: "border-box",
-    });
+  const [viewportWidth, setViewportWidth] = useState(
+    ref.current?.clientWidth ?? 0
+  );
+  const [viewportHeight, setViewportHeight] = useState(
+    ref.current?.clientHeight ?? 0
+  );
+  const [scrollWidth, setScrollWidth] = useState(ref.current?.scrollWidth ?? 0);
+  const [scrollHeight, setScrollHeight] = useState(
+    ref.current?.scrollHeight ?? 0
+  );
+
+  useResizeObserver({
+    ref,
+    box: "border-box",
+    onResize: () => {
+      const el = ref.current;
+      if (!el) return;
+      setViewportWidth(el.clientWidth);
+      setViewportHeight(el.clientHeight);
+      setScrollWidth(el.scrollWidth);
+      setScrollHeight(el.scrollHeight);
+    },
+  });
 
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -25,24 +47,20 @@ export default function useIsOverflowing({
   );
 
   const isOverflowingY = useMemo(() => {
-    return (
-      !!ref.current?.scrollHeight && ref.current.scrollHeight > viewportHeight
-    );
-  }, [ref, viewportHeight]);
+    return scrollHeight - scrollbarOffsetY > viewportHeight;
+  }, [scrollHeight, viewportHeight, scrollbarOffsetY]);
 
   const isOverflowingX = useMemo(() => {
-    return (
-      !!ref.current?.scrollWidth && ref.current.scrollWidth > viewportWidth
-    );
-  }, [ref, viewportWidth]);
+    return scrollWidth - scrollbarOffsetX > viewportWidth;
+  }, [scrollWidth, viewportWidth, scrollbarOffsetX]);
 
   const isScrollMaxedY = useMemo(() => {
-    return scrollTop === (ref.current?.scrollHeight ?? 0) - viewportHeight;
-  }, [scrollTop, ref, viewportHeight]);
+    return scrollTop === scrollHeight - viewportHeight;
+  }, [scrollTop, scrollHeight, viewportHeight]);
 
   const isScrollMaxedX = useMemo(() => {
-    return scrollLeft === (ref.current?.scrollWidth ?? 0) - viewportWidth;
-  }, [scrollLeft, ref, viewportWidth]);
+    return scrollLeft === scrollWidth - viewportWidth;
+  }, [scrollLeft, scrollWidth, viewportWidth]);
 
   return {
     isOverflowingY,

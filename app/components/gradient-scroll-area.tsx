@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useCallback,
   useState,
   type ComponentProps,
   type PropsWithChildren,
@@ -13,21 +14,87 @@ interface GradientScrollAreaProps
 }
 
 const GradientScrollArea = forwardRef<HTMLDivElement, GradientScrollAreaProps>(
-  ({ children, variant = "background", ...props }, ref) => {
-    const [isOverflowing, setIsOverflowing] = useState(false);
+  (
+    {
+      children,
+      variant = "background",
+      className,
+      onIsOverflowingX,
+      onIsScrollMaxedX,
+      onIsOverflowingY,
+      onIsScrollMaxedY,
+      ...props
+    },
+    ref
+  ) => {
+    const [isOverflowingX, setIsOverflowingX] = useState(false);
+    const [isScrollMaxedX, setIsScrollMaxedX] = useState(false);
+    const [isOverflowingY, setIsOverflowingY] = useState(false);
+    const [isScrollMaxedY, setIsScrollMaxedY] = useState(false);
+
+    const handleIsOverflowingX = useCallback(
+      (isOverflowing: boolean) => {
+        setIsOverflowingX(isOverflowing);
+        onIsOverflowingX?.(isOverflowing);
+      },
+      [onIsOverflowingX]
+    );
+
+    const handleIsScrollMaxedX = useCallback(
+      (isScrollMaxed: boolean) => {
+        setIsScrollMaxedX(isScrollMaxed);
+        onIsScrollMaxedX?.(isScrollMaxed);
+      },
+      [onIsScrollMaxedX]
+    );
+
+    const handleIsOverflowingY = useCallback(
+      (isOverflowing: boolean) => {
+        setIsOverflowingY(isOverflowing);
+        onIsOverflowingY?.(isOverflowing);
+      },
+      [onIsOverflowingY]
+    );
+
+    const handleIsScrollMaxedY = useCallback(
+      (isScrollMaxed: boolean) => {
+        setIsScrollMaxedY(isScrollMaxed);
+        onIsScrollMaxedY?.(isScrollMaxed);
+      },
+      [onIsScrollMaxedY]
+    );
 
     return (
-      <ScrollArea {...props} onIsOverflowing={setIsOverflowing} ref={ref}>
+      <ScrollArea
+        {...props}
+        className={cn("relative", className)}
+        onIsOverflowingX={handleIsOverflowingX}
+        onIsOverflowingY={handleIsOverflowingY}
+        onIsScrollMaxedX={handleIsScrollMaxedX}
+        onIsScrollMaxedY={handleIsScrollMaxedY}
+        ref={ref}
+      >
         {children}
-        {isOverflowing && (
+        {isOverflowingX && (
           <>
             <div
               className={cn(
-                "absolute w-full bottom-0 left-0 h-6 bg-gradient-to-t to-transparent",
-                variant === "card" ? "from-card" : "from-background"
+                "absolute h-full top-0 right-0 w-6 bg-gradient-to-l to-transparent transition-all",
+                variant === "card" ? "from-card" : "from-background",
+                isScrollMaxedX && "translate-x-full"
               )}
             ></div>
-            <div className="pt-6 w-full"></div>
+          </>
+        )}
+        {isOverflowingY && (
+          <>
+            <div
+              className={cn(
+                "absolute w-full bottom-0 left-0 h-6 bg-gradient-to-t to-transparent transition-all",
+                variant === "card" ? "from-card" : "from-background",
+                isScrollMaxedY && "translate-y-full"
+              )}
+            ></div>
           </>
         )}
       </ScrollArea>

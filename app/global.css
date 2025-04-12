@@ -1,0 +1,3 @@
+.override-scroll-display-table > * {
+  display: block !important;
+}

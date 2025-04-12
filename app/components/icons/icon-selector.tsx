@@ -93,7 +93,12 @@ export default function IconSelector({
         <DialogHeader className="px-6">
           <DialogTitle>Find an icon</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-96 border-b border-t px-6 self-stretch">
+        <ScrollArea
+          classNames={{
+            root: "h-96 border-b border-t px-6 self-stretch",
+            viewport: "-mx-[1px] px-[1px]",
+          }}
+        >
           <div className="relative overflow-visible my-4 p-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4" />
             <Input

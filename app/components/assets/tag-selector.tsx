@@ -97,6 +97,7 @@ export default function TagSelector({
             disabled={disabled}
             className={cn(className)}
             onMouseEnter={handlePreload}
+            onTouchStart={handlePreload}
           >
             <Search />
             Select Tag
@@ -107,7 +108,12 @@ export default function TagSelector({
         <DialogHeader className="px-6">
           <DialogTitle>Find Tag by Serial No.</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="h-96 border-b border-t px-6 self-stretch">
+        <ScrollArea
+          classNames={{
+            root: "h-96 border-b border-t px-6 self-stretch",
+            viewport: "-mx-[1px] px-[1px]",
+          }}
+        >
           {tags.length === 0 && (
             <div className="text-sm flex flex-col items-center p-4 mt-2">
               No tags found.

@@ -6,8 +6,8 @@ import type {
   EChartsOption,
   SetOptionOpts,
 } from "echarts";
-import { getInstanceByDom, init } from "echarts";
-import { useEffect, useRef } from "react";
+import { init } from "echarts";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "~/lib/utils";
 
 export interface ReactEChartsProps {
@@ -32,12 +32,14 @@ export function ReactECharts({
   getChart,
 }: ReactEChartsProps): JSX.Element {
   const chartRef = useRef<HTMLDivElement>(null);
+  const [chart, setChart] = useState<ECharts | undefined>(undefined);
 
   useEffect(() => {
     // Initialize chart
     let chart: ECharts | undefined;
     if (chartRef.current !== null) {
       chart = init(chartRef.current, theme, { renderer: "canvas" });
+      setChart(chart);
     }
 
     // Observe changes in chart container size and resize chart
@@ -62,39 +64,29 @@ export function ReactECharts({
 
   useEffect(() => {
     // Update chart
-    if (chartRef.current !== null) {
-      const chart = getInstanceByDom(chartRef.current);
-      chart?.setOption(option, settings);
-    }
-  }, [option, settings, theme]); // Whenever theme changes we need to add option and setting due to it being deleted in cleanup function
+    chart?.setOption(option, settings);
+  }, [chart, option, settings]);
 
   useEffect(() => {
     // Update chart
-    if (chartRef.current !== null) {
-      const chart = getInstanceByDom(chartRef.current);
-      loading === true ? chart?.showLoading() : chart?.hideLoading();
-    }
-  }, [loading, theme]);
+    loading === true ? chart?.showLoading() : chart?.hideLoading();
+  }, [chart, loading]);
 
   useEffect(() => {
-    if (chartRef.current !== null && onClick) {
-      const chart = getInstanceByDom(chartRef.current);
-      chart?.on("click", onClick);
+    if (chart && onClick) {
+      chart.on("click", onClick);
 
       return () => {
-        chart?.off("click", onClick);
+        chart.off("click", onClick);
       };
     }
-  }, [onClick]);
+  }, [chart, onClick]);
 
   useEffect(() => {
-    if (chartRef.current !== null && getChart) {
-      const chart = getInstanceByDom(chartRef.current);
-      if (chart) {
-        getChart(chart);
-      }
+    if (chart && getChart) {
+      getChart(chart);
     }
-  }, [getChart]);
+  }, [getChart, chart]);
 
   return (
     <div

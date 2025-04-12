@@ -171,7 +171,7 @@ export function ComplianceBySiteChart() {
           className="w-full h-full"
           style={{
             minHeight:
-              400 + (mySitesById ? Object.keys(mySitesById).length : 3) * 20,
+              300 + (mySitesById ? Object.keys(mySitesById).length : 3) * 20,
           }}
         />
       </CardContent>

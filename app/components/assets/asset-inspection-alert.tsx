@@ -60,7 +60,14 @@ export default function AssetInspectionAlert({
   return (
     <ResponsiveDialog
       title="Inspection Alert"
-      trigger={<div onMouseEnter={handlePreloadAlerts}>{trigger}</div>}
+      trigger={
+        <div
+          onMouseEnter={handlePreloadAlerts}
+          onTouchStart={handlePreloadAlerts}
+        >
+          {trigger}
+        </div>
+      }
       dialogClassName="sm:max-w-lg"
     >
       {alert ? (

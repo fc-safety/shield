@@ -23,7 +23,12 @@ import { useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { ScrollArea } from "./ui/scroll-area";
 
-interface ResponsiveDialogProps extends React.PropsWithChildren {
+interface ResponsiveDialogProps
+  extends React.PropsWithChildren,
+    Pick<
+      React.ComponentPropsWithoutRef<typeof ScrollArea>,
+      "disableDisplayTable"
+    > {
   className?: string;
   dialogClassName?: string;
   drawerClassName?: string;
@@ -39,6 +44,9 @@ interface ResponsiveDialogProps extends React.PropsWithChildren {
     open: boolean;
     onOpenChange: (open: boolean) => void;
   }) => React.ReactNode;
+  // scroll area props
+  disableDisplayTable?: boolean;
+  // end scroll area props
 }
 
 export function ResponsiveDialog({
@@ -54,6 +62,7 @@ export function ResponsiveDialog({
   children,
   minWidth = "768px",
   render,
+  disableDisplayTable,
 }: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery(`(min-width: ${minWidth})`);
   const [internalOpen, setInternalOpen] = useState(false);
@@ -71,7 +80,13 @@ export function ResponsiveDialog({
             dialogClassName
           )}
         >
-          <ScrollArea className="max-h-[calc(100vh-10rem)]">
+          <ScrollArea
+            classNames={{
+              root: "max-h-[calc(100vh-10rem)]",
+              viewport: "-mx-[1px] px-[1px]",
+            }}
+            disableDisplayTable={disableDisplayTable}
+          >
             <DialogHeader className="text-left">
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>{description}</DialogDescription>
@@ -86,13 +101,21 @@ export function ResponsiveDialog({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-      <DrawerContent className={cn(className, drawerClassName)}>
-        <ScrollArea className="h-[calc(100vh-10rem)]">
+      <DrawerContent
+        className={cn("max-w-[100vw]", className, drawerClassName)}
+      >
+        <ScrollArea
+          classNames={{
+            root: "h-[calc(100vh-10rem)]",
+            viewport: "-mx-[1px] px-[1px]",
+          }}
+          disableDisplayTable={disableDisplayTable}
+        >
           <DrawerHeader className="text-left">
             <DrawerTitle>{title}</DrawerTitle>
             <DrawerDescription>{description}</DrawerDescription>
           </DrawerHeader>
-          <div className="px-4">
+          <div className="px-4 w-full">
             {render ? render({ isDesktop, open, onOpenChange }) : children}
           </div>
           <DrawerFooter className="pt-2">

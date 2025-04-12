@@ -83,6 +83,7 @@ export default function ClientCombobox({
       options={options}
       disabled={disabled}
       onMouseOver={() => !disabled && preloadClients()}
+      onTouchStart={() => !disabled && preloadClients()}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

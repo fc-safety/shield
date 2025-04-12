@@ -191,8 +191,9 @@ export function ComplianceByCategoryChart() {
               return name;
             }
             // Use rich text to display the icon, which is stored here as a unicode string.
-            return `${name} {icon_${icon.id}|${icon.unicode}}`;
+            return `${name}  {icon_${icon.id}|${icon.unicode}}`;
           },
+          fontSize: 14,
           rich: {
             // Rich text is general, not specific to each axis label. For this reason,
             // we need to create a new rich object for each axis label.
@@ -200,7 +201,7 @@ export function ComplianceByCategoryChart() {
               acc[`icon_${id}`] = {
                 color,
                 fontFamily: "FontAwesome",
-                fontSize: 18,
+                fontSize: 14,
               };
               return acc;
             }, {} as NonNullable<NonNullable<SingularNonNullable<ReactEChartsProps["option"]["yAxis"]>["axisLabel"]>["rich"]>),
@@ -235,7 +236,7 @@ export function ComplianceByCategoryChart() {
             // However, because this allows Y Axis labels to get progressively smaller
             // with a lower limit of 20px.
             minHeight:
-              400 +
+              300 +
               (productCategoriesById
                 ? Object.keys(productCategoriesById).length
                 : 3) *

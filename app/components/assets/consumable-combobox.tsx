@@ -67,6 +67,7 @@ export default function ConsumableCombobox({
       options={options}
       disabled={disabled}
       onMouseOver={() => !disabled && preloadProducts()}
+      onTouchStart={() => !disabled && preloadProducts()}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

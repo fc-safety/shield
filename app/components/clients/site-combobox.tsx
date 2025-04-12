@@ -111,6 +111,7 @@ export default function SiteCombobox({
       loading={fetcher.state === "loading"}
       options={options}
       onMouseOver={() => !disabled && preloadSites(clientId)}
+      onTouchStart={() => !disabled && preloadSites(clientId)}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

@@ -78,6 +78,7 @@ export default function AnsiCategoryCombobox({
         options={options}
         loading={fetcher.state === "loading"}
         onMouseOver={() => preloadAnsiCategories()}
+        onTouchStart={() => preloadAnsiCategories()}
         searchValue={search}
         onSearchValueChange={setSearch}
         className={className}

@@ -1,53 +1,98 @@
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import * as React from "react";
 import { useEffect, useRef } from "react";
-import { useResizeObserver } from "usehooks-ts";
+import useIsOverflowing from "~/hooks/use-is-overflowing";
 
 import { cn } from "~/lib/utils";
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
-    onIsOverflowing?: (isOverflowing: boolean) => void;
+    onIsOverflowingX?: (isOverflowing: boolean) => void;
+    onIsOverflowingY?: (isOverflowing: boolean) => void;
+    onIsScrollMaxedX?: (isScrollMaxed: boolean) => void;
+    onIsScrollMaxedY?: (isScrollMaxed: boolean) => void;
     scrollDisabled?: boolean;
+    classNames?: {
+      root?: string;
+      viewport?: string;
+      scrollbar?: string;
+    };
+    /**
+     * Overrides the display style property of one of the underlying radix primitive
+     * elements that can cause unexpected behavior with horizontal overflow.
+     *
+     * See https://github.com/radix-ui/primitives/issues/2964.
+     */
+    disableDisplayTable?: boolean;
   }
->(({ className, children, onIsOverflowing, scrollDisabled, ...props }, ref) => {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const { height: viewPortHeight = 0 } = useResizeObserver({
-    ref: viewportRef,
-    box: "border-box",
-  });
+>(
+  (
+    {
+      className,
+      children,
+      onIsOverflowingX,
+      onIsScrollMaxedX,
+      onIsOverflowingY,
+      onIsScrollMaxedY,
+      scrollDisabled,
+      classNames,
+      disableDisplayTable,
+      ...props
+    },
+    ref
+  ) => {
+    const viewportRef = useRef<HTMLDivElement>(null);
+    const { isOverflowingX, isOverflowingY, isScrollMaxedX, isScrollMaxedY } =
+      useIsOverflowing({
+        ref: viewportRef,
+        scrollbarOffsetX: 8,
+        scrollbarOffsetY: 8,
+      });
 
-  useEffect(() => {
-    onIsOverflowing?.(
-      !!viewportRef.current?.scrollHeight &&
-        viewportRef.current?.scrollHeight > viewPortHeight
-    );
-  }, [viewportRef.current?.scrollHeight, viewPortHeight, onIsOverflowing]);
+    useEffect(() => {
+      onIsOverflowingX?.(isOverflowingX);
+    }, [isOverflowingX, onIsOverflowingX]);
 
-  return (
-    <ScrollAreaPrimitive.Root
-      ref={ref}
-      className={cn(
-        "relative overflow-y-hidden flex flex-col items-center",
-        className
-      )}
-      {...props}
-    >
-      <ScrollAreaPrimitive.Viewport
-        ref={viewportRef}
+    useEffect(() => {
+      onIsOverflowingY?.(isOverflowingY);
+    }, [isOverflowingY, onIsOverflowingY]);
+
+    useEffect(() => {
+      onIsScrollMaxedX?.(isScrollMaxedX);
+    }, [isScrollMaxedX, onIsScrollMaxedX]);
+
+    useEffect(() => {
+      onIsScrollMaxedY?.(isScrollMaxedY);
+    }, [isScrollMaxedY, onIsScrollMaxedY]);
+
+    return (
+      <ScrollAreaPrimitive.Root
+        ref={ref}
         className={cn(
-          "h-full w-full rounded-[inherit] -mx-[1px] px-[1px]",
-          scrollDisabled && "touch-none"
+          "relative overflow-hidden grid",
+          className,
+          classNames?.root
         )}
+        {...props}
       >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
-      {!scrollDisabled && <ScrollBar />}
-      <ScrollAreaPrimitive.Corner />
-    </ScrollAreaPrimitive.Root>
-  );
-});
+        <ScrollAreaPrimitive.Viewport
+          ref={viewportRef}
+          className={cn(
+            "h-full w-full rounded-[inherit]",
+            scrollDisabled && "touch-none",
+            classNames?.viewport,
+            disableDisplayTable && "override-scroll-display-table"
+          )}
+        >
+          {children}
+        </ScrollAreaPrimitive.Viewport>
+        {!scrollDisabled && <ScrollBar className={classNames?.scrollbar} />}
+        <ScrollAreaPrimitive.Corner />
+      </ScrollAreaPrimitive.Root>
+    );
+  }
+);
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
 const ScrollBar = React.forwardRef<

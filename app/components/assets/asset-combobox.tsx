@@ -101,6 +101,7 @@ export default function AssetCombobox({
         loading={fetcher.state === "loading"}
         options={options}
         onMouseOver={() => !disabled && preloadAssets()}
+        onTouchStart={() => !disabled && preloadAssets()}
         searchValue={search}
         onSearchValueChange={setSearch}
         className={className}

@@ -1,13 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, formatDistanceToNow } from "date-fns";
 import { CirclePlus, Image, NotepadText, Trash } from "lucide-react";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ComponentProps,
-} from "react";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useFetcher } from "react-router";
 import type { z } from "zod";
@@ -20,7 +14,6 @@ import {
   FormItem,
   FormMessage,
 } from "~/components/ui/form";
-import useIsOverflowing from "~/hooks/use-is-overflowing";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { GENERIC_MANUFACTURER_NAME } from "~/lib/constants";
@@ -35,6 +28,7 @@ import type {
 import { createProductRequestSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
 import { cn, dateSort, dedupById } from "~/lib/utils";
+import GradientScrollArea from "../gradient-scroll-area";
 import { AnsiCategoryDisplay } from "../products/ansi-category-combobox";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
@@ -46,6 +40,7 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Input } from "../ui/input";
+import { ScrollBar } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import ProductRequestApprovalIndicator from "./product-request-approval-indicator";
@@ -98,6 +93,7 @@ export function NewSupplyRequestButton({
       title="Product Request"
       description="Please select which consumables and the quantities you would like to order."
       dialogClassName="sm:max-w-xl"
+      disableDisplayTable
       render={({ isDesktop }) => (
         <ProductRequestForm
           {...props}
@@ -256,10 +252,10 @@ function ProductRequestForm({
     <>
       <Form {...form}>
         <form
-          className="space-y-4 mt-4"
+          className="space-y-4 mt-4 w-full"
           onSubmit={form.handleSubmit(handleSubmit)}
         >
-          <div>
+          <div className="w-full">
             <h3 className="font-medium text-sm">Available Consumables</h3>
             {suppliesLoading ? (
               <div className="mt-2">
@@ -370,13 +366,7 @@ function ConsumableSelectTabs({
     setSelectedTab(ansiCategories.at(0)?.id);
   }, [ansiCategories]);
 
-  const tabsRef = useRef<HTMLDivElement>(null);
-  const {
-    isOverflowingX: isTabsDivOverflowingX,
-    isScrollMaxedX: isTabsScrollMaxedX,
-  } = useIsOverflowing({
-    ref: tabsRef,
-  });
+  const [isTabsDivOverflowingX, setIsTabsDivOverflowingX] = useState(false);
 
   return (
     <Tabs
@@ -389,46 +379,33 @@ function ConsumableSelectTabs({
           Scroll to view more categories &rarr;
         </div>
       )}
-      <div className="w-full relative">
-        <div
-          className={cn(
-            "w-full overflow-x-auto relative hidden",
-            showTabs && "block"
-          )}
-          ref={tabsRef}
-        >
-          <TabsList className="w-full min-w-fit">
-            {ansiCategories.map((category) => (
-              <TabsTrigger
-                key={category.id}
-                value={category.id}
-                style={
-                  {
-                    "--tab-active-bg":
-                      category.color ?? "hsl(var(--background))",
-                    "--tab-active-color": category.color
-                      ? getContrastTextColor(category.color)
-                      : "hsl(var(--foreground))",
-                    "--tab-inactive-color":
-                      category.color ?? "hsl(var(--muted-foreground))",
-                  } as React.CSSProperties
-                }
-                className="text-[var(--tab-inactive-color)] data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] grow flex shrink-0 font-bold"
-              >
-                {category.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-        {isTabsDivOverflowingX && (
-          <div
-            className={cn(
-              "absolute top-0 right-0 h-full w-12 bg-gradient-to-l from-background to-transparent pointer-events-none transition-all",
-              isTabsScrollMaxedX && "translate-x-full"
-            )}
-          />
-        )}
-      </div>
+      <GradientScrollArea
+        className={cn("w-full hidden", showTabs && "block")}
+        onIsOverflowingX={setIsTabsDivOverflowingX}
+      >
+        <TabsList className="w-full min-w-fit">
+          {ansiCategories.map((category) => (
+            <TabsTrigger
+              key={category.id}
+              value={category.id}
+              style={
+                {
+                  "--tab-active-bg": category.color ?? "hsl(var(--background))",
+                  "--tab-active-color": category.color
+                    ? getContrastTextColor(category.color)
+                    : "hsl(var(--foreground))",
+                  "--tab-inactive-color":
+                    category.color ?? "hsl(var(--muted-foreground))",
+                } as React.CSSProperties
+              }
+              className="text-[var(--tab-inactive-color)] data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] grow flex shrink-0 font-bold"
+            >
+              {category.name}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <ScrollBar orientation="horizontal" />
+      </GradientScrollArea>
       {ansiCategories.map((category) => (
         <TabsContent key={category.id} value={category.id}>
           <AvailableConsumables

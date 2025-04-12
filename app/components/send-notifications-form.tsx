@@ -148,6 +148,7 @@ export function SendNotificationsForm({
                       aria-expanded={open}
                       className="w-full justify-between"
                       onMouseOver={() => preloadUsers()}
+                      onTouchStart={() => preloadUsers()}
                     >
                       <span className="overflow-hidden whitespace-nowrap overflow-ellipsis">
                         {value.length > 0
