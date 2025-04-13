@@ -24,11 +24,11 @@ export default function useIsOverflowing({
   useResizeObserver({
     ref,
     box: "border-box",
-    onResize: () => {
+    onResize: ({ width, height }) => {
       const el = ref.current;
       if (!el) return;
-      setViewportWidth(el.clientWidth);
-      setViewportHeight(el.clientHeight);
+      setViewportWidth(width ?? el.clientWidth);
+      setViewportHeight(height ?? el.clientHeight);
       setScrollWidth(el.scrollWidth);
       setScrollHeight(el.scrollHeight);
     },

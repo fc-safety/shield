@@ -1,3 +1,4 @@
+import type { SortingState } from "@tanstack/react-table";
 import {
   createContext,
   useCallback,
@@ -14,6 +15,7 @@ interface AppState {
       lte?: string;
     };
   };
+  productRequestsSort?: SortingState;
 }
 
 const AppStateContext = createContext<{

@@ -7,8 +7,10 @@ import {
   useReactTable,
   type Cell,
   type ColumnDef,
+  type SortingState,
 } from "@tanstack/react-table";
 import { subDays } from "date-fns";
+import { ChevronsUpDown } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { useImmer } from "use-immer";
@@ -41,6 +43,12 @@ import Icon from "../icons/icon";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
 import { DialogFooter } from "../ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { Skeleton } from "../ui/skeleton";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
@@ -58,6 +66,13 @@ export default function ProductRequestsOverview() {
       },
     }
   );
+
+  const handleSetProductRequestsQuery = (
+    newProductRequestsQuery: typeof productRequestsQuery
+  ) => {
+    setProductRequestsQuery(newProductRequestsQuery);
+    setAppState({ productRequestsQuery: newProductRequestsQuery });
+  };
 
   const { data, error, isLoading } = useQuery({
     queryKey: ["product-requests", productRequestsQuery] as const,
@@ -103,6 +118,7 @@ export default function ProductRequestsOverview() {
               to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
               className="flex items-center gap-2 group"
             >
+              <span className="group-hover:underline">{assetName}</span>
               {row.original.asset?.product?.productCategory?.icon && (
                 <Icon
                   iconId={row.original.asset.product.productCategory.icon}
@@ -110,7 +126,6 @@ export default function ProductRequestsOverview() {
                   className="text-lg"
                 />
               )}
-              <span className="group-hover:underline">{assetName}</span>
             </Link>
           );
         },
@@ -233,7 +248,9 @@ export default function ProductRequestsOverview() {
     data: productRequests,
     columns,
     initialState: {
-      sorting: [{ id: "orderedOn", desc: true }],
+      sorting: appState.productRequestsSort ?? [
+        { id: "orderedOn", desc: true },
+      ],
       columnVisibility: {
         site: hasMultiSiteVisibility(user),
         review: can(user, "review", "product-requests"),
@@ -244,6 +261,13 @@ export default function ProductRequestsOverview() {
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
+  const handleSortingChange = (sorting: SortingState) => {
+    table.setSorting(sorting);
+    setAppState({
+      productRequestsSort: sorting,
+    });
+  };
 
   const { rows } = table.getRowModel();
   const isEmpty = !rows.length;
@@ -259,7 +283,7 @@ export default function ProductRequestsOverview() {
             Requests shown from the last 30 days.
           </CardDescription>
         </CardHeader>
-        <CardContent className="bg-inherit space-y-4">
+        <CardContent className="bg-inherit space-y-4 rounded-[inherit]">
           {/* <VirtualizedDataTable
             height="100%"
             maxHeight={400}
@@ -274,7 +298,7 @@ export default function ProductRequestsOverview() {
             data={data?.results ?? []}
             loading={isLoading}
           /> */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap items-center justify-between">
             <DateRangeSelect
               value={
                 productRequestsQuery.createdOn?.gte
@@ -292,15 +316,37 @@ export default function ProductRequestsOverview() {
                     lte: dateRange.to,
                   },
                 };
-                console.log("newProductRequestsQuery", newProductRequestsQuery);
-                setProductRequestsQuery(newProductRequestsQuery);
-                setAppState({ productRequestsQuery: newProductRequestsQuery });
+                handleSetProductRequestsQuery(newProductRequestsQuery);
               }}
             />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Sort by
+                  <ChevronsUpDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    handleSortingChange([{ id: "orderedOn", desc: true }]);
+                  }}
+                >
+                  Newest first
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    handleSortingChange([{ id: "orderedOn", desc: false }]);
+                  }}
+                >
+                  Oldest first
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <GradientScrollArea className="h-[400px]">
+          <GradientScrollArea className="h-[350px]" variant="card">
             {isLoading ? (
-              <Skeleton className="h-36 w-full" />
+              <Skeleton className="h-[400px] w-full" />
             ) : isEmpty ? (
               <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
                 No product requests found.
@@ -316,7 +362,7 @@ export default function ProductRequestsOverview() {
               return (
                 <div
                   key={productRequest.id}
-                  className="py-2 flex flex-col gap-1 border-t border-border"
+                  className="py-2 flex flex-col gap-2 border-t border-border"
                 >
                   <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
                     {renderCell(cells.orderedOn)}
