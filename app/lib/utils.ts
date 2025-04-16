@@ -1,8 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { endOfDay, format, isAfter, isValid, parse, parseISO } from "date-fns";
-import type { FieldValues, Resolver } from "react-hook-form";
 import type { LoaderFunctionArgs, MetaDescriptor } from "react-router";
-import { getValidatedFormData } from "remix-hook-form";
 import { twMerge } from "tailwind-merge";
 import { z } from "zod";
 
@@ -208,22 +206,6 @@ export const validateParams = <TKey extends string>(
   }
 
   return validated;
-};
-
-export const getValidatedFormDataOrThrow = async <T extends FieldValues>(
-  request: Request | FormData,
-  resolver: Resolver<T>,
-  preserveStringified?: boolean
-) => {
-  const { data, errors, receivedValues } = await getValidatedFormData<T>(
-    request,
-    resolver,
-    preserveStringified
-  );
-  if (errors) {
-    throw Response.json({ errors }, { status: 400 });
-  }
-  return { data: data as T, receivedValues };
 };
 
 export const humanize = <T extends string | null | undefined>(str: T) => {

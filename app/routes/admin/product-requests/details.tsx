@@ -28,7 +28,7 @@ export default function AdminProductRequestsDetails({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Product Request Details</CardTitle>
+        <CardTitle>Supply Request Details</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-8">
         <DataList

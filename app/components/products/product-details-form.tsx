@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import {
   type Manufacturer,
@@ -28,6 +29,7 @@ import {
   type updateProductSchema,
 } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
+import { can } from "~/lib/users";
 import { slugify } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
 import AnsiCategoryCombobox from "./ansi-category-combobox";
@@ -55,6 +57,9 @@ export default function ProductDetailsForm({
   manufacturer,
   consumable = false,
 }: ProductDetailsFormProps) {
+  const { user } = useAuth();
+  const canReadAnsiCategories = can(user, "read", "ansi-categories");
+
   const isNew = !product;
   const requireConsumable = Boolean(consumable || parentProduct);
 
@@ -298,26 +303,29 @@ export default function ProductDetailsForm({
             </FormItem>
           )}
         />
-        {(parentProduct || productType === "CONSUMABLE") && (
-          <FormField
-            control={form.control}
-            name="ansiCategory"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ANSI Category</FormLabel>
-                <FormControl>
-                  <AnsiCategoryCombobox
-                    value={field.value?.connect?.id}
-                    onValueChange={(id) => field.onChange({ connect: { id } })}
-                    onBlur={field.onBlur}
-                    className="flex w-full"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        {(parentProduct || productType === "CONSUMABLE") &&
+          canReadAnsiCategories && (
+            <FormField
+              control={form.control}
+              name="ansiCategory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ANSI Category</FormLabel>
+                  <FormControl>
+                    <AnsiCategoryCombobox
+                      value={field.value?.connect?.id}
+                      onValueChange={(id) =>
+                        field.onChange({ connect: { id } })
+                      }
+                      onBlur={field.onBlur}
+                      className="flex w-full"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         <FormField
           control={form.control}
           name="sku"

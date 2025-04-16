@@ -190,7 +190,7 @@ export default function AdminProductRequestsIndex({
       <Card>
         <CardHeader>
           <CardTitle>
-            <Package /> Product Requests
+            <Package /> Supply Requests
           </CardTitle>
         </CardHeader>
         <CardContent>

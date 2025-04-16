@@ -34,15 +34,11 @@ import {
 } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { useAuth } from "~/contexts/auth-context";
+import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import type { AssetQuestion } from "~/lib/models";
 import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
-import {
-  buildTitle,
-  cn,
-  getValidatedFormDataOrThrow,
-  isNil,
-} from "~/lib/utils";
+import { buildTitle, cn, isNil } from "~/lib/utils";
 import type { Route } from "./+types/setup";
 
 export const action = async ({ request }: Route.ActionArgs) => {

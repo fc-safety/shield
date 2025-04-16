@@ -175,7 +175,7 @@ export function ComplianceByCategoryChart() {
         left: "3%",
         right: "4%",
         bottom: "8%",
-        top: "13%",
+        top: "14%",
         containLabel: true,
       },
       xAxis: {

@@ -56,7 +56,7 @@ export default function ProductRequests({
     <div className="grid gap-4">
       {productRequests.length === 0 && (
         <p className="text-muted-foreground text-xs">
-          No active product requests.
+          No active supply requests.
         </p>
       )}
 
@@ -87,11 +87,11 @@ export function NewSupplyRequestButton({
           className="justify-self-end"
         >
           <NotepadText />
-          New Product Request
+          New Supply Request
         </Button>
       }
-      title="Product Request"
-      description="Please select which consumables and the quantities you would like to order."
+      title="Supply Request"
+      description="Please select which supplies and the quantities you would like to order."
       dialogClassName="sm:max-w-xl"
       disableDisplayTable
       render={({ isDesktop }) => (
@@ -256,7 +256,7 @@ function ProductRequestForm({
           onSubmit={form.handleSubmit(handleSubmit)}
         >
           <div className="w-full">
-            <h3 className="font-medium text-sm">Available Consumables</h3>
+            <h3 className="font-medium text-sm">Available Supplies</h3>
             {suppliesLoading ? (
               <div className="mt-2">
                 <Skeleton className="h-12 w-full" />

@@ -6,6 +6,7 @@ import {
   type SessionStorage,
 } from "react-router";
 import { createThemeSessionResolver } from "remix-themes";
+import type { AppState } from "~/lib/types";
 import { isTokenExpired } from "~/lib/users";
 import { buildUser, strategy, type Tokens } from "./authenticator";
 import { config } from "./config";
@@ -78,15 +79,20 @@ export const themeSessionResolver =
   createThemeSessionResolver(themeSessionStorage);
 
 // APP STATE STORAGE
-export const appStateSessionStorage = createCookieSessionStorage<
-  Record<string, unknown>
->({
+export const appStateSessionStorage = createCookieSessionStorage<AppState>({
   cookie: {
     name: "__appState",
     path: "/",
     sameSite: "lax",
   },
 });
+
+export const getAppState = async (request: Request) => {
+  const session = await appStateSessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+  return session.data;
+};
 
 // INSPECTION STORAGE
 

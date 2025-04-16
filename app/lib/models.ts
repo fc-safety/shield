@@ -347,6 +347,7 @@ export interface ProductCategory extends BaseModel {
   _count?: { products: number };
   products?: Omit<Product, "productCategory">[];
   client?: Client;
+  clientId: string | null;
 }
 
 export interface Manufacturer extends BaseModel {
@@ -356,6 +357,7 @@ export interface Manufacturer extends BaseModel {
   products?: Omit<Product, "manufacturer">[];
   _count?: { products: number };
   client?: Client;
+  clientId: string | null;
 }
 
 export interface AnsiCategory extends BaseModel {

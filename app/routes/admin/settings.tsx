@@ -104,7 +104,7 @@ export default function AdminSettings({
               name="productRequestToAddress"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Request To Address</FormLabel>
+                  <FormLabel>Supply Request To Address</FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-2">
                       <Input {...field} type="email" />

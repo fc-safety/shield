@@ -118,7 +118,7 @@ export function OverallComplianceChart() {
           },
           label: {
             show: true,
-            position: "outer",
+            position: "inner",
             formatter: (params) => {
               return `${params.percent}%`;
             },

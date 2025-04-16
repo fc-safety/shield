@@ -1,22 +1,10 @@
-import type { SortingState } from "@tanstack/react-table";
 import {
   createContext,
   useCallback,
   useContext,
   type PropsWithChildren,
 } from "react";
-import type { QueryParams } from "~/lib/urls";
-
-interface AppState {
-  sidebarState?: Record<string, boolean>;
-  productRequestsQuery?: QueryParams & {
-    createdOn: {
-      gte: string;
-      lte?: string;
-    };
-  };
-  productRequestsSort?: SortingState;
-}
+import type { AppState } from "~/lib/types";
 
 const AppStateContext = createContext<{
   appState: AppState;

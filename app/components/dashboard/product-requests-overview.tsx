@@ -9,18 +9,12 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { subDays } from "date-fns";
-import { ChevronsUpDown } from "lucide-react";
-import { useMemo } from "react";
+import { format, subDays } from "date-fns";
+import { Check, ChevronsUpDown, Package } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useImmer } from "use-immer";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAppState } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
@@ -32,11 +26,12 @@ import type {
 } from "~/lib/models";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
+import { cn } from "~/lib/utils";
 import { ProductRequestStatusBadge } from "../assets/product-request-status-badge";
 import { ProductRequestCard } from "../assets/product-requests";
 import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
-import DateRangeSelect from "../date-range-select";
+import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
 import GradientScrollArea from "../gradient-scroll-area";
 import Icon from "../icons/icon";
@@ -59,7 +54,7 @@ export default function ProductRequestsOverview() {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
   const [productRequestsQuery, setProductRequestsQuery] = useImmer(
-    appState.productRequestsQuery ?? {
+    appState.dash_pr_query ?? {
       createdOn: {
         gte: subDays(new Date(), 30).toISOString(),
         lte: new Date().toISOString(),
@@ -68,10 +63,14 @@ export default function ProductRequestsOverview() {
   );
 
   const handleSetProductRequestsQuery = (
-    newProductRequestsQuery: typeof productRequestsQuery
+    newProductRequestsQuery: typeof productRequestsQuery,
+    quickRangeId?: QuickRangeId
   ) => {
     setProductRequestsQuery(newProductRequestsQuery);
-    setAppState({ productRequestsQuery: newProductRequestsQuery });
+    setAppState({
+      dash_pr_query: newProductRequestsQuery,
+      dash_pr_quickRangeId: quickRangeId,
+    });
   };
 
   const { data, error, isLoading } = useQuery({
@@ -243,20 +242,25 @@ export default function ProductRequestsOverview() {
     [reviewRequest]
   );
 
+  const [sorting, setSorting] = useState<SortingState>(
+    appState.dash_pr_sort ?? [{ id: "orderedOn", desc: true }]
+  );
+
   const productRequests = useMemo(() => data?.results ?? [], [data]);
   const table = useReactTable({
     data: productRequests,
     columns,
     initialState: {
-      sorting: appState.productRequestsSort ?? [
-        { id: "orderedOn", desc: true },
-      ],
       columnVisibility: {
         site: hasMultiSiteVisibility(user),
         review: can(user, "review", "product-requests"),
       },
     },
+    state: {
+      sorting,
+    },
     enableRowSelection: true,
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -265,7 +269,7 @@ export default function ProductRequestsOverview() {
   const handleSortingChange = (sorting: SortingState) => {
     table.setSorting(sorting);
     setAppState({
-      productRequestsSort: sorting,
+      dash_pr_sort: sorting,
     });
   };
 
@@ -278,10 +282,9 @@ export default function ProductRequestsOverview() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Recent Product Requests</CardTitle>
-          <CardDescription>
-            Requests shown from the last 30 days.
-          </CardDescription>
+          <CardTitle>
+            <Package /> Recent Supply Requests
+          </CardTitle>
         </CardHeader>
         <CardContent className="bg-inherit space-y-4 rounded-[inherit]">
           {/* <VirtualizedDataTable
@@ -308,16 +311,28 @@ export default function ProductRequestsOverview() {
                     }
                   : undefined
               }
-              onValueChange={(dateRange) => {
-                const newProductRequestsQuery = {
-                  ...productRequestsQuery,
-                  createdOn: {
-                    gte: dateRange.from,
-                    lte: dateRange.to,
-                  },
-                };
-                handleSetProductRequestsQuery(newProductRequestsQuery);
+              onValueChange={(dateRange, quickRangeId) => {
+                if (!dateRange) {
+                  return;
+                }
+
+                const newProductRequestsQuery = dateRange
+                  ? {
+                      ...productRequestsQuery,
+                      createdOn: {
+                        gte: dateRange.from,
+                        lte: dateRange.to,
+                      },
+                    }
+                  : productRequestsQuery;
+                handleSetProductRequestsQuery(
+                  newProductRequestsQuery,
+                  quickRangeId
+                );
               }}
+              defaultQuickRangeId={
+                appState.dash_pr_quickRangeId ?? "last-30-days"
+              }
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -327,20 +342,35 @@ export default function ProductRequestsOverview() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem
-                  onSelect={() => {
-                    handleSortingChange([{ id: "orderedOn", desc: true }]);
-                  }}
-                >
-                  Newest first
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => {
-                    handleSortingChange([{ id: "orderedOn", desc: false }]);
-                  }}
-                >
-                  Oldest first
-                </DropdownMenuItem>
+                {[
+                  {
+                    id: "newestFirst",
+                    sort: { id: "orderedOn", desc: true },
+                    label: "Newest first",
+                  },
+                  {
+                    id: "oldestFirst",
+                    sort: { id: "orderedOn", desc: false },
+                    label: "Oldest first",
+                  },
+                ].map(({ id, sort, label }) => (
+                  <DropdownMenuItem
+                    key={id}
+                    onSelect={() => {
+                      handleSortingChange([sort]);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "opacity-0",
+                        sorting.some(
+                          (s) => s.id === sort.id && s.desc === sort.desc
+                        ) && "opacity-100"
+                      )}
+                    />
+                    {label}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -349,7 +379,7 @@ export default function ProductRequestsOverview() {
               <Skeleton className="h-[400px] w-full" />
             ) : isEmpty ? (
               <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
-                No product requests found.
+                No supply requests to display.
               </p>
             ) : null}
             {rows.map((row) => {
@@ -372,12 +402,17 @@ export default function ProductRequestsOverview() {
                     <DataList
                       details={[
                         {
+                          label: "Date",
+                          value: format(productRequest.createdOn, "PPpp"),
+                          hidden: !cells.orderedOn,
+                        },
+                        {
                           label: "Site",
                           value: renderCell(cells.site),
                           hidden: !cells.site,
                         },
                         {
-                          label: "Requestor",
+                          label: "Requested by",
                           value: renderCell(cells.requestor),
                           hidden: !cells.requestor,
                         },
@@ -420,7 +455,6 @@ const getProductRequests = async (
   queryParams: QueryParams
 ) => {
   const qs = stringifyQuery({
-    // createdOn: { gte: subDays(new Date(), 30).toISOString() },
     ...queryParams,
     limit: 10000,
   });
@@ -503,8 +537,7 @@ function ReviewProductRequestModal({
   return (
     <>
       <ResponsiveDialog
-        // title="Review Product Request"
-        title="Product Request Details"
+        title="Supply Request Details"
         open={open}
         onOpenChange={onOpenChange}
         dialogClassName="sm:max-w-lg"

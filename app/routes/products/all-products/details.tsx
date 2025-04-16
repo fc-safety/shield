@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { format } from "date-fns";
 import {
   FireExtinguisher,
@@ -183,6 +189,10 @@ export default function ProductDetails({
             <CardTitle>
               <SquareStack /> Supplies
             </CardTitle>
+            <CardDescription>
+              These are generally considered consumables that belong to another
+              product and should be replaced at regular intervals.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <SuppliesTable
@@ -192,25 +202,29 @@ export default function ProductDetails({
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>
-              <SquareStack />
-              <span>
-                {product.productCategory.shortName ??
-                  product.productCategory.name}{" "}
-                Generic Supplies
-              </span>
-              <div className="flex-1"></div>
-              {getCanUpdateCategory(product.productCategory) && (
-                <Button variant="link" asChild>
-                  <Link
-                    to={`/products/categories/${product.productCategory.id}`}
-                  >
-                    Manage Category
-                  </Link>
-                </Button>
-              )}
-            </CardTitle>
+          <CardHeader className="flex flex-row items-start gap-4">
+            <div>
+              <CardTitle>
+                <SquareStack />
+                <span>
+                  {product.productCategory.shortName ??
+                    product.productCategory.name}{" "}
+                  Generic Supplies
+                </span>
+              </CardTitle>
+              <CardDescription>
+                These are supplies that belong to an entire category rather than
+                a specific product.
+              </CardDescription>
+            </div>
+            <div className="flex-1"></div>
+            {getCanUpdateCategory(product.productCategory) && (
+              <Button variant="link" asChild>
+                <Link to={`/products/categories/${product.productCategory.id}`}>
+                  Manage Category
+                </Link>
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <SuppliesTable
@@ -229,6 +243,10 @@ export default function ProductDetails({
             <CardTitle>
               <ShieldQuestion /> Questions
             </CardTitle>
+            <CardDescription>
+              These questions appear during inspections for this particular
+              product.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <AssetQuestionsTable
@@ -240,25 +258,29 @@ export default function ProductDetails({
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>
-              <ShieldQuestion />
-              <span>
-                {product.productCategory.shortName ??
-                  product.productCategory.name}{" "}
-                Category Questions
-              </span>
-              <div className="flex-1"></div>
-              {getCanUpdateCategory(product.productCategory) && (
-                <Button variant="link" asChild>
-                  <Link
-                    to={`/products/categories/${product.productCategory.id}`}
-                  >
-                    Manage Category
-                  </Link>
-                </Button>
-              )}
-            </CardTitle>
+          <CardHeader className="flex flex-row items-start gap-4">
+            <div>
+              <CardTitle>
+                <ShieldQuestion />
+                <span>
+                  {product.productCategory.shortName ??
+                    product.productCategory.name}{" "}
+                  Category Questions
+                </span>
+              </CardTitle>
+              <CardDescription>
+                These questions appear during inspections for any product in
+                this category.
+              </CardDescription>
+            </div>
+            <div className="flex-1"></div>
+            {getCanUpdateCategory(product.productCategory) && (
+              <Button variant="link" asChild>
+                <Link to={`/products/categories/${product.productCategory.id}`}>
+                  Manage Category
+                </Link>
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <AssetQuestionsTable

@@ -166,13 +166,21 @@ export class DataResponse<T> extends Promise<ReturnType<typeof data<T>>> {
     );
   }
 
-  public catchResponse(): DataResponse<DataOrError<T>> {
+  public catchResponse(
+    options: {
+      /** Only catch responses with these status codes. */
+      codes?: number[];
+    } = {}
+  ): DataResponse<DataOrError<T>> {
     return (
       this.then(({ data: initData, init }) =>
         data({ data: initData }, init ?? undefined)
       ) as DataResponse<DataOrError<T>>
     ).catch(async (errorOrResponse) => {
       if (errorOrResponse instanceof Response) {
+        if (options.codes && !options.codes.includes(errorOrResponse.status)) {
+          throw errorOrResponse;
+        }
         return data(
           {
             error: await tryJson(errorOrResponse).then(({ body }) => body),

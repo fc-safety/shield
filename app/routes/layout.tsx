@@ -115,7 +115,7 @@ export default function Layout({
           hide: !can(user, "read", "clients"),
         },
         {
-          title: "Product Requests",
+          title: "Supply Requests",
           url: "admin/product-requests",
           icon: Package,
           hide: !can(user, "read", "product-requests"),

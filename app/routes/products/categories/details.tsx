@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { format } from "date-fns";
 import {
   FireExtinguisher,
@@ -145,6 +151,10 @@ export default function ProductCategoryDetails({
             <CardTitle>
               <ShieldQuestion /> Questions
             </CardTitle>
+            <CardDescription>
+              These questions appear during inspections for any product in this
+              category.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <AssetQuestionsTable
@@ -162,6 +172,7 @@ export default function ProductCategoryDetails({
             productCategory?.products?.filter((p) => p.type === "PRIMARY") ?? []
           }
           title="Primary Products"
+          description="These products are generally not considered consumable. They can be added as assets and belong to inspection routes."
           icon={FireExtinguisher}
           productCategory={productCategory}
           navigateTo={(p) => `/products/all/${p.id}`}
@@ -175,6 +186,7 @@ export default function ProductCategoryDetails({
             ) ?? []
           }
           title="Generic Supplies"
+          description="Supplies with no particular manufacturer. This is most commonly used for First Aid supplies."
           icon={SquareStack}
           productCategory={productCategory}
           manufacturer={genericManufacturer}
@@ -191,6 +203,7 @@ function ProductsCard({
   manufacturer,
   consumable,
   title,
+  description,
   icon: Icon,
   navigateTo,
 }: {
@@ -199,6 +212,7 @@ function ProductsCard({
   manufacturer?: Manufacturer;
   consumable?: boolean;
   title: string;
+  description?: string;
   icon: LucideIcon;
   navigateTo?: (product: Omit<Product, "productCategory">) => To;
 }) {
@@ -210,18 +224,21 @@ function ProductsCard({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>
-          <Icon /> {title}
-          <div className="flex-1"></div>
-          {canCreate && (
-            <EditProductButton
-              productCategory={productCategory}
-              manufacturer={manufacturer}
-              consumable={consumable}
-            />
-          )}
-        </CardTitle>
+      <CardHeader className="flex-row items-start gap-4">
+        <div>
+          <CardTitle>
+            <Icon /> {title}
+          </CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </div>
+        <div className="flex-1"></div>
+        {canCreate && (
+          <EditProductButton
+            productCategory={productCategory}
+            manufacturer={manufacturer}
+            consumable={consumable}
+          />
+        )}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">

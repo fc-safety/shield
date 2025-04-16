@@ -27,6 +27,7 @@ import {
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import type { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
+import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import {
   getAssetAlertsStatus,
   getAssetInspectionStatus,
@@ -34,7 +35,7 @@ import {
 import type { Asset, ProductCategory } from "~/lib/models";
 import { createAssetSchema, createAssetSchemaResolver } from "~/lib/schema";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
-import { dedupById, getValidatedFormDataOrThrow } from "~/lib/utils";
+import { dedupById } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const loader = ({ request }: Route.LoaderArgs) => {

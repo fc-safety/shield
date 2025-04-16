@@ -9,10 +9,11 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronRight, FireExtinguisher, Link2, Search } from "lucide-react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useRevalidator } from "react-router";
 import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
-import { requireUserSession } from "~/.server/sessions";
+import { getAppState, requireUserSession } from "~/.server/sessions";
 import Icon from "~/components/icons/icon";
 import LinkPreview from "~/components/link-preview";
 import CustomTag from "~/components/products/custom-tag";
@@ -37,12 +38,12 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
+import { useAppState } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
-import { useQueryNavigate } from "~/hooks/use-query-navigate";
 import type { Manufacturer, ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
 import { can, isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
-import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
+import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const handle = {
@@ -59,11 +60,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
   const isGlobalAdmin = isGlobalAdminFn(user);
 
-  const showAllProducts = getSearchParam(request, "show-all");
+  const { products_showAll } = await getAppState(request);
 
-  let onlyMyProducts = showAllProducts !== "true";
-  if (!showAllProducts && isGlobalAdmin) {
-    onlyMyProducts = false;
+  let onlyMyProducts = !products_showAll;
+  if (products_showAll === undefined && isGlobalAdmin) {
+    onlyMyProducts = true;
   }
 
   const query = { type: "PRIMARY", limit: 10000 } as QueryParams;
@@ -77,43 +78,40 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return api.products.list(request, query).mapTo((r) => ({
     products: r.results,
     isGlobalAdmin,
+    onlyMyProducts,
   }));
 };
 
 export default function AllProducts({
-  loaderData: { products, isGlobalAdmin },
+  loaderData: { products, isGlobalAdmin, onlyMyProducts },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "products");
 
-  const { setQuery, query } = useQueryNavigate();
+  const { appState, setAppState } = useAppState();
+  const { revalidate } = useRevalidator();
 
-  const grouping = useMemo(
-    () => query.get("grp")?.split(",") || ["category"],
-    [query]
+  const [grouping, setGrouping] = useState<GroupingState>(
+    appState.products_grp ?? ["category"]
   );
-  const setGrouping = (
+  const handleSetGrouping = (
     value: GroupingState | ((prev: GroupingState) => GroupingState)
   ) => {
     const newValue = typeof value === "function" ? value(grouping) : value;
-    setQuery((prev) => {
-      prev.set("grp", newValue.join(","));
-      return prev;
+    setGrouping(newValue);
+    setAppState({
+      products_grp: newValue,
     });
   };
 
-  const onlyMyProducts = useMemo(
-    () => query.get("show-all") !== "true",
-    [query]
-  );
-  const setOnlyMyProducts = useCallback(
-    (value: boolean) => {
-      setQuery((prev) => {
-        prev.set("show-all", String(!value));
-        return prev;
+  const handleSetOnlyMyProducts = useCallback(
+    async (value: boolean) => {
+      await setAppState({
+        products_showAll: !value,
       });
+      await revalidate();
     },
-    [setQuery]
+    [setAppState, revalidate]
   );
 
   const [sorting, setSorting] = useImmer<SortingState>([
@@ -152,7 +150,7 @@ export default function AllProducts({
       grouping,
       sorting,
     },
-    onGroupingChange: setGrouping,
+    onGroupingChange: handleSetGrouping,
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     getGroupedRowModel: getGroupedRowModel(),
@@ -200,7 +198,7 @@ export default function AllProducts({
               <Switch
                 id="onlyMyProducts"
                 checked={onlyMyProducts}
-                onCheckedChange={(checked) => setOnlyMyProducts(checked)}
+                onCheckedChange={(checked) => handleSetOnlyMyProducts(checked)}
               />
               <Label htmlFor="onlyMyProducts">Only My Products</Label>
             </div>
@@ -271,7 +269,7 @@ export default function AllProducts({
             ) : onlyMyProducts ? (
               <Button
                 variant="outline"
-                onClick={() => setOnlyMyProducts(false)}
+                onClick={() => handleSetOnlyMyProducts(false)}
               >
                 Show All Products
               </Button>

@@ -51,6 +51,7 @@ import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Textarea } from "~/components/ui/textarea";
 import { useAuth } from "~/contexts/auth-context";
+import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import type {
   Asset,
   AssetQuestion,
@@ -60,12 +61,7 @@ import type {
 import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
-import {
-  buildTitle,
-  getSearchParams,
-  getValidatedFormDataOrThrow,
-  isNil,
-} from "~/lib/utils";
+import { buildTitle, getSearchParams, isNil } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const action = async ({ request }: Route.ActionArgs) => {

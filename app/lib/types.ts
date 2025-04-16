@@ -1,6 +1,54 @@
+import type { SortingState } from "@tanstack/react-table";
+
+import type { QuickRangeId } from "~/components/date-range-select";
+import type { QueryParams } from "./urls";
+
 export type BaseUIComponentProps = {
   className?: string;
 };
+
+// Use flat structure to ease data access and updates. This should be kept relatively
+// small to avoid reaching cookie size limits.
+export interface AppState {
+  sidebarState?: Record<string, boolean>;
+
+  // Dashboard
+  // -> Supply Requests
+  dash_pr_query?: QueryParams & {
+    createdOn: {
+      gte: string;
+      lte?: string;
+    };
+  };
+  dash_pr_sort?: SortingState;
+  dash_pr_quickRangeId?: QuickRangeId;
+
+  // -> Inspections
+  dash_insp_query?: QueryParams & {
+    createdOn: {
+      gte: string;
+      lte?: string;
+    };
+  };
+  dash_insp_sort?: SortingState;
+  dash_insp_quickRangeId?: QuickRangeId;
+
+  // -> Inspection Alerts
+  dash_alert_query?: QueryParams & {
+    createdOn: {
+      gte: string;
+      lte?: string;
+    };
+  };
+  dash_alert_sort?: SortingState;
+  dash_alert_quickRangeId?: QuickRangeId;
+
+  // Products
+  products_showAll?: boolean;
+  products_grp?: string[];
+  categories_showAll?: boolean;
+  manufacturers_showAll?: boolean;
+}
 
 export interface Role {
   id: string;

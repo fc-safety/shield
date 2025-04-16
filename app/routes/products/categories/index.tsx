@@ -1,17 +1,19 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import {
+  Building2,
   CornerDownRight,
+  Globe2,
   HardHat,
   MoreHorizontal,
   Pencil,
   Plus,
   Shapes,
   Trash,
+  type LucideIcon,
 } from "lucide-react";
-import { useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router";
+import { useMemo } from "react";
+import { Link } from "react-router";
 import { api } from "~/.server/api";
-import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
@@ -21,7 +23,13 @@ import CustomTag from "~/components/products/custom-tag";
 import EditAnsiCategoryButton from "~/components/products/edit-ansi-category-button";
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,8 +37,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Label } from "~/components/ui/label";
-import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -38,58 +44,120 @@ import { useOpenData } from "~/hooks/use-open-data";
 import type { AnsiCategory, ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
-import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user } = await requireUserSession(request);
-
-  const showAllProducts = getSearchParam(request, "show-all");
-
-  let onlyMyProductCategories = showAllProducts !== "true";
-  if (!showAllProducts && isGlobalAdmin(user)) {
-    onlyMyProductCategories = false;
-  }
-
   const query = { limit: 10000 } as QueryParams;
-
-  if (onlyMyProductCategories) {
-    query.client = {
-      externalId: user.clientId,
-    };
-  }
 
   return api.productCategories
     .list(request, query)
-    .mergeWith(api.ansiCategories.list(request, { limit: 10000 }))
+    .mergeWith(
+      api.ansiCategories.list(request, { limit: 10000 }).catchResponse({
+        codes: [403],
+      })
+    )
     .mapTo(([productCategoryResults, ansiCategoryResults]) => ({
       productCategories: productCategoryResults.results,
-      ansiCategories: ansiCategoryResults.results,
-      onlyMyProductCategories,
+      // Not all users have permission to read ANSI categories.
+      ansiCategories: ansiCategoryResults.data?.results ?? [],
     }));
 }
 
 export default function ProductCategories({
-  loaderData: { productCategories, ansiCategories, onlyMyProductCategories },
+  loaderData: { productCategories, ansiCategories },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canCreate = can(user, "create", "product-categories");
-  const canDelete = useCallback(
-    (productCategory: ProductCategory) =>
-      can(user, "delete", "product-categories") &&
-      (isGlobalAdmin(user) ||
-        productCategory.client?.externalId === user.clientId),
-    [user]
-  );
 
+  const userIsGlobalAdmin = isGlobalAdmin(user);
+  const hasCreatePermission = can(user, "create", "product-categories");
+  const hasDeletePermission = can(user, "delete", "product-categories");
+
+  const canReadAnsiCategories = can(user, "read", "ansi-categories");
+
+  // useCallback(
+  //   (productCategory: ProductCategory) =>
+  //     can(user, "delete", "product-categories") &&
+  //     (isGlobalAdmin(user) ||
+  //       productCategory.client?.externalId === user.clientId),
+  //   [user]
+  // )
+
+  const [globalCategories, clientCategories, myCategories] = useMemo(() => {
+    const globalCategories: ProductCategory[] = [];
+    const clientCategories: ProductCategory[] = [];
+    const myCategories: ProductCategory[] = [];
+
+    productCategories.forEach((category) => {
+      if (category.clientId !== null) {
+        if (category.client?.externalId === user.clientId) {
+          myCategories.push(category);
+        } else {
+          clientCategories.push(category);
+        }
+      } else {
+        globalCategories.push(category);
+      }
+    });
+
+    return [globalCategories, clientCategories, myCategories];
+  }, [productCategories, user.clientId]);
+
+  return (
+    <div className="grid gap-4">
+      <ProductCategoriesCard
+        title="My Product Categories"
+        description="These are product categories that either you or someone in your organization has created."
+        TitleIcon={Shapes}
+        productCategories={myCategories}
+        canCreate={hasCreatePermission}
+        canDelete={hasDeletePermission}
+      />
+      <ProductCategoriesCard
+        title="Global Product Categories"
+        description="These are product categories that anyone can use."
+        TitleIcon={Globe2}
+        productCategories={globalCategories}
+        canCreate={hasCreatePermission && userIsGlobalAdmin}
+        canDelete={hasDeletePermission && userIsGlobalAdmin}
+      />
+      {isGlobalAdmin(user) && (
+        <ProductCategoriesCard
+          title="Client Product Categories"
+          description="These are product categories that have been created by other clients."
+          TitleIcon={Building2}
+          productCategories={clientCategories}
+          canCreate={false}
+          canDelete={userIsGlobalAdmin}
+          showOwner
+        />
+      )}
+      {canReadAnsiCategories && (
+        <AnsiCategoriesCard ansiCategories={ansiCategories} />
+      )}
+    </div>
+  );
+}
+
+function ProductCategoriesCard({
+  productCategories,
+  title,
+  description,
+  canCreate,
+  canDelete,
+  TitleIcon = Shapes,
+  showOwner = false,
+}: {
+  productCategories: ProductCategory[];
+  title: string;
+  description?: string;
+  canCreate: boolean;
+  canDelete: boolean;
+  TitleIcon?: LucideIcon;
+  showOwner?: boolean;
+}) {
   const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete product category",
   });
-  const navigate = useNavigate();
-
-  const setOnlyMyProductCategories = (value: boolean) => {
-    navigate(`?show-all=${!value}`);
-  };
 
   const [deleteAction, setDeleteAction] = useConfirmAction({
     variant: "destructive",
@@ -193,7 +261,7 @@ export default function ProductCategories({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  disabled={!canDelete(category)}
+                  disabled={!canDelete}
                   onSelect={() =>
                     setDeleteAction((draft) => {
                       draft.open = true;
@@ -227,45 +295,29 @@ export default function ProductCategories({
   );
   return (
     <>
-      <div className="grid gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <Shapes /> Product Categories
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={columns}
-              data={productCategories}
-              searchPlaceholder="Search categories..."
-              actions={
-                canCreate
-                  ? [<EditProductCategoryButton key="add" />]
-                  : undefined
-              }
-              externalFilters={[
-                <div
-                  key="onlyMyProductCategories"
-                  className="flex items-center space-x-2"
-                >
-                  <Switch
-                    id="onlyMyProductCategories"
-                    checked={onlyMyProductCategories}
-                    onCheckedChange={(checked) =>
-                      setOnlyMyProductCategories(checked)
-                    }
-                  />
-                  <Label htmlFor="onlyMyProductCategories">
-                    Only My Categories
-                  </Label>
-                </div>,
-              ]}
-            />
-          </CardContent>
-        </Card>
-        <AnsiCategoriesCard ansiCategories={ansiCategories} />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            <TitleIcon /> {title}
+          </CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={columns}
+            data={productCategories}
+            initialState={{
+              columnVisibility: {
+                owner: showOwner,
+              },
+            }}
+            searchPlaceholder="Search categories..."
+            actions={
+              canCreate ? [<EditProductCategoryButton key="add" />] : undefined
+            }
+          />
+        </CardContent>
+      </Card>
       <ConfirmationDialog {...deleteAction} />
     </>
   );
@@ -307,6 +359,10 @@ function AnsiCategoriesCard({
           <CardTitle>
             <HardHat /> ANSI Categories
           </CardTitle>
+          <CardDescription>
+            Special categories for organizing supplies (typically for First Aid)
+            by ANSI standard.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <DataTable

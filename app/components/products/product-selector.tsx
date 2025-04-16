@@ -332,7 +332,6 @@ export default function ProductSelector({
         <ScrollArea
           classNames={{
             root: "h-96 border-b border-t px-6 self-stretch",
-            viewport: "-mx-[1px] px-[1px]",
           }}
         >
           {currentStep?.step}

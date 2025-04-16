@@ -3,14 +3,14 @@ import {
   endOfMonth,
   endOfWeek,
   endOfYear,
-  isSameDay,
   startOfMonth,
   startOfWeek,
   startOfYear,
   subDays,
   subMonths,
 } from "date-fns";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
+import { useCustomInput } from "~/hooks/use-custom-input";
 import { formatDateAsTimestamp, formatTimestampAsDate } from "~/lib/utils";
 import GradientScrollArea from "./gradient-scroll-area";
 import { ResponsiveDialog } from "./responsive-dialog";
@@ -28,45 +28,79 @@ interface DateRange {
 
 interface DateRangeSelectProps {
   value?: DateRange;
-  onValueChange?: (value: DateRange) => void;
+  onValueChange?: (
+    value: DateRange | undefined,
+    quickRangeId: QuickRangeId | undefined
+  ) => void;
+  quickRangeId?: QuickRangeId;
+  defaultQuickRangeId?: QuickRangeId;
+  onSelectQuickRangeId?: (quickRangeId: QuickRangeId | undefined) => void;
   title?: string;
 }
 
 export default function DateRangeSelect({
   value: valueProp,
   onValueChange,
+  quickRangeId: quickRangeIdProp,
+  defaultQuickRangeId: defaultQuickRangeIdProp,
+  onSelectQuickRangeId,
   title = "Select Date Range",
 }: DateRangeSelectProps) {
-  const [internalValue, setInternalValue] = useState<DateRange>(
-    getQuickRangeValue(QUICK_DATE_RANGES[0])
-  );
-  const [_externalValue, _setExternalValue] = useState<DateRange>(
-    valueProp ?? internalValue
-  );
-
-  const externalValue = useMemo(
-    () => valueProp ?? _externalValue,
-    [valueProp, _externalValue]
-  );
-
-  useEffect(() => {
-    if (valueProp) {
-      _setExternalValue(valueProp);
+  const defaultQuickRangeId = useRef(defaultQuickRangeIdProp);
+  const initialValue = useMemo(() => {
+    // Prefer quick range if provided.
+    const quickRangeId = quickRangeIdProp ?? defaultQuickRangeId.current;
+    if (quickRangeId) {
+      const quickRangeValue = getQuickRangeValueById(quickRangeId);
+      if (quickRangeValue) {
+        return quickRangeValue;
+      }
     }
-  }, [valueProp]);
+
+    // Otherwise, prefer value if provided.
+    if (valueProp) {
+      return valueProp;
+    }
+
+    // Otherwise, use the first quick range.
+    return getQuickRangeValue(QUICK_DATE_RANGES[0]);
+  }, [valueProp, quickRangeIdProp]);
+
+  const { value, setValue, appliedValue, applyValue } =
+    useCustomInput<DateRange>({
+      value: initialValue,
+      onValueChange: (value) => {
+        // Send the current quick range ID with the value. This allows the parent
+        // to reapply the same quick range ID on page reload.
+        onValueChange?.(value, quickRangeId);
+      },
+    });
+
+  const {
+    value: quickRangeId,
+    setValue: setQuickRangeId,
+    appliedValue: appliedQuickRangeId,
+    applyValue: applyQuickRangeId,
+  } = useCustomInput<QuickRangeId>({
+    defaultValue: defaultQuickRangeIdProp,
+    value: quickRangeIdProp,
+    onValueChange: onSelectQuickRangeId,
+    onPendingValueChange: (qrId) => {
+      if (!qrId) {
+        return;
+      }
+
+      const quickRange = QUICK_DATE_RANGES.find((qr) => qr.id === qrId);
+      if (quickRange) {
+        setValue(getQuickRangeValue(quickRange));
+      }
+    },
+  });
 
   const handleApplyChange = useCallback(() => {
-    _setExternalValue(internalValue);
-    onValueChange?.(internalValue);
-  }, [onValueChange, internalValue]);
-
-  const activeQuickRangeIndex = useMemo(() => {
-    return externalValue
-      ? QUICK_DATE_RANGES.findIndex((quickDateRange) =>
-          isQuickRangeActive(externalValue, quickDateRange)
-        )
-      : -1;
-  }, [externalValue]);
+    applyQuickRangeId();
+    applyValue();
+  }, [applyValue, applyQuickRangeId]);
 
   return (
     <ResponsiveDialog
@@ -76,14 +110,17 @@ export default function DateRangeSelect({
           <span className="border-r border-border pr-2 font-semibold">
             Date Range
           </span>
-          {(activeQuickRangeIndex > -1 &&
-            QUICK_DATE_RANGES.at(activeQuickRangeIndex)?.label) || (
-            <>
-              {formatTimestampAsDate(externalValue.from)}
-              <span className="mx-1">&#8596;</span>
-              {formatTimestampAsDate(externalValue.to ?? "")}
-            </>
-          )}
+          {QUICK_DATE_RANGES.find((qr) => qr.id === appliedQuickRangeId)
+            ?.label ||
+            (appliedValue ? (
+              <>
+                {formatTimestampAsDate(appliedValue.from)}
+                <span className="mx-1">&#8596;</span>
+                {formatTimestampAsDate(appliedValue.to ?? "")}
+              </>
+            ) : (
+              QUICK_DATE_RANGES[0].label
+            ))}
         </Button>
       }
       className="w-full max-w-md"
@@ -91,19 +128,15 @@ export default function DateRangeSelect({
         <div className="flex flex-col gap-4 mt-2">
           <GradientScrollArea className="w-full">
             <div className="flex gap-2">
-              {/* TODO: Upon reopeneing, put the active quick range first. */}
               {QUICK_DATE_RANGES.map((quickDateRange) => {
-                const isActive = isQuickRangeActive(
-                  internalValue,
-                  quickDateRange
-                );
+                const isActive = quickRangeId === quickDateRange.id;
 
                 return (
                   <Button
                     key={quickDateRange.label}
                     variant={isActive ? "default" : "outline"}
                     onClick={() => {
-                      setInternalValue(getQuickRangeValue(quickDateRange));
+                      setQuickRangeId(quickDateRange.id);
                     }}
                     size="sm"
                     type="button"
@@ -121,13 +154,14 @@ export default function DateRangeSelect({
               <Input
                 id="date-range-from"
                 type="date"
-                value={formatTimestampAsDate(internalValue.from)}
-                onChange={(e) =>
-                  setInternalValue({
-                    ...internalValue,
+                value={value && formatTimestampAsDate(value.from)}
+                onChange={(e) => {
+                  setQuickRangeId(undefined);
+                  setValue({
+                    ...value,
                     from: formatDateAsTimestamp(e.target.value, false),
-                  })
-                }
+                  });
+                }}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -135,13 +169,16 @@ export default function DateRangeSelect({
               <Input
                 id="date-range-to"
                 type="date"
-                value={formatTimestampAsDate(internalValue.to ?? "")}
-                onChange={(e) =>
-                  setInternalValue({
-                    ...internalValue,
+                value={value && formatTimestampAsDate(value.to ?? "")}
+                onChange={(e) => {
+                  setQuickRangeId(undefined);
+                  setValue({
+                    // Provide default in case value is somehow empty.
+                    from: new Date().toISOString(),
+                    ...value,
                     to: formatDateAsTimestamp(e.target.value, true),
-                  })
-                }
+                  });
+                }}
               />
             </div>
           </div>
@@ -171,6 +208,7 @@ export default function DateRangeSelect({
 }
 
 interface QuickDateRange {
+  id: string;
   label: string;
   value: {
     from: () => string;
@@ -178,8 +216,9 @@ interface QuickDateRange {
   };
 }
 
-export const QUICK_DATE_RANGES: QuickDateRange[] = [
+export const QUICK_DATE_RANGES = [
   {
+    id: "last-7-days",
     label: "Last 7 days",
     value: {
       from: () => subDays(new Date(), 7).toISOString(),
@@ -187,6 +226,7 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
     },
   },
   {
+    id: "this-week",
     label: "This Week",
     value: {
       from: () => startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString(),
@@ -194,6 +234,7 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
     },
   },
   {
+    id: "last-30-days",
     label: "Last 30 days",
     value: {
       from: () => subDays(new Date(), 30).toISOString(),
@@ -201,6 +242,7 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
     },
   },
   {
+    id: "this-month",
     label: "This Month",
     value: {
       from: () => startOfMonth(new Date()).toISOString(),
@@ -208,6 +250,7 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
     },
   },
   {
+    id: "last-month",
     label: "Last Month",
     value: {
       from: () => subMonths(new Date(), 1).toISOString(),
@@ -215,6 +258,7 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
     },
   },
   {
+    id: "last-3-months",
     label: "Last 3 months",
     value: {
       from: () => subMonths(new Date(), 3).toISOString(),
@@ -222,6 +266,7 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
     },
   },
   {
+    id: "last-6-months",
     label: "Last 6 months",
     value: {
       from: () => subMonths(new Date(), 6).toISOString(),
@@ -229,6 +274,7 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
     },
   },
   {
+    id: "last-12-months",
     label: "Last 12 months",
     value: {
       from: () => subMonths(new Date(), 12).toISOString(),
@@ -236,13 +282,16 @@ export const QUICK_DATE_RANGES: QuickDateRange[] = [
     },
   },
   {
+    id: "this-year",
     label: "This Year",
     value: {
       from: () => startOfYear(new Date()).toISOString(),
       to: () => endOfYear(new Date()).toISOString(),
     },
   },
-];
+] as const satisfies QuickDateRange[];
+
+export type QuickRangeId = (typeof QUICK_DATE_RANGES)[number]["id"];
 
 const getQuickRangeValue = (quickRange: QuickDateRange) => {
   return {
@@ -251,9 +300,11 @@ const getQuickRangeValue = (quickRange: QuickDateRange) => {
   };
 };
 
-const isQuickRangeActive = (value: DateRange, quickRange: QuickDateRange) => {
-  return (
-    isSameDay(value.from, quickRange.value.from()) &&
-    isSameDay(value.to ?? new Date(), quickRange.value.to())
-  );
+const getQuickRangeValueById = (quickRangeId: string) => {
+  const quickRange = QUICK_DATE_RANGES.find((qr) => qr.id === quickRangeId);
+  if (!quickRange) {
+    return undefined;
+  }
+
+  return getQuickRangeValue(quickRange);
 };

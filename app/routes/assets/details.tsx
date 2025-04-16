@@ -65,6 +65,7 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
+import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import {
   getAssetAlertsStatus,
   getAssetInspectionStatus,
@@ -76,7 +77,6 @@ import {
   buildTitleFromBreadcrumb,
   dateSort,
   getSearchParam,
-  getValidatedFormDataOrThrow,
   validateParam,
 } from "~/lib/utils";
 import type { Route } from "./+types/details";
@@ -326,7 +326,7 @@ export default function AssetDetails({
         </Card>
         <Tabs defaultValue={defaultTab} id="tabs">
           <TabsList className="grid w-full grid-cols-[1fr_1fr]">
-            <TabsTrigger value="consumables">Consumables</TabsTrigger>
+            <TabsTrigger value="consumables">Supplies</TabsTrigger>
             <TabsTrigger value="alerts">
               Alerts
               {!!asset.alerts?.filter((a) => !a.resolved).length && (
@@ -361,7 +361,7 @@ export default function AssetDetails({
               </CardContent>
             </Card>
             <BasicCard
-              title="Consumables"
+              title="Supplies"
               className="rounded-t-none"
               icon={SquareStack}
             >

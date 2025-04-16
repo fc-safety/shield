@@ -27,13 +27,13 @@ export default function EditConsumableButton({
     <ResponsiveDialog
       open={openProp ?? open}
       onOpenChange={onOpenChange ?? setOpen}
-      title={consumable ? "Edit Consumable" : "Add New Consumable"}
+      title={consumable ? "Edit Supply" : "Add New Supply"}
       dialogClassName="sm:max-w-lg"
       trigger={
         trigger ?? (
           <Button type="button" size="sm">
             {consumable ? <Pencil /> : <Plus />}
-            {consumable ? "Edit" : "Add"} Consumable
+            {consumable ? "Edit" : "Add"} Supply
           </Button>
         )
       }

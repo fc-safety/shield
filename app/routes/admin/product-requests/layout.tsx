@@ -6,7 +6,7 @@ import type { Route } from "./+types/layout";
 
 export const handle = {
   breadcrumb: () => ({
-    label: "Product Requests",
+    label: "Supply Requests",
   }),
 };
 

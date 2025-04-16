@@ -1,9 +1,16 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { CornerDownRight, Factory, MoreHorizontal, Trash } from "lucide-react";
-import { useCallback, useMemo } from "react";
-import { Link, useNavigate } from "react-router";
+import {
+  Building2,
+  CornerDownRight,
+  Factory,
+  Globe2,
+  MoreHorizontal,
+  Trash,
+  type LucideIcon,
+} from "lucide-react";
+import { useMemo } from "react";
+import { Link } from "react-router";
 import { api } from "~/.server/api";
-import { requireUserSession } from "~/.server/sessions";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
@@ -12,7 +19,13 @@ import LinkPreview from "~/components/link-preview";
 import CustomTag from "~/components/products/custom-tag";
 import NewManufacturerButton from "~/components/products/edit-manufacturer-button";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,67 +33,111 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Label } from "~/components/ui/label";
-import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
-import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user } = await requireUserSession(request);
-
-  const showAllProducts = getSearchParam(request, "show-all");
-
-  let onlyMyManufacturers = showAllProducts !== "true";
-  if (!showAllProducts && isGlobalAdmin(user)) {
-    onlyMyManufacturers = false;
-  }
-
   const query = { limit: 10000 } as QueryParams;
 
-  if (onlyMyManufacturers) {
-    query.client = {
-      externalId: user.clientId,
-    };
-  }
   return api.manufacturers
     .list(request, query)
     .mapTo((manufacturersResponse) => ({
       manufacturers: manufacturersResponse.results,
-      onlyMyManufacturers,
     }));
 }
 
 export default function ProductManufacturers({
-  loaderData: { manufacturers, onlyMyManufacturers },
+  loaderData: { manufacturers },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canCreate = can(user, "create", "manufacturers");
-  const canDelete = useCallback(
-    (manufacturer: Manufacturer) =>
-      can(user, "delete", "manufacturers") &&
-      (isGlobalAdmin(user) ||
-        manufacturer.client?.externalId === user.clientId),
-    [user]
-  );
 
+  const userIsGlobalAdmin = isGlobalAdmin(user);
+  const hasCreatePermission = can(user, "create", "product-categories");
+  const hasDeletePermission = can(user, "delete", "product-categories");
+
+  const [globalManufacturers, clientManufacturers, myManufacturers] =
+    useMemo(() => {
+      const globalManufacturers: Manufacturer[] = [];
+      const clientManufacturers: Manufacturer[] = [];
+      const myManufacturers: Manufacturer[] = [];
+
+      manufacturers.forEach((manufacturer) => {
+        if (manufacturer.clientId !== null) {
+          if (manufacturer.client?.externalId === user.clientId) {
+            myManufacturers.push(manufacturer);
+          } else {
+            clientManufacturers.push(manufacturer);
+          }
+        } else {
+          globalManufacturers.push(manufacturer);
+        }
+      });
+
+      return [globalManufacturers, clientManufacturers, myManufacturers];
+    }, [manufacturers, user.clientId]);
+
+  return (
+    <div className="grid gap-4">
+      <ManufacturersCard
+        title="My Manufacturers"
+        description="These are manufacturers that either you or someone in your organization has created."
+        TitleIcon={Factory}
+        manufacturers={myManufacturers}
+        canCreate={hasCreatePermission}
+        canDelete={hasDeletePermission}
+      />
+      <ManufacturersCard
+        title="Global Manufacturers"
+        description="These are manufacturers that anyone can use."
+        TitleIcon={Globe2}
+        manufacturers={globalManufacturers}
+        canCreate={hasCreatePermission && userIsGlobalAdmin}
+        canDelete={hasDeletePermission && userIsGlobalAdmin}
+      />
+      {isGlobalAdmin(user) && (
+        <ManufacturersCard
+          title="Client Manufacturers"
+          description="These are manufacturers that have been created by other clients."
+          TitleIcon={Building2}
+          manufacturers={clientManufacturers}
+          canCreate={false}
+          canDelete={userIsGlobalAdmin}
+          showOwner
+        />
+      )}{" "}
+    </div>
+  );
+}
+
+function ManufacturersCard({
+  manufacturers,
+  title,
+  description,
+  canCreate,
+  canDelete,
+  TitleIcon = Factory,
+  showOwner = false,
+}: {
+  manufacturers: Manufacturer[];
+  title: string;
+  description?: string;
+  canCreate: boolean;
+  canDelete: boolean;
+  TitleIcon?: LucideIcon;
+  showOwner?: boolean;
+}) {
   const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete manufacturer",
   });
-  const navigate = useNavigate();
 
   const [deleteAction, setDeleteAction] = useConfirmAction({
     variant: "destructive",
   });
-
-  const setOnlyMyManufacturers = (value: boolean) => {
-    navigate(`?show-all=${!value}`);
-  };
 
   const columns: ColumnDef<Manufacturer>[] = useMemo(
     () => [
@@ -156,7 +213,7 @@ export default function ProductManufacturers({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  disabled={!canDelete(manufacturer)}
+                  disabled={!canDelete}
                   onSelect={() =>
                     setDeleteAction((draft) => {
                       draft.open = true;
@@ -194,27 +251,20 @@ export default function ProductManufacturers({
       <Card>
         <CardHeader>
           <CardTitle>
-            <Factory /> Manufacturers
+            <TitleIcon /> {title}
           </CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
         <CardContent>
           <DataTable
             columns={columns}
             data={manufacturers}
+            initialState={{
+              columnVisibility: {
+                owner: showOwner,
+              },
+            }}
             searchPlaceholder="Search manufacturers..."
-            externalFilters={[
-              <div
-                key="onlyMyManufacturers"
-                className="flex items-center space-x-2"
-              >
-                <Switch
-                  id="onlyMyProducts"
-                  checked={onlyMyManufacturers}
-                  onCheckedChange={(checked) => setOnlyMyManufacturers(checked)}
-                />
-                <Label htmlFor="onlyMyProducts">Only My Products</Label>
-              </div>,
-            ]}
             actions={
               canCreate ? [<NewManufacturerButton key="add" />] : undefined
             }

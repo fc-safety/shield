@@ -2,7 +2,6 @@ import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 import * as React from "react";
-import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -27,7 +26,10 @@ const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 type SidebarContext = {
   state: { [key: string]: "expanded" | "collapsed" };
   open: SidebarOpenState;
-  setOpen: React.Dispatch<React.SetStateAction<SidebarOpenState>>;
+  setOpen: (
+    value: SidebarOpenState | ((value: SidebarOpenState) => SidebarOpenState),
+    persist?: boolean
+  ) => void;
   openMobile: string | undefined;
   setOpenMobile: (openId: string | undefined) => void;
   isMobile: boolean;
@@ -85,7 +87,8 @@ const SidebarProvider = React.forwardRef<
       (
         value:
           | SidebarOpenState
-          | ((value: SidebarOpenState) => SidebarOpenState)
+          | ((value: SidebarOpenState) => SidebarOpenState),
+        persist = true
       ) => {
         const openState = typeof value === "function" ? value(open) : value;
         if (setOpenStateProp) {
@@ -93,8 +96,11 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setOpen(openState);
         }
+        if (persist) {
+          setAppState({ sidebarState: openState });
+        }
       },
-      [setOpenStateProp, open]
+      [setOpenStateProp, open, setAppState]
     );
 
     // Helper to toggle the sidebar.
@@ -131,10 +137,6 @@ const SidebarProvider = React.forwardRef<
         value ? ("expanded" as const) : ("collapsed" as const),
       ])
     );
-
-    useEffect(() => {
-      setAppState({ sidebarState: open });
-    }, [open, setAppState]);
 
     const contextValue = React.useMemo<SidebarContext>(
       () => ({

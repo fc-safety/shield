@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import { CornerDownRight, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
@@ -53,6 +53,7 @@ export default function AssetInspectionDialog({
             onTouchStart={() => preloadInspection(inspectionId)}
             onClick={() => setOpen(true)}
           >
+            <CornerDownRight />
             Details
           </Button>
         )

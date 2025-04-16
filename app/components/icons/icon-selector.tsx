@@ -96,7 +96,6 @@ export default function IconSelector({
         <ScrollArea
           classNames={{
             root: "h-96 border-b border-t px-6 self-stretch",
-            viewport: "-mx-[1px] px-[1px]",
           }}
         >
           <div className="relative overflow-visible my-4 p-1">
