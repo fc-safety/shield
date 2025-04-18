@@ -43,7 +43,6 @@ export default function Dashboard() {
           <ComplianceBySiteChart />
         )}
         {canReadAssets && <ComplianceByCategoryChart />}
-        {/* <LocationReadinessChart /> */}
         {canReadProductRequests && <ProductRequestsOverview />}
         {canReadInspections && <InspectionsOverview />}
         {canReadAlerts && <InspectionAlertsOverview />}

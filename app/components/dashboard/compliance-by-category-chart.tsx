@@ -75,60 +75,85 @@ export function ComplianceByCategoryChart() {
     setIconMap(iconMap);
   }, [nonEmptyProductCategories]);
 
-  const series = React.useMemo(
-    (): EChartsOption["series"] =>
-      rawAssets && productCategoriesById && themeValues !== null
-        ? countBy(
-            rawAssets.map((a) => {
-              const status = getAssetInspectionStatus(
-                a.inspections ?? [],
-                a.inspectionCycle ?? a.client?.defaultInspectionCycle
-              );
-              return {
-                asset: a,
-                status,
-              };
-            }),
-            "status"
-          )
-            .sort(sortByStatus())
-            .map(({ status, items }) => {
-              const assets = items.map(({ asset }) => asset);
-              const countsByCategoryArray = countBy(
-                assets.map((a) => a.product),
-                "productCategoryId"
-              );
-              const countsByCategoryId = Object.fromEntries(
-                countsByCategoryArray.map(({ productCategoryId, count }) => [
-                  productCategoryId,
-                  count,
-                ])
-              );
+  const series = React.useMemo((): EChartsOption["series"] => {
+    if (!rawAssets || !productCategoriesById || themeValues === null) {
+      return;
+    }
 
-              return {
-                id: status,
-                name: getStatusLabel(status),
-                type: "bar",
-                stack: "total",
-                label: {
-                  show: true,
-                },
-                emphasis: {
-                  focus: "series",
-                },
-                itemStyle: {
-                  color: themeValues[status],
-                },
-                data: nonEmptyProductCategories.map((productCategory) => ({
-                  id: productCategory.id,
-                  name: productCategory.shortName ?? productCategory.name,
-                  value: countsByCategoryId[productCategory.id] ?? 0,
-                })),
-              } satisfies NonNullable<EChartsOption["series"]>;
-            })
-        : undefined,
-    [rawAssets, themeValues, productCategoriesById, nonEmptyProductCategories]
-  );
+    const assetStatuses = rawAssets.map((a) => {
+      const status = getAssetInspectionStatus(
+        a.inspections ?? [],
+        a.inspectionCycle ?? a.client?.defaultInspectionCycle
+      );
+      return {
+        asset: a,
+        status,
+      };
+    });
+
+    const totalCountsByCategoryIdArray = countBy(
+      rawAssets.map((a) => a.product),
+      "productCategoryId"
+    );
+    const totalCountsByCategoryId = Object.fromEntries(
+      totalCountsByCategoryIdArray.map(({ productCategoryId, count }) => [
+        productCategoryId,
+        count,
+      ])
+    );
+
+    return countBy(assetStatuses, "status")
+      .sort(sortByStatus())
+      .map(({ status, items }) => {
+        const assets = items.map(({ asset }) => asset);
+        const countsByCategoryArray = countBy(
+          assets.map((a) => a.product),
+          "productCategoryId"
+        );
+        const countsByCategoryId = Object.fromEntries(
+          countsByCategoryArray.map(({ productCategoryId, count }) => [
+            productCategoryId,
+            count,
+          ])
+        );
+
+        return {
+          id: status,
+          name: getStatusLabel(status),
+          type: "bar",
+          stack: "total",
+          label: {
+            show: true,
+            formatter: (params) => {
+              const categoryId = (params.data as { id: string }).id;
+              return `${
+                Math.round(
+                  (+(params.value ?? 0) /
+                    (totalCountsByCategoryId[categoryId] || 1)) *
+                    10000
+                ) / 100
+              }%`;
+            },
+          },
+          emphasis: {
+            focus: "series",
+          },
+          itemStyle: {
+            color: themeValues[status],
+          },
+          data: nonEmptyProductCategories.map((productCategory) => ({
+            id: productCategory.id,
+            name: productCategory.shortName ?? productCategory.name,
+            value: countsByCategoryId[productCategory.id] ?? 0,
+          })),
+        } satisfies NonNullable<EChartsOption["series"]>;
+      });
+  }, [
+    rawAssets,
+    themeValues,
+    productCategoriesById,
+    nonEmptyProductCategories,
+  ]);
 
   const chartOption = useMemo(
     (): ReactEChartsProps["option"] => ({

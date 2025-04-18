@@ -44,54 +44,67 @@ export function ComplianceBySiteChart() {
     [mySites]
   );
 
-  const series = React.useMemo(
-    (): EChartsOption["series"] =>
-      rawAssets && mySitesById && themeValues !== null
-        ? countBy(
-            rawAssets.map((a) => {
-              const status = getAssetInspectionStatus(
-                a.inspections ?? [],
-                a.inspectionCycle ?? a.client?.defaultInspectionCycle
-              );
-              return {
-                asset: a,
-                status,
-              };
-            }),
-            "status"
-          )
-            .sort(sortByStatus())
-            .map(({ status, items }) => {
-              const assets = items.map(({ asset }) => asset);
-              const countsBySiteArray = countBy(assets, "siteId");
-              const countsBySiteId = Object.fromEntries(
-                countsBySiteArray.map(({ siteId, count }) => [siteId, count])
-              );
+  const series = React.useMemo((): EChartsOption["series"] => {
+    if (!rawAssets || !mySitesById || themeValues === null) {
+      return;
+    }
 
-              return {
-                id: status,
-                name: getStatusLabel(status),
-                type: "bar",
-                stack: "total",
-                label: {
-                  show: true,
-                },
-                emphasis: {
-                  focus: "series",
-                },
-                itemStyle: {
-                  color: themeValues[status],
-                },
-                data: Object.entries(mySitesById).map(([siteId, site]) => ({
-                  id: siteId,
-                  name: site.name,
-                  value: countsBySiteId[siteId] ?? 0,
-                })),
-              } satisfies NonNullable<EChartsOption["series"]>;
-            })
-        : undefined,
-    [rawAssets, themeValues, mySitesById]
-  );
+    const assetStatuses = rawAssets.map((a) => {
+      const status = getAssetInspectionStatus(
+        a.inspections ?? [],
+        a.inspectionCycle ?? a.client?.defaultInspectionCycle
+      );
+      return {
+        asset: a,
+        status,
+      };
+    });
+
+    const totalCountsBySiteIdArray = countBy(rawAssets, "siteId");
+    const totalCountsBySiteId = Object.fromEntries(
+      totalCountsBySiteIdArray.map(({ siteId, count }) => [siteId, count])
+    );
+
+    return countBy(assetStatuses, "status")
+      .sort(sortByStatus())
+      .map(({ status, items }) => {
+        const assets = items.map(({ asset }) => asset);
+        const countsBySiteArray = countBy(assets, "siteId");
+        const countsBySiteId = Object.fromEntries(
+          countsBySiteArray.map(({ siteId, count }) => [siteId, count])
+        );
+
+        return {
+          id: status,
+          name: getStatusLabel(status),
+          type: "bar",
+          stack: "total",
+          label: {
+            show: true,
+            formatter: (params) => {
+              const siteId = (params.data as { id: string }).id;
+              return `${
+                Math.round(
+                  (+(params.value ?? 0) / (totalCountsBySiteId[siteId] || 1)) *
+                    10000
+                ) / 100
+              }%`;
+            },
+          },
+          emphasis: {
+            focus: "series",
+          },
+          itemStyle: {
+            color: themeValues[status],
+          },
+          data: Object.entries(mySitesById).map(([siteId, site]) => ({
+            id: siteId,
+            name: site.name,
+            value: countsBySiteId[siteId] ?? 0,
+          })),
+        } satisfies NonNullable<EChartsOption["series"]>;
+      });
+  }, [rawAssets, themeValues, mySitesById]);
 
   const chartOption = useMemo(
     (): ReactEChartsProps["option"] => ({
