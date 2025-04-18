@@ -78,7 +78,7 @@ export default function ReportDetails({
           <CardTitle>{report.name}</CardTitle>
           <CardDescription>{report.description}</CardDescription>
         </CardHeader>
-        <CardContent className="bg-background">
+        <CardContent className="bg-[inherit]">
           <VirtualizedTable
             height={"100%"}
             maxHeight={"70vh"}
