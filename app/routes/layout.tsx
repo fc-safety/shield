@@ -177,7 +177,7 @@ export default function Layout({
       <SidebarProvider defaultOpenState={{ help: false }}>
         <HelpSidebarProvider>
           <AppSidebar groups={groups} />
-          <SidebarInset>
+          <SidebarInset className="min-w-0">
             <Header
               leftSlot={
                 <>

@@ -172,31 +172,6 @@ export interface ProductRequestItem extends BaseModel {
   addedBy: Person;
 }
 
-export const QueryReportTypes = [
-  "ASSETS",
-  "INSPECTIONS",
-  "CONSUMABLES",
-  "ALERTS",
-] as const;
-export type QueryReportType = (typeof QueryReportTypes)[number];
-
-export interface QueryReportColumn {
-  displayName: string;
-  propertyName: string;
-  sort: {
-    direction: "asc" | "desc";
-    priority: number;
-  };
-}
-export interface QueryReport extends BaseModel {
-  name: string;
-  description?: string | null;
-  type: QueryReportType;
-  startDate: string;
-  endDate?: string | null;
-  columns: QueryReportColumn[];
-}
-
 export interface Address {
   id: string;
   street1: string;

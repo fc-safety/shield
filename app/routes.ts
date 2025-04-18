@@ -58,7 +58,7 @@ export default [
     route("inspection-routes", "./routes/inspection-routes.tsx"),
     route("reports", "./routes/reports/layout.tsx", [
       index("./routes/reports/index.tsx"),
-      route("build/:id?", "./routes/reports/build.tsx"),
+      // route("build/:id?", "./routes/reports/build.tsx"),
       route(":id", "./routes/reports/details.tsx"),
     ]),
 

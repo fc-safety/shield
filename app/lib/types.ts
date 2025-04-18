@@ -145,3 +145,18 @@ export interface JobQueue {
   waitingJobs: Job<unknown>[];
   activeJobs: Job<unknown>[];
 }
+
+export const ReportTypes = ["CANNED"] as const;
+export type ReportType = (typeof ReportTypes)[number];
+
+export interface ListReportsResult {
+  id: string;
+  name: string;
+  description: string;
+  type: ReportType;
+}
+
+export interface GetReportResult extends ListReportsResult {
+  columns: string[];
+  data: unknown[];
+}

@@ -694,20 +694,3 @@ export const createVaultOwnershipSchema = z.object({
 });
 
 export const updateVaultOwnershipSchema = createVaultOwnershipSchema.partial();
-
-// TODO: Below is old code, may need to be updated
-export const buildReportSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().nonempty(),
-  description: z.string(),
-  type: z.enum(["asset", "inspection", "user", "location"]),
-  columns: z.array(z.string()),
-  dateRange: z
-    .object({
-      from: z.date(),
-      to: z.date(),
-    })
-    .optional(),
-});
-
-export const buildReportSchemaResolver = zodResolver(buildReportSchema);

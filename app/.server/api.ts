@@ -47,7 +47,12 @@ import {
   type updateProductSchema,
   type updateTagSchema,
 } from "~/lib/schema";
-import type { ClientUser, Role } from "~/lib/types";
+import type {
+  ClientUser,
+  GetReportResult,
+  ListReportsResult,
+  Role,
+} from "~/lib/types";
 import { authenticatedData, CRUD, FetchOptions } from "./api-utils";
 
 const backendCreateInspectionSchema = createInspectionSchema.extend({
@@ -283,6 +288,16 @@ export const api = {
     getByKey: (request: Request, key: string) =>
       authenticatedData<VaultOwnership>(request, [
         FetchOptions.url("/vault-ownerships/key/:key", { key }).get().build(),
+      ]),
+  },
+  reports: {
+    list: (request: Request) =>
+      authenticatedData<ListReportsResult[]>(request, [
+        FetchOptions.url("/reports").get().build(),
+      ]),
+    get: (request: Request, id: string) =>
+      authenticatedData<GetReportResult>(request, [
+        FetchOptions.url("/reports/:id", { id }).get().build(),
       ]),
   },
 };

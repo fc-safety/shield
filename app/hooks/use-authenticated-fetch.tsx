@@ -46,8 +46,8 @@ export function useAuthenticatedFetch() {
   }, [fetcher.state, fetcher.data]);
 
   const fetchAuthenticated = useCallback(
-    async (url: string, options?: RequestInit) => {
-      if (!isAbsoluteUrl(url)) {
+    async (url: Parameters<typeof fetch>[0], options?: RequestInit) => {
+      if (typeof url === "string" && !isAbsoluteUrl(url)) {
         url = buildUrl(url, apiUrl).toString();
       }
 
@@ -93,7 +93,7 @@ const getRefreshAuthAction = () =>
 
 const doFetch = async (
   accessToken: string,
-  url: string,
+  url: Parameters<typeof fetch>[0],
   options: RequestInit = {}
 ) => {
   options.headers = new Headers(options?.headers);
