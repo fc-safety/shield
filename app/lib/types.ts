@@ -21,7 +21,7 @@ export interface AppState {
     };
   };
   dash_pr_sort?: SortingState;
-  dash_pr_quickRangeId?: QuickRangeId;
+  dash_pr_quickRangeId?: QuickRangeId<"both">;
 
   // -> Inspections
   dash_insp_query?: QueryParams & {
@@ -31,7 +31,7 @@ export interface AppState {
     };
   };
   dash_insp_sort?: SortingState;
-  dash_insp_quickRangeId?: QuickRangeId;
+  dash_insp_quickRangeId?: QuickRangeId<"both">;
 
   // -> Inspection Alerts
   dash_alert_query?: QueryParams & {
@@ -41,7 +41,7 @@ export interface AppState {
     };
   };
   dash_alert_sort?: SortingState;
-  dash_alert_quickRangeId?: QuickRangeId;
+  dash_alert_quickRangeId?: QuickRangeId<"both">;
 
   // Products
   products_showAll?: boolean;
@@ -149,12 +149,14 @@ export interface JobQueue {
 export const ReportTypes = ["CANNED"] as const;
 export type ReportType = (typeof ReportTypes)[number];
 
+export type DateRangeSupport = "NONE" | "PAST" | "FUTURE" | "BOTH";
+
 export interface ListReportsResult {
   id: string;
   name: string;
   description: string;
   type: ReportType;
-  supportsDateRange: boolean;
+  dateRangeSupport: DateRangeSupport;
 }
 
 export interface GetReportResult extends ListReportsResult {

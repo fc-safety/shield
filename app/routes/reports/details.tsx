@@ -39,7 +39,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
-const getDefaultDateRange = (quickRangeId: QuickRangeId = "last-30-days") => {
+const getDefaultDateRange = (quickRangeId: QuickRangeId<"both">) => {
   const quickRange =
     QUICK_DATE_RANGES.find((range) => range.id === quickRangeId) ??
     QUICK_DATE_RANGES[0];
@@ -57,9 +57,8 @@ export const loader = ({ request, params }: Route.LoaderArgs) => {
     to: requestQuery.get("dr_to"),
   };
 
-  let defaultQuickRangeId: QuickRangeId | null =
-    (requestQuery.get("qr_id") as QuickRangeId) ?? null;
-  //   (requestQuery.get("qr_id") as QuickRangeId) ?? "last-90-days";
+  const defaultQuickRangeId =
+    (requestQuery.get("qr_id") as QuickRangeId<"both"> | undefined) ?? null;
   let defaultDateRange: {
     from: string;
     to: string;
@@ -72,8 +71,7 @@ export const loader = ({ request, params }: Route.LoaderArgs) => {
     if (dateRange.to) {
       query.endDate = dateRange.to;
     }
-  } else {
-    defaultQuickRangeId = defaultQuickRangeId ?? "last-90-days";
+  } else if (defaultQuickRangeId) {
     defaultDateRange = getDefaultDateRange(defaultQuickRangeId);
     query.startDate = defaultDateRange.from;
     query.endDate = defaultDateRange.to;
@@ -137,7 +135,7 @@ export default function ReportDetails({
   const externalFilters = useMemo(() => {
     const filters: ReactNode[] = [];
 
-    if (report.supportsDateRange) {
+    if (report.dateRangeSupport !== "NONE") {
       filters.push(
         <DateRangeSelect
           key="date-range-select"
@@ -172,6 +170,14 @@ export default function ReportDetails({
             });
             revalidate();
           }}
+          past={
+            report.dateRangeSupport === "PAST" ||
+            report.dateRangeSupport === "BOTH"
+          }
+          future={
+            report.dateRangeSupport === "FUTURE" ||
+            report.dateRangeSupport === "BOTH"
+          }
         />
       );
     }

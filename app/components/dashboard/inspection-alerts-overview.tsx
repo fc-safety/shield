@@ -62,7 +62,7 @@ export default function InspectionAlertsOverview() {
 
   const handleSetQueryParams = (
     newQueryParams: typeof queryParams,
-    quickRangeId?: QuickRangeId
+    quickRangeId?: QuickRangeId<"both">
   ) => {
     setQueryParams(newQueryParams);
     setAppState({

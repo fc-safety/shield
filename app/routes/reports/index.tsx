@@ -26,8 +26,13 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
-import type { ListReportsResult, ReportType } from "~/lib/types";
+import type {
+  DateRangeSupport,
+  ListReportsResult,
+  ReportType,
+} from "~/lib/types";
 import type { Route } from "./+types/index";
+import type { QuickRangeIdFromDateRangeSupport } from "./types";
 import { downloadReportCsv } from "./utils";
 
 export const loader = ({ request }: Route.LoaderArgs) => {
@@ -36,7 +41,18 @@ export const loader = ({ request }: Route.LoaderArgs) => {
   }));
 };
 
-const getDefaultDateRange = (quickRangeId: QuickRangeId = "last-90-days") => {
+const getDefaultQuickRangeId = (
+  dateRangeSupport: DateRangeSupport
+): QuickRangeIdFromDateRangeSupport<DateRangeSupport> => {
+  switch (dateRangeSupport) {
+    case "FUTURE":
+      return "next-30-days";
+    default:
+      return "last-90-days";
+  }
+};
+
+const getDefaultDateRange = (quickRangeId: QuickRangeId<"both">) => {
   const quickRange =
     QUICK_DATE_RANGES.find((range) => range.id === quickRangeId) ??
     QUICK_DATE_RANGES[0];
@@ -58,14 +74,16 @@ export default function ReportsIndex({
       {
         from: string;
         to: string;
-        quickRangeId?: QuickRangeId;
+        quickRangeId?: QuickRangeId<"both">;
       }
     >
   >({});
 
   const getReportQuery = useCallback(
-    (reportId: string) => {
-      const defaultDateRange = getDefaultDateRange();
+    (reportId: string, dateRangeSupport: DateRangeSupport) => {
+      const defaultDateRange = getDefaultDateRange(
+        getDefaultQuickRangeId(dateRangeSupport)
+      );
       return {
         startDate: reportDateRanges[reportId]?.from ?? defaultDateRange.from,
         endDate: reportDateRanges[reportId]?.to ?? defaultDateRange.to,
@@ -75,13 +93,17 @@ export default function ReportsIndex({
   );
 
   const { mutate: mutateExportCsv } = useMutation({
-    mutationFn: (reportId: string) =>
-      downloadReportCsv(fetch, reportId, getReportQuery(reportId)),
+    mutationFn: (report: ListReportsResult) =>
+      downloadReportCsv(
+        fetch,
+        report.id,
+        getReportQuery(report.id, report.dateRangeSupport)
+      ),
   });
 
   const handleExportCsv = useCallback(
     (report: ListReportsResult) => {
-      mutateExportCsv(report.id);
+      mutateExportCsv(report);
     },
     [mutateExportCsv]
   );
@@ -127,12 +149,15 @@ export default function ReportsIndex({
         cell: ({ row }) => {
           const report = row.original;
 
-          if (!report.supportsDateRange) {
+          if (report.dateRangeSupport === "NONE") {
             return <>&mdash;</>;
           }
 
           const { quickRangeId, ...dateRange } =
-            reportDateRanges[report.id] ?? getDefaultDateRange();
+            reportDateRanges[report.id] ??
+            getDefaultDateRange(
+              getDefaultQuickRangeId(report.dateRangeSupport)
+            );
           return (
             <DateRangeSelect
               value={dateRange}
@@ -145,11 +170,22 @@ export default function ReportsIndex({
                   draft[report.id] = {
                     from: newDateRange.from,
                     to: newDateRange.to ?? dateRange.to,
-                    quickRangeId,
+                    quickRangeId:
+                      quickRangeId as QuickRangeIdFromDateRangeSupport<
+                        typeof report.dateRangeSupport
+                      >,
                   };
                 });
               }}
               defaultQuickRangeId={quickRangeId}
+              past={
+                report.dateRangeSupport === "PAST" ||
+                report.dateRangeSupport === "BOTH"
+              }
+              future={
+                report.dateRangeSupport === "FUTURE" ||
+                report.dateRangeSupport === "BOTH"
+              }
             />
           );
         },
