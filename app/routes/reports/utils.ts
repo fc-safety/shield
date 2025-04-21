@@ -1,8 +1,14 @@
 export const downloadReportCsv = async (
   fetcher: typeof fetch,
-  reportId: string
+  reportId: string,
+  query: {
+    startDate?: string;
+    endDate?: string;
+  }
 ) => {
-  const response = await fetcher(`/reports/${reportId}/csv`);
+  const response = await fetcher(
+    `/reports/${reportId}/csv?${new URLSearchParams(query).toString()}`
+  );
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
 

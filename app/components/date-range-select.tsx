@@ -253,8 +253,16 @@ export const QUICK_DATE_RANGES = [
     id: "last-month",
     label: "Last Month",
     value: {
-      from: () => subMonths(new Date(), 1).toISOString(),
+      from: () => startOfMonth(subMonths(new Date(), 1)).toISOString(),
       to: () => endOfMonth(subMonths(new Date(), 1)).toISOString(),
+    },
+  },
+  {
+    id: "last-90-days",
+    label: "Last 90 days",
+    value: {
+      from: () => subDays(new Date(), 90).toISOString(),
+      to: () => endOfDay(new Date()).toISOString(),
     },
   },
   {

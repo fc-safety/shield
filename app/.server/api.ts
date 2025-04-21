@@ -53,6 +53,7 @@ import type {
   ListReportsResult,
   Role,
 } from "~/lib/types";
+import type { QueryParams } from "~/lib/urls";
 import { authenticatedData, CRUD, FetchOptions } from "./api-utils";
 
 const backendCreateInspectionSchema = createInspectionSchema.extend({
@@ -295,9 +296,11 @@ export const api = {
       authenticatedData<ListReportsResult[]>(request, [
         FetchOptions.url("/reports").get().build(),
       ]),
-    get: (request: Request, id: string) =>
+    get: (request: Request, id: string, query: QueryParams) =>
       authenticatedData<GetReportResult>(request, [
-        FetchOptions.url("/reports/:id", { id }).get().build(),
+        FetchOptions.url("/reports/:id", { id, ...query })
+          .get()
+          .build(),
       ]),
   },
 };

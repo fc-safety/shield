@@ -154,6 +154,7 @@ export interface ListReportsResult {
   name: string;
   description: string;
   type: ReportType;
+  supportsDateRange: boolean;
 }
 
 export interface GetReportResult extends ListReportsResult {

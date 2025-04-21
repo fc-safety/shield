@@ -25,6 +25,7 @@ interface DataTableColumnHeaderProps<TData, TValue>
   column: Column<TData, TValue>;
   table: Table<TData>;
   title?: string;
+  allowWrap?: boolean;
 }
 
 export function DataTableColumnHeader<TData, TValue>({
@@ -32,6 +33,7 @@ export function DataTableColumnHeader<TData, TValue>({
   title,
   table,
   className,
+  allowWrap,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   // if (!column.getCanSort()) {
   //   return <div className={cn(className)}>{title}</div>;
@@ -60,15 +62,18 @@ export function DataTableColumnHeader<TData, TValue>({
   };
 
   return (
-    <div className={cn("inline-flex items-center space-x-2", className)}>
+    <div className={cn("inline-flex items-center space-x-2 w-full", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-3 h-8 data-[state=open]:bg-accent"
+            className={cn(
+              "-ml-3 h-8 data-[state=open]:bg-accent max-w-full",
+              allowWrap && "whitespace-normal h-max"
+            )}
           >
-            <span>{title ?? formatColumnId(column.id)}</span>
+            <span className="w-min">{title ?? formatColumnId(column.id)}</span>
             {column.getIsSorted() === "desc" ? (
               <ArrowDown />
             ) : column.getIsSorted() === "asc" ? (
