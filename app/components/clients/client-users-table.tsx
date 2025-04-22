@@ -4,6 +4,7 @@ import {
   Pencil,
   ShieldCheck,
   ShieldOff,
+  SquareAsterisk,
   UserPen,
   UserPlus,
 } from "lucide-react";
@@ -28,6 +29,7 @@ import {
 } from "../ui/dropdown-menu";
 import ClientUserDetailsForm from "./client-user-details-form";
 import EditUserButton from "./edit-client-user-button";
+import ResetPasswordForm from "./reset-password-form";
 import UpdateUserRoleForm from "./update-user-role-form";
 
 interface ClientUsersTableProps {
@@ -45,7 +47,7 @@ export default function ClientUsersTable({
 }: ClientUsersTableProps) {
   const editUser = useOpenData<ClientUser>();
   const updateRole = useOpenData<ClientUser>();
-
+  const resetPassword = useOpenData<ClientUser>();
   const { createOrUpdateJson: submit } = useModalFetcher();
   const setUserActive = useCallback(
     (id: string, data: Pick<z.infer<typeof updateUserSchema>, "active">) => {
@@ -148,6 +150,10 @@ export default function ClientUsersTable({
                     </>
                   )}
                 </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => resetPassword.openData(user)}>
+                  <SquareAsterisk />
+                  Reset Password
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() =>
                     setUserActive(user.id, { active: !user.active })
@@ -171,7 +177,7 @@ export default function ClientUsersTable({
         },
       },
     ],
-    [getSiteByExternalId, editUser, updateRole, setUserActive]
+    [getSiteByExternalId, editUser, updateRole, resetPassword, setUserActive]
   );
 
   return (
@@ -218,6 +224,19 @@ export default function ClientUsersTable({
             clientId={clientId}
             onSubmitted={() => updateRole.setOpen(false)}
             viewContext="admin"
+          />
+        </ResponsiveDialog>
+      )}
+      {resetPassword.data && (
+        <ResponsiveDialog
+          title="Reset Password"
+          open={resetPassword.open}
+          onOpenChange={resetPassword.setOpen}
+        >
+          <ResetPasswordForm
+            user={resetPassword.data}
+            clientId={clientId}
+            onSubmitted={() => resetPassword.setOpen(false)}
           />
         </ResponsiveDialog>
       )}

@@ -5,7 +5,6 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronRight, ChevronUp, LogOut, User2, UserCog } from "lucide-react";
 import { Link, NavLink, useMatches } from "react-router";
-import { useTheme } from "remix-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,8 +71,6 @@ export function AppSidebar({
   const { user } = useAuth();
   const { setOpenMobile } = useSidebar();
 
-  const [theme] = useTheme();
-
   const matches = useMatches();
 
   return (
@@ -85,14 +82,34 @@ export function AppSidebar({
               <Link to="/">
                 <img
                   src={
-                    theme === "dark"
-                      ? "https://content.fc-safety.com/fc_shield_logo_small_dark.png"
-                      : "https://content.fc-safety.com/fc_shield_logo_small_light.png"
+                    "https://content.fc-safety.com/fc_shield_logo_small_light.png"
                   }
                   alt=""
-                  className="w-8"
+                  className="h-4 w-auto object-contain dark:hidden"
                 />
-                <span className="text-2xl uppercase font-light">Shield</span>
+                <img
+                  src={
+                    "https://content.fc-safety.com/fc_shield_logo_small_dark.png"
+                  }
+                  alt=""
+                  className="h-4 w-auto object-contain hidden dark:block"
+                />
+                <div>
+                  <img
+                    src={
+                      "https://content.fc-safety.com/fc_shield_logo_text_light.png"
+                    }
+                    alt=""
+                    className="h-4 dark:hidden"
+                  />
+                  <img
+                    src={
+                      "https://content.fc-safety.com/fc_shield_logo_text_dark.png"
+                    }
+                    alt=""
+                    className="h-4 hidden dark:block"
+                  />
+                </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

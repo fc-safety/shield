@@ -21,7 +21,7 @@ export interface AppState {
     };
   };
   dash_pr_sort?: SortingState;
-  dash_pr_quickRangeId?: QuickRangeId<"both">;
+  dash_pr_quickRangeId?: QuickRangeId<"past">;
 
   // -> Inspections
   dash_insp_query?: QueryParams & {
@@ -31,7 +31,7 @@ export interface AppState {
     };
   };
   dash_insp_sort?: SortingState;
-  dash_insp_quickRangeId?: QuickRangeId<"both">;
+  dash_insp_quickRangeId?: QuickRangeId<"past">;
 
   // -> Inspection Alerts
   dash_alert_query?: QueryParams & {
@@ -41,7 +41,7 @@ export interface AppState {
     };
   };
   dash_alert_sort?: SortingState;
-  dash_alert_quickRangeId?: QuickRangeId<"both">;
+  dash_alert_quickRangeId?: QuickRangeId<"past">;
 
   // Products
   products_showAll?: boolean;

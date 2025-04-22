@@ -9,6 +9,8 @@ export function ProductRequestStatusBadge({
 }) {
   const variant = useMemo((): ComponentProps<typeof Badge>["variant"] => {
     switch (status) {
+      case "NEW":
+        return "status_new";
       case "PROCESSING":
       case "COMPLETE":
         return "secondary";

@@ -89,7 +89,7 @@ export function AlertsStatusBadge({ status }: { status: AlertsStatus }) {
     <StatusBadge
       icon={ShieldCheck}
       status="No Alerts"
-      className="bg-status-ok text-status-ok-foreground hover:bg-status-ok"
+      className="bg-status-compliant text-status-compliant-foreground hover:bg-status-compliant"
     />
   );
 }

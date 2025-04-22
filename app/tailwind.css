@@ -49,16 +49,6 @@ body {
 
     /* CUSTOM */
 
-    /* OLD (Deprecated) Inspection Status Colors */
-    --status-ok: 142.1 76.2% 36.3%;
-    --status-ok-foreground: 355.7 100% 97.3%;
-    --status-overdue: 50.7 95.1% 47.8%;
-    --status-overdue-foreground: 0 0% 37.6%;
-    --status-expired: 0 100% 60.6%;
-    --status-expired-foreground: 0 0% 98%;
-    --status-never: 0 0% 88%;
-    --status-never-foreground: 0 0% 37.6%;
-
     /* NEW Inspection Status Colors */
     --status-compliant: 142.1 76.2% 36.3%;
     --status-compliant-foreground: 355.7 100% 97.3%;
@@ -66,6 +56,8 @@ body {
     --status-due-soon-foreground: 0 0% 37.6%;
     --status-non-compliant: 0 100% 60.6%;
     --status-non-compliant-foreground: 0 0% 98%;
+    --status-never: 0 0% 88%;
+    --status-never-foreground: 0 0% 37.6%;
 
     --urgent: 0 100% 60.6%;
     --urgent-foreground: 0 0% 98%;
@@ -74,6 +66,9 @@ body {
 
     --pending: 50.5 99.2% 47.3%;
     --pending-foreground: 0 0% 98%;
+
+    --status-new: 141.89, 69.16%, 58.04%;
+    --status-new-foreground: 141.95, 80.39%, 10%;
   }
   .dark,
   :root[class~="dark"] {
@@ -112,16 +107,6 @@ body {
 
     /* CUSTOM */
 
-    /* OLD (Deprecated) Inspection Status Colors */
-    --status-ok: 142.1 70.6% 45.3%;
-    --status-ok-foreground: 144.9 80.4% 10%;
-    --status-overdue: 44.8 100% 48.8%;
-    --status-overdue-foreground: 0 0% 36.9%;
-    --status-expired: 0 100% 60.6%;
-    --status-expired-foreground: 0 85.7% 97.3%;
-    --status-never: 0 0% 24%;
-    --status-never-foreground: 0 0% 90.2%;
-
     /* NEW Inspection Status Colors */
     --status-compliant: 142.1 70.6% 45.3%;
     --status-compliant-foreground: 144.9 80.4% 10%;
@@ -129,6 +114,8 @@ body {
     --status-due-soon-foreground: 0 0% 36.9%;
     --status-non-compliant: 0 100% 60.6%;
     --status-non-compliant-foreground: 0 85.7% 97.3%;
+    --status-never: 0 0% 24%;
+    --status-never-foreground: 0 0% 90.2%;
 
     --urgent: 0 60.6% 51.2%;
     --urgent-foreground: 0 85.7% 97.3%;
@@ -137,6 +124,9 @@ body {
 
     --pending: 50.4 99.2% 42.9%;
     --pending-foreground: 0 0% 98%;
+
+    --status-new: 142.29, 76.64%, 73.14%;
+    --status-new-foreground: 141.95, 80.39%, 10%;
   }
 }
 

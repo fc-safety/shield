@@ -57,8 +57,8 @@ interface DateRangeSelectProps<TPast extends boolean, TFuture extends boolean> {
 }
 
 export default function DateRangeSelect<
-  TPast extends boolean,
-  TFuture extends boolean
+  TPast extends boolean = true,
+  TFuture extends boolean = false
 >({
   value: valueProp,
   onValueChange,
@@ -155,7 +155,7 @@ export default function DateRangeSelect<
                 {formatTimestampAsDate(appliedValue.to ?? "")}
               </>
             ) : (
-              "none"
+              "None"
             ))}
         </Button>
       }

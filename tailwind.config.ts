@@ -76,24 +76,6 @@ export default {
 
         // Custom colors
 
-        // OLD (Deprecated) Inspection Status Colors
-        ["status-ok"]: {
-          DEFAULT: "hsl(var(--status-ok))",
-          foreground: "hsl(var(--status-ok-foreground))",
-        },
-        ["status-overdue"]: {
-          DEFAULT: "hsl(var(--status-overdue))",
-          foreground: "hsl(var(--status-overdue-foreground))",
-        },
-        ["status-expired"]: {
-          DEFAULT: "hsl(var(--status-expired))",
-          foreground: "hsl(var(--status-expired-foreground))",
-        },
-        ["status-never"]: {
-          DEFAULT: "hsl(var(--status-never))",
-          foreground: "hsl(var(--status-never-foreground))",
-        },
-
         // NEW Inspection Status Colors
         ["status-compliant"]: {
           DEFAULT: "hsl(var(--status-compliant))",
@@ -107,6 +89,10 @@ export default {
           DEFAULT: "hsl(var(--status-non-compliant))",
           foreground: "hsl(var(--status-non-compliant-foreground))",
         },
+        ["status-never"]: {
+          DEFAULT: "hsl(var(--status-never))",
+          foreground: "hsl(var(--status-never-foreground))",
+        },
 
         urgent: {
           DEFAULT: "hsl(var(--urgent))",
@@ -119,6 +105,11 @@ export default {
         pending: {
           DEFAULT: "hsl(var(--pending))",
           foreground: "hsl(var(--pending-foreground))",
+        },
+
+        ["status-new"]: {
+          DEFAULT: "hsl(var(--status-new))",
+          foreground: "hsl(var(--status-new-foreground))",
         },
       },
       keyframes: {

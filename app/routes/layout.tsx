@@ -42,6 +42,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       apiUrl: config.API_BASE_URL,
       appHost: config.APP_HOST,
       googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
+      authClientId: config.CLIENT_ID,
     },
     {
       headers: {
@@ -52,7 +53,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function Layout({
-  loaderData: { user, apiUrl, appHost, googleMapsApiKey },
+  loaderData: { user, apiUrl, appHost, googleMapsApiKey, authClientId },
 }: Route.ComponentProps) {
   const groups: SidebarGroup[] = [
     {
@@ -173,6 +174,7 @@ export default function Layout({
       apiUrl={apiUrl}
       appHost={appHost}
       googleMapsApiKey={googleMapsApiKey}
+      clientId={authClientId}
     >
       <SidebarProvider defaultOpenState={{ help: false }}>
         <HelpSidebarProvider>

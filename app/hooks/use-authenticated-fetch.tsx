@@ -69,7 +69,7 @@ export function useAuthenticatedFetch() {
   );
 
   const fetchOrThrow = useCallback(
-    async (url: string, options: RequestInit) => {
+    async (url: Parameters<typeof fetch>[0], options?: RequestInit) => {
       const response = await fetchAuthenticated(url, options);
       if (!response.ok) {
         throw response;

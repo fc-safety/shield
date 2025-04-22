@@ -34,7 +34,7 @@ const ErrorTitle = ({
 }) => (
   <div
     className={cn(
-      "font-semibold text-sm flex gap-1 items-center capitalize",
+      "font-semibold text-xs flex gap-1 items-center capitalize",
       className
     )}
   >
@@ -47,7 +47,7 @@ const buildValidationErrorDisplay = (error: unknown) => {
   return (
     <div className="grid gap-2">
       <ErrorTitle className="text-important">
-        <AlertCircle className="size-5" />
+        <AlertCircle className="size-4 shrink-0" />
         {validationError.message}
       </ErrorTitle>
       <ul>
@@ -71,7 +71,7 @@ export const buildErrorDisplay = (
   content ??= attempt(() => buildValidationErrorDisplay(error));
   content ??= (
     <ErrorTitle className="text-urgent">
-      <AlertCircle className="size-5" />
+      <AlertCircle className="size-4 shrink-0" />
       {options.defaultErrorMessage ?? "Error: Something went wrong."}
     </ErrorTitle>
   );

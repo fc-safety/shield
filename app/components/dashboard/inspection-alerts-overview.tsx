@@ -62,7 +62,7 @@ export default function InspectionAlertsOverview() {
 
   const handleSetQueryParams = (
     newQueryParams: typeof queryParams,
-    quickRangeId?: QuickRangeId<"both">
+    quickRangeId?: QuickRangeId<"past">
   ) => {
     setQueryParams(newQueryParams);
     setAppState({
@@ -154,7 +154,7 @@ export default function InspectionAlertsOverview() {
         ),
         cell: ({ getValue }) =>
           getValue() ? (
-            <Check className="size-5 text-status-ok" />
+            <Check className="size-5 text-status-compliant" />
           ) : (
             <>&mdash;</>
           ),

@@ -143,6 +143,7 @@ export default function ReportsIndex({
       },
       {
         id: "dateRange",
+        enableSorting: false,
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
@@ -251,8 +252,8 @@ export default function ReportsIndex({
             initialState={{
               sorting: [
                 {
-                  id: "createdAt",
-                  desc: true,
+                  id: "name",
+                  desc: false,
                 },
               ],
             }}

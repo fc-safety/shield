@@ -14,8 +14,8 @@ export default function QueryContext({ children }: PropsWithChildren) {
 
   const handleError = useCallback(
     async (error: DefaultError) => {
-      console.error(error);
       const errMsg = await extractErrorMessage(error);
+      console.error(errMsg, error);
       if (errMsg) {
         toast.error(
           buildErrorDisplay(errMsg, {
