@@ -1,7 +1,7 @@
 export default function Footer() {
   return (
     <footer className="w-full bg-secondary p-4 flex justify-center">
-      <div className="w-full max-w-screen-sm bg-secondary p-4 flex flex-row gap-6 justify-between items-center text-center text-secondary-foreground text-sm">
+      <div className="w-full max-w-(--breakpoint-sm) bg-secondary p-4 flex flex-row gap-6 justify-between items-center text-center text-secondary-foreground text-sm">
         <img
           src={BANNER_LOGO_LIGHT_URL}
           alt="FC Safety Shield"

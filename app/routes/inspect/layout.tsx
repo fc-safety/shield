@@ -115,7 +115,7 @@ export default function Layout({
                 </>
               }
             />
-            <section className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow w-full max-w-screen-lg self-center">
+            <section className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow w-full max-w-(--breakpoint-lg) self-center">
               <Outlet />
             </section>
             <Footer />

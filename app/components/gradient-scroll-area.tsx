@@ -79,7 +79,7 @@ const GradientScrollArea = forwardRef<HTMLDivElement, GradientScrollAreaProps>(
           <>
             <div
               className={cn(
-                "absolute h-full top-0 right-0 w-6 bg-gradient-to-l to-transparent transition-all",
+                "absolute h-full top-0 right-0 w-6 bg-linear-to-l to-transparent transition-all",
                 variant === "card" ? "from-card" : "from-background",
                 isScrollMaxedX && "translate-x-full"
               )}
@@ -90,7 +90,7 @@ const GradientScrollArea = forwardRef<HTMLDivElement, GradientScrollAreaProps>(
           <>
             <div
               className={cn(
-                "absolute w-full bottom-0 left-0 h-6 bg-gradient-to-t to-transparent transition-all",
+                "absolute w-full bottom-0 left-0 h-6 bg-linear-to-t to-transparent transition-all",
                 variant === "card" ? "from-card" : "from-background",
                 isScrollMaxedY && "translate-y-full"
               )}

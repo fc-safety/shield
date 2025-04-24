@@ -210,7 +210,7 @@ export default function AllProducts({
           </div>
         </CardContent>
       </Card>
-      <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4 sm:gap-8">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(28rem,1fr))] gap-4 sm:gap-8">
         {table
           .getRowModel()
           .rows.filter((row) => row.getIsGrouped())

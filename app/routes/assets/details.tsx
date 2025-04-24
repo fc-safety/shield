@@ -128,7 +128,7 @@ export default function AssetDetails({
 
   return (
     <div className="grid gap-y-4 gap-x-2 sm:gap-x-4">
-      <div className="grid grid-cols-[repeat(auto-fit,_minmax(250px,_1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
         <StatusCard asset={asset} />
         <Card>
           <CardHeader>
@@ -191,7 +191,7 @@ export default function AssetDetails({
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
         <Card className="h-max">
           <CardHeader>
             <CardTitle>

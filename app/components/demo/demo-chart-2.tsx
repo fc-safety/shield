@@ -66,7 +66,7 @@ export function DemoChart2() {
                 dataKey="location"
                 position="insideLeft"
                 offset={8}
-                className="fill-[--color-label]"
+                className="fill-(--color-label)"
                 fontSize={12}
               /> */}
               <LabelList

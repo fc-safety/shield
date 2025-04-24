@@ -67,7 +67,7 @@ export default function ProductCategoryDetails({
 
   return (
     <div className="grid gap-4">
-      <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
         <Card>
           <CardHeader>
             <CardTitle>
@@ -167,7 +167,7 @@ export default function ProductCategoryDetails({
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
         <ProductsCard
           products={
             productCategory?.products?.filter((p) => p.type === "PRIMARY") ?? []
@@ -243,7 +243,7 @@ function ProductsCard({
       </CardHeader>
       <CardContent>
         <GradientScrollArea className="h-[500px]" variant="card">
-          <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(28rem,1fr))] gap-4">
             {products.map((product) => (
               <ProductCard
                 key={product.id}

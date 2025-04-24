@@ -157,7 +157,7 @@ export function OverallComplianceChart() {
             const status = (e.data as { id: string }).id;
             navigate(`/assets?inspectionStatus=${status}`);
           }}
-          className="w-full aspect-square max-w-screen-sm"
+          className="w-full aspect-square max-w-(--breakpoint-sm)"
         />
       </CardContent>
     </Card>

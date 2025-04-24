@@ -235,7 +235,7 @@ export function AppSidebar({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 side="top"
-                className="w-[--radix-popper-anchor-width]"
+                className="w-(--radix-popper-anchor-width)"
               >
                 {userRoutes.map((route) => (
                   <DropdownMenuItem asChild key={route.title}>

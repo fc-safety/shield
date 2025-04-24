@@ -191,7 +191,7 @@ export function TagCard({ tag, renderEditButton }: TagCardProps) {
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Nfc className="!size-6 text-primary" />
+                <Nfc className="size-6! text-primary" />
                 <div className="grid gap-0">
                   <span className="text-xs text-muted-foreground">
                     Serial Number

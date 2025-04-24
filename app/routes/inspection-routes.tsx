@@ -10,7 +10,7 @@ export default function InspectionRoutes({
   loaderData: routes,
 }: Route.ComponentProps) {
   return (
-    <div className="w-full max-w-screen-lg self-center">
+    <div className="w-full max-w-(--breakpoint-lg) self-center">
       <InspectionRoutesPage routes={routes.results} />
     </div>
   );

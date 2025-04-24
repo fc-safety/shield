@@ -83,7 +83,7 @@ export default function ProductDetails({
       productCategory.client?.externalId === user.clientId);
 
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
         <CardHeader>
           <CardTitle>

@@ -41,7 +41,7 @@ export default function ClientDetails({
   );
   return (
     <div className="grid gap-4">
-      <div className="grid grid-cols-[repeat(auto-fit,_minmax(450px,_1fr))] gap-2 sm:gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
         <Card>
           <CardHeader>
             <CardTitle>

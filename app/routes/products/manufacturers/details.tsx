@@ -129,7 +129,7 @@ export default function ProductManufacturerDetails({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(28rem,1fr))] gap-4">
             {manufacturer?.products?.map((product) => (
               <ProductCard
                 key={product.id}

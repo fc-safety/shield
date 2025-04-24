@@ -150,7 +150,7 @@ export function SendNotificationsForm({
                       onMouseOver={() => preloadUsers()}
                       onTouchStart={() => preloadUsers()}
                     >
-                      <span className="overflow-hidden whitespace-nowrap overflow-ellipsis">
+                      <span className="overflow-hidden whitespace-nowrap text-ellipsis">
                         {value.length > 0
                           ? value.map((v) => v.name).join(", ")
                           : "Select recipients..."}
