@@ -685,6 +685,7 @@ export const updatePermissionMappingSchemaResolver = zodResolver(
 export const globalSettingsSchema = z.object({
   systemEmailFromAddress: fromAddressSchema,
   productRequestToAddress: z.string().email(),
+  landingFormLeadToAddress: z.string().email(),
 });
 
 export const createVaultOwnershipSchema = z.object({

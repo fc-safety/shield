@@ -21,7 +21,7 @@ export default function QueryContext({ children }: PropsWithChildren) {
           buildErrorDisplay(errMsg, {
             defaultErrorMessage: asString(cleanErrorMessage(errMsg)),
           }),
-          { id: defaultErrorAlertId }
+          { id: defaultErrorAlertId, icon: null }
         );
         return;
       }
@@ -30,7 +30,7 @@ export default function QueryContext({ children }: PropsWithChildren) {
         buildErrorDisplay(null, {
           defaultErrorMessage: "Oops! Something went wrong.",
         }),
-        { id: defaultErrorAlertId }
+        { id: defaultErrorAlertId, icon: null }
       );
     },
     [defaultErrorAlertId]

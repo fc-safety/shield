@@ -122,6 +122,31 @@ export default function AdminSettings({
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="landingFormLeadToAddress"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Landing Form Lead To Address</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Input {...field} type="email" />
+                      <SendTestEmailButton
+                        to={field.value}
+                        from={systemEmailFromAddress}
+                        template="new-landing-form-lead"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    New lead form submissions from the Shield landing site will
+                    be sent to this address.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
           <CardFooter>
             <Button
@@ -144,7 +169,7 @@ function SendTestEmailButton({
 }: {
   to: string;
   from: string;
-  template?: "test" | "new-product-request";
+  template?: "test" | "new-product-request" | "new-landing-form-lead";
 }) {
   const { fetch } = useAuthenticatedFetch();
 
@@ -176,7 +201,7 @@ const handleSendTestEmail = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>,
   to: string,
   from: string,
-  template: "test" | "new-product-request" = "test"
+  template: "test" | "new-product-request" | "new-landing-form-lead" = "test"
 ) =>
   fetch(`/notifications/send-test-email?template=${template}`, {
     method: "POST",
