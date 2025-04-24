@@ -40,9 +40,9 @@ export default function ProductCard({
             navigateTo={navigateTo}
           />
           <div className="grow flex flex-col">
-            <CardHeader>
+            <CardHeader className="p-2 sm:p-4">
               <CardTitle className="flex justify-between items-center">
-                <div className="grid gap-2">
+                <div className="grid gap-1">
                   {displayManufacturer && (
                     <span className="text-xs text-muted-foreground">
                       {product.manufacturer.name}
@@ -59,8 +59,8 @@ export default function ProductCard({
                 {renderEditButton?.()}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col gap-4 justify-between">
-              <p className="text-sm text-muted-foreground inline-flex flex-col justify-between gap-2">
+            <CardContent className="flex-1 flex flex-col gap-2 justify-between p-2 sm:p-4 pt-0 sm:pt-0">
+              <p className="text-xs text-muted-foreground inline-flex flex-col justify-between gap-1">
                 {product.description ?? <>&mdash;</>}
                 {product.client && (
                   <span className="mt-2 text-xs text-muted-foreground">
@@ -160,7 +160,7 @@ export function ProductImage({
   return (
     <Container
       className={cn(
-        "rounded-l-xl w-48 min-h-48 shrink-0 overflow-hidden border-r flex flex-col",
+        "rounded-l-xl w-32 sm:w-40 min-h-36 shrink-0 overflow-hidden border-r flex flex-col",
         className
       )}
     >

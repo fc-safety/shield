@@ -25,11 +25,11 @@ import {
   validateTagId,
 } from "~/.server/inspections";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
+import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
-import DataList from "~/components/data-list";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import RouteProgressCard from "~/components/inspections/route-progress-card";
-import ProductCard from "~/components/products/product-card";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +57,7 @@ import type {
   AssetQuestion,
   InspectionRoute,
   InspectionSession,
+  Tag,
 } from "~/lib/models";
 import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
@@ -196,12 +197,47 @@ const onlyInspectionQuestions = (questions: AssetQuestion[] | undefined) =>
 export default function InspectIndex({
   loaderData: { tag, activeSessions, matchingRoutes },
 }: Route.ComponentProps) {
+  if (tag.asset) {
+    return (
+      <InspectionPage
+        tag={tag}
+        asset={tag.asset}
+        activeSessions={activeSessions}
+        matchingRoutes={matchingRoutes}
+      />
+    );
+  }
+
+  return (
+    <Alert variant="warning">
+      <AlertTitle>
+        Oops! This tag hasn&apos;t been registered correctly.
+      </AlertTitle>
+      <AlertDescription>
+        Please contact your administrator to ensure this tag is assigned to an
+        asset.
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function InspectionPage({
+  tag,
+  asset,
+  activeSessions,
+  matchingRoutes,
+}: {
+  tag: Tag;
+  asset: NonNullable<Tag["asset"]>;
+  activeSessions: InspectionSession[] | null | undefined;
+  matchingRoutes: InspectionRoute[] | null | undefined;
+}) {
   const questions = useMemo(
     () =>
       [
-        ...onlyInspectionQuestions(tag.asset?.product.assetQuestions),
+        ...onlyInspectionQuestions(asset.product.assetQuestions),
         ...onlyInspectionQuestions(
-          tag.asset?.product.productCategory.assetQuestions
+          asset.product.productCategory.assetQuestions
         ),
       ].sort((a, b) => {
         if (!isNil(a.order) && !isNil(b.order) && a.order !== b.order) {
@@ -211,7 +247,7 @@ export default function InspectIndex({
         if (b.order) return 1;
         return isAfter(a.createdOn, b.createdOn) ? 1 : -1;
       }),
-    [tag]
+    [asset]
   );
 
   const narrowedCreateInspectionSchema = useMemo(() => {
@@ -223,7 +259,7 @@ export default function InspectIndex({
     values: {
       asset: {
         connect: {
-          id: tag.asset?.id ?? "",
+          id: asset.id,
         },
       },
       status: "COMPLETE",
@@ -319,129 +355,98 @@ export default function InspectIndex({
         <InspectionRouteCard
           activeSessions={activeSessions}
           matchingRoutes={matchingRoutes}
-          asset={tag.asset ?? undefined}
+          asset={asset}
           userInteractionReady={!geolocationPending}
           setActionQueryParams={setActionQueryParams}
         />
+        <AssetCard
+          asset={{
+            ...asset,
+            tag,
+          }}
+        />
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center justify-between">
-              Asset Inspection
+            <CardTitle className="flex items-center justify-between">
+              Inspecting &quot;{asset.name}&quot;
               <Nfc className="size-8 text-primary" />
             </CardTitle>
-            <CardDescription>Tag Serial No. {tag.serialNumber}</CardDescription>
+            <CardDescription>
+              Please answer the following questions to complete the inspection.
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6 sm:gap-8">
-            {tag.asset ? (
-              <div>
-                <div className="mb-2 text-sm font-bold">Details</div>
-                <DataList
-                  details={[
-                    {
-                      label: "Name",
-                      value: tag.asset.name,
-                    },
-                    {
-                      label: "Serial No.",
-                      value: tag.asset.serialNumber,
-                    },
-                    {
-                      label: "Location",
-                      value: tag.asset.location,
-                    },
-                    {
-                      label: "Placement",
-                      value: tag.asset.placement,
-                    },
-                  ]}
+            <RemixFormProvider {...form}>
+              <Form
+                className="space-y-4"
+                method={"post"}
+                action={
+                  actionQueryParams
+                    ? `?index&${stringifyQuery(actionQueryParams)}`
+                    : undefined
+                }
+                onSubmit={form.handleSubmit}
+              >
+                <Input
+                  type="hidden"
+                  {...form.register("asset.connect.id")}
+                  hidden
                 />
-              </div>
-            ) : (
-              <p>No asset assigned to this tag.</p>
-            )}
-            {tag.asset?.product && (
-              <div>
-                <div className="mb-2 text-sm font-bold">Product</div>
-                <ProductCard
-                  product={tag.asset.product}
-                  displayActiveIndicator={false}
-                />
-              </div>
-            )}
-
-            {tag.asset && (
-              <RemixFormProvider {...form}>
-                <Form
-                  className="space-y-4"
-                  method={"post"}
-                  action={
-                    actionQueryParams
-                      ? `?index&${stringifyQuery(actionQueryParams)}`
-                      : undefined
-                  }
-                  onSubmit={form.handleSubmit}
-                >
-                  <Input
-                    type="hidden"
-                    {...form.register("asset.connect.id")}
-                    hidden
-                  />
-                  {questionFields.map((questionField, index) => {
-                    const question = questions[index];
-                    return (
-                      <FormField
-                        key={questionField.id}
-                        control={form.control}
-                        name={`responses.createMany.data.${index}.value`}
-                        render={({ field: { value, onChange, onBlur } }) => (
-                          <FormItem>
-                            <FormLabel>{question?.prompt}</FormLabel>
-                            <FormControl>
-                              <AssetQuestionResponseTypeInput
-                                value={value ?? ""}
-                                onValueChange={onChange}
-                                onBlur={onBlur}
-                                valueType={question?.valueType ?? "BINARY"}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    );
-                  })}
-                  {questionFields.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      No questions available for this asset. Please contact your
-                      administrator.
-                      <br />
-                      <br />
-                      You can still leave comments and submit the inspection.
-                    </p>
+                {questionFields.map((questionField, index) => {
+                  const question = questions[index];
+                  return (
+                    <FormField
+                      key={questionField.id}
+                      control={form.control}
+                      name={`responses.createMany.data.${index}.value`}
+                      render={({ field: { value, onChange, onBlur } }) => (
+                        <FormItem>
+                          <FormLabel>{question?.prompt}</FormLabel>
+                          <FormControl>
+                            <AssetQuestionResponseTypeInput
+                              value={value ?? ""}
+                              onValueChange={onChange}
+                              onBlur={onBlur}
+                              valueType={question?.valueType ?? "BINARY"}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  );
+                })}
+                {questionFields.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center">
+                    No questions available for this asset. Please contact your
+                    administrator.
+                    <br />
+                    <br />
+                    You can still leave comments and submit the inspection.
+                  </p>
+                )}
+                <FormField
+                  control={form.control}
+                  name="comments"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Additional comments</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <FormField
-                    control={form.control}
-                    name="comments"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Additional comments</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={!!isSubmitting || !isValid}
-                    className="w-full"
-                  >
-                    {isSubmitting ? "Sending data..." : "Complete Inspection"}
-                  </Button>
-                </Form>
-              </RemixFormProvider>
-            )}
+                />
+                <Button
+                  type="submit"
+                  disabled={!!isSubmitting || !isValid}
+                  className="w-full"
+                >
+                  {isSubmitting ? "Sending data..." : "Complete Inspection"}
+                </Button>
+              </Form>
+            </RemixFormProvider>
           </CardContent>
         </Card>
       </div>

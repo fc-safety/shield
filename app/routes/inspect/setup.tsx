@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseISO } from "date-fns";
-import { ArrowRight, Nfc, Plus } from "lucide-react";
+import { AlertCircle, ArrowRight, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { useFieldArray } from "react-hook-form";
 import { data, Form, Link } from "react-router";
@@ -20,11 +20,11 @@ import {
   getInspectionRouteAndSessionData,
   validateTagId,
 } from "~/.server/inspections";
+import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
-import DataList from "~/components/data-list";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
-import ProductCard from "~/components/products/product-card";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   Card,
   CardContent,
@@ -191,6 +191,22 @@ export default function InspectSetup({
     name: "setupQuestionResponses.updateMany",
   });
 
+  const allQuestionFields = useMemo(() => {
+    return [
+      ...updateQuestionFields.map(({ id, data }) => ({
+        key: id,
+        data,
+      })),
+      ...createQuestionFields.map(({ id, ...qf }) => ({
+        key: id,
+        data: {
+          id: undefined,
+          ...qf,
+        },
+      })),
+    ];
+  }, [createQuestionFields, updateQuestionFields]);
+
   return (
     <>
       <div className="grid gap-4">
@@ -242,53 +258,31 @@ export default function InspectSetup({
             </CardContent>
           </Card>
         )}
+        {tag.asset && (
+          <AssetCard
+            asset={{
+              ...tag.asset,
+              tag: tag,
+              site: tag.asset.site ?? tag.site ?? undefined,
+              client: tag.asset.client ?? tag.client ?? undefined,
+            }}
+          />
+        )}
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl flex items-center justify-between">
-              Asset Inspection Setup
-              <Nfc className="size-8 text-primary" />
+            <CardTitle>
+              <AlertCircle />
+              Setup Required
             </CardTitle>
-            <CardDescription>Tag Serial No. {tag.serialNumber}</CardDescription>
+            <CardDescription>
+              This asset will need to be setup before it can be inspected.{" "}
+              <span className="font-bold">
+                You will only see this setup screen once.
+              </span>
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6 sm:gap-8">
             {tag.asset ? (
-              <div>
-                <div className="mb-2 text-sm font-bold">Details</div>
-                <DataList
-                  details={[
-                    {
-                      label: "Name",
-                      value: tag.asset.name,
-                    },
-                    {
-                      label: "Serial No.",
-                      value: tag.asset.serialNumber,
-                    },
-                    {
-                      label: "Location",
-                      value: tag.asset.location,
-                    },
-                    {
-                      label: "Placement",
-                      value: tag.asset.placement,
-                    },
-                  ]}
-                />
-              </div>
-            ) : (
-              <p>No asset assigned to this tag.</p>
-            )}
-            {tag.asset?.product && (
-              <div>
-                <div className="mb-2 text-sm font-bold">Product</div>
-                <ProductCard
-                  product={tag.asset.product}
-                  displayActiveIndicator={false}
-                />
-              </div>
-            )}
-
-            {tag.asset && (
               <RemixFormProvider {...form}>
                 <Form
                   className="space-y-4"
@@ -299,19 +293,7 @@ export default function InspectSetup({
                   {isSetup && (
                     <Input type="hidden" {...form.register("setupOn")} hidden />
                   )}
-                  {[
-                    ...updateQuestionFields.map(({ id, data }) => ({
-                      key: id,
-                      data,
-                    })),
-                    ...createQuestionFields.map(({ id, ...qf }) => ({
-                      key: id,
-                      data: {
-                        id: undefined,
-                        ...qf,
-                      },
-                    })),
-                  ].map(({ key, data }, index) => {
+                  {allQuestionFields.map(({ key, data }, index) => {
                     const question = questions.find(
                       (q) => q.id === data.assetQuestionId
                     );
@@ -351,20 +333,21 @@ export default function InspectSetup({
                       />
                     );
                   })}
-                  {createQuestionFields.length === 0 &&
-                    updateQuestionFields.length === 0 && (
-                      <p className="text-muted-foreground text-sm text-center">
-                        No setup questions found.{" "}
-                        {isSetup ? (
-                          <>There is nothing to update.</>
-                        ) : (
-                          <>
-                            Go ahead and complete setup to begin your
-                            inspection.
-                          </>
-                        )}
-                      </p>
-                    )}
+                  {allQuestionFields.length === 0 && (
+                    <p className="text-muted-foreground text-sm text-center">
+                      <span className="font-bold">
+                        No setup questions found.
+                      </span>{" "}
+                      {isSetup ? (
+                        <>There is nothing to update.</>
+                      ) : (
+                        <>
+                          Go ahead and click complete setup to begin your
+                          inspection.
+                        </>
+                      )}
+                    </p>
+                  )}
                   <Button
                     type="submit"
                     // TODO: Not sure if questions should be able to be updated after setup.
@@ -398,6 +381,16 @@ export default function InspectSetup({
                   )}
                 </Form>
               </RemixFormProvider>
+            ) : (
+              <Alert variant="warning">
+                <AlertTitle>
+                  Oops! This tag hasn&apos;t been registered correctly.
+                </AlertTitle>
+                <AlertDescription>
+                  Please contact your administrator to ensure this tag is
+                  assigned to an asset.
+                </AlertDescription>
+              </Alert>
             )}
           </CardContent>
         </Card>

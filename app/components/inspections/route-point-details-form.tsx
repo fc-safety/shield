@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { ExternalLink, Loader2, RotateCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useFetcher, type To } from "react-router";
@@ -73,11 +73,17 @@ export default function RoutePointDetailsForm({
   const fetcher = useFetcher<ResultsPage<InspectionRoute>>();
   const [routesLoading, setRoutesLoading] = useState(true);
 
-  const preloadRoutes = useCallback(() => {
-    if (fetcher.state === "idle" && !fetcher.data) {
+  const loadRoutes = useCallback(() => {
+    if (fetcher.state === "idle") {
       fetcher.load("/api/proxy/inspection-routes?limit=10000");
     }
   }, [fetcher]);
+
+  const preloadRoutes = useCallback(() => {
+    if (!fetcher.data) {
+      loadRoutes();
+    }
+  }, [fetcher, loadRoutes]);
 
   useEffect(() => {
     if (!routeProp) {
@@ -178,6 +184,16 @@ export default function RoutePointDetailsForm({
                       </SelectContent>
                     </Select>
                   </FormControl>
+                  <Button
+                    type="button"
+                    title="Refresh"
+                    variant="outline"
+                    size="xs"
+                    onClick={loadRoutes}
+                  >
+                    Refresh Routes
+                    <RotateCw />
+                  </Button>
                   <FormMessage />
                 </FormItem>
               )}
@@ -185,8 +201,20 @@ export default function RoutePointDetailsForm({
           ) : (
             <div className="flex flex-col items-center text-sm text-muted-foreground my-4">
               <div>No new routes available for this asset.</div>
+              <Button
+                type="button"
+                title="Refresh"
+                variant="outline"
+                size="xs"
+                onClick={loadRoutes}
+              >
+                Refresh Routes
+                <RotateCw />
+              </Button>
               <Button variant="link" asChild>
-                <Link to={linkToRoutes}>Create a new route</Link>
+                <Link to={linkToRoutes} target="_blank" rel="noreferrer">
+                  Create a new route <ExternalLink />
+                </Link>
               </Button>
             </div>
           ))}

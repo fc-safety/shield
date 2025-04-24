@@ -10,6 +10,7 @@ import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Loader2, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import type { AssetQuestionResponseType } from "~/lib/models";
 import type { ResponseValueImage } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
@@ -43,13 +44,20 @@ export default function AssetQuestionResponseTypeInput<
   onBlur,
   disabled = false,
 }: AssetQuestionResponseTypeInputProps<T>) {
+  const [inputOpen, setInputOpen] = useState(false);
+  useBlurOnClose({
+    onBlur,
+    open: inputOpen,
+  });
+
   return valueType === "BINARY" || valueType === "INDETERMINATE_BINARY" ? (
     <Select
       value={String(value)}
       onValueChange={(v) => onValueChange(v as TValue<T>)}
       disabled={disabled}
+      onOpenChange={setInputOpen}
     >
-      <SelectTrigger onBlur={onBlur}>
+      <SelectTrigger>
         <SelectValue placeholder="Select a response" />
       </SelectTrigger>
       <SelectContent side="top">

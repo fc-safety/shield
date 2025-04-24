@@ -18,6 +18,7 @@ import { type To, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
+import GradientScrollArea from "~/components/gradient-scroll-area";
 import Icon from "~/components/icons/icon";
 import AssetQuestionsTable from "~/components/products/asset-questions-table";
 import CustomTag from "~/components/products/custom-tag";
@@ -241,44 +242,46 @@ function ProductsCard({
         )}
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">
-          {products.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={{
-                ...product,
-                productCategoryId: productCategory.id,
-                productCategory: productCategory,
-              }}
-              displayCategory={!!product.ansiCategory}
-              navigateTo={navigateTo?.(product)}
-              renderEditButton={() =>
-                getCanUpdate(product) ? (
-                  <EditProductButton
-                    product={{
-                      ...product,
-                      productCategoryId: productCategory.id,
-                      productCategory: productCategory,
-                    }}
-                    productCategory={productCategory}
-                    manufacturer={manufacturer}
-                    consumable={consumable}
-                    trigger={
-                      <Button variant="secondary" size="icon" type="button">
-                        <Pencil />
-                      </Button>
-                    }
-                  />
-                ) : null
-              }
-            />
-          ))}
-          {!products.length && (
-            <span className="text-sm text-muted-foreground col-span-full text-center">
-              No {title.toLowerCase()} found.
-            </span>
-          )}
-        </div>
+        <GradientScrollArea className="h-[500px]" variant="card">
+          <div className="grid grid-cols-[repeat(auto-fit,_minmax(28rem,_1fr))] gap-4">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={{
+                  ...product,
+                  productCategoryId: productCategory.id,
+                  productCategory: productCategory,
+                }}
+                displayCategory={!!product.ansiCategory}
+                navigateTo={navigateTo?.(product)}
+                renderEditButton={() =>
+                  getCanUpdate(product) ? (
+                    <EditProductButton
+                      product={{
+                        ...product,
+                        productCategoryId: productCategory.id,
+                        productCategory: productCategory,
+                      }}
+                      productCategory={productCategory}
+                      manufacturer={manufacturer}
+                      consumable={consumable}
+                      trigger={
+                        <Button variant="secondary" size="icon" type="button">
+                          <Pencil />
+                        </Button>
+                      }
+                    />
+                  ) : null
+                }
+              />
+            ))}
+            {!products.length && (
+              <span className="text-sm text-muted-foreground col-span-full text-center">
+                No {title.toLowerCase()} found.
+              </span>
+            )}
+          </div>
+        </GradientScrollArea>
       </CardContent>
     </Card>
   );

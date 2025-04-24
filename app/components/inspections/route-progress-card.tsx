@@ -102,9 +102,12 @@ export default function RouteProgressCard({
             <Button
               variant="secondary"
               size="sm"
+              className="capitalize"
               onClick={() => setRouteDisabled((prev) => !prev)}
             >
-              {routeDisabled ? "Include in Route" : "Exclude from Route"}
+              {routeDisabled
+                ? "Include in current route"
+                : "Exclude from current route"}
             </Button>
           )}
         </div>
@@ -155,9 +158,13 @@ export default function RouteProgressCard({
                   !matchingRoutes.some((mr) => mr.id === r.id)
                 }
                 trigger={
-                  <Button variant="default" size="sm" className="shrink-0">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="shrink-0 capitalize"
+                  >
                     <Plus />
-                    Add to Route
+                    Add to New Route
                   </Button>
                 }
               />
