@@ -18,8 +18,17 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Asset, Inspection } from "~/lib/models";
 import { getUserDisplayName } from "~/lib/users";
+import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import { INSPECTION_TOKEN_HEADER } from "../inspect/constants/headers";
 import type { Route } from "./+types/history";
+
+export const handle = {
+  breadcrumb: () => ({ label: "History" }),
+};
+
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const inspectionSession = await getSession(request, inspectionSessionStorage);

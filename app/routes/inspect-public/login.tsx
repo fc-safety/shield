@@ -2,8 +2,17 @@ import { History, LogIn } from "lucide-react";
 import { Form, Link } from "react-router";
 import { getLoginRedirect } from "~/.server/sessions";
 import { Button } from "~/components/ui/button";
+import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/login";
 import ShieldBannerLogo from "./components/shield-banner-logo";
+
+export const handle = {
+  breadcrumb: () => ({ label: "Welcome" }),
+};
+
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
 
 export const action = async ({ request }: Route.ActionArgs) => {
   return getLoginRedirect(request);

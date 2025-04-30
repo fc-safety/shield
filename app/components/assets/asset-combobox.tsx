@@ -9,6 +9,13 @@ import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can } from "~/lib/users";
 import { objectsEqual } from "~/lib/utils";
 import { ResponsiveCombobox } from "../responsive-combobox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import EditAssetButton from "./edit-asset-button";
 
 interface AssetComboboxProps {
@@ -110,9 +117,9 @@ export default function AssetCombobox({
         shouldFilter={false}
         disabled={disabled}
         showClear={showClear}
-        onCreate={canCreate ? () => createNew.openNew() : undefined}
+        onCreate={() => createNew.openNew()}
       />
-      {canCreate && (
+      {canCreate ? (
         <EditAssetButton
           trigger={<></>}
           open={createNew.open}
@@ -121,6 +128,18 @@ export default function AssetCombobox({
           siteId={siteId}
           context={viewContext}
         />
+      ) : (
+        <Dialog open={createNew.open} onOpenChange={createNew.setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Permission Required</DialogTitle>
+            </DialogHeader>
+            <DialogDescription>
+              You do not have permission to create assets. Please contact your
+              administrator.
+            </DialogDescription>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

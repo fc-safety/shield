@@ -51,7 +51,7 @@ export default function Layout({
 }: Route.ComponentProps) {
   const groups: SidebarGroup[] = [
     {
-      groupTitle: "Application",
+      groupTitle: "My Shield",
       items: [
         {
           title: "Dashboard",

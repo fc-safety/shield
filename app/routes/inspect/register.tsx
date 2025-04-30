@@ -22,8 +22,17 @@ import {
   type registerTagSchema,
 } from "~/lib/schema";
 import { can } from "~/lib/users";
+import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/register";
 import SuccessCircle from "./components/success-circle";
+
+export const handle = {
+  breadcrumb: () => ({ label: "Register Tag" }),
+};
+
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { inspectionToken } = await validateInspectionSession(request);

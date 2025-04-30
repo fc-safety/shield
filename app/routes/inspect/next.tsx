@@ -28,9 +28,17 @@ import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, Inspection } from "~/lib/models";
 import { can } from "~/lib/users";
-import { getSearchParam } from "~/lib/utils";
+import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/next";
 import SuccessCircle from "./components/success-circle";
+
+export const handle = {
+  breadcrumb: () => ({ label: "Next" }),
+};
+
+export const meta: Route.MetaFunction = ({ matches }) => {
+  return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const inspectionId = getSearchParam(request, "inspectionId");
