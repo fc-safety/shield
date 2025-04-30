@@ -19,15 +19,14 @@ export default function DefaultErrorBoundary({
       <h1 className="mt-4 text-6xl font-bold tracking-tight text-primary sm:text-8xl">
         {errorDisplay.title}
       </h1>
-      <p className="mt-2 text-base leading-7 text-secondary-foreground">
-        {errorDisplay.subtitle}
-      </p>
+      {errorDisplay.subtitle && (
+        <p className="mt-2 text-base leading-7 text-secondary-foreground">
+          {errorDisplay.subtitle}
+        </p>
+      )}
       {errorDisplay.message && (
         <p className="mt-6 text-sm text-muted-foreground">
-          Message:{" "}
-          {typeof errorDisplay.message === "string"
-            ? errorDisplay.message
-            : JSON.stringify(errorDisplay.message)}
+          Message: {errorDisplay.message}
         </p>
       )}
       <div className="mt-10 flex items-center justify-center gap-2 flex-wrap">

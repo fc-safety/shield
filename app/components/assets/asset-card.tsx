@@ -57,7 +57,7 @@ export default function AssetCard({ asset, className }: AssetCardProps) {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="pt-4 grid gap-x-4 gap-y-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+              <div className="pt-4 grid gap-x-4 gap-y-2 grid-cols-[repeat(auto-fit,minmax(130px,1fr))]">
                 {[
                   {
                     label: "Asset Serial No.",

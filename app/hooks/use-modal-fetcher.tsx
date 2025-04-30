@@ -105,6 +105,7 @@ export function useModalFetcher<T>({
             }),
             {
               duration: 5000,
+              icon: null,
             }
           );
         }

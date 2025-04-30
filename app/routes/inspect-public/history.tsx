@@ -8,17 +8,18 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
-import { CircleAlert, CircleCheck } from "lucide-react";
+import { CircleAlert, CircleCheck, CircleSlash, LogIn } from "lucide-react";
 import { useMemo } from "react";
+import { Link } from "react-router";
 import { defaultDataGetter, FetchOptions } from "~/.server/api-utils";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Asset, Inspection } from "~/lib/models";
 import { getUserDisplayName } from "~/lib/users";
 import { INSPECTION_TOKEN_HEADER } from "../inspect/constants/headers";
 import type { Route } from "./+types/history";
-import ShieldBannerLogo from "./components/shield-banner-logo";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const inspectionSession = await getSession(request, inspectionSessionStorage);
@@ -32,14 +33,40 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     .build();
 
   return await defaultDataGetter<{
-    asset: Asset;
+    asset: Asset | null;
     inspections: Inspection[];
   }>(fetch(url, options));
 };
 
-export default function PublicInspectHistory({
+export default function PublicInspectHistoryView({
   loaderData: { asset, inspections },
 }: Route.ComponentProps) {
+  if (!asset) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 h-full grow w-full max-w-sm">
+        <CircleSlash className="size-16 text-destructive" />
+        <h2 className="text-lg font-semibold text-center">
+          This tag has not yet been registered to an asset.
+        </h2>
+        <Button asChild>
+          <Link to="/inspect/register?intent=register-tag">
+            <LogIn /> Login to Register Tag
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  return <PublicInspectHistory asset={asset} inspections={inspections} />;
+}
+
+function PublicInspectHistory({
+  asset,
+  inspections,
+}: {
+  asset: Asset;
+  inspections: Inspection[];
+}) {
   const columns = useMemo(
     (): ColumnDef<Inspection>[] => [
       {
@@ -115,66 +142,51 @@ export default function PublicInspectHistory({
   const isEmpty = !rows.length;
 
   return (
-    <div className="w-full flex flex-col items-center gap-12">
-      <ShieldBannerLogo />
-      <div className="w-full flex flex-col gap-4">
-        <AssetCard asset={asset} />
+    <div className="w-full max-w-md flex flex-col items-stretch gap-4">
+      <AssetCard asset={asset} />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Inspection Log</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-4">
-              {rows.map((row) => {
-                const inspection = row.original;
-                const cells = row.getVisibleCells().reduce((acc, cell) => {
-                  acc[String(cell.column.id)] = cell;
-                  return acc;
-                }, {} as Record<string, Cell<Inspection, unknown>>);
+      <Card>
+        <CardHeader>
+          <CardTitle>Inspection Log</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            {isEmpty && (
+              <p className="text-sm text-muted-foreground">
+                This asset has no inspection logs yet.
+              </p>
+            )}
+            {rows.map((row) => {
+              const inspection = row.original;
+              const cells = row.getVisibleCells().reduce((acc, cell) => {
+                acc[String(cell.column.id)] = cell;
+                return acc;
+              }, {} as Record<string, Cell<Inspection, unknown>>);
 
-                return (
-                  <Card
-                    key={inspection.id}
-                    className="bg-background text-foreground"
-                  >
-                    <CardContent className="pt-4 sm:pt-6 flex flex-col gap-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-0.5">
-                          {renderCell(cells.createdOn)}
-                        </p>
-                        <p className="text-sm">
-                          Inspected {formatDistanceToNow(inspection.createdOn)}{" "}
-                          by {renderCell(cells.inspector)}.
-                        </p>
-                      </div>
+              return (
+                <Card
+                  key={inspection.id}
+                  className="bg-background text-foreground"
+                >
+                  <CardContent className="pt-4 sm:pt-6 flex flex-col gap-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        {renderCell(cells.createdOn)}
+                      </p>
+                      <p className="text-sm">
+                        Inspected {formatDistanceToNow(inspection.createdOn)} by{" "}
+                        {renderCell(cells.inspector)}.
+                      </p>
+                    </div>
 
-                      {renderAlerts(inspection.alerts)}
-
-                      {/* <DataList
-                        classNames={{
-                          details: "gap-1",
-                        }}
-                        details={[
-                          {
-                            label: "Date",
-                            value: renderCell(cells.createdOn),
-                          },
-                          {
-                            label: "Unresolved Alerts",
-                            value: renderCell(cells.alerts),
-                          },
-                        ]}
-                        fluid
-                      /> */}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                    {renderAlerts(inspection.alerts)}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -109,18 +109,6 @@ export const api = {
           .get()
           .build(),
       ]),
-    validateTagUrl: (request: Request, url: string) =>
-      getAuthenticatedData<{ isValid: boolean }>(request, [
-        FetchOptions.url("/tags/validate-tag-url", { tagUrl: url })
-          .post()
-          .build(),
-      ]),
-    validateByTagId: (request: Request, tagId: string) =>
-      getAuthenticatedData<{ isValid: boolean }>(request, [
-        FetchOptions.url("/tags/validate-by-tag-id/:tagId", { tagId })
-          .post()
-          .build(),
-      ]),
   },
   inspections: {
     ...CRUD.for<Inspection>("/inspections").all(),

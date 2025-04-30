@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { XCircle } from "lucide-react";
+import { CircleSlash } from "lucide-react";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
+import type { z } from "zod";
 import { api } from "~/.server/api";
 import { catchResponse } from "~/.server/api-utils";
 import { validateInspectionSession } from "~/.server/inspections";
@@ -14,17 +15,18 @@ import {
   FormItem,
   FormLabel,
 } from "~/components/ui/form";
+import { useAuth } from "~/contexts/auth-context";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import {
+  registerTagSchemaResolver,
+  type registerTagSchema,
+} from "~/lib/schema";
+import { can } from "~/lib/users";
 import type { Route } from "./+types/register";
 import SuccessCircle from "./components/success-circle";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { inspectionToken, serialNumber, expiresOn, isValid } =
-    await validateInspectionSession(request);
-
-  console.debug("expiresOn", {
-    expiresOn,
-    isValid,
-  });
+  const { inspectionToken } = await validateInspectionSession(request);
 
   const {
     data: { data: tag },
@@ -35,23 +37,22 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     }
   );
 
-  return { tag };
+  return { tag, inspectionToken };
 };
 
-type TForm = {
-  asset: {
-    connect: {
-      id: string;
-    };
-  };
-};
+type TForm = z.infer<typeof registerTagSchema>;
 
 export default function InspectRegister({
-  loaderData: { tag },
+  loaderData: { tag, inspectionToken },
 }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const canRegister = can(user, "register", "tags");
+
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [recentlyRegistered, setRecentlyRegistered] = useState(false);
 
   const form = useForm<TForm>({
+    resolver: registerTagSchemaResolver,
     defaultValues: {
       asset: {
         connect: {
@@ -65,32 +66,42 @@ export default function InspectRegister({
     formState: { isValid },
   } = form;
 
+  const { submitJson: submitRegisterTag, isSubmitting } = useModalFetcher();
+
   const handleSubmit = (data: TForm) => {
-    console.debug("submitting", data);
+    setRecentlyRegistered(true);
+    submitRegisterTag(data, {
+      method: "POST",
+      path: "/api/proxy/tags/register-tag",
+      query: {
+        _inspectionToken: inspectionToken,
+      },
+    });
   };
 
   return (
-    <div className="flex flex-col justify-center items-center h-full">
+    <div className="flex flex-col justify-center items-center gap-2 h-full w-full max-w-sm self-center">
       {tag?.asset ? (
-        <div className="flex flex-col items-center gap-2">
+        <>
           <SuccessCircle />
           <h2 className="text-lg font-semibold">
-            This tag is already registered to an asset.
+            This tag is {recentlyRegistered ? "now" : "already"} registered to
+            an asset.
           </h2>
           <Button asChild>
             <Link to="/inspect">Begin Inspection</Link>
           </Button>
-        </div>
+        </>
       ) : (
-        <div className="flex flex-col items-center gap-2">
-          <XCircle className="size-16 text-destructive" />
+        <>
+          <CircleSlash className="size-16 text-destructive" />
           <h2 className="text-lg font-semibold">
             This tag is not registered to an asset.
           </h2>
           <FormProvider {...form}>
             <form
               onSubmit={form.handleSubmit(handleSubmit)}
-              className="w-full max-w-md grid gap-4"
+              className="w-full grid gap-4"
             >
               {showRegistrationForm && (
                 <motion.div
@@ -123,22 +134,32 @@ export default function InspectRegister({
                   />
                 </motion.div>
               )}
+              {!canRegister && (
+                <p className="text-center text-sm text-destructive">
+                  You do not have permission to register tags.
+                </p>
+              )}
               {showRegistrationForm ? (
-                <Button key="submit-button" type="submit" disabled={!isValid}>
-                  Register
+                <Button
+                  key="submit-button"
+                  type="submit"
+                  disabled={!isValid || isSubmitting || !canRegister}
+                >
+                  {isSubmitting ? "Registering..." : "Register"}
                 </Button>
               ) : (
                 <Button
                   key="open-form-button"
                   type="button"
                   onClick={() => setShowRegistrationForm(true)}
+                  disabled={!canRegister}
                 >
                   Register Tag
                 </Button>
               )}
             </form>
           </FormProvider>
-        </div>
+        </>
       )}
     </div>
   );

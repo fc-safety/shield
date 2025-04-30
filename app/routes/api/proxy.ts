@@ -3,6 +3,7 @@ import { config } from "~/.server/config";
 import { buildUrl } from "~/lib/urls";
 import { getSearchParams, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/proxy";
+const INSPECTION_TOKEN_HEADER = "x-inspection-token";
 
 const proxy = async ({
   request,
@@ -25,6 +26,13 @@ const proxy = async ({
 
   if (viewContext) {
     headers.set("x-view-context", viewContext);
+  }
+
+  const inspectionToken = query.get("_inspectionToken");
+  query.delete("_inspectionToken");
+
+  if (inspectionToken) {
+    headers.set(INSPECTION_TOKEN_HEADER, inspectionToken);
   }
 
   const url = buildUrl(

@@ -75,7 +75,6 @@ export const setCookieResponseHeaders: unstable_MiddlewareFunction = async (
   const setCookieHeaderValues = requestContext.get("setCookieHeaderValues");
 
   for (const [key, value] of Object.entries(setCookieHeaderValues)) {
-    console.debug(`-------> Setting "${key}" session from SESSION MIDDLEWARE`);
     response.headers.append("Set-Cookie", value);
   }
 

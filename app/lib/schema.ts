@@ -327,6 +327,17 @@ export const updateTagSchema = createTagSchema
   .partial();
 export const updateTagSchemaResolver = zodResolver(updateTagSchema);
 
+export const registerTagSchema = z.object({
+  client: optionalConnectSchema,
+  site: optionalConnectSchema,
+  asset: z.object({
+    connect: z.object({
+      id: z.string(),
+    }),
+  }),
+});
+export const registerTagSchemaResolver = zodResolver(registerTagSchema);
+
 export const createAssetSchema = z.object({
   active: z.boolean(),
   name: z.string().nonempty(),
