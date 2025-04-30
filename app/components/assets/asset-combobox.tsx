@@ -121,7 +121,7 @@ export default function AssetCombobox({
       />
       {canCreate ? (
         <EditAssetButton
-          trigger={<></>}
+          trigger={null}
           open={createNew.open}
           onOpenChange={createNew.setOpen}
           clientId={clientId}
@@ -130,7 +130,7 @@ export default function AssetCombobox({
         />
       ) : (
         <Dialog open={createNew.open} onOpenChange={createNew.setOpen}>
-          <DialogContent>
+          <DialogContent className="z-[51]">
             <DialogHeader>
               <DialogTitle>Permission Required</DialogTitle>
             </DialogHeader>

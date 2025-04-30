@@ -444,7 +444,7 @@ function SuppliesTable({
           onOpenChange={editSupply.setOpen}
           product={editSupply.data}
           parentProduct={parentProduct}
-          trigger={<></>}
+          trigger={null}
         />
       )}
       <ConfirmationDialog {...deleteAction} />

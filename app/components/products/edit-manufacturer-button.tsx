@@ -22,7 +22,9 @@ export default function EditManufacturerButton({
       title={manufacturer ? "Edit Manufacturer" : "Add New Manufacturer"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {manufacturer ? <Pencil /> : <Plus />}
             {manufacturer ? "Edit" : "Add"} Manufacturer

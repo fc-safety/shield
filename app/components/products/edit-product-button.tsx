@@ -33,7 +33,9 @@ export default function EditProductButton({
       }`}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {product ? <Pencil /> : <Plus />}
             {product ? "Edit" : "Add"}{" "}

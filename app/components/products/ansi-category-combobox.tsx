@@ -87,7 +87,7 @@ export default function AnsiCategoryCombobox({
         onCreate={() => createNew.openNew()}
       />
       <EditAnsiCategoryButton
-        trigger={<></>}
+        trigger={null}
         open={createNew.open}
         onOpenChange={createNew.setOpen}
       />

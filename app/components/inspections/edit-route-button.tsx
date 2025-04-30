@@ -22,7 +22,9 @@ export default function EditRouteButton({
       title={route ? "Edit Route" : "Add New Route"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {route ? <Pencil /> : <Plus />}
             {route ? "Edit" : "Add"} Route

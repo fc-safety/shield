@@ -33,7 +33,9 @@ export default function TagAssistantButton({
       description="Use this assistant to guide you through the process of programming new tags."
       dialogClassName="sm:max-w-2xl"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             <WandSparkles /> Tag Assistant
           </Button>

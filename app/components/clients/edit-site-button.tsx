@@ -26,7 +26,9 @@ export default function EditSiteButton({
       title={site ? "Edit Site" : "Add New Site"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {site ? <Pencil /> : <Plus />}
             {site ? "Edit" : "Add"} Site {isSiteGroup ? "Group" : ""}

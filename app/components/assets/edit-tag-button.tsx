@@ -32,7 +32,9 @@ export default function EditTagButton({
       title={tag ? "Edit Tag" : "Add New Tag"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {tag ? <Pencil /> : <Plus />}
             {tag ? "Edit" : "Add"} Tag

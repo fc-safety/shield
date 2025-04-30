@@ -1,5 +1,6 @@
 import { History, LogIn } from "lucide-react";
 import { Form, Link } from "react-router";
+import { validateInspectionSession } from "~/.server/inspections";
 import { getLoginRedirect } from "~/.server/sessions";
 import { Button } from "~/components/ui/button";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
@@ -16,6 +17,12 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 
 export const action = async ({ request }: Route.ActionArgs) => {
   return getLoginRedirect(request);
+};
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  await validateInspectionSession(request);
+
+  return null;
 };
 
 export default function PublicInspectLogin() {

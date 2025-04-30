@@ -29,7 +29,17 @@ export default function DefaultErrorBoundary({
           Message: {errorDisplay.message}
         </p>
       )}
-      <div className="mt-10 flex items-center justify-center gap-2 flex-wrap">
+      <p className="mt-10 text-sm">
+        Try{" "}
+        <button
+          className="underline text-primary"
+          onClick={() => window.location.reload()}
+        >
+          refreshing the page
+        </button>
+        , or
+      </p>
+      <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
         <Button asChild>
           <Link to={homeTo}>Go back home</Link>
         </Button>

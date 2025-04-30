@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Badge } from "~/components/ui/badge";
 
 export default function SubStep({
@@ -7,7 +8,7 @@ export default function SubStep({
   children,
 }: React.PropsWithChildren<{
   idx: number;
-  title: string;
+  title: ReactNode;
   prefix?: string;
 }>) {
   return (

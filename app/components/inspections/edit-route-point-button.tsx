@@ -25,7 +25,9 @@ export default function EditRoutePointButton({
       onOpenChange={setOpen}
       title={routePoint ? "Edit Route Point" : "Add Route Point"}
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {routePoint ? <Pencil /> : <Plus />}
             {routePoint ? "Edit" : "Add"} Route Point

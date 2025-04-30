@@ -27,7 +27,9 @@ export default function EditAssetButton({
       title={asset ? "Edit Asset" : "Add New Asset"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {asset ? <Pencil /> : <Plus />}
             {asset ? "Edit" : "Add"} Asset

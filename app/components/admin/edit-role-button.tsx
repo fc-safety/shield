@@ -21,7 +21,9 @@ export default function EditRoleButton({ role, trigger }: EditRoleButtonProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger ?? (
+        {trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {role ? <Pencil /> : <Plus />}
             {role ? "Edit" : "Add"} Role

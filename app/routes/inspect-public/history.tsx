@@ -12,7 +12,7 @@ import { CircleAlert, CircleCheck, CircleSlash, LogIn } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { defaultDataGetter, FetchOptions } from "~/.server/api-utils";
-import { getSession, inspectionSessionStorage } from "~/.server/sessions";
+import { validateInspectionSession } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -31,14 +31,11 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const inspectionSession = await getSession(request, inspectionSessionStorage);
+  const { inspectionToken } = await validateInspectionSession(request);
 
   const { url, options } = FetchOptions.url("/inspections-public/history")
     .get()
-    .setHeader(
-      INSPECTION_TOKEN_HEADER,
-      inspectionSession.get("inspectionToken") ?? ""
-    )
+    .setHeader(INSPECTION_TOKEN_HEADER, inspectionToken)
     .build();
 
   return await defaultDataGetter<{

@@ -23,7 +23,9 @@ export default function EditUserButton({
       title={user ? "Edit User" : "Add New User"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {user ? <Pencil /> : <Plus />}
             {user ? "Edit" : "Add"} User

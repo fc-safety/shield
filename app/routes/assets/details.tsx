@@ -592,7 +592,7 @@ function ConsumablesTable({
           consumable={editConsumable.data}
           assetId={asset.id}
           parentProductId={asset.productId}
-          trigger={<></>}
+          trigger={null}
         />
       )}
       <ConfirmationDialog {...deleteAction} />

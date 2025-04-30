@@ -72,7 +72,7 @@ export function ResponsiveDialog({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogTrigger asChild={!!trigger}>{trigger}</DialogTrigger>
         <DialogContent
           className={cn(
             "sm:max-w-[425px] rounded-lg",
@@ -99,7 +99,7 @@ export function ResponsiveDialog({
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerTrigger asChild>{trigger}</DrawerTrigger>
+      <DrawerTrigger asChild={!!trigger}>{trigger}</DrawerTrigger>
       <DrawerContent
         className={cn("max-w-[100vw]", className, drawerClassName)}
       >

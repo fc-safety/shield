@@ -22,7 +22,9 @@ export default function EditClientButton({
       title={client ? "Edit Client" : "Add New Client"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {client ? <Pencil /> : <Plus />}
             {client ? "Edit" : "Add"} Client

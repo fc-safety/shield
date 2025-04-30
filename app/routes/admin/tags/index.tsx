@@ -230,7 +230,7 @@ export default function AdminTagsIndex({
         tag={editTag.data ?? undefined}
         open={editTag.open}
         onOpenChange={editTag.setOpen}
-        trigger={<></>}
+        trigger={null}
         viewContext="admin"
       />
       <ConfirmationDialog {...deleteAction} />

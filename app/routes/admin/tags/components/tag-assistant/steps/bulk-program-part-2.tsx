@@ -69,6 +69,9 @@ export default function StepBulkProgramPart2({
   );
 
   const [currentSerialNumberIdx, setCurrentSerialNumberIdx] = useState(0);
+  const currentSerialNumber = useMemo(() => {
+    return getSerialNumber(currentSerialNumberIdx);
+  }, [currentSerialNumberIdx, getSerialNumber]);
 
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { mutate: getGeneratedTagUrl, isPending: isGeneratingTagUrl } =
@@ -86,17 +89,16 @@ export default function StepBulkProgramPart2({
 
   const [writeData, setWriteData] = useState<string | null>(null);
   useEffect(() => {
-    const serialNumber = getSerialNumber(currentSerialNumberIdx);
-    if (serialNumber === null) {
+    if (currentSerialNumber === null) {
       return;
     }
 
-    getGeneratedTagUrl(serialNumber, {
+    getGeneratedTagUrl(currentSerialNumber, {
       onSuccess: (data) => {
         setWriteData(data);
       },
     });
-  }, [getSerialNumber, currentSerialNumberIdx]);
+  }, [currentSerialNumber, getGeneratedTagUrl]);
 
   return (
     <div className="w-full max-w-xl flex flex-col items-stretch justify-center gap-4">
@@ -173,7 +175,18 @@ export default function StepBulkProgramPart2({
         </p>
       </SubStep>
 
-      <SubStep idx={1} title="Write the URL to the tag from your NFC device.">
+      <SubStep
+        idx={1}
+        title={
+          <>
+            Using your NFC device, write the URL to the tag{" "}
+            <span className="font-bold">with the following serial number:</span>
+          </>
+        }
+      >
+        <div className="border-border border rounded-md p-4 flex items-center justify-center">
+          <p className="font-bold text-lg">{currentSerialNumber}</p>
+        </div>
         <p className="text-xs text-muted-foreground italic">
           This final step requires a physical device and accompanying software
           to write NFC tags. Desktop computers require an external device while

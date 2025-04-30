@@ -493,7 +493,7 @@ function AnsiCategoriesCard({
         ansiCategory={editAnsiCategory.data ?? undefined}
         open={editAnsiCategory.open}
         onOpenChange={editAnsiCategory.setOpen}
-        trigger={<></>}
+        trigger={null}
       />
       <ConfirmationDialog {...deleteAction} />
     </>

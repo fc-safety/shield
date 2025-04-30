@@ -332,7 +332,7 @@ export const registerTagSchema = z.object({
   site: optionalConnectSchema,
   asset: z.object({
     connect: z.object({
-      id: z.string(),
+      id: z.string().nonempty(),
     }),
   }),
 });

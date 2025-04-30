@@ -30,7 +30,9 @@ export default function EditConsumableButton({
       title={consumable ? "Edit Supply" : "Add New Supply"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {consumable ? <Pencil /> : <Plus />}
             {consumable ? "Edit" : "Add"} Supply

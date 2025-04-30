@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { isRouteErrorResponse } from "react-router";
+import { isNil } from "~/lib/utils";
 
 export default function useBoundaryError({ error }: { error: unknown }) {
   const errorDisplay = useMemo(() => {
@@ -22,8 +23,8 @@ export default function useBoundaryError({ error }: { error: unknown }) {
   };
 }
 
-const parseErrorMessage = (error: unknown) => {
-  if (error === null || error === undefined) {
+const parseErrorMessage = (error: unknown, noJson = false) => {
+  if (isNil(error)) {
     return "Unknown error";
   }
 
@@ -31,10 +32,15 @@ const parseErrorMessage = (error: unknown) => {
   if (typeof error === "object") {
     errObj = error as Record<string, unknown>;
   } else if (typeof error === "string") {
-    try {
-      errObj = JSON.parse(error);
-    } catch (e) {
+    if (noJson) {
       errObj = { message: error };
+    } else {
+      try {
+        const errorJson = JSON.parse(error);
+        return parseErrorMessage(errorJson);
+      } catch (e) {
+        errObj = { message: error };
+      }
     }
   }
 

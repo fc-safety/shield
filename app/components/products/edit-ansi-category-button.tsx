@@ -27,7 +27,9 @@ export default function EditAnsiCategoryButton({
       title={`${ansiCategory ? "Edit" : "Add New"} ANSI Category`}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {ansiCategory ? <Pencil /> : <Plus />}
             {ansiCategory ? "Edit" : "Add"} ANSI Category

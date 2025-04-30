@@ -22,7 +22,9 @@ export default function EditProductCategoryButton({
       title={productCategory ? "Edit Category" : "Add New Category"}
       dialogClassName="sm:max-w-lg"
       trigger={
-        trigger ?? (
+        trigger !== undefined ? (
+          trigger
+        ) : (
           <Button type="button" size="sm">
             {productCategory ? <Pencil /> : <Plus />}
             {productCategory ? "Edit" : "Add"} Category
