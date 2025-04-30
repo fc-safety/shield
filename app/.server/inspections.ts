@@ -1,22 +1,113 @@
-import { add, isAfter, type Duration } from "date-fns";
-import { data, redirect } from "react-router";
+import { redirect } from "react-router";
 import { inspectionSessionStorage } from "~/.server/sessions";
 import type { InspectionRoute, InspectionSession } from "~/lib/models";
-import { dateSort, getSearchParam } from "../lib/utils";
+import { dateSort, getSearchParams } from "../lib/utils";
 import { api } from "./api";
-import { DataResponse, mergeInit } from "./api-utils";
 
-const TAG_SESSION_DURATION: Duration = { hours: 1 };
+export const validateInspectionSession = async (
+  request: Request,
+  session?: Awaited<ReturnType<typeof inspectionSessionStorage.getSession>>
+) => {
+  const inspectionSession =
+    session ??
+    (await inspectionSessionStorage.getSession(request.headers.get("cookie")));
 
-export const validateTagId = async (request: Request, redirectTo: string) => {
-  let extId = getSearchParam(request, "extId");
+  const inspectionToken = inspectionSession.get("inspectionToken");
+
+  if (!inspectionToken) {
+    throw new Response("No active inspection session.", {
+      status: 400,
+    });
+  }
+
+  const validateInspectionTokenResult =
+    await api.inspectionsPublic.validateInspectionToken(
+      request,
+      inspectionToken
+    );
+
+  if (!validateInspectionTokenResult.isValid) {
+    throw new Response(
+      validateInspectionTokenResult.reason ??
+        "Failed to validate inspection session.",
+      {
+        status: 400,
+      }
+    );
+  }
+
+  return { inspectionToken, ...validateInspectionTokenResult };
+};
+
+export const validateTagRequestAndBuildSession = async (
+  request: Request,
+  redirectTo: string
+) => {
+  const requestQuery = getSearchParams(request);
+
+  // Step 1: Get the tag ID from the request query. This should only be present when initially scanning a tag.
+  //
+  // NOTE: As of this 2025 Shield redesign, tags are being programmed with signed URLs. This allows us to trust
+  // the incoming tag ID (or external ID) even if it hasn't been created in our system yet.
+  //
+  // However, in order to continue supporting already programmed and in-use tags, we also check for the `extId`
+  // param. We don't expect these tag URLs to be accompanied by a signature, but they should always already exist
+  // in our system.
+  //
+  // Thus validation allows two methods:
+  // 1. Validate signature if present (then look up tag and create if not present)
+  // 2. Or, simply look up tag and consider valid if found.
+  let extId = requestQuery.get("id") ?? requestQuery.get("extId");
+  let isValidNewTagUrl = false;
+  let inspectionToken: string | undefined;
+
+  // Step 2: Validate the tag signature if present. Again, this should only be present when initially scanning a tag.
+  // This is validation method #1.
+  if (requestQuery.has("sig")) {
+    const {
+      isValid: isValidSignature,
+      inspectionToken: inspectionTokenFromSignature,
+    } = await api.inspectionsPublic.isValidTagUrl(request, request.url);
+
+    if (!isValidSignature) {
+      throw new Response("Invalid tag signature.", {
+        status: 400,
+      });
+    }
+
+    isValidNewTagUrl = true;
+    inspectionToken = inspectionTokenFromSignature;
+  }
+
   const inspectionSession = await inspectionSessionStorage.getSession(
     request.headers.get("cookie")
   );
 
   if (extId) {
+    // Step 3 (part A): If there is no valid signature, but the tag ID is present, validate the tag ID.
+    // This is validation method #2.
+    if (!isValidNewTagUrl) {
+      const {
+        isValid: isValidTagId,
+        inspectionToken: inspectionTokenFromTagId,
+      } = await api.inspectionsPublic.isValidTagId(request, { extId });
+
+      isValidNewTagUrl = isValidTagId;
+      inspectionToken = inspectionTokenFromTagId;
+    }
+
+    if (!isValidNewTagUrl || !extId) {
+      throw new Response("Tag not found", { status: 404 });
+    }
+
+    // Step 3 (part B): If this is a valid new tag URL, set session data and redirect
+    // to remove the tag params from the URL.
     inspectionSession.set("activeTag", extId);
     inspectionSession.set("tagActivatedOn", new Date().toISOString());
+    inspectionSession.set("inspectionToken", inspectionToken);
+
+    // Redirect to remove the tag params from the URL. This prevents users from bookmarking or
+    // sharing the tag URL.
     throw redirect(redirectTo, {
       headers: {
         "Set-Cookie": await inspectionSessionStorage.commitSession(
@@ -25,25 +116,15 @@ export const validateTagId = async (request: Request, redirectTo: string) => {
       },
     });
   }
-  extId = inspectionSession.get("activeTag") ?? null;
-  const tagActivatedOn = inspectionSession.get("tagActivatedOn");
 
-  if (
-    !tagActivatedOn ||
-    isAfter(new Date(), add(new Date(tagActivatedOn), TAG_SESSION_DURATION))
-  ) {
-    throw new Response("Tag session expired.", {
-      status: 400,
-    });
-  }
+  // Step 4: If pulling from session, validate session and get tag ID.
+  const validatedInspectionSessionContext = await validateInspectionSession(
+    request,
+    inspectionSession
+  );
 
-  if (!extId) {
-    throw new Response("No tag ID provided.", {
-      status: 400,
-    });
-  }
-
-  return extId;
+  // Step 5: Get and return tag context.
+  return validatedInspectionSessionContext;
 };
 
 export const getNextPointFromSession = (
@@ -103,41 +184,27 @@ export const getNextPointFromSession = (
   return { nextPoint, routeCompleted };
 };
 
-export const getInspectionRouteAndSessionData = (
+export const getInspectionRouteAndSessionData = async (
   request: Request,
-  assetId: string,
-  init?: ResponseInit
+  assetId: string
 ) => {
-  const getData = async () => {
-    let matchingRoutes: InspectionRoute[] | null = null;
-    let _init: ResponseInit | null = init ?? null;
+  let matchingRoutes: InspectionRoute[] | null = null;
 
-    const { data: activeSessions, init: thisInit } =
-      await api.inspections.getActiveSessionsForAsset(request, assetId);
-    _init = mergeInit(_init, thisInit);
+  const activeSessions = await api.inspections.getActiveSessionsForAsset(
+    request,
+    assetId
+  );
 
-    if (activeSessions.length === 0) {
-      const { data: _matchingRoutes, init: thisInit } =
-        await api.inspectionRoutes.getForAssetId(request, assetId);
-      matchingRoutes = _matchingRoutes;
-      _init = mergeInit(_init, thisInit);
-    } else {
-      matchingRoutes = activeSessions
-        .map((session) => session.inspectionRoute)
-        .filter((r): r is InspectionRoute => !!r);
-    }
+  if (activeSessions.length === 0) {
+    matchingRoutes = await api.inspectionRoutes.getForAssetId(request, assetId);
+  } else {
+    matchingRoutes = activeSessions
+      .map((session) => session.inspectionRoute)
+      .filter((r): r is InspectionRoute => !!r);
+  }
 
-    return data(
-      {
-        activeSessions,
-        matchingRoutes,
-      },
-      _init ?? undefined
-    );
+  return {
+    activeSessions,
+    matchingRoutes,
   };
-
-  return new DataResponse<{
-    activeSessions: InspectionSession[];
-    matchingRoutes: InspectionRoute[];
-  }>((resolve) => resolve(getData()));
 };

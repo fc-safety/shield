@@ -75,7 +75,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     };
   }
 
-  return api.products.list(request, query).mapTo((r) => ({
+  return api.products.list(request, query).then((r) => ({
     products: r.results,
     isGlobalAdmin,
     onlyMyProducts,

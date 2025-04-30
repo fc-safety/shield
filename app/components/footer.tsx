@@ -1,3 +1,5 @@
+import { BANNER_LOGO_DARK_URL, BANNER_LOGO_LIGHT_URL } from "~/lib/constants";
+
 export default function Footer() {
   return (
     <footer className="w-full bg-secondary p-4 flex justify-center">
@@ -20,8 +22,3 @@ export default function Footer() {
     </footer>
   );
 }
-
-const BANNER_LOGO_LIGHT_URL =
-  "https://content.fc-safety.com/fc_shield_logo_full_05x-light.png";
-const BANNER_LOGO_DARK_URL =
-  "https://content.fc-safety.com/fc_shield_logo_full_05x-dark.png";

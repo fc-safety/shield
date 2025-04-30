@@ -3,7 +3,6 @@ import {
   type Alert,
   type AnsiCategory,
   type Asset,
-  type AssetQuestion,
   type Client,
   type Inspection,
   type InspectionRoute,
@@ -18,34 +17,12 @@ import {
   type VaultOwnership,
 } from "~/lib/models";
 import {
-  createAnsiCategorySchema,
-  createInspectionRouteSchema,
   createInspectionSchema,
-  createProductRequestSchema,
-  createRoleSchema,
+  createTagSchema,
   createVaultOwnershipSchema,
   globalSettingsSchema,
   resolveAlertSchema,
-  updateAnsiCategorySchema,
-  updateInspectionRouteSchema,
-  updateRoleSchema,
-  updateVaultOwnershipSchema,
-  type baseSiteSchema,
-  type createAssetQuestionSchema,
-  type createAssetSchema,
-  type createClientSchema,
-  type createManufacturerSchema,
-  type createProductCategorySchema,
-  type createProductSchema,
-  type createTagSchema,
   type setupAssetSchema,
-  type updateAssetQuestionSchema,
-  type updateAssetSchema,
-  type updateClientSchema,
-  type updateManufacturerSchema,
-  type updateProductCategorySchema,
-  type updateProductSchema,
-  type updateTagSchema,
 } from "~/lib/schema";
 import type {
   ClientUser,
@@ -54,7 +31,14 @@ import type {
   Role,
 } from "~/lib/types";
 import type { QueryParams } from "~/lib/urls";
-import { authenticatedData, CRUD, FetchOptions } from "./api-utils";
+import { INSPECTION_TOKEN_HEADER } from "~/routes/inspect/constants/headers";
+import {
+  CRUD,
+  defaultDataGetter,
+  FetchOptions,
+  getAuthenticatedData,
+  type FetchBuildOptions,
+} from "./api-utils";
 
 const backendCreateInspectionSchema = createInspectionSchema.extend({
   useragent: z.string(),
@@ -65,13 +49,11 @@ const backendCreateInspectionSchema = createInspectionSchema.extend({
 export const api = {
   // ASSETS
   assets: {
-    ...CRUD.for<Asset, typeof createAssetSchema, typeof updateAssetSchema>(
-      "/assets"
-    ).all(),
+    ...CRUD.for<Asset>("/assets").all(),
 
     // Asset setup questions
     setup: (request: Request, input: z.infer<typeof setupAssetSchema>) => {
-      return authenticatedData<Asset>(request, [
+      return getAuthenticatedData<Asset>(request, [
         FetchOptions.url("/assets/:id/setup", { id: input.id })
           .post()
           .json(input)
@@ -82,7 +64,7 @@ export const api = {
       request: Request,
       input: z.infer<typeof setupAssetSchema>
     ) => {
-      return authenticatedData<Asset>(request, [
+      return getAuthenticatedData<Asset>(request, [
         FetchOptions.url("/assets/:id/setup", { id: input.id })
           .patch()
           .json(input)
@@ -91,44 +73,74 @@ export const api = {
     },
   },
   alerts: {
-    ...CRUD.for<Alert, never, never>("/alerts").only(["get", "list"]),
+    ...CRUD.for<Alert>("/alerts"),
     resolve: (
       request: Request,
       id: string,
       input: z.infer<typeof resolveAlertSchema>
     ) => {
-      return authenticatedData<Alert>(request, [
+      return getAuthenticatedData<Alert>(request, [
         FetchOptions.url(`/alerts/${id}/resolve`).post().json(input).build(),
       ]);
     },
   },
   tags: {
-    ...CRUD.for<Tag, typeof createTagSchema, typeof updateTagSchema>(
-      "/tags"
-    ).all(),
-    getByExternalId: (request: Request, externalId: string) =>
-      authenticatedData<Tag>(request, [
-        FetchOptions.url("/tags/externalId/:externalId", { externalId })
+    ...CRUD.for<Tag>("/tags").all(),
+    create: (request: Request, input: z.infer<typeof createTagSchema>) =>
+      getAuthenticatedData<Tag>(request, [
+        FetchOptions.url("/tags").post().json(input).build(),
+      ]),
+    getForInspection: (request: Request, externalId: string) =>
+      getAuthenticatedData<Tag>(request, [
+        FetchOptions.url("/tags/for-inspection/:externalId", { externalId })
           .get()
+          .build(),
+      ]),
+    checkRegistration: (request: Request, inspectionToken: string) =>
+      getAuthenticatedData<Tag>(request, [
+        FetchOptions.url("/tags/check-registration")
+          .get()
+          .setHeader(INSPECTION_TOKEN_HEADER, inspectionToken)
+          .build(),
+      ]),
+    getForAssetSetup: (request: Request, externalId: string) =>
+      getAuthenticatedData<Tag>(request, [
+        FetchOptions.url("/tags/for-asset-setup/:externalId", { externalId })
+          .get()
+          .build(),
+      ]),
+    validateTagUrl: (request: Request, url: string) =>
+      getAuthenticatedData<{ isValid: boolean }>(request, [
+        FetchOptions.url("/tags/validate-tag-url", { tagUrl: url })
+          .post()
+          .build(),
+      ]),
+    validateByTagId: (request: Request, tagId: string) =>
+      getAuthenticatedData<{ isValid: boolean }>(request, [
+        FetchOptions.url("/tags/validate-by-tag-id/:tagId", { tagId })
+          .post()
           .build(),
       ]),
   },
   inspections: {
-    ...CRUD.for<
-      Inspection,
-      typeof backendCreateInspectionSchema,
-      never,
-      {
+    ...CRUD.for<Inspection>("/inspections").all(),
+    create: (
+      request: Request,
+      input: z.infer<typeof backendCreateInspectionSchema>,
+      options: FetchBuildOptions
+    ) =>
+      getAuthenticatedData<{
         inspection: Inspection;
         session: InspectionSession | null;
-      }
-    >("/inspections").except(["delete", "deleteAndRedirect", "update"]),
+      }>(request, [
+        FetchOptions.url("/inspections").post().json(input).build(options),
+      ]),
     getSession: (request: Request, id: string) =>
-      authenticatedData<InspectionSession>(request, [
+      getAuthenticatedData<InspectionSession>(request, [
         FetchOptions.url("/inspections/sessions/:id", { id }).get().build(),
       ]),
     getActiveSessionsForAsset: (request: Request, assetId: string) =>
-      authenticatedData<InspectionSession[]>(request, [
+      getAuthenticatedData<InspectionSession[]>(request, [
         FetchOptions.url("/inspections/active-sessions/asset/:assetId", {
           assetId,
         })
@@ -136,168 +148,116 @@ export const api = {
           .build(),
       ]),
     completeSession: (request: Request, id: string) =>
-      authenticatedData<InspectionSession>(request, [
+      getAuthenticatedData<InspectionSession>(request, [
         FetchOptions.url("/inspections/sessions/:id/complete", { id })
           .post()
           .build(),
       ]),
   },
+  inspectionsPublic: {
+    isValidTagUrl: (request: Request, tagUrl: string) => {
+      const { url, options } = FetchOptions.url(
+        "/inspections-public/is-valid-tag-url",
+        { url: tagUrl }
+      )
+        .get()
+        .build();
+
+      return defaultDataGetter<{
+        isValid: boolean;
+        inspectionToken?: string;
+      }>(fetch(url, options));
+    },
+    isValidTagId: (
+      request: Request,
+      { id, extId }: { id?: string; extId?: string }
+    ) => {
+      const { url, options } = FetchOptions.url(
+        "/inspections-public/is-valid-tag-id",
+        { id, extId }
+      )
+        .get()
+        .build();
+
+      return defaultDataGetter<{
+        isValid: boolean;
+        tag: { id: string; externalId: string } | null;
+        inspectionToken?: string;
+      }>(fetch(url, options));
+    },
+    validateInspectionToken: (request: Request, token: string) => {
+      const { url, options } = FetchOptions.url(
+        "/inspections-public/validate-token"
+      )
+        .get()
+        .setHeader(INSPECTION_TOKEN_HEADER, token)
+        .build();
+
+      return defaultDataGetter<{
+        isValid: boolean;
+        reason: string | null;
+        tagExternalId: string;
+        serialNumber: string;
+        expiresOn: string;
+      }>(fetch(url, options));
+    },
+  },
   inspectionRoutes: {
-    ...CRUD.for<
-      InspectionRoute,
-      typeof createInspectionRouteSchema,
-      typeof updateInspectionRouteSchema
-    >("/inspection-routes").all(),
+    ...CRUD.for<InspectionRoute>("/inspection-routes").all(),
+
     getForAssetId: (request: Request, assetId: string) =>
-      authenticatedData<InspectionRoute[]>(request, [
+      getAuthenticatedData<InspectionRoute[]>(request, [
         FetchOptions.url("/inspection-routes/asset/:assetId", { assetId })
           .get()
           .build(),
       ]),
   },
   productRequests: {
-    ...CRUD.for<ProductRequest, typeof createProductRequestSchema, never>(
-      "/product-requests"
-    ).except(["delete", "deleteAndRedirect", "update"]),
+    ...CRUD.for<ProductRequest>("/product-requests").all(),
   },
 
   // PRODUCTS
-  products: {
-    ...CRUD.for<
-      Product,
-      typeof createProductSchema,
-      typeof updateProductSchema
-    >("/products").all(),
-    addQuestion: (
-      request: Request,
-      productId: string,
-      input: z.infer<typeof createAssetQuestionSchema>
-    ) =>
-      authenticatedData<AssetQuestion>(request, [
-        FetchOptions.url("/products/:id/questions", { id: productId })
-          .post()
-          .json(input)
-          .build(),
-      ]),
-    updateQuestion: (
-      request: Request,
-      productId: string,
-      questionId: string,
-      input: z.infer<typeof updateAssetQuestionSchema>
-    ) =>
-      authenticatedData<AssetQuestion>(request, [
-        FetchOptions.url("/products/:id/questions/:questionId", {
-          id: productId,
-          questionId,
-        })
-          .patch()
-          .json(input)
-          .build(),
-      ]),
-    deleteQuestion: (request: Request, productId: string, questionId: string) =>
-      authenticatedData<AssetQuestion>(request, [
-        FetchOptions.url("/products/:id/questions/:questionId", {
-          id: productId,
-          questionId,
-        })
-          .delete()
-          .build(),
-      ]),
-  },
-  manufacturers: CRUD.for<
-    Manufacturer,
-    typeof createManufacturerSchema,
-    typeof updateManufacturerSchema
-  >("/manufacturers").all(),
-  productCategories: {
-    ...CRUD.for<
-      ProductCategory,
-      typeof createProductCategorySchema,
-      typeof updateProductCategorySchema
-    >("/product-categories").all(),
-    addQuestion: (
-      request: Request,
-      categoryId: string,
-      input: z.infer<typeof createAssetQuestionSchema>
-    ) =>
-      authenticatedData<AssetQuestion>(request, [
-        FetchOptions.url("/product-categories/:id/questions", {
-          id: categoryId,
-        })
-          .post()
-          .json(input)
-          .build(),
-      ]),
-    updateQuestion: (
-      request: Request,
-      categoryId: string,
-      questionId: string,
-      input: z.infer<typeof updateAssetQuestionSchema>
-    ) =>
-      authenticatedData<AssetQuestion>(request, [
-        FetchOptions.url("/product-categories/:id/questions/:questionId", {
-          id: categoryId,
-          questionId,
-        })
-          .patch()
-          .json(input)
-          .build(),
-      ]),
-    deleteQuestion: (request: Request, productId: string, questionId: string) =>
-      authenticatedData<AssetQuestion>(request, [
-        FetchOptions.url("/product-categories/:id/questions/:questionId", {
-          id: productId,
-          questionId,
-        })
-          .delete()
-          .build(),
-      ]),
-  },
-  ansiCategories: CRUD.for<
-    AnsiCategory,
-    typeof createAnsiCategorySchema,
-    typeof updateAnsiCategorySchema
-  >("/ansi-categories").all(),
+  products: CRUD.for<Product>("/products").all(),
+  manufacturers: CRUD.for<Manufacturer>("/manufacturers").all(),
+  productCategories: CRUD.for<ProductCategory>("/product-categories").all(),
+  ansiCategories: CRUD.for<AnsiCategory>("/ansi-categories").all(),
   // CLIENTS & SITES
   clients: {
-    ...CRUD.for<Client, typeof createClientSchema, typeof updateClientSchema>(
-      "/clients"
-    ).all(),
+    ...CRUD.for<Client>("/clients").all(),
   },
-  users: CRUD.for<ClientUser, never, never>(`/users`).all(),
-  sites: CRUD.for<Site, typeof baseSiteSchema, typeof baseSiteSchema>(
-    "/sites"
-  ).except(["list"]),
+  users: CRUD.for<ClientUser>(`/users`).all(),
+  sites: CRUD.for<Site>("/sites").except(["list"]),
 
   // Other ADMIN
-  roles: CRUD.for<Role, typeof createRoleSchema, typeof updateRoleSchema>(
-    "/roles"
-  ).all(),
+  roles: CRUD.for<Role>("/roles").all(),
   settings: {
     getGlobal: (request: Request) =>
-      authenticatedData<SettingsBlock<z.infer<typeof globalSettingsSchema>>>(
+      getAuthenticatedData<SettingsBlock<z.infer<typeof globalSettingsSchema>>>(
         request,
         [FetchOptions.url("/settings/global").get().build()]
       ),
   },
   vaultOwnerships: {
-    ...CRUD.for<
-      VaultOwnership,
-      typeof createVaultOwnershipSchema,
-      typeof updateVaultOwnershipSchema
-    >("/vault-ownerships").all(),
+    ...CRUD.for<VaultOwnership>("/vault-ownerships").all(),
+    create: (
+      request: Request,
+      input: z.infer<typeof createVaultOwnershipSchema>
+    ) =>
+      getAuthenticatedData<VaultOwnership>(request, [
+        FetchOptions.url("/vault-ownerships").post().json(input).build(),
+      ]),
     getByKey: (request: Request, key: string) =>
-      authenticatedData<VaultOwnership>(request, [
+      getAuthenticatedData<VaultOwnership>(request, [
         FetchOptions.url("/vault-ownerships/key/:key", { key }).get().build(),
       ]),
   },
   reports: {
     list: (request: Request) =>
-      authenticatedData<ListReportsResult[]>(request, [
+      getAuthenticatedData<ListReportsResult[]>(request, [
         FetchOptions.url("/reports").get().build(),
       ]),
     get: (request: Request, id: string, query: QueryParams) =>
-      authenticatedData<GetReportResult>(request, [
+      getAuthenticatedData<GetReportResult>(request, [
         FetchOptions.url("/reports/:id", { id, ...query })
           .get()
           .build(),

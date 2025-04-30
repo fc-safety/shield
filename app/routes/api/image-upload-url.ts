@@ -10,8 +10,6 @@ import type { Route } from "./+types/image-upload-url";
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireUserSession(request);
-  let init: ResponseInit | null = null;
-
   const searchParams = getSearchParams(request);
 
   const keyStart = searchParams.get("key") ?? "";
@@ -23,10 +21,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (!isPublic) {
     // If is private, store ownership information in the database.
-    const { init: thisInit } = await api.vaultOwnerships.create(request, {
+    await api.vaultOwnerships.create(request, {
       key,
     });
-    init = thisInit;
   }
 
   const putUrl = await getSignedUrl(
@@ -52,7 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         config.APP_HOST
       );
 
-  return Response.json({ putUrl, getUrl }, init ?? undefined);
+  return Response.json({ putUrl, getUrl });
 }
 
 const uniquifyKey = (keyStart: string) => {

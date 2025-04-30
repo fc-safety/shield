@@ -1,7 +1,8 @@
 import { format } from "date-fns";
 import { Boxes, Pencil, Users, Warehouse } from "lucide-react";
-import { Link, type UIMatch } from "react-router";
+import { data, Link, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
+import { catchResponse } from "~/.server/api-utils";
 import ClientUsersTable from "~/components/clients/client-users-table";
 import EditSiteButton from "~/components/clients/edit-site-button";
 import SitesTable from "~/components/clients/sites-table";
@@ -31,9 +32,9 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const siteId = validateParam(params, "siteId");
-  return api.sites.get(request, siteId, { context: "admin" }).mapWith((site) =>
-    api.users
-      .list(
+  return api.sites.get(request, siteId, { context: "admin" }).then((site) =>
+    catchResponse(
+      api.users.list(
         request,
         {
           clientId: site.clientId,
@@ -41,23 +42,19 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
           limit: 10000,
         },
         { context: "admin" }
-      )
-      .catchResponse()
-      .mapTo((dataOrError) => {
-        // Catch 403s from the API. If access is forbidden, only hide the users part and not the entire page.
-        if (
-          dataOrError.error &&
-          dataOrError.error instanceof Response &&
-          dataOrError.error.status !== 403
-        ) {
-          throw dataOrError.error;
-        }
+      ),
+      { codes: [403] }
+    ).then((dataWithResponseInit) => {
+      const dataOrError = dataWithResponseInit.data;
 
-        return {
+      return data(
+        {
           site,
           users: dataOrError.data?.results,
-        };
-      })
+        },
+        dataWithResponseInit.init ?? undefined
+      );
+    })
   );
 };
 

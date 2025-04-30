@@ -1,14 +1,36 @@
-import { data, redirect } from "react-router";
-import type { z } from "zod";
+import { data } from "react-router";
 import type { ResultsPage } from "~/lib/models";
 import { buildUrl, type PathParams, type QueryParams } from "~/lib/urls";
 import { config } from "./config";
 import { logger } from "./logger";
+import { requestContext } from "./request-context";
 import {
   refreshTokensOrRelogin,
   requireUserSession,
   type LoginRedirectOptions,
 } from "./sessions";
+
+export const ResourceBasePaths = {
+  assets: "/assets",
+  alerts: "/alerts",
+  tags: "/tags",
+  inspections: "/inspections",
+  inspectionRoutes: "/inspection-routes",
+  productRequests: "/product-requests",
+  products: "/products",
+  manufacturers: "/manufacturers",
+  productCategories: "/product-categories",
+  ansiCategories: "/ansi-categories",
+  clients: "/clients",
+  users: "/users",
+  sites: "/sites",
+  roles: "/roles",
+  settings: "/settings",
+  vaultOwnerships: "/vault-ownerships",
+  reports: "/reports",
+};
+
+type ResourceKey = keyof typeof ResourceBasePaths;
 
 type NativeFetchParameters = Parameters<typeof fetch>;
 type FetchArguments = {
@@ -19,16 +41,18 @@ type FetchArguments = {
 const VIEW_CONTEXTS = ["admin", "user"] as const;
 export type ViewContext = (typeof VIEW_CONTEXTS)[number];
 
-type FetchBuildOptions = {
+export type FetchBuildOptions = {
   context?: ViewContext;
   params?: QueryParams;
+  headers?: HeadersInit;
 };
 
 export class FetchOptions {
   private url: NativeFetchParameters[0];
-  private options: Exclude<NativeFetchParameters[1], undefined> & {
+  private options: NonNullable<NativeFetchParameters[1]> & {
     headers: Headers;
   };
+  private singleResourceKey: string | undefined = undefined;
 
   constructor(
     url: NativeFetchParameters[0],
@@ -42,6 +66,13 @@ export class FetchOptions {
     };
   }
 
+  public static resources = Object.fromEntries(
+    Object.entries(ResourceBasePaths).map(([key, resourceBasePath]) => [
+      key,
+      () => new FetchOptions(buildUrl(resourceBasePath, config.API_BASE_URL)),
+    ])
+  ) as Record<ResourceKey, () => FetchOptions>;
+
   public static builder(
     url: NativeFetchParameters[0],
     options?: NativeFetchParameters[1]
@@ -54,6 +85,15 @@ export class FetchOptions {
     params?: QueryParams & PathParams<TPath>
   ) {
     return new FetchOptions(buildUrl(path, config.API_BASE_URL, params));
+  }
+
+  public byKey(key: string) {
+    this.singleResourceKey = key;
+    return this;
+  }
+
+  public byId(id: string) {
+    return this.byKey(id);
   }
 
   public get() {
@@ -76,6 +116,21 @@ export class FetchOptions {
     return this;
   }
 
+  public setHeaders(headers: HeadersInit) {
+    this.options.headers = new Headers(headers);
+    return this;
+  }
+
+  public setHeader(key: string, value: string) {
+    this.options.headers.set(key, value);
+    return this;
+  }
+
+  public appendHeader(key: string, value: string) {
+    this.options.headers.append(key, value);
+    return this;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public json(body: any) {
     this.options.body = JSON.stringify(body);
@@ -87,10 +142,39 @@ export class FetchOptions {
     if (options.context) {
       this.options.headers.set("X-View-Context", options.context);
     }
+
+    const newHeaders = new Headers(this.options.headers);
+    if (options.headers) {
+      Object.entries(options.headers).forEach(([key, value]) => {
+        newHeaders.set(key, value);
+      });
+    }
+
+    if (this.singleResourceKey) {
+      this.addResourceKeyToUrl(this.singleResourceKey);
+    }
+
     return {
       url: this.url,
       options: this.options,
     };
+  }
+
+  private addResourceKeyToUrl(key: string) {
+    const addIdToPath = (url: URL, id: string) => {
+      const path = url.pathname;
+      const newPath = `${path.replace(/\/$/, "")}/${id}`;
+      url.pathname = newPath;
+      return url;
+    };
+
+    if (typeof this.url === "string") {
+      this.url = addIdToPath(new URL(this.url), key).toString();
+    } else if (this.url instanceof URL) {
+      this.url = addIdToPath(new URL(this.url), key);
+    } else {
+      throw new Error("Cannot modify path of read-only Request URL");
+    }
   }
 }
 
@@ -110,95 +194,40 @@ export const tryJson = async <T = unknown>(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type DataOrError<T> = { data?: T; error?: any };
 
-export const mergeInit = (
-  responseInit1: ResponseInit | null,
-  responseInit2: ResponseInit | null
-) => {
-  if (!responseInit1 || !responseInit2) {
-    return responseInit1 ?? responseInit2;
-  }
+export const catchResponse = async <T>(
+  dataPromise: Promise<T>,
+  options: {
+    /** Only catch responses with these status codes. */
+    codes?: number[];
+  } = {}
+): Promise<ReturnType<typeof data<DataOrError<T>>>> => {
+  return dataPromise
+    .then((gotData) => data({ data: gotData }))
+    .catch(async (errorOrResponse) => {
+      let status: number = 500;
+      let error: unknown = null;
 
-  const mergedHeaders = new Headers(responseInit1.headers);
-  const headersToMerge = new Headers(responseInit2.headers);
-  headersToMerge.forEach((value, key) => {
-    mergedHeaders.set(key, value);
-  });
-  return { ...responseInit1, headers: mergedHeaders };
-};
-
-export class DataResponse<T> extends Promise<ReturnType<typeof data<T>>> {
-  public mapTo<U>(fn: (initData: T) => U | Promise<U>) {
-    return this.then(async ({ data: initData, init }) =>
-      data(await fn(initData), init ?? undefined)
-    ) as DataResponse<Awaited<U>>;
-  }
-
-  public mapWith<U>(fn: (initData: T) => DataResponse<U>) {
-    return this.then(({ data: initData, init: thisInit }) =>
-      fn(initData).then(({ data: thatData, init: thatInit }) =>
-        data(thatData, mergeInit(thisInit, thatInit) ?? undefined)
-      )
-    ) as DataResponse<Awaited<U>>;
-  }
-
-  public mergeWith<U>(other: DataResponse<U>) {
-    return DataResponse.all([this, other]).then(
-      ([
-        { data: thisData, init: thisInit },
-        { data: otherData, init: otherInit },
-      ]) =>
-        data([thisData, otherData], mergeInit(thisInit, otherInit) ?? undefined)
-    ) as DataResponse<[T, U]>;
-  }
-
-  public mergeInit(init: ResponseInit | null) {
-    return this.then(({ data: thisData, init: thisInit }) =>
-      data(thisData, mergeInit(thisInit, init) ?? undefined)
-    ) as DataResponse<T>;
-  }
-
-  public async asRedirect(url: string | ((data: T) => string)) {
-    return this.then(({ data: thisData, init }) =>
-      redirect(
-        typeof url === "function" ? url(thisData) : url,
-        init ?? undefined
-      )
-    );
-  }
-
-  public catchResponse(
-    options: {
-      /** Only catch responses with these status codes. */
-      codes?: number[];
-    } = {}
-  ): DataResponse<DataOrError<T>> {
-    return (
-      this.then(({ data: initData, init }) =>
-        data({ data: initData }, init ?? undefined)
-      ) as DataResponse<DataOrError<T>>
-    ).catch(async (errorOrResponse) => {
       if (errorOrResponse instanceof Response) {
         if (options.codes && !options.codes.includes(errorOrResponse.status)) {
           throw errorOrResponse;
         }
-        return data(
-          {
-            error: await tryJson(errorOrResponse).then(({ body }) => body),
-          },
-          { status: errorOrResponse.status }
-        );
+        error = await tryJson(errorOrResponse).then(({ body }) => body);
+        status = errorOrResponse.status;
+      } else if (errorOrResponse instanceof Error) {
+        error = errorOrResponse.message;
+        logger.error(errorOrResponse);
+      } else {
+        error = errorOrResponse;
       }
-      logger.error(errorOrResponse);
-      return data({ error: errorOrResponse.message }, { status: 500 });
-    }) as DataResponse<DataOrError<T>>;
-  }
-}
+
+      return data({ error }, { status });
+    });
+};
 
 type AtLeastOneFetch = [FetchArguments, ...FetchArguments[]];
 type AtLeastOneAwaitableResponse = [Promise<Response>, ...Promise<Response>[]];
 export const fetchAuthenticated = async (
   request: Request,
-  setSessionCookie: (cookie: string) => void,
   fetchArgs: AtLeastOneFetch,
   options: LoginRedirectOptions = {}
 ) => {
@@ -226,30 +255,17 @@ export const fetchAuthenticated = async (
   const testResponse = await Promise.any(awaitableResponses);
   if (testResponse.status === 401) {
     user.tokens = await refreshTokensOrRelogin(request, session, user.tokens);
-    setSessionCookie(await getSessionToken(session));
+
+    const sessionToken = await getSessionToken(session);
+    requestContext.set("setCookieHeaderValues", (values) => ({
+      ...values,
+      authSession: sessionToken,
+    }));
+
     awaitableResponses = getResponses(user.tokens.accessToken);
   }
 
   return awaitableResponses;
-};
-
-export const authenticatedResolver = async (
-  request: Request,
-  fetchArgs: AtLeastOneFetch,
-  options: LoginRedirectOptions = {}
-) => {
-  const resHeaders = new Headers({});
-  const responses = await fetchAuthenticated(
-    request,
-    (cookie) => resHeaders.append("Set-Cookie", cookie),
-    fetchArgs,
-    options
-  );
-
-  return {
-    responses,
-    headers: resHeaders,
-  };
 };
 
 export const defaultDataGetter = async <T = unknown>(
@@ -280,7 +296,7 @@ export const defaultDataGetter = async <T = unknown>(
   });
 };
 
-export const authenticatedData = <T>(
+export const getAuthenticatedData = async <T>(
   request: Request,
   fetchArgs: AtLeastOneFetch,
   {
@@ -290,84 +306,78 @@ export const authenticatedData = <T>(
     getData?: (responses: AtLeastOneAwaitableResponse) => Promise<T>;
   } = {}
 ) => {
-  const initData = (async () => {
-    const { responses, headers } = await authenticatedResolver(
+  const responses = await fetchAuthenticated(
+    request,
+    fetchArgs,
+    passThroughOptions
+  );
+  return await getData(responses);
+};
+
+export const getManyAuthenticatedData = async <
+  TMany extends readonly unknown[]
+>(
+  request: Request,
+  fetchArgs: AtLeastOneFetch,
+  passThroughOptions: LoginRedirectOptions = {}
+) => {
+  const responses = await fetchAuthenticated(
+    request,
+    fetchArgs,
+    passThroughOptions
+  );
+  return responses.map(defaultDataGetter) as {
+    [key in keyof TMany]: ReturnType<typeof defaultDataGetter<TMany[key]>>;
+  };
+};
+
+export const getAllAuthenticatedData = async <TMany extends readonly unknown[]>(
+  request: Request,
+  fetchArgs: AtLeastOneFetch,
+  passThroughOptions: LoginRedirectOptions = {}
+) => {
+  return await Promise.all(
+    await getManyAuthenticatedData<TMany>(
       request,
       fetchArgs,
       passThroughOptions
-    );
-    return data(await getData(responses), { headers });
-  })();
-
-  return new DataResponse<T>((resolve) => resolve(initData));
+    )
+  );
 };
 
-interface AllCrudActions<
-  T,
-  TCreateSchema extends z.ZodType,
-  TUpdateSchema extends z.ZodType,
-  TCreateReturn = T,
-  TUpdateReturn = T
-> {
+export const getAllSettledAuthenticatedData = async <
+  TMany extends readonly unknown[]
+>(
+  request: Request,
+  fetchArgs: AtLeastOneFetch,
+  passThroughOptions: LoginRedirectOptions = {}
+) => {
+  return await Promise.allSettled(
+    await getManyAuthenticatedData<TMany>(
+      request,
+      fetchArgs,
+      passThroughOptions
+    )
+  );
+};
+
+interface AllCrudActions<T> {
   list: (
     request: Request,
     query?: QueryParams,
     options?: FetchBuildOptions
-  ) => DataResponse<ResultsPage<T>>;
+  ) => Promise<ResultsPage<T>>;
   get: (
     request: Request,
     id: string,
     options?: FetchBuildOptions
-  ) => DataResponse<T>;
-  create: (
-    request: Request,
-    input: z.infer<TCreateSchema>,
-    options?: FetchBuildOptions
-  ) => DataResponse<TCreateReturn>;
-  update: (
-    request: Request,
-    id: string,
-    input: z.infer<TUpdateSchema>,
-    options?: FetchBuildOptions
-  ) => DataResponse<TUpdateReturn>;
-  delete: (
-    request: Request,
-    id: string,
-    options?: FetchBuildOptions
-  ) => DataResponse<unknown>;
-  deleteAndRedirect: (
-    request: Request,
-    id: string,
-    to: string,
-    options?: FetchBuildOptions
-  ) => Promise<Response>;
+  ) => Promise<T>;
 }
 
-type CrudActionName = keyof AllCrudActions<unknown, z.ZodTypeAny, z.ZodTypeAny>;
-const CrudActionNames: CrudActionName[] = [
-  "list",
-  "get",
-  "create",
-  "update",
-  "delete",
-  "deleteAndRedirect",
-];
+type CrudActionName = keyof AllCrudActions<unknown>;
+const CrudActionNames: CrudActionName[] = ["list", "get"];
 
-function buildCrud<
-  T,
-  TCreateSchema extends z.ZodType,
-  TUpdateSchema extends z.ZodType,
-  TCreateReturn = T,
-  TUpdateReturn = T
->(
-  path: string
-): AllCrudActions<
-  T,
-  TCreateSchema,
-  TUpdateSchema,
-  TCreateReturn,
-  TUpdateReturn
-> {
+function buildCrud<T>(path: string): AllCrudActions<T> {
   const actions = [...CrudActionNames];
   return actions.reduce((acc, action) => {
     switch (action) {
@@ -377,7 +387,7 @@ function buildCrud<
           query: QueryParams = {},
           options: FetchBuildOptions = {}
         ) => {
-          return authenticatedData<ResultsPage<T>>(request, [
+          return getAuthenticatedData<ResultsPage<T>>(request, [
             FetchOptions.url(path, {
               order: {
                 createdOn: "desc",
@@ -393,61 +403,9 @@ function buildCrud<
           id: string,
           options: FetchBuildOptions = {}
         ) => {
-          return authenticatedData<T>(request, [
+          return getAuthenticatedData<T>(request, [
             FetchOptions.url(`${path}/:id`, { id }).build(options),
           ]);
-        };
-        break;
-      case "create":
-        acc[action] = (
-          request: Request,
-          input: z.infer<TCreateSchema>,
-          options: FetchBuildOptions = {}
-        ) => {
-          return authenticatedData<TCreateReturn>(request, [
-            FetchOptions.url(path, options.params)
-              .post()
-              .json(input)
-              .build(options),
-          ]);
-        };
-        break;
-      case "update":
-        acc[action] = (
-          request: Request,
-          id: string,
-          input: z.infer<TUpdateSchema>,
-          options: FetchBuildOptions = {}
-        ) => {
-          return authenticatedData<TUpdateReturn>(request, [
-            FetchOptions.url(`${path}/:id`, { id, ...options.params })
-              .patch()
-              .json(input)
-              .build(options),
-          ]);
-        };
-        break;
-      case "delete":
-        acc[action] = (
-          request: Request,
-          id: string,
-          options: FetchBuildOptions = {}
-        ) => {
-          return authenticatedData(request, [
-            FetchOptions.url(`${path}/:id`, { id }).delete().build(options),
-          ]);
-        };
-        break;
-      case "deleteAndRedirect":
-        acc[action] = (
-          request: Request,
-          id: string,
-          to: string,
-          options: FetchBuildOptions = {}
-        ) => {
-          return authenticatedData(request, [
-            FetchOptions.url(`${path}/:id`, { id }).delete().build(options),
-          ]).asRedirect(to);
         };
         break;
       default:
@@ -455,42 +413,18 @@ function buildCrud<
     }
 
     return acc;
-  }, {} as AllCrudActions<T, TCreateSchema, TUpdateSchema, TCreateReturn, TUpdateReturn>);
+  }, {} as AllCrudActions<T>);
 }
 
-export class CRUD<
-  T,
-  TCreateSchema extends z.ZodType,
-  TUpdateSchema extends z.ZodType,
-  TCreateReturn = T,
-  TUpdateReturn = T
-> {
+export class CRUD<T> {
   constructor(private path: string) {}
 
-  public static for<
-    T,
-    TCreateSchema extends z.ZodType,
-    TUpdateSchema extends z.ZodType,
-    TCreateReturn = T,
-    TUpdateReturn = T
-  >(path: string) {
-    return new CRUD<
-      T,
-      TCreateSchema,
-      TUpdateSchema,
-      TCreateReturn,
-      TUpdateReturn
-    >(path);
+  public static for<T>(path: string) {
+    return new CRUD<T>(path);
   }
 
   public all() {
-    return buildCrud<
-      T,
-      TCreateSchema,
-      TUpdateSchema,
-      TCreateReturn,
-      TUpdateReturn
-    >(this.path);
+    return buildCrud<T>(this.path);
   }
 
   public only<TActions extends CrudActionName[]>(actions: TActions) {
@@ -498,16 +432,7 @@ export class CRUD<
       Object.entries(this.all()).filter(([action]) =>
         actions.includes(action as CrudActionName)
       )
-    ) as Pick<
-      AllCrudActions<
-        T,
-        TCreateSchema,
-        TUpdateSchema,
-        TCreateReturn,
-        TUpdateReturn
-      >,
-      TActions[number]
-    >;
+    ) as Pick<AllCrudActions<T>, TActions[number]>;
   }
 
   public except<TActions extends CrudActionName[]>(actions: TActions) {
@@ -515,15 +440,6 @@ export class CRUD<
       Object.entries(this.all()).filter(
         ([action]) => !actions.includes(action as CrudActionName)
       )
-    ) as Omit<
-      AllCrudActions<
-        T,
-        TCreateSchema,
-        TUpdateSchema,
-        TCreateReturn,
-        TUpdateReturn
-      >,
-      TActions[number]
-    >;
+    ) as Omit<AllCrudActions<T>, TActions[number]>;
   }
 }

@@ -3,11 +3,12 @@ import { Separator } from "@/components/ui/separator";
 import {
   BookOpenText,
   Building2,
+  CircleHelp,
   Factory,
   FileSpreadsheet,
   FireExtinguisher,
   LayoutDashboard,
-  MessageCircleQuestion,
+  MailQuestion,
   Nfc,
   Package,
   Route as RouteIcon,
@@ -17,7 +18,7 @@ import {
   Terminal,
   Users,
 } from "lucide-react";
-import { data, Outlet } from "react-router";
+import { Outlet } from "react-router";
 import { config } from "~/.server/config";
 import { requireUserSession } from "~/.server/sessions";
 import Footer from "~/components/footer";
@@ -34,22 +35,15 @@ import { can, isGlobalAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user, session, getSessionToken } = await requireUserSession(request);
+  const { user } = await requireUserSession(request);
 
-  return data(
-    {
-      user,
-      apiUrl: config.API_BASE_URL,
-      appHost: config.APP_HOST,
-      googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
-      authClientId: config.CLIENT_ID,
-    },
-    {
-      headers: {
-        "Set-Cookie": await getSessionToken(session),
-      },
-    }
-  );
+  return {
+    user,
+    apiUrl: config.API_BASE_URL,
+    appHost: config.APP_HOST,
+    googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
+    authClientId: config.CLIENT_ID,
+  };
 }
 
 export default function Layout({
@@ -157,12 +151,17 @@ export default function Layout({
         {
           title: "FAQs",
           url: "faqs",
+          icon: CircleHelp,
+        },
+        {
+          title: "Docs",
+          url: "docs",
           icon: BookOpenText,
         },
         {
           title: "Contact",
           url: "contact",
-          icon: MessageCircleQuestion,
+          icon: MailQuestion,
         },
       ],
     },

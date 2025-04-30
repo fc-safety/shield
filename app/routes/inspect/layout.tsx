@@ -24,21 +24,19 @@ import { can } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user, session, getSessionToken } = await requireUserSession(request);
+  // For public access (when no user is logged in), redirect to a special login page
+  // that gives the anonymous user the opportunity to view public inspection data.
+  const { user } = await requireUserSession(request, {
+    loginRoute: "/public-inspect/login",
+  });
 
-  return data(
-    {
-      user,
-      apiUrl: config.API_BASE_URL,
-      appHost: config.APP_HOST,
-      googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
-    },
-    {
-      headers: {
-        "Set-Cookie": await getSessionToken(session),
-      },
-    }
-  );
+  return data({
+    user,
+    apiUrl: config.API_BASE_URL,
+    appHost: config.APP_HOST,
+    googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
+    clientId: config.CLIENT_ID,
+  });
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
@@ -66,7 +64,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export default function Layout({
-  loaderData: { user, apiUrl, appHost, googleMapsApiKey },
+  loaderData: { user, apiUrl, appHost, googleMapsApiKey, clientId },
 }: Route.ComponentProps) {
   const groups: SidebarGroup[] = [
     {
@@ -95,6 +93,7 @@ export default function Layout({
       apiUrl={apiUrl}
       appHost={appHost}
       googleMapsApiKey={googleMapsApiKey}
+      clientId={clientId}
     >
       <SidebarProvider defaultOpenState={{ help: false }}>
         <HelpSidebarProvider>
@@ -104,6 +103,7 @@ export default function Layout({
               ...r,
               url: `/inspect${r.url}`,
             }))}
+            logoutReturnTo="/inspect"
           />
           <SidebarInset>
             <Header

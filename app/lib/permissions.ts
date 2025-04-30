@@ -25,6 +25,7 @@ export const PERMISSION_ACTIONS = [
   "resolve",
   "review",
   "notify",
+  "program",
 ] as const;
 
 export type TAction = (typeof PERMISSION_ACTIONS)[number];

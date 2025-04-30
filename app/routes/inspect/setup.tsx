@@ -11,14 +11,14 @@ import { parseISO } from "date-fns";
 import { AlertCircle, ArrowRight, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { useFieldArray } from "react-hook-form";
-import { data, Form, Link } from "react-router";
+import { Form, Link } from "react-router";
 import { RemixFormProvider, useRemixForm } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { guard } from "~/.server/guard";
 import {
   getInspectionRouteAndSessionData,
-  validateTagId,
+  validateInspectionSession,
 } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
@@ -54,30 +54,26 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const extId = await validateTagId(request, "/inspect/setup");
+  const { tagExternalId } = await validateInspectionSession(request);
+
   await guard(request, (user) => can(user, "setup", "assets"));
 
-  const response = await api.tags.getByExternalId(request, extId);
+  const tag = await api.tags.getForAssetSetup(request, tagExternalId);
 
-  if (response.data.asset?.id) {
-    return getInspectionRouteAndSessionData(
-      request,
-      response.data.asset?.id,
-      response.init ?? undefined
-    ).mapTo((result) => ({
-      tag: response.data,
-      ...result,
-    }));
+  if (tag.asset?.id) {
+    return getInspectionRouteAndSessionData(request, tag.asset?.id).then(
+      (result) => ({
+        tag: tag,
+        ...result,
+      })
+    );
   }
 
-  return data(
-    {
-      tag: response.data,
-      activeSessions: null,
-      matchingRoutes: null,
-    },
-    response.init ?? undefined
-  );
+  return {
+    tag,
+    activeSessions: null,
+    matchingRoutes: null,
+  };
 };
 
 export const meta: Route.MetaFunction = ({ data, matches }) => {
@@ -132,7 +128,7 @@ export default function InspectSetup({
   }, [questions, tag]);
 
   const form = useRemixForm<TForm>({
-    resolver: zodResolver(narrowedSetupAssetSchema),
+    resolver: zodResolver(narrowedSetupAssetSchema as z.Schema<TForm>),
     values: {
       id: tag.asset?.id ?? "",
       setupOn: tag.asset?.setupOn ? parseISO(tag.asset.setupOn) : undefined,

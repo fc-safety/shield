@@ -1,0 +1,1 @@
+export const MAX_SERIAL_NUMBER_COUNT = 100_000;

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Pencil, Search } from "lucide-react";
 import type React from "react";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
@@ -28,7 +29,6 @@ import { cn, dedupById } from "~/lib/utils";
 import { ManufacturerCard } from "./manufacturer-selector";
 import ProductCard from "./product-card";
 import { ProductCategoryCard } from "./product-category-selector";
-
 interface ProductSelectorProps {
   value?: string;
   onValueChange?: (value: string) => void;
@@ -42,6 +42,7 @@ interface StepsState {
   step: number;
   maxStep: number;
   minStep: number;
+  stepDirection: "forward" | "backward" | "none";
   stepForward: () => void;
   stepBackward: () => void;
   getCanStepForward: () => boolean;
@@ -58,13 +59,20 @@ const createUseSteps = (options: {
     step: options.defaultStep ?? 0,
     maxStep: options.maxStep,
     minStep: options.minStep ?? 0,
+    stepDirection: "none",
     stepForward: () =>
-      set((state) => ({ step: Math.min(state.maxStep, state.step + 1) })),
+      set((state) => ({
+        step: Math.min(state.maxStep, state.step + 1),
+        stepDirection: "forward",
+      })),
     stepBackward: () =>
-      set((state) => ({ step: Math.max(state.minStep, state.step - 1) })),
+      set((state) => ({
+        step: Math.max(state.minStep, state.step - 1),
+        stepDirection: "backward",
+      })),
     getCanStepForward: () => get().step < get().maxStep,
     getCanStepBackward: () => get().step > get().minStep,
-    reset: () => set({ step: options.defaultStep ?? 0 }),
+    reset: () => set({ step: options.defaultStep ?? 0, stepDirection: "none" }),
   }));
 };
 
@@ -104,6 +112,7 @@ export default function ProductSelector({
 
   const {
     step,
+    stepDirection,
     minStep,
     maxStep,
     stepForward,
@@ -331,10 +340,48 @@ export default function ProductSelector({
         </div>
         <ScrollArea
           classNames={{
-            root: "h-96 border-b border-t px-6 self-stretch",
+            root: "h-96 border-b border-t self-stretch",
           }}
         >
-          {currentStep?.step}
+          {currentStep && (
+            <div className="h-max relative w-full">
+              <AnimatePresence custom={stepDirection}>
+                <motion.div
+                  key={currentStep.idx}
+                  className="absolute right-0 left-0 top-0 h-max px-6"
+                  custom={stepDirection}
+                  variants={{
+                    slideIn: (direction: typeof stepDirection) => ({
+                      opacity: 0,
+                      translateX:
+                        direction === "forward"
+                          ? "100%"
+                          : direction === "backward"
+                          ? "-100%"
+                          : "0%",
+                    }),
+                    slideOut: (direction: typeof stepDirection) => ({
+                      opacity: 0,
+                      translateX: direction === "backward" ? "100%" : "-100%",
+                    }),
+                  }}
+                  initial="slideIn"
+                  animate={{
+                    opacity: 1,
+                    translateX: "0%",
+                  }}
+                  exit="slideOut"
+                  transition={{
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 26,
+                  }}
+                >
+                  {currentStep.step}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
         </ScrollArea>
         <div className="flex justify-between px-6">
           <Button

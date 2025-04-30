@@ -8,7 +8,7 @@ export default function BlankDashboardTile({
   className?: string;
 }>) {
   return (
-    <div className={cn("aspect-video rounded-xl bg-muted/50", className)}>
+    <div className={cn("min-h-64 rounded-xl bg-muted/50", className)}>
       {children}
     </div>
   );

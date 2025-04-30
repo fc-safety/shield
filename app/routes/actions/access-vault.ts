@@ -9,8 +9,7 @@ import type { Route } from "./+types/access-vault";
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const key = validateParam(params, "*");
-  const { data: vaultOwnershipRecord, init } =
-    await api.vaultOwnerships.getByKey(request, key);
+  const vaultOwnershipRecord = await api.vaultOwnerships.getByKey(request, key);
 
   if (!vaultOwnershipRecord) {
     throw new Response("Not found", { status: 404 });
@@ -26,7 +25,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     ).toISOString(),
   });
 
-  return redirect(signedUrl, init ?? undefined);
+  return redirect(signedUrl);
 }
 
 const getExpirationDate = (seconds: number) => {

@@ -4,6 +4,7 @@ import {
   redirect,
   type SessionData,
   type SessionStorage,
+  type unstable_MiddlewareFunction,
 } from "react-router";
 import { createThemeSessionResolver } from "remix-themes";
 import type { AppState } from "~/lib/types";
@@ -11,6 +12,7 @@ import { isTokenExpired } from "~/lib/users";
 import { buildUser, strategy, type Tokens } from "./authenticator";
 import { config } from "./config";
 import { logger } from "./logger";
+import { requestContext } from "./request-context";
 
 const isProduction = process.env.NODE_ENV === "production";
 const domain = process.env.APP_DOMAIN;
@@ -62,6 +64,24 @@ export const getSessionValues = async <
   };
 };
 
+// SESSION MIDDLEWARE
+
+export const setCookieResponseHeaders: unstable_MiddlewareFunction = async (
+  { request, params, context },
+  next
+) => {
+  const response = (await next()) as Response;
+
+  const setCookieHeaderValues = requestContext.get("setCookieHeaderValues");
+
+  for (const [key, value] of Object.entries(setCookieHeaderValues)) {
+    console.debug(`-------> Setting "${key}" session from SESSION MIDDLEWARE`);
+    response.headers.append("Set-Cookie", value);
+  }
+
+  return response;
+};
+
 // THEME MANAGEMENT
 
 const themeSessionStorage = createCookieSessionStorage({
@@ -101,6 +121,7 @@ export interface InspectionCookieValue {
   tagActivatedOn?: string;
   activeSession?: string;
   activeRoute?: string;
+  inspectionToken?: string;
 }
 
 export const inspectionSessionStorage =
@@ -147,18 +168,33 @@ export const userSessionStorage = createCookieSessionStorage<{
 
 export interface LoginRedirectOptions {
   returnTo?: string;
+  loginRoute?: string;
 }
 
 export const getLoginRedirect = async (
   request: Request,
-  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
+  session?: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
   options: LoginRedirectOptions = {}
 ) => {
-  session.set("returnTo", options.returnTo ?? request.url);
-  return redirect("/login", {
-    headers: {
-      "Set-Cookie": await userSessionStorage.commitSession(session),
-    },
+  const resHeaders = new Headers({});
+
+  if (session) {
+    session.set("returnTo", options.returnTo ?? request.url);
+    resHeaders.append(
+      "Set-Cookie",
+      await userSessionStorage.commitSession(session)
+    );
+  }
+
+  // Clear any existing middleware set cookie values.
+  requestContext.set("setCookieHeaderValues", (values) => {
+    const newValues = { ...values };
+    delete newValues.authSession;
+    return newValues;
+  });
+
+  return redirect(options.loginRoute ?? "/login", {
+    headers: resHeaders,
   });
 };
 
@@ -175,6 +211,9 @@ export const requireUserSession = async (
     throw redirect("/logout");
   }
 
+  const getSessionToken = (thisSession: typeof session) =>
+    userSessionStorage.commitSession(thisSession);
+
   let tokens = session.get("tokens");
   if (!tokens) {
     throw await getLoginRedirect(request, session, options);
@@ -186,7 +225,16 @@ export const requireUserSession = async (
   // Now both checks are made: 1) refresh preemptively if token is expired or 2) refresh
   // if 401 is received from API.
   if (isTokenExpired(tokens.accessToken)) {
+    // Refresh tokens and update session.
     tokens = await refreshTokensOrRelogin(request, session, tokens, options);
+    session.set("tokens", tokens);
+
+    // Update session cookie.
+    const sessionToken = await getSessionToken(session);
+    requestContext.set("setCookieHeaderValues", (values) => ({
+      ...values,
+      authSession: sessionToken,
+    }));
   }
 
   // Get user, refreshing tokens if needed.
@@ -196,8 +244,7 @@ export const requireUserSession = async (
   return {
     user,
     session,
-    getSessionToken: (thisSession: typeof session) =>
-      userSessionStorage.commitSession(thisSession),
+    getSessionToken,
   };
 };
 
@@ -224,8 +271,6 @@ export const refreshTokensOrRelogin = async (
     return tokensResponse;
   } catch (e) {
     logger.warn("Token refresh failed", { details: e });
-    throw await getLoginRedirect(request, session, {
-      returnTo: options.returnTo,
-    });
+    throw await getLoginRedirect(request, session, options);
   }
 };

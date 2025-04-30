@@ -15,17 +15,27 @@ export default [
   route("logout", "./routes/auth/logout.tsx"),
   route("callback", "./routes/auth/callback.tsx"),
 
+  // Read tag routes
+  ...prefix("tag", [index("./routes/read-tag/index.tsx")]),
+
   // Inspect routes
   route("inspect", "./routes/inspect/layout.tsx", [
     index("./routes/inspect/index.tsx"),
     route("setup", "./routes/inspect/setup.tsx"),
     route("next", "./routes/inspect/next.tsx"),
     route("routes", "./routes/inspect/routes.tsx"),
+    route("register", "./routes/inspect/register.tsx"),
 
     // User routes
     route("account", "./routes/inspect/account.tsx"),
     route("contact", "./routes/inspect/contact.tsx"),
     route("*", "./routes/inspect/404.tsx"),
+  ]),
+
+  route("public-inspect", "./routes/inspect-public/layout.tsx", [
+    index("./routes/inspect-public/index.tsx"),
+    route("login", "./routes/inspect-public/login.tsx"),
+    route("history", "./routes/inspect-public/history.tsx"),
   ]),
 
   // Action Routes
@@ -113,6 +123,10 @@ export default [
 
     // Help routes
     route("faqs", "./routes/faqs.tsx"),
+    route("docs", "./routes/docs/layout.tsx", [
+      index("./routes/docs/index.tsx"),
+      route("writing-nfc-tags", "./routes/docs/writing-nfc-tags.tsx"),
+    ]),
     route("contact", "./routes/contact.tsx"),
 
     // User routes

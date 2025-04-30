@@ -17,10 +17,12 @@ import {
 } from "remix-themes";
 import {
   appStateSessionStorage,
+  setCookieResponseHeaders,
   themeSessionResolver,
 } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
+import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
@@ -31,6 +33,12 @@ import QueryContext from "./contexts/query-context";
 import globalStyles from "./global.css?url";
 import { FONT_AWESOME_VERSION } from "./lib/constants";
 import styles from "./tailwind.css?url";
+
+export const unstable_middleware = [
+  requestContext.create,
+  // `setCookieResponseHeaders` requires `requestContext.create` to be run first.
+  setCookieResponseHeaders,
+];
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
@@ -110,7 +118,7 @@ export const meta: Route.MetaFunction = () => {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
-    <div className="w-full h-full min-h-svh flex flex-col">
+    <div className="bg-background w-full h-full min-h-svh flex flex-col">
       <Header
         rightSlot={
           <>

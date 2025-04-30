@@ -144,7 +144,7 @@ function VirtualizedTableBody<TData>({
   loading,
 }: {
   table: TTable<TData>;
-  tableContainerRef: React.RefObject<HTMLDivElement>;
+  tableContainerRef: React.RefObject<HTMLDivElement | null>;
   loading?: boolean;
 }) {
   const { rows } = table.getRowModel();

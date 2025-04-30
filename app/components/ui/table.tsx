@@ -6,7 +6,7 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement> & {
     containerProps?: React.HTMLAttributes<HTMLDivElement> & {
-      ref?: React.RefObject<HTMLDivElement>;
+      ref?: React.RefObject<HTMLDivElement | null>;
     };
   }
 >(

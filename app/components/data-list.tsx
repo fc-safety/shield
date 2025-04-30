@@ -14,6 +14,7 @@ interface DataListProps {
   classNames?: {
     container?: string;
     details?: string;
+    detailLabel?: string;
   };
   /**
    * @deprecated Use `classNames.container` instead
@@ -53,7 +54,14 @@ export default function DataList({
           .filter(({ hidden }) => !hidden)
           .map(({ label, value }) => (
             <Fragment key={String(label)}>
-              <dt className="text-muted-foreground text-sm">{label}</dt>
+              <dt
+                className={cn(
+                  "text-muted-foreground text-sm",
+                  classNames?.detailLabel
+                )}
+              >
+                {label}
+              </dt>
               <dd className="text-sm">{value || defaultValue}</dd>
             </Fragment>
           ))}

@@ -21,8 +21,7 @@ import {
 } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
 import { Link, type UIMatch } from "react-router";
-import type { z } from "zod";
-import { api } from "~/.server/api";
+import { FetchOptions, getAuthenticatedData } from "~/.server/api-utils";
 import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
@@ -65,13 +64,11 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
-import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import {
   getAssetAlertsStatus,
   getAssetInspectionStatus,
 } from "~/lib/model-utils";
 import type { Alert, Asset, Consumable } from "~/lib/models";
-import { updateAssetSchema, updateAssetSchemaResolver } from "~/lib/schema";
 import { can } from "~/lib/users";
 import {
   buildTitleFromBreadcrumb,
@@ -93,25 +90,11 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
-export const action = async ({ request, params }: Route.ActionArgs) => {
-  const id = validateParam(params, "id");
-
-  if (request.method === "POST" || request.method === "PATCH") {
-    const { data } = await getValidatedFormDataOrThrow<
-      z.infer<typeof updateAssetSchema>
-    >(request, updateAssetSchemaResolver);
-
-    return api.assets.update(request, id, data);
-  } else if (request.method === "DELETE") {
-    return api.assets.deleteAndRedirect(request, id, "/assets");
-  }
-
-  throw new Response("Invalid method", { status: 405 });
-};
-
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
-  return api.assets.get(request, id).mapTo((asset) => ({
+  return getAuthenticatedData<Asset>(request, [
+    FetchOptions.resources.assets().byId(id).get().build(),
+  ]).then((asset) => ({
     asset,
     defaultTab: getSearchParam(request, "tab") ?? "consumables",
   }));

@@ -49,7 +49,7 @@ const getDefaultDateRange = (quickRangeId: QuickRangeId<"both">) => {
   };
 };
 
-export const loader = ({ request, params }: Route.LoaderArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const requestQuery = getSearchParams(request);
 
   const dateRange = {
@@ -77,7 +77,7 @@ export const loader = ({ request, params }: Route.LoaderArgs) => {
     query.endDate = defaultDateRange.to;
   }
 
-  return api.reports.get(request, params.id, query).mapTo((report) => ({
+  return api.reports.get(request, params.id, query).then((report) => ({
     report,
     defaultQuickRangeId,
     defaultDateRange,

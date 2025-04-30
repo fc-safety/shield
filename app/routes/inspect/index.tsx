@@ -13,16 +13,16 @@ import { Loader2, Nfc } from "lucide-react";
 import { isIPv4, isIPv6 } from "net";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray } from "react-hook-form";
-import { data, Form, redirect, useNavigate } from "react-router";
+import { Form, redirect, useNavigate } from "react-router";
 import { RemixFormProvider, useRemixForm } from "remix-hook-form";
 import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import type { z } from "zod";
 import { api } from "~/.server/api";
-import { DataResponse } from "~/.server/api-utils";
+import { catchResponse } from "~/.server/api-utils";
 import { guard } from "~/.server/guard";
 import {
   getInspectionRouteAndSessionData,
-  validateTagId,
+  validateInspectionSession,
 } from "~/.server/inspections";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
@@ -64,6 +64,7 @@ import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
 import { buildTitle, getSearchParams, isNil } from "~/lib/utils";
 import type { Route } from "./+types/index";
+import { INSPECTION_TOKEN_HEADER } from "./constants/headers";
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const { data: validatedData } = await getValidatedFormDataOrThrow<
@@ -74,6 +75,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const qp = getSearchParams(request);
   const inspectionSession = await getSession(request, inspectionSessionStorage);
+
+  const inspectionToken = inspectionSession.get("inspectionToken");
 
   // Set active route and session from query params.
   const activeRouteId = qp.get("routeId");
@@ -109,67 +112,57 @@ export const action = async ({ request }: Route.ActionArgs) => {
       },
       {
         params: queryParams,
+        headers: {
+          [INSPECTION_TOKEN_HEADER]: inspectionToken ?? "",
+        },
       }
     )
-    .mapWith(({ inspection, session }) => {
-      return new DataResponse<{ inspection: typeof inspection }>(
-        async (resolve) => {
-          // If session object is returned, make sure to store it for later use.
-          if (session) {
-            inspectionSession.set("activeSession", session.id);
-          }
+    .then(async ({ inspection, session }) => {
+      // If session object is returned, make sure to store it for later use.
+      if (session) {
+        inspectionSession.set("activeSession", session.id);
+      }
 
-          // Update session cookie.
-          resolve(
-            data(
-              { inspection },
-              {
-                headers: {
-                  "Set-Cookie": await inspectionSessionStorage.commitSession(
-                    inspectionSession
-                  ),
-                },
-              }
-            )
-          );
-        }
-      );
+      return { inspection };
     })
-    .asRedirect((data) => `next?success&inspectionId=${data.inspection.id}`);
+    .then((data) =>
+      redirect(`next?success&inspectionId=${data.inspection.id}`)
+    );
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
+  // TODO: Redirect based on user access.
+  // [✅] PUBLIC: View public inspection history.
+  // [✅] INSPECTOR: Begin inspection.
+  // [  ] MANAGER: View menu: Inspect, History, Order Supplies, etc.
   await guard(request, (user) => can(user, "create", "inspections"));
 
-  const extId = await validateTagId(request, "/inspect");
+  const { tagExternalId } = await validateInspectionSession(request);
 
-  const response = await api.tags.getByExternalId(request, extId);
+  const {
+    data: { data: tag },
+  } = await catchResponse(api.tags.getForInspection(request, tagExternalId), {
+    codes: [404],
+  });
 
-  if (response.data.asset && !response.data.asset.setupOn) {
-    return redirect(
-      `/inspect/setup/?extId=${extId}`,
-      response.init ?? undefined
-    );
+  // If tag isn't found, it means it hasn't been registered yet.
+  // Redirect to registration page, which will handle completing tag
+  // setup.
+  if (!tag || !tag.asset) {
+    throw redirect("/inspect/register/");
   }
 
-  if (response.data.asset?.id) {
-    return getInspectionRouteAndSessionData(
-      request,
-      response.data.asset?.id,
-      response.init ?? undefined
-    ).mapTo((result) => ({
-      tag: response.data,
+  // If asset hasn't been setup yet, redirect to setup page.
+  if (!tag.asset.setupOn) {
+    return redirect("/inspect/setup/");
+  }
+
+  // Load inspection route and session data, if present.
+  return getInspectionRouteAndSessionData(request, tag.asset.id).then(
+    (result) => ({
+      tag,
       ...result,
-    }));
-  }
-
-  return data(
-    {
-      tag: response.data,
-      activeSessions: null,
-      matchingRoutes: null,
-    },
-    response.init ?? undefined
+    })
   );
 };
 
@@ -255,7 +248,7 @@ function InspectionPage({
   }, [questions]);
 
   const form = useRemixForm<TForm>({
-    resolver: zodResolver(narrowedCreateInspectionSchema),
+    resolver: zodResolver(narrowedCreateInspectionSchema as z.Schema<TForm>),
     values: {
       asset: {
         connect: {
@@ -289,7 +282,7 @@ function InspectionPage({
   });
 
   const [locationAlertOpen, setLocationAlertOpen] = useState(false);
-  const locationAlertTimeout = useRef<number | undefined>();
+  const locationAlertTimeout = useRef<number | undefined>(undefined);
   const [geolocationPending, setGeolocationPending] = useState(true);
   const [geolocationPosition, setGeolocationPosition] = useState<
     GeolocationPosition | undefined

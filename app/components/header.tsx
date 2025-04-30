@@ -8,10 +8,12 @@ export default function Header({
   leftSlot,
   rightSlot,
   homeTo = "/",
+  showBreadcrumb = true,
 }: {
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
   homeTo?: string;
+  showBreadcrumb?: boolean;
 }) {
   const matches = useMatches();
 
@@ -19,20 +21,22 @@ export default function Header({
     <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
       <div className="flex items-center gap-2 px-2 sm:px-4">
         {leftSlot}
-        <BreadcrumbResponsive
-          items={[
-            {
-              to: homeTo,
-              label: <Home size={16} />,
-              id: "home",
-            },
-            ...matches.filter(validateBreadcrumb).map((match) => ({
-              id: match.id,
-              label: match.handle.breadcrumb(match).label,
-              to: match.pathname,
-            })),
-          ]}
-        />
+        {showBreadcrumb && (
+          <BreadcrumbResponsive
+            items={[
+              {
+                to: homeTo,
+                label: <Home size={16} />,
+                id: "home",
+              },
+              ...matches.filter(validateBreadcrumb).map((match) => ({
+                id: match.id,
+                label: match.handle.breadcrumb(match).label,
+                to: match.pathname,
+              })),
+            ]}
+          />
+        )}
       </div>
       <div className="flex-1" />
       <div className="flex items-center gap-2 px-2 sm:px-4">

@@ -6,11 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useBeforeUnload, useBlocker, type UIMatch } from "react-router";
 import type { z } from "zod";
 import { create } from "zustand";
-import {
-  authenticatedData,
-  defaultDataGetter,
-  FetchOptions,
-} from "~/.server/api-utils";
+import { FetchOptions, getAllAuthenticatedData } from "~/.server/api-utils";
 import EditRoleButton from "~/components/admin/edit-role-button";
 import DataList from "~/components/data-list";
 import { Button } from "~/components/ui/button";
@@ -55,31 +51,17 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  return authenticatedData<{
-    role: Role;
-    permissions: GetPermissionsResponse;
-    notificationGroups: NotificationGroup[];
-  }>(
-    request,
-    [
-      FetchOptions.url("/roles/:id", { id }).get().build(),
-      FetchOptions.url("/roles/permissions").get().build(),
-      FetchOptions.url("/roles/notification-groups").get().build(),
-    ],
-    {
-      getData: async ([
-        rolesResponse,
-        permissionsResponse,
-        notificationGroupsResponse,
-      ]) => ({
-        role: await defaultDataGetter([rolesResponse]),
-        permissions: await defaultDataGetter([permissionsResponse]),
-        notificationGroups: await defaultDataGetter([
-          notificationGroupsResponse,
-        ]),
-      }),
-    }
-  );
+  return getAllAuthenticatedData<
+    [Role, GetPermissionsResponse, NotificationGroup[]]
+  >(request, [
+    FetchOptions.url("/roles/:id", { id }).get().build(),
+    FetchOptions.url("/roles/permissions").get().build(),
+    FetchOptions.url("/roles/notification-groups").get().build(),
+  ]).then(([role, permissions, notificationGroups]) => ({
+    role,
+    permissions,
+    notificationGroups,
+  }));
 };
 
 const usePermissionsStore = create<{

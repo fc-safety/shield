@@ -310,6 +310,7 @@ export const updateProductSchemaResolver = zodResolver(updateProductSchema);
 export const createTagSchema = z.object({
   id: z.string().optional(),
   serialNumber: z.string().nonempty(),
+  externalId: z.string().optional(),
   asset: optionalConnectSchema,
   site: optionalConnectSchema,
   client: optionalConnectSchema,

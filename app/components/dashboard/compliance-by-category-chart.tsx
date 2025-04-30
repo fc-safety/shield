@@ -33,8 +33,6 @@ export function ComplianceByCategoryChart() {
     queryFn: () => getProductCategories(fetch).then((r) => r.results),
   });
 
-  // TODO: Only use product categories with assets. We don't want a bunch of empty
-  // or unused categories in the chart.
   const productCategoriesById = React.useMemo(
     () =>
       productCategories &&
@@ -273,7 +271,7 @@ export function ComplianceByCategoryChart() {
   ) : error ? (
     <ErrorDashboardTile />
   ) : (
-    <BlankDashboardTile className="animate-pulse" />
+    <BlankDashboardTile className="animate-pulse h-full" />
   );
 }
 

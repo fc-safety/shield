@@ -34,7 +34,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
   const { user } = await requireUserSession(request);
 
-  return api.manufacturers.get(request, id).mapTo((manufacturer) => {
+  return api.manufacturers.get(request, id).then((manufacturer) => {
     return {
       manufacturer,
       canEdit:

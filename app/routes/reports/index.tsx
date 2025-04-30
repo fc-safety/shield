@@ -35,8 +35,8 @@ import type { Route } from "./+types/index";
 import type { QuickRangeIdFromDateRangeSupport } from "./types";
 import { downloadReportCsv } from "./utils";
 
-export const loader = ({ request }: Route.LoaderArgs) => {
-  return api.reports.list(request).mapTo((reports) => ({
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  return api.reports.list(request).then((reports) => ({
     reports,
   }));
 };

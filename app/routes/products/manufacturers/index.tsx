@@ -46,7 +46,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return api.manufacturers
     .list(request, query)
-    .mapTo((manufacturersResponse) => ({
+    .then((manufacturersResponse) => ({
       manufacturers: manufacturersResponse.results,
     }));
 }

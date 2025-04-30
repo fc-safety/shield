@@ -1,6 +1,22 @@
 import { createContext, useContext, type PropsWithChildren } from "react";
 import type { User } from "~/.server/authenticator";
 
+export const ANONYMOUS_USER: User = {
+  idpId: "anonymous",
+  email: "anonymous@shield.com",
+  username: "anonymous",
+  name: "Anonymous",
+  givenName: "Anonymous",
+  familyName: "Anonymous",
+  picture: "https://shield.com/anonymous.png",
+  clientId: "",
+  siteId: "",
+  tokens: {
+    accessToken: "anonymous",
+    refreshToken: "anonymous",
+  },
+};
+
 const AuthContext = createContext<{
   user: User;
   apiUrl: string;

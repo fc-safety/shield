@@ -1,3 +1,4 @@
+import { useMutation } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Copy, Nfc, Pencil, Trash } from "lucide-react";
@@ -13,18 +14,20 @@ import { DataTableColumnHeader } from "~/components/data-table/data-table-column
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Tag } from "~/lib/models";
-import { buildUrl } from "~/lib/urls";
 import { can } from "~/lib/users";
 import type { Route } from "./+types/index";
+import TagAssistantButton from "./components/tag-assistant/tag-assistant-button";
+import { generateSignedTagUrl } from "./services/tags.service";
 
-export function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
   return api.tags
     .list(request, { limit: 10000 }, { context: "admin" })
-    .mapTo((tags) => ({
+    .then((tags) => ({
       tags,
       appHost: config.APP_HOST,
     }));
@@ -35,7 +38,7 @@ export default function AdminTagsIndex({
 }: Route.ComponentProps) {
   const { user } = useAuth();
 
-  const canCreate = useMemo(() => can(user, "create", "tags"), [user]);
+  const canProgram = useMemo(() => can(user, "program", "tags"), [user]);
   const canUpdate = useMemo(() => can(user, "update", "tags"), [user]);
   const canDelete = useMemo(() => can(user, "delete", "tags"), [user]);
 
@@ -48,14 +51,28 @@ export default function AdminTagsIndex({
     variant: "destructive",
   });
 
+  const { fetchOrThrow } = useAuthenticatedFetch();
+  const { mutate: getGeneratedTagUrl } = useMutation({
+    mutationFn: (options: { serialNumber: string; externalId: string }) =>
+      generateSignedTagUrl(
+        fetchOrThrow,
+        options.serialNumber,
+        options.externalId
+      ),
+  });
+
   const copyUrlForTagExternalId = useCallback(
-    (extId: string) => {
-      const url = buildUrl("/inspect", appHost, {
-        extId,
-      });
-      navigator.clipboard.writeText(url.toString()).then(() => {
-        toast.success("Copied inspection URL to clipboard!");
-      });
+    (serialNumber: string, externalId: string) => {
+      getGeneratedTagUrl(
+        { serialNumber, externalId },
+        {
+          onSuccess: (data) => {
+            navigator.clipboard.writeText(data.tagUrl).then(() => {
+              toast.success("Copied inspection URL to clipboard!");
+            });
+          },
+        }
+      );
     },
     [appHost]
   );
@@ -120,7 +137,9 @@ export default function AdminTagsIndex({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => copyUrlForTagExternalId(getValue() as string)}
+              onClick={() =>
+                copyUrlForTagExternalId(tag.serialNumber, getValue() as string)
+              }
               title={tag.asset ? "Copy inspection link" : "No asset assigned"}
             >
               <Copy />
@@ -195,8 +214,8 @@ export default function AdminTagsIndex({
             data={tags.results}
             searchPlaceholder="Search tags..."
             actions={
-              canCreate
-                ? [<EditTagButton key="add" viewContext="admin" />]
+              canProgram
+                ? [<TagAssistantButton key="tag-assistant" />]
                 : undefined
             }
             initialState={{

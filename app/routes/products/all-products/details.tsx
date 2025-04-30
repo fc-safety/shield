@@ -62,7 +62,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  return api.products.get(request, id).mapTo((product) => {
+  return api.products.get(request, id).then((product) => {
     return {
       product,
     };

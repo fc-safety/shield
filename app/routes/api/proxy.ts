@@ -1,4 +1,4 @@
-import { authenticatedData } from "~/.server/api-utils";
+import { catchResponse, getAuthenticatedData } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { buildUrl } from "~/lib/urls";
 import { getSearchParams, validateParam } from "~/lib/utils";
@@ -32,7 +32,7 @@ const proxy = async ({
     config.API_BASE_URL,
     Object.fromEntries(query.entries())
   );
-  const awaitableData = authenticatedData(
+  const awaitableData = getAuthenticatedData(
     request,
     [
       {
@@ -54,7 +54,7 @@ const proxy = async ({
     return awaitableData;
   }
 
-  return awaitableData.catchResponse();
+  return catchResponse(awaitableData);
 };
 
 export const action = proxy;

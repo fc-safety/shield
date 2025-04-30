@@ -22,6 +22,7 @@ interface AssetComboboxProps {
   viewContext?: ViewContext;
   clientId?: string;
   siteId?: string;
+  showClear?: boolean;
 }
 
 const fuse = new Fuse([] as Asset[], { keys: ["name"] });
@@ -37,6 +38,7 @@ export default function AssetCombobox({
   viewContext,
   clientId,
   siteId,
+  showClear,
 }: AssetComboboxProps) {
   const { user } = useAuth();
   const canCreate = useMemo(() => can(user, "create", "assets"), [user]);
@@ -107,7 +109,7 @@ export default function AssetCombobox({
         className={className}
         shouldFilter={false}
         disabled={disabled}
-        showClear
+        showClear={showClear}
         onCreate={canCreate ? () => createNew.openNew() : undefined}
       />
       {canCreate && (

@@ -2,7 +2,6 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Shield, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
-import type { z } from "zod";
 import { api } from "~/.server/api";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import {
@@ -27,27 +26,17 @@ import {
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import type { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
-import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import {
   getAssetAlertsStatus,
   getAssetInspectionStatus,
 } from "~/lib/model-utils";
 import type { Asset, ProductCategory } from "~/lib/models";
-import { createAssetSchema, createAssetSchemaResolver } from "~/lib/schema";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
-export const loader = ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
   return api.assets.list(request, { limit: 10000 });
-};
-
-export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow<
-    z.infer<typeof createAssetSchema>
-  >(request, createAssetSchemaResolver);
-
-  return api.assets.create(request, data);
 };
 
 export default function AssetsIndex({

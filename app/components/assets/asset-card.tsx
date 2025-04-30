@@ -88,23 +88,28 @@ export default function AssetCard({ asset, className }: AssetCardProps) {
                     value:
                       asset.inspectionCycle !== null ? (
                         <>{asset.inspectionCycle} days</>
-                      ) : (
+                      ) : asset.client ? (
                         <>
-                          {asset.client?.defaultInspectionCycle} days (client
+                          {asset.client.defaultInspectionCycle} days (client
                           default)
                         </>
+                      ) : (
+                        <>&mdash;</>
                       ),
+                    hidden: asset.inspectionCycle === null && !asset.client,
                   },
-                ].map(({ label, value }) => (
-                  <div key={label} className="flex flex-col gap-0.5">
-                    <span className="font-bold text-xs text-muted-foreground">
-                      {label}
-                    </span>
-                    <span className="text-sm font-light">
-                      {value ?? <>&mdash;</>}
-                    </span>
-                  </div>
-                ))}
+                ]
+                  .filter(({ hidden }) => !hidden)
+                  .map(({ label, value }) => (
+                    <div key={label} className="flex flex-col gap-0.5">
+                      <span className="font-bold text-xs text-muted-foreground">
+                        {label}
+                      </span>
+                      <span className="text-sm font-light">
+                        {value ?? <>&mdash;</>}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </CollapsibleContent>
           </Collapsible>

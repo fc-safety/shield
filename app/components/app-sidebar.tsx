@@ -64,9 +64,11 @@ export const DEFAULT_USER_ROUTES = [
 export function AppSidebar({
   groups,
   userRoutes = DEFAULT_USER_ROUTES,
+  logoutReturnTo,
 }: {
   groups: SidebarGroup[];
   userRoutes?: (Omit<SidebarMenuItem, "children" | "url"> & { url: string })[];
+  logoutReturnTo?: string;
 }) {
   const { user } = useAuth();
   const { setOpenMobile } = useSidebar();
@@ -245,7 +247,11 @@ export function AppSidebar({
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuItem asChild>
-                  <Link to="/logout">
+                  <Link
+                    to={`/logout${
+                      logoutReturnTo ? `?returnTo=${logoutReturnTo}` : ""
+                    }`}
+                  >
                     <LogOut />
                     <span>Sign out</span>
                   </Link>

@@ -164,7 +164,7 @@ export function OverallComplianceChart() {
   ) : error ? (
     <ErrorDashboardTile />
   ) : (
-    <BlankDashboardTile className="animate-pulse" />
+    <BlankDashboardTile className="animate-pulse h-full" />
   );
 }
 

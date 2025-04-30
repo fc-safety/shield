@@ -1,11 +1,9 @@
 import { format } from "date-fns";
-import { motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Plus, RefreshCw } from "lucide-react";
-import { data, redirect } from "react-router";
+import { AlertCircle, Plus, RefreshCw } from "lucide-react";
+import { redirect } from "react-router";
 import { Fragment } from "react/jsx-runtime";
 import { toast } from "sonner";
 import { api } from "~/.server/api";
-import { mergeInit } from "~/.server/api-utils";
 import { getNextPointFromSession } from "~/.server/inspections";
 import {
   getSession,
@@ -32,6 +30,7 @@ import type { Asset, Inspection } from "~/lib/models";
 import { can } from "~/lib/users";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/next";
+import SuccessCircle from "./components/success-circle";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const inspectionId = getSearchParam(request, "inspectionId");
@@ -61,53 +60,34 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     "activeSession"
   );
 
-  let init: ResponseInit | null = null;
-
   let inspection: Inspection | null = null;
   if (inspectionId) {
-    const inspectionResponse = await api.inspections.get(request, inspectionId);
-    inspection = inspectionResponse.data;
-    init = inspectionResponse.init;
+    inspection = await api.inspections.get(request, inspectionId);
   }
 
   if (activeSessionId) {
-    const inspectionsResponse = await api.inspections
+    const { session, nextPoint, routeCompleted } = await api.inspections
       .getSession(request, activeSessionId)
-      .mapTo((session) => ({
+      .then((session) => ({
         session,
         ...getNextPointFromSession(session),
       }));
 
-    const {
-      data: { session, nextPoint, routeCompleted },
-    } = inspectionsResponse;
-    init = mergeInit(init, inspectionsResponse.init);
-
     let nextAsset: Asset | null = null;
     if (nextPoint) {
-      const assetResponse = await api.assets
-        .get(request, nextPoint.assetId)
-        .mergeInit(init);
-      init = assetResponse.init;
-      nextAsset = assetResponse.data;
+      nextAsset = await api.assets.get(request, nextPoint.assetId);
     } else if (routeCompleted) {
-      const completeResponse = await api.inspections
-        .completeSession(request, session.id)
-        .mergeInit(init);
-      init = completeResponse.init;
+      await api.inspections.completeSession(request, session.id);
     }
 
-    return data(
-      {
-        session,
-        nextPoint,
-        nextAsset,
-        routeCompleted,
-        showSuccessfulInspection,
-        inspection,
-      },
-      init ?? undefined
-    );
+    return {
+      session,
+      nextPoint,
+      nextAsset,
+      routeCompleted,
+      showSuccessfulInspection,
+      inspection,
+    };
   }
 
   return {
@@ -157,16 +137,7 @@ export default function InspectNext({
         <Card className="text-center">
           <CardHeader>
             <div className="flex flex-col items-center gap-2">
-              <motion.div
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  duration: 0.4,
-                  scale: { type: "spring", visualDuration: 0.4, bounce: 0.5 },
-                }}
-              >
-                <CheckCircle className="size-16 text-primary" />
-              </motion.div>
+              <SuccessCircle />
               Inspection successfully submitted!
             </div>
           </CardHeader>

@@ -13,7 +13,10 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { api } from "~/.server/api";
+import {
+  FetchOptions,
+  getAllSettledAuthenticatedData,
+} from "~/.server/api-utils";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
@@ -41,7 +44,11 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
-import type { AnsiCategory, ProductCategory } from "~/lib/models";
+import {
+  type AnsiCategory,
+  type ProductCategory,
+  type ResultsPage,
+} from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
@@ -49,18 +56,26 @@ import type { Route } from "./+types/index";
 export async function loader({ request }: Route.LoaderArgs) {
   const query = { limit: 10000 } as QueryParams;
 
-  return api.productCategories
-    .list(request, query)
-    .mergeWith(
-      api.ansiCategories.list(request, { limit: 10000 }).catchResponse({
-        codes: [403],
-      })
-    )
-    .mapTo(([productCategoryResults, ansiCategoryResults]) => ({
-      productCategories: productCategoryResults.results,
-      // Not all users have permission to read ANSI categories.
-      ansiCategories: ansiCategoryResults.data?.results ?? [],
-    }));
+  return getAllSettledAuthenticatedData<
+    [ResultsPage<ProductCategory>, ResultsPage<AnsiCategory>]
+  >(request, [
+    FetchOptions.resources.productCategories().get().build({ params: query }),
+    FetchOptions.resources
+      .ansiCategories()
+      .get()
+      .build({ params: { limit: 10000 } }),
+  ]).then(([productCategoryResult, ansiCategoryResult]) => {
+    return {
+      productCategories:
+        productCategoryResult.status === "fulfilled"
+          ? productCategoryResult.value.results
+          : [],
+      ansiCategories:
+        ansiCategoryResult.status === "fulfilled"
+          ? ansiCategoryResult.value.results
+          : [],
+    };
+  });
 }
 
 export default function ProductCategories({

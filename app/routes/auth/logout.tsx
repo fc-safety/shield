@@ -2,6 +2,7 @@ import { redirect, type Session } from "react-router";
 import { strategy } from "~/.server/authenticator";
 import { config } from "~/.server/config";
 import { logger } from "~/.server/logger";
+import { requestContext } from "~/.server/request-context";
 import { userSessionStorage } from "~/.server/sessions";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/logout";
@@ -10,6 +11,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   const returnTo = getSearchParam(request, "returnTo");
   const postLogoutUrl =
     URL.parse(returnTo ?? "/", config.APP_HOST)?.toString() ?? "";
+
+  // Clear any existing middleware set cookie values.
+  requestContext.set("setCookieHeaderValues", (values) => {
+    const newValues = { ...values };
+    delete newValues.authSession;
+    return newValues;
+  });
 
   let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
   try {
