@@ -1,6 +1,7 @@
-import { ArrowLeft, Download, Nfc } from "lucide-react";
+import { Download, Nfc } from "lucide-react";
 import { useMemo } from "react";
-import { Button } from "~/components/ui/button";
+import OptionButton from "../components/option-button";
+import Step from "../components/step";
 
 export default function StepBulkProgramPart1({
   onExport,
@@ -35,34 +36,35 @@ export default function StepBulkProgramPart1({
     serialNumbers,
   ]);
 
+  const subtitle = useMemo(
+    () => (
+      <>
+        You have provided serial numbers for{" "}
+        <span className="font-bold">
+          {serialNumberCount.toLocaleString()} tag
+          {serialNumberCount === 1 ? "" : "s"}
+        </span>
+        . 🎉
+      </>
+    ),
+    [serialNumberCount]
+  );
+
   return (
-    <div className="w-full max-w-xl flex flex-col items-stretch justify-center gap-4">
-      <div>
-        <h3 className="text-center text-lg font-bold">
-          Great! Let's talk about programming the tags.
-        </h3>
-        <h4 className="text-center text-base text-muted-foreground">
-          You have provided serial numbers for{" "}
-          <span className="font-bold">
-            {serialNumberCount.toLocaleString()} tag
-            {serialNumberCount === 1 ? "" : "s"}
-          </span>
-          . 🎉
-        </h4>
-      </div>
-      <Button onClick={onExport} className="self-center">
+    <Step
+      className="max-w-sm"
+      title="Great! Let's talk about programming the tags."
+      subtitle={subtitle}
+      onStepBackward={onStepBackward}
+    >
+      <OptionButton onClick={onExport}>
         <Download /> Export tag data
-      </Button>
-      <Button onClick={onProgramNow} className="self-center">
+      </OptionButton>
+      <OptionButton onClick={onProgramNow}>
         <Nfc />
         Program tags now
-      </Button>
-      <div className="flex flex-row-reverse gap-4 justify-end">
-        <Button onClick={onStepBackward} variant="secondary">
-          <ArrowLeft /> Back
-        </Button>
-      </div>
-    </div>
+      </OptionButton>
+    </Step>
   );
 }
 

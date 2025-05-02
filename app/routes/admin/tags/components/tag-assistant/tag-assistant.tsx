@@ -6,11 +6,13 @@ import StepBulkProgramExport from "./steps/bulk-program-export";
 import StepBulkProgramPart1 from "./steps/bulk-program-part-1";
 import StepBulkProgramPart2 from "./steps/bulk-program-part-2";
 import StepBulkSerialNumberInput from "./steps/bulk-serial-number-input";
+import StepPreprocessBatchFile from "./steps/preprocess-batch-file";
+import StepSelectClient from "./steps/select-client";
 import StepSelectMode from "./steps/select-mode";
 import StepSingleProgram from "./steps/single-program";
 import StepSingleSerialNumberInput from "./steps/single-serial-number-input";
-
-// const useSteps = createUseSteps({ maxStep: 3 });
+import StepUploadBatchFile from "./steps/upload-batch-file";
+import type { Mode } from "./types/core";
 
 interface StepsState {
   stepId: string;
@@ -20,28 +22,36 @@ interface StepsState {
 }
 
 interface AssistantState {
-  mode: "single" | "bulk";
+  mode: Mode;
   serialNumberMethod: "sequential" | "manual";
   serialNumberRangeStart?: string;
   serialNumberRangeEnd?: string;
   serialNumbers?: string[];
+
+  // Batch file mode
+  batchFile?: File;
+  selectedClientId?: string;
 }
 
 const initialStepsState = {
-  stepId: "select-mode",
   stepDirection: "none",
 } as const;
 
 const createUseSteps = (options: { firstStepId: string }) => {
-  return create<StepsState>((set, get) => ({
+  const initialState = {
     ...initialStepsState,
+    stepId: options.firstStepId,
+  };
+
+  return create<StepsState>((set, get) => ({
+    ...initialState,
     stepTo: (stepId: string, direction: "forward" | "backward" = "forward") =>
       set({ stepId, stepDirection: direction }),
-    reset: () => set(initialStepsState),
+    reset: () => set(initialState),
   }));
 };
 
-const useSteps = createUseSteps({ firstStepId: "select-mode" });
+const useSteps = createUseSteps({ firstStepId: StepSelectMode.StepId });
 
 export default function TagAssistant() {
   const { stepId, stepTo, stepDirection, reset: resetSteps } = useSteps();
@@ -53,7 +63,7 @@ export default function TagAssistant() {
   }, [resetSteps]);
 
   const [assistantState, setAssistantState] = useImmer<AssistantState>({
-    mode: "single",
+    mode: "preprogram-single",
     serialNumberMethod: "sequential",
   });
 
@@ -107,9 +117,11 @@ const CurrentStep = ({
                 draft.mode = mode;
               });
               stepTo(
-                mode === "single"
+                mode === "preprogram-single"
                   ? StepSingleSerialNumberInput.StepId
-                  : StepBulkSerialNumberInput.StepId,
+                  : mode === "preprogram-batch"
+                  ? StepBulkSerialNumberInput.StepId
+                  : StepSelectClient.StepId,
                 "forward"
               );
             }}
@@ -212,6 +224,41 @@ const CurrentStep = ({
             serialNumberRangeStart={assistantState.serialNumberRangeStart}
             serialNumberRangeEnd={assistantState.serialNumberRangeEnd}
             serialNumbers={assistantState.serialNumbers}
+          />
+        );
+      case StepSelectClient.StepId:
+        return (
+          <StepSelectClient
+            onContinue={() => stepTo(StepUploadBatchFile.StepId, "forward")}
+            onStepBackward={() => stepTo(StepSelectMode.StepId, "backward")}
+            selectedClientId={assistantState.selectedClientId}
+            onSelectClient={(clientId) => {
+              setAssistantState((draft) => {
+                draft.selectedClientId = clientId;
+              });
+            }}
+          />
+        );
+      case StepUploadBatchFile.StepId:
+        return (
+          <StepUploadBatchFile
+            onContinue={() => stepTo(StepPreprocessBatchFile.StepId, "forward")}
+            onStepBackward={() => stepTo(StepSelectClient.StepId, "backward")}
+            selectedFile={assistantState.batchFile}
+            onSelectFile={(file) => {
+              setAssistantState((draft) => {
+                draft.batchFile = file;
+              });
+            }}
+          />
+        );
+      case StepPreprocessBatchFile.StepId:
+        return (
+          <StepPreprocessBatchFile
+            onStepBackward={() =>
+              stepTo(StepUploadBatchFile.StepId, "backward")
+            }
+            batchFile={assistantState.batchFile}
           />
         );
       default:

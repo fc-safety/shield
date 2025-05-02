@@ -8,7 +8,13 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { format, formatDistanceToNow } from "date-fns";
-import { CircleAlert, CircleCheck, CircleSlash, LogIn } from "lucide-react";
+import {
+  CircleAlert,
+  CircleCheck,
+  CircleSlash,
+  CircleX,
+  LogIn,
+} from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { defaultDataGetter, FetchOptions } from "~/.server/api-utils";
@@ -16,7 +22,7 @@ import { validateInspectionSession } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import type { Asset, Inspection } from "~/lib/models";
+import type { Alert, Asset, Inspection } from "~/lib/models";
 import { getUserDisplayName } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import { INSPECTION_TOKEN_HEADER } from "../inspect/constants/headers";
@@ -40,12 +46,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return await defaultDataGetter<{
     asset: Asset | null;
+    unresolvedAlerts: Alert[];
     inspections: Inspection[];
   }>(fetch(url, options));
 };
 
 export default function PublicInspectHistoryView({
-  loaderData: { asset, inspections },
+  loaderData: { asset, inspections, unresolvedAlerts },
 }: Route.ComponentProps) {
   if (!asset) {
     return (
@@ -63,15 +70,23 @@ export default function PublicInspectHistoryView({
     );
   }
 
-  return <PublicInspectHistory asset={asset} inspections={inspections} />;
+  return (
+    <PublicInspectHistory
+      asset={asset}
+      inspections={inspections}
+      unresolvedAlerts={unresolvedAlerts}
+    />
+  );
 }
 
 function PublicInspectHistory({
   asset,
   inspections,
+  unresolvedAlerts,
 }: {
   asset: Asset;
   inspections: Inspection[];
+  unresolvedAlerts: Alert[];
 }) {
   const columns = useMemo(
     (): ColumnDef<Inspection>[] => [
@@ -151,6 +166,41 @@ function PublicInspectHistory({
     <div className="w-full max-w-md flex flex-col items-stretch gap-4">
       <AssetCard asset={asset} />
 
+      {unresolvedAlerts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {unresolvedAlerts.length} Unresolved Alert
+              {unresolvedAlerts.length === 1 ? "" : "s"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-border divide-y">
+              {unresolvedAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex gap-1 items-center py-1.5 text-sm"
+                >
+                  {alert.alertLevel === "URGENT" ? (
+                    <CircleX className="size-4 text-urgent shrink-0" />
+                  ) : (
+                    <CircleAlert className="size-4 text-important shrink-0" />
+                  )}
+                  <p className="font-semibold">{alert.alertLevel}</p>
+                  &mdash;
+                  <p className="italic">
+                    triggered{" "}
+                    {formatDistanceToNow(alert.createdOn, {
+                      addSuffix: true,
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Inspection Log</CardTitle>
@@ -180,8 +230,11 @@ function PublicInspectHistory({
                         {renderCell(cells.createdOn)}
                       </p>
                       <p className="text-sm">
-                        Inspected {formatDistanceToNow(inspection.createdOn)} by{" "}
-                        {renderCell(cells.inspector)}.
+                        Inspected{" "}
+                        {formatDistanceToNow(inspection.createdOn, {
+                          addSuffix: true,
+                        })}{" "}
+                        by {renderCell(cells.inspector)}.
                       </p>
                     </div>
 

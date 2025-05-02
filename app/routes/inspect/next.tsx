@@ -10,11 +10,9 @@ import {
   getSessionValue,
   inspectionSessionStorage,
 } from "~/.server/sessions";
+import AssetCard from "~/components/assets/asset-card";
 import DisplayInspectionValue from "~/components/assets/display-inspection-value";
 import { NewSupplyRequestButton } from "~/components/assets/product-requests";
-import DataList from "~/components/data-list";
-import RouteProgressCard from "~/components/inspections/route-progress-card";
-import ProductCard from "~/components/products/product-card";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   Card,
@@ -29,6 +27,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, Inspection } from "~/lib/models";
 import { can } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
+import RouteProgressCard from "~/routes/inspect/components/route-progress-card";
 import type { Route } from "./+types/next";
 import SuccessCircle from "./components/success-circle";
 
@@ -74,7 +73,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }
 
   if (activeSessionId) {
-    const { session, nextPoint, routeCompleted } = await api.inspections
+    const { session, nextPoint } = await api.inspections
       .getSession(request, activeSessionId)
       .then((session) => ({
         session,
@@ -84,15 +83,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     let nextAsset: Asset | null = null;
     if (nextPoint) {
       nextAsset = await api.assets.get(request, nextPoint.assetId);
-    } else if (routeCompleted) {
-      await api.inspections.completeSession(request, session.id);
     }
 
     return {
       session,
       nextPoint,
       nextAsset,
-      routeCompleted,
       showSuccessfulInspection,
       inspection,
     };
@@ -102,20 +98,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     session: null,
     nextPoint: null,
     nextAsset: null,
-    routeCompleted: false,
     showSuccessfulInspection,
     inspection,
   };
 };
 
 export default function InspectNext({
-  loaderData: {
-    nextAsset,
-    routeCompleted,
-    showSuccessfulInspection,
-    session,
-    inspection,
-  },
+  loaderData: { nextAsset, showSuccessfulInspection, session, inspection },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canCreateProductRequests = can(user, "create", "product-requests");
@@ -139,8 +128,13 @@ export default function InspectNext({
   };
 
   return (
-    <div className="grid gap-4">
-      {session && <RouteProgressCard activeSession={session} />}
+    <div className="grid gap-4 w-full max-w-md self-center">
+      {session && (
+        <RouteProgressCard
+          activeSession={session}
+          asset={nextAsset ?? undefined}
+        />
+      )}
       {showSuccessfulInspection && (
         <Card className="text-center">
           <CardHeader>
@@ -243,7 +237,7 @@ export default function InspectNext({
           </CardContent>
         </Card>
       )}
-      {nextAsset && (
+      {nextAsset ? (
         <Card>
           <CardHeader>
             <CardTitle>Go to Next Asset in Route</CardTitle>
@@ -253,56 +247,36 @@ export default function InspectNext({
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <div className="grid gap-2">
-              <h3 className="text-base font-semibold">Details</h3>
-              <DataList
-                details={[
-                  {
-                    label: "Name",
-                    value: nextAsset.name,
-                  },
-                  {
-                    label: "Location",
-                    value: nextAsset.location,
-                  },
-                  {
-                    label: "Placement",
-                    value: nextAsset.placement,
-                  },
-                  {
-                    label: "Tag Serial No.",
-                    value: nextAsset.tag?.serialNumber,
-                  },
-                ]}
-                defaultValue={<>&mdash;</>}
-              />
-            </div>
-            <div className="grid gap-2">
-              <h3 className="text-base font-semibold">Product</h3>
-              <ProductCard product={nextAsset.product} />
-            </div>
+            <AssetCard asset={nextAsset} />
           </CardContent>
         </Card>
-      )}
-      {!nextAsset && routeCompleted && (
+      ) : session ? (
         <Card className="text-center">
           <CardHeader>
             <CardTitle className="justify-center">
-              Inspection Route Completed
+              {session.status === "COMPLETE"
+                ? "Inspection Route Completed"
+                : session.status === "EXPIRED"
+                ? "Inspection Session Expired"
+                : session.status === "CANCELLED"
+                ? "Inspection Session Cancelled"
+                : "Something unexpected happened 🙊"}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm grid gap-4">
-            <p>
-              You have completed inspecting all assets in the route. Thank you
-              for your inspections!
-            </p>
+            {session?.status === "COMPLETE" && (
+              <p>
+                You have completed inspecting all assets in the route. Thank you
+                for your inspections!
+              </p>
+            )}
             <p className="text-xs text-muted-foreground">
               To continue inspecting and/or begin a new route, please scan an
               asset&apos;s NFC tag.
             </p>
           </CardContent>
         </Card>
-      )}
+      ) : null}
     </div>
   );
 }

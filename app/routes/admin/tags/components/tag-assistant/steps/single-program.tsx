@@ -1,17 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Copy,
-  ExternalLink,
-  Loader2,
-  RotateCcw,
-} from "lucide-react";
+import { Copy, ExternalLink, Loader2, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { generateSignedTagUrl } from "../../../services/tags.service";
 import DisplayTagWriteData from "../components/display-tag-write-data";
+import Step from "../components/step";
 import SubStep from "../components/sub-step";
 
 export default function StepSingleProgram({
@@ -49,16 +44,16 @@ export default function StepSingleProgram({
   }, [serialNumber]);
 
   return (
-    <div className="w-full max-w-xl flex flex-col items-stretch justify-center gap-4">
-      <div>
-        <h3 className="text-center text-lg font-bold">
-          Almost done! Time to program the tag.
-        </h3>
-        <h4 className="text-center text-base text-muted-foreground">
-          Follow the steps to finish programming.
-        </h4>
-      </div>
-
+    <Step
+      title="Almost done! Time to program the tag."
+      subtitle="Follow the steps to finish programming."
+      onStepBackward={onStepBackward}
+      footerSlotEnd={
+        <Button onClick={onRestart} variant="outline">
+          <RotateCcw /> Write another tag
+        </Button>
+      }
+    >
       <SubStep idx={0} title="Copy the following URL to your clipboard.">
         <div className="h-16 flex flex-col gap-2 items-center justify-center rounded-md bg-background text-foreground px-4 py-2 ring ring-accent">
           {isGeneratingTagUrl || writeData === null ? (
@@ -97,16 +92,7 @@ export default function StepSingleProgram({
           </Link>
         </p>
       </SubStep>
-
-      <div className="flex flex-row-reverse gap-4 justify-between">
-        <Button onClick={onRestart}>
-          <RotateCcw /> Write another tag
-        </Button>
-        <Button onClick={onStepBackward} variant="secondary">
-          <ArrowLeft /> Back
-        </Button>
-      </div>
-    </div>
+    </Step>
   );
 }
 

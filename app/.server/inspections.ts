@@ -170,41 +170,72 @@ export const getNextPointFromSession = (
   // Find the next incomplete point after the last completed point, starting
   // back from the beginning if necessary.
   let nextPoint = null;
-  let routeCompleted = true;
   for (let i = 0; i < sortedPoints.length; i++) {
     const candidateIdx = (i + lastCompletedIndex + 1) % sortedPoints.length;
     const candidatePoint = sortedPoints[candidateIdx];
     if (!completedPointAssetIds.has(candidatePoint.assetId)) {
-      routeCompleted = false;
       nextPoint = candidatePoint;
       break;
     }
   }
 
-  return { nextPoint, routeCompleted };
+  return { nextPoint };
 };
 
-export const getInspectionRouteAndSessionData = async (
+/**
+ * Fetches the active inspection route context for the given asset.
+ *
+ * This function will return a list of active sessions for the given asset,
+ * as well as the matching routes for those sessions. It will also check
+ * for any sessions that should be marked as completed and update the session
+ * if necessary.
+ *
+ * If there are no active sessions, it will return all routes for the asset.
+ *
+ * @param request - The HTTP request object.
+ * @param assetId - The ID of the asset to fetch inspection route context for.
+ * @returns An object containing the active sessions and matching routes.
+ */
+export const fetchActiveInspectionRouteContext = async (
   request: Request,
-  assetId: string
+  assetId: string,
+  options: {
+    resetSession?: boolean;
+    sessionId?: string;
+  } = {}
 ) => {
+  // Get all sessions for this asset that are not marked as complete.
+  let activeOrRecentlyExpiredSessions =
+    await api.inspections.getActiveOrRecentlyExpiredSessionsForAsset(
+      request,
+      assetId
+    );
+
+  if (options.sessionId) {
+    activeOrRecentlyExpiredSessions = activeOrRecentlyExpiredSessions.filter(
+      (session) => session.id === options.sessionId
+    );
+
+    const session = activeOrRecentlyExpiredSessions.at(0);
+    if (session && options.resetSession) {
+      await api.inspections.cancelRouteSession(request, session.id);
+      activeOrRecentlyExpiredSessions = [];
+    }
+  }
+
+  // Get matching routes either from the remaining session(s), or, if no active
+  // sessions, get all routes for the asset.
   let matchingRoutes: InspectionRoute[] | null = null;
-
-  const activeSessions = await api.inspections.getActiveSessionsForAsset(
-    request,
-    assetId
-  );
-
-  if (activeSessions.length === 0) {
+  if (activeOrRecentlyExpiredSessions.length === 0) {
     matchingRoutes = await api.inspectionRoutes.getForAssetId(request, assetId);
   } else {
-    matchingRoutes = activeSessions
+    matchingRoutes = activeOrRecentlyExpiredSessions
       .map((session) => session.inspectionRoute)
       .filter((r): r is InspectionRoute => !!r);
   }
 
   return {
-    activeSessions,
+    activeOrRecentlyExpiredSessions,
     matchingRoutes,
   };
 };

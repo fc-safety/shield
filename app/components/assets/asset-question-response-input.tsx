@@ -1,22 +1,15 @@
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Loader2, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import type { AssetQuestionResponseType } from "~/lib/models";
 import type { ResponseValueImage } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
 import { formatDateAsTimestamp, formatTimestampAsDate } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
+import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import PreviewInspectionImages from "./preview-inspection-images";
 
 type TValue<T extends AssetQuestionResponseType> = T extends "NUMBER"
@@ -44,34 +37,25 @@ export default function AssetQuestionResponseTypeInput<
   onBlur,
   disabled = false,
 }: AssetQuestionResponseTypeInputProps<T>) {
-  const [inputOpen, setInputOpen] = useState(false);
-  useBlurOnClose({
-    onBlur,
-    open: inputOpen,
-  });
-
   return valueType === "BINARY" || valueType === "INDETERMINATE_BINARY" ? (
-    <Select
+    <ToggleGroup
+      type="single"
       value={String(value)}
       onValueChange={(v) => onValueChange(v as TValue<T>)}
       disabled={disabled}
-      onOpenChange={setInputOpen}
+      className="w-full"
+      variant="outline"
     >
-      <SelectTrigger>
-        <SelectValue placeholder="Select a response" />
-      </SelectTrigger>
-      <SelectContent side="top">
-        {[
-          "Yes",
-          "No",
-          ...(valueType === "INDETERMINATE_BINARY" ? ["N/A"] : []),
-        ].map((operand) => (
-          <SelectItem key={operand} value={operand}>
-            {operand}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      {[
+        "Yes",
+        "No",
+        ...(valueType === "INDETERMINATE_BINARY" ? ["N/A"] : []),
+      ].map((operand) => (
+        <ToggleGroupItem key={operand} value={operand}>
+          {operand}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   ) : valueType === "DATE" ? (
     <Input
       type="date"

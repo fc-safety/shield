@@ -15,6 +15,7 @@ import {
   createInspectionRoutePointSchema,
   updateInspectionRoutePointSchema,
 } from "~/lib/schema";
+import { buildPath } from "~/lib/urls";
 import AssetCombobox from "../assets/asset-combobox";
 import { Button } from "../ui/button";
 import {
@@ -50,10 +51,10 @@ export interface RoutePointDetailsFormProps {
 }
 
 const createInspectionRouteSchemaResolver = zodResolver(
-  createInspectionRoutePointSchema
+  createInspectionRoutePointSchema as z.Schema<TForm>
 );
 const updateInspectionRouteSchemaResolver = zodResolver(
-  updateInspectionRoutePointSchema
+  updateInspectionRoutePointSchema as z.Schema<TForm>
 );
 
 const FORM_DEFAULTS = {
@@ -75,7 +76,12 @@ export default function RoutePointDetailsForm({
 
   const loadRoutes = useCallback(() => {
     if (fetcher.state === "idle") {
-      fetcher.load("/api/proxy/inspection-routes?limit=10000");
+      fetcher.load(
+        buildPath("/api/proxy/inspection-routes", {
+          limit: 10000,
+          siteId: assetProp?.siteId,
+        })
+      );
     }
   }, [fetcher]);
 

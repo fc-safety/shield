@@ -124,7 +124,12 @@ export interface InspectionSession extends BaseModel {
   clientId: string;
 }
 
-export const InspectionSessionStatuses = ["PENDING", "COMPLETE"] as const;
+export const InspectionSessionStatuses = [
+  "PENDING",
+  "COMPLETE",
+  "EXPIRED",
+  "CANCELLED",
+] as const;
 export type InspectionSessionStatus =
   (typeof InspectionSessionStatuses)[number];
 

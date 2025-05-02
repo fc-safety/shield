@@ -1,29 +1,32 @@
 import { ExternalLink, Factory, SquarePlus } from "lucide-react";
 import { Link } from "react-router";
-import { Button } from "~/components/ui/button";
+import OptionButton from "../components/option-button";
+import Step from "../components/step";
+import type { Mode } from "../types/core";
 
 export default function StepSelectMode({
   onSelectMode,
 }: {
-  onSelectMode: (mode: "single" | "bulk") => void;
+  onSelectMode: (mode: Mode) => void;
 }) {
   return (
-    <div className="w-full max-w-md flex flex-col items-center justify-center gap-4">
-      <div>
-        <h3 className="text-lg font-bold">
-          How do you want to program the tags?
-        </h3>
-        <h4 className="text-center text-base text-muted-foreground">
-          Choose an option to begin.
-        </h4>
-      </div>
-      <Button onClick={() => onSelectMode("single")}>
-        <SquarePlus /> One at a time
-      </Button>
-      <Button onClick={() => onSelectMode("bulk")}>
+    <Step
+      title="How do you want to start?"
+      subtitle="Choose an option to begin."
+      className="max-w-sm"
+    >
+      <OptionButton onClick={() => onSelectMode("preprogram-single")}>
+        <SquarePlus /> Pre-program one tag at a time
+      </OptionButton>
+      <OptionButton onClick={() => onSelectMode("preprogram-batch")}>
         <Factory />
-        In batches
-      </Button>
+        Pre-program tags in batches
+      </OptionButton>
+      {/* TODO: Finish adding batch register mode */}
+      {/* <OptionButton onClick={() => onSelectMode("batch-register")}>
+        <FileSpreadsheet />
+        Register tags from a batch file
+      </OptionButton> */}
       <p className="text-xs text-muted-foreground italic text-center">
         Tip: Make sure you have your NFC writer setup and ready to go before you
         start.{" "}
@@ -37,7 +40,7 @@ export default function StepSelectMode({
           <ExternalLink className="size-3 inline" />
         </Link>
       </p>
-    </div>
+    </Step>
   );
 }
 

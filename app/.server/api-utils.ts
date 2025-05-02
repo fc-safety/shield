@@ -1,6 +1,11 @@
 import { data } from "react-router";
 import type { ResultsPage } from "~/lib/models";
-import { buildUrl, type PathParams, type QueryParams } from "~/lib/urls";
+import {
+  buildUrl,
+  stringifyQuery,
+  type PathParams,
+  type QueryParams,
+} from "~/lib/urls";
 import { config } from "./config";
 import { logger } from "./logger";
 import { requestContext } from "./request-context";
@@ -131,6 +136,23 @@ export class FetchOptions {
     return this;
   }
 
+  public setQueryParams(params: QueryParams) {
+    this.modifyUrl((url) => {
+      url.search = `?${stringifyQuery(params)}`;
+      return url;
+    });
+  }
+
+  public addQueryParams(params: QueryParams) {
+    this.modifyUrl((url) => {
+      const newParams = new URLSearchParams(stringifyQuery(params));
+      newParams.forEach((value, key) => {
+        url.searchParams.append(key, value);
+      });
+      return url;
+    });
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public json(body: any) {
     this.options.body = JSON.stringify(body);
@@ -143,11 +165,16 @@ export class FetchOptions {
       this.options.headers.set("X-View-Context", options.context);
     }
 
-    const newHeaders = new Headers(this.options.headers);
     if (options.headers) {
+      const newHeaders = new Headers(this.options.headers);
       Object.entries(options.headers).forEach(([key, value]) => {
         newHeaders.set(key, value);
       });
+      this.options.headers = newHeaders;
+    }
+
+    if (options.params) {
+      this.addQueryParams(options.params);
     }
 
     if (this.singleResourceKey) {
@@ -161,17 +188,19 @@ export class FetchOptions {
   }
 
   private addResourceKeyToUrl(key: string) {
-    const addIdToPath = (url: URL, id: string) => {
+    this.modifyUrl((url) => {
       const path = url.pathname;
-      const newPath = `${path.replace(/\/$/, "")}/${id}`;
+      const newPath = `${path.replace(/\/$/, "")}/${key}`;
       url.pathname = newPath;
       return url;
-    };
+    });
+  }
 
+  private modifyUrl(action: (url: URL) => URL) {
     if (typeof this.url === "string") {
-      this.url = addIdToPath(new URL(this.url), key).toString();
+      this.url = action(new URL(this.url)).toString();
     } else if (this.url instanceof URL) {
-      this.url = addIdToPath(new URL(this.url), key);
+      this.url = action(this.url);
     } else {
       throw new Error("Cannot modify path of read-only Request URL");
     }

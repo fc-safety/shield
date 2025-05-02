@@ -127,7 +127,10 @@ export const api = {
       getAuthenticatedData<InspectionSession>(request, [
         FetchOptions.url("/inspections/sessions/:id", { id }).get().build(),
       ]),
-    getActiveSessionsForAsset: (request: Request, assetId: string) =>
+    getActiveOrRecentlyExpiredSessionsForAsset: (
+      request: Request,
+      assetId: string
+    ) =>
       getAuthenticatedData<InspectionSession[]>(request, [
         FetchOptions.url("/inspections/active-sessions/asset/:assetId", {
           assetId,
@@ -135,9 +138,9 @@ export const api = {
           .get()
           .build(),
       ]),
-    completeSession: (request: Request, id: string) =>
+    cancelRouteSession: (request: Request, id: string) =>
       getAuthenticatedData<InspectionSession>(request, [
-        FetchOptions.url("/inspections/sessions/:id/complete", { id })
+        FetchOptions.url("/inspections/sessions/:id/cancel", { id })
           .post()
           .build(),
       ]),

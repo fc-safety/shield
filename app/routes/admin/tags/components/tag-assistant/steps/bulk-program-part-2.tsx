@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -14,6 +13,7 @@ import { Button } from "~/components/ui/button";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { generateSignedTagUrl } from "../../../services/tags.service";
 import DisplayTagWriteData from "../components/display-tag-write-data";
+import Step from "../components/step";
 import SubStep from "../components/sub-step";
 import { incrementSerialNumber } from "../utils/inputs";
 
@@ -101,19 +101,19 @@ export default function StepBulkProgramPart2({
   }, [currentSerialNumber, getGeneratedTagUrl]);
 
   return (
-    <div className="w-full max-w-xl flex flex-col items-stretch justify-center gap-4">
-      <div>
-        <h3 className="text-center text-lg font-bold">
-          Good choice! Let's get started.
-        </h3>
-        <h4 className="text-center text-base text-muted-foreground">
-          Follow the steps for each serial number.
-        </h4>
-      </div>
-
+    <Step
+      title="Good choice! Let's get started."
+      subtitle="Follow the steps for each serial number."
+      onStepBackward={onStepBackward}
+      footerSlotEnd={
+        <Button onClick={onRestart} variant="outline">
+          <RotateCcw /> Start new batch
+        </Button>
+      }
+    >
       <SubStep idx={0} title="Copy the following URL to your clipboard.">
         <div className="rounded-md bg-background text-foreground ring ring-accent">
-          <div className="text-xs w-full flex items-center justify-between gap-2 px-2 py-1 bg-card text-card-foreground rounded-t-md">
+          <div className="text-xs w-full flex items-center justify-between gap-2 px-4 py-1 bg-card text-card-foreground rounded-t-md border-b border-accent">
             <div>
               {(currentSerialNumberIdx + 1).toLocaleString()} /{" "}
               {serialNumberCount.toLocaleString()}
@@ -202,16 +202,7 @@ export default function StepBulkProgramPart2({
           </Link>
         </p>
       </SubStep>
-
-      <div className="flex flex-row-reverse gap-4 justify-between">
-        <Button onClick={onRestart}>
-          <RotateCcw /> Start new batch
-        </Button>
-        <Button onClick={onStepBackward} variant="secondary">
-          <ArrowLeft /> Back
-        </Button>
-      </div>
-    </div>
+    </Step>
   );
 }
 

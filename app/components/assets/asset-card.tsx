@@ -1,8 +1,8 @@
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Nfc } from "lucide-react";
 import type { Asset, Product } from "~/lib/models";
 import { cn } from "~/lib/utils";
-import Icon from "../icons/icon";
 import { ProductImage } from "../products/product-card";
+import ProductCategoryIcon from "../products/product-category-icon";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import {
@@ -19,29 +19,36 @@ interface AssetCardProps {
 export default function AssetCard({ asset, className }: AssetCardProps) {
   return (
     <Card className={cn("flex", className)}>
-      <ProductImage
-        name={asset.product.name}
-        imageUrl={asset.product.imageUrl}
-        custom={!!asset.product.client}
-      />
+      <div className="flex flex-col">
+        <ProductImage
+          name={asset.product.name}
+          imageUrl={asset.product.imageUrl}
+          custom={!!asset.product.client}
+          className="grow rounded-l-none rounded-tl-xl"
+        />
+        {asset.tag && (
+          <div className="flex items-center justify-center gap-1 rounded-bl-xl w-32 sm:w-40 text-center bg-background border-t border-r border-border text-xs font-bold px-2 py-1">
+            <Nfc className="size-4" />
+            <div className="truncate">{asset.tag.serialNumber}</div>
+          </div>
+        )}
+      </div>
       <div className="grow flex flex-col">
         <CardHeader className="p-4 sm:p-4">
           <CardTitle className="flex flex-wrap-reverse justify-between items-center">
             <div className="grid gap-1">
-              <span>{asset.name}</span>
+              <span>
+                <ProductCategoryIcon category={asset.product.productCategory} />
+                {asset.name}
+              </span>
               <span className="text-xs text-muted-foreground">
                 {asset.site && <>{asset.site.name} &mdash; </>}
                 {asset.location} &mdash; {asset.placement}
               </span>
+              <span className="text-xs font-light text-muted-foreground">
+                Serial No. <pre className="inline">{asset.serialNumber}</pre>
+              </span>
             </div>
-            {asset.tag && (
-              <div className="w-max border-2 rounded-lg text-xs flex border-secondary-foreground bg-secondary-foreground text-secondary overflow-hidden">
-                <span className="font-medium py-0.5 px-2">Tag Serial No.</span>
-                <pre className="font-mono font-thin bg-secondary text-secondary-foreground py-0.5 px-2">
-                  {asset.tag.serialNumber}
-                </pre>
-              </div>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 sm:p-4 pt-0 sm:pt-0">
@@ -60,10 +67,6 @@ export default function AssetCard({ asset, className }: AssetCardProps) {
               <div className="pt-4 grid gap-x-4 gap-y-2 grid-cols-[repeat(auto-fit,minmax(130px,1fr))]">
                 {[
                   {
-                    label: "Asset Serial No.",
-                    value: asset.serialNumber,
-                  },
-                  {
                     label: "Product",
                     value: asset.product.name,
                   },
@@ -71,15 +74,12 @@ export default function AssetCard({ asset, className }: AssetCardProps) {
                     label: "Category",
                     value: (
                       <div>
-                        {(asset.product.productCategory.icon ||
-                          asset.product.productCategory.color) && (
-                          <Icon
-                            iconId={asset.product.productCategory.icon ?? "box"}
-                            color={asset.product.productCategory.color}
-                            className="text-sm mr-1"
-                          />
-                        )}
-                        {asset.product.productCategory.name}
+                        <ProductCategoryIcon
+                          category={asset.product.productCategory}
+                        />
+                        {asset.product.productCategory.name}{" "}
+                        {asset.product.productCategory.shortName &&
+                          `(${asset.product.productCategory.shortName})`}
                       </div>
                     ),
                   },

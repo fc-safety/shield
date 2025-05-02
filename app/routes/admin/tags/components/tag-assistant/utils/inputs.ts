@@ -1,3 +1,5 @@
+import Papa from "papaparse";
+
 export const coerceNumeric = (value: string) => {
   return value.replace(/\D/g, "");
 };
@@ -59,3 +61,17 @@ export const getAssetOptionQueryFilter = (
     ],
   };
 };
+
+export const extractCsvHeaders = (file: File) =>
+  new Promise<string[]>((resolve, reject) =>
+    Papa.parse<Record<string, string>>(file, {
+      header: true,
+      skipEmptyLines: true,
+      preview: 1,
+      complete: (results) => {
+        const rawHeaders = Object.keys(results.data[0]);
+        resolve(rawHeaders);
+      },
+      error: (error) => reject(error),
+    })
+  );

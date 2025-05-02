@@ -20,6 +20,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Tag } from "~/lib/models";
 import { can } from "~/lib/users";
+import { dedupById } from "~/lib/utils";
 import type { Route } from "./+types/index";
 import TagAssistantButton from "./components/tag-assistant/tag-assistant-button";
 import { generateSignedTagUrl } from "./services/tags.service";
@@ -200,6 +201,18 @@ export default function AdminTagsIndex({
     ]
   );
 
+  const allClients = dedupById(
+    tags.results
+      .map((tag) => tag.client)
+      .filter((c): c is NonNullable<typeof c> => !!c)
+  );
+
+  const allSites = dedupById(
+    tags.results
+      .map((tag) => tag.site)
+      .filter((s): s is NonNullable<typeof s> => !!s)
+  );
+
   return (
     <>
       <Card>
@@ -223,6 +236,24 @@ export default function AdminTagsIndex({
                 actions: canUpdate || canDelete,
               },
             }}
+            filters={({ table }) => [
+              {
+                column: table.getColumn("assigned client"),
+                options: allClients.map((client) => ({
+                  label: client.name,
+                  value: client.name,
+                })),
+                title: "Client",
+              },
+              {
+                column: table.getColumn("assigned site"),
+                options: allSites.map((site) => ({
+                  label: site.name,
+                  value: site.name,
+                })),
+                title: "Site",
+              },
+            ]}
           />
         </CardContent>
       </Card>

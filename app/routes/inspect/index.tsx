@@ -21,14 +21,13 @@ import { api } from "~/.server/api";
 import { catchResponse } from "~/.server/api-utils";
 import { guard } from "~/.server/guard";
 import {
-  getInspectionRouteAndSessionData,
+  fetchActiveInspectionRouteContext,
   validateInspectionSession,
 } from "~/.server/inspections";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
-import RouteProgressCard from "~/components/inspections/route-progress-card";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   AlertDialog,
@@ -63,6 +62,7 @@ import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
 import { buildTitle, getSearchParams, isNil } from "~/lib/utils";
+import RouteProgressCard from "~/routes/inspect/components/route-progress-card";
 import type { Route } from "./+types/index";
 import { INSPECTION_TOKEN_HEADER } from "./constants/headers";
 
@@ -125,8 +125,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
       return { inspection };
     })
-    .then((data) =>
-      redirect(`next?success&inspectionId=${data.inspection.id}`)
+    .then(async (data) =>
+      redirect(`next?success&inspectionId=${data.inspection.id}`, {
+        headers: {
+          "Set-Cookie": await inspectionSessionStorage.commitSession(
+            inspectionSession
+          ),
+        },
+      })
     );
 };
 
@@ -157,13 +163,18 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     return redirect("/inspect/setup/");
   }
 
+  const qp = getSearchParams(request);
+  const action = qp.get("action");
+  const sessionId = qp.get("sessionId");
+
   // Load inspection route and session data, if present.
-  return getInspectionRouteAndSessionData(request, tag.asset.id).then(
-    (result) => ({
-      tag,
-      ...result,
-    })
-  );
+  return fetchActiveInspectionRouteContext(request, tag.asset.id, {
+    sessionId: sessionId ?? undefined,
+    resetSession: action === "reset-session",
+  }).then((result) => ({
+    tag,
+    ...result,
+  }));
 };
 
 export const meta: Route.MetaFunction = ({ data, matches }) => {
@@ -188,14 +199,14 @@ const onlyInspectionQuestions = (questions: AssetQuestion[] | undefined) =>
   (questions ?? []).filter((question) => question.type === "INSPECTION");
 
 export default function InspectIndex({
-  loaderData: { tag, activeSessions, matchingRoutes },
+  loaderData: { tag, activeOrRecentlyExpiredSessions, matchingRoutes },
 }: Route.ComponentProps) {
   if (tag.asset) {
     return (
       <InspectionPage
         tag={tag}
         asset={tag.asset}
-        activeSessions={activeSessions}
+        activeOrRecentlyExpiredSessions={activeOrRecentlyExpiredSessions}
         matchingRoutes={matchingRoutes}
       />
     );
@@ -217,12 +228,12 @@ export default function InspectIndex({
 function InspectionPage({
   tag,
   asset,
-  activeSessions,
+  activeOrRecentlyExpiredSessions,
   matchingRoutes,
 }: {
   tag: Tag;
   asset: NonNullable<Tag["asset"]>;
-  activeSessions: InspectionSession[] | null | undefined;
+  activeOrRecentlyExpiredSessions: InspectionSession[] | null | undefined;
   matchingRoutes: InspectionRoute[] | null | undefined;
 }) {
   const questions = useMemo(
@@ -344,9 +355,9 @@ function InspectionPage({
 
   return (
     <>
-      <div className="grid gap-4">
+      <div className="grid gap-4 max-w-md self-center">
         <InspectionRouteCard
-          activeSessions={activeSessions}
+          activeOrRecentlyExpiredSessions={activeOrRecentlyExpiredSessions}
           matchingRoutes={matchingRoutes}
           asset={asset}
           userInteractionReady={!geolocationPending}
@@ -461,7 +472,16 @@ function InspectionPage({
                 Ensure that location services are enabled for this browser in
                 your device&apos;s browser or system settings.
               </li>
-              <li>Refresh this page.</li>
+              <li>
+                <button
+                  onClick={() => {
+                    window.location.reload();
+                  }}
+                  className="underline"
+                >
+                  Refresh this page.
+                </button>
+              </li>
             </ol>
           </p>
         </AlertDialogContent>
@@ -479,20 +499,25 @@ function InspectionPage({
 }
 
 function InspectionRouteCard({
-  activeSessions,
+  activeOrRecentlyExpiredSessions,
   matchingRoutes,
   asset,
   userInteractionReady,
   setActionQueryParams,
 }: {
-  activeSessions: InspectionSession[] | null | undefined;
+  activeOrRecentlyExpiredSessions: InspectionSession[] | null | undefined;
   matchingRoutes: InspectionRoute[] | null | undefined;
   asset: Asset | undefined;
   userInteractionReady: boolean;
   setActionQueryParams: (params: QueryParams | null) => void;
 }) {
   const { user } = useAuth();
-  const navigate = useNavigate();
+
+  const activeSessions = useMemo(() => {
+    return activeOrRecentlyExpiredSessions?.filter(
+      (s) => s.status === "PENDING"
+    );
+  }, [activeOrRecentlyExpiredSessions]);
 
   // Allow user to disable route for this inspection.
   const [routeDisabled, setRouteDisabled] = useState(false);
@@ -505,15 +530,21 @@ function InspectionRouteCard({
   // has multiple sessions, or if another inspector has already started a session,
   // the user will be prompted to confirm which session they would like to continue.
   useEffect(() => {
-    if (activeSessions) {
-      const mySessions = activeSessions.filter(
+    if (activeOrRecentlyExpiredSessions) {
+      const mySessions = activeOrRecentlyExpiredSessions.filter(
         (s) => s.lastInspector?.idpId === user.idpId
       );
-      if (mySessions.length === 1) {
+      const myActiveSessions = mySessions.filter((s) => s.status === "PENDING");
+
+      if (myActiveSessions.length === 1) {
+        // Choose active session if there is only one.
+        setActiveSession(myActiveSessions[0]);
+      } else if (mySessions.length === 1) {
+        // Choose any session if there is only one.
         setActiveSession(mySessions[0]);
       }
     }
-  }, [user, activeSessions]);
+  }, [user, activeOrRecentlyExpiredSessions]);
 
   const [activeRoute, setActiveRoute] = useState<
     InspectionRoute | undefined | null
@@ -556,54 +587,45 @@ function InspectionRouteCard({
         setRouteDisabled={setRouteDisabled}
         asset={asset}
       />
-      <ConfirmSessionPrompt
-        open={
-          userInteractionReady &&
-          activeSession === undefined &&
-          !!activeSessions &&
-          activeSessions.length > 0
-        }
-        activeSessions={activeSessions}
-        onContinue={setActiveSession}
-        onCancel={() => setActiveSession(null)}
-      />
-      <AlertDialog
-        open={
-          userInteractionReady &&
-          !routeDisabled &&
-          !!activeSession &&
-          activeSession.completedInspectionRoutePoints &&
-          activeSession.completedInspectionRoutePoints.some(
-            (p) => p.inspectionRoutePoint?.assetId === asset?.id
-          )
-        }
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Inspection Already Completed</AlertDialogTitle>
-            <AlertDialogDescription>
-              An inspection has already been completed for this asset in the
-              current route session.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setRouteDisabled(true);
-              }}
-            >
-              Inspect without route
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() =>
-                navigate("next?sessionId=" + (activeSession?.id ?? ""))
-              }
-            >
-              Continue to next asset in route
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Show confirm session prompt if there are multiple (non-expired) sessions. */}
+      {activeSessions && (
+        <ConfirmSessionPrompt
+          open={
+            userInteractionReady &&
+            activeSession === undefined &&
+            activeSessions.length > 0
+          }
+          activeSessions={activeSessions}
+          onContinue={setActiveSession}
+          onCancel={() => setActiveSession(null)}
+        />
+      )}
+      {/* Show alert if there is a single active session and the current asset has
+       * already been inspected in the current session. */}
+      {activeSession && (
+        <InspectionForAssetCompletedAlert
+          open={
+            userInteractionReady &&
+            !routeDisabled &&
+            !!activeSession.completedInspectionRoutePoints &&
+            activeSession.completedInspectionRoutePoints.some(
+              (p) => p.inspectionRoutePoint?.assetId === asset?.id
+            )
+          }
+          activeSession={activeSession}
+          setRouteDisabled={setRouteDisabled}
+        />
+      )}
+      {activeSession && activeSession.status === "EXPIRED" && (
+        <SessionExpiredAlert
+          open={userInteractionReady && activeSession.status === "EXPIRED"}
+          onContinue={() => setActiveSession(null)}
+          onContinueWithoutRoute={() => {
+            setActiveSession(null);
+            setRouteDisabled(true);
+          }}
+        />
+      )}
     </>
   );
 }
@@ -615,13 +637,13 @@ function ConfirmSessionPrompt({
   onCancel,
 }: {
   open: boolean;
-  activeSessions: InspectionSession[] | null | undefined;
+  activeSessions: InspectionSession[];
   onContinue: (session: InspectionSession) => void;
   onCancel: () => void;
 }) {
   const [selectedSession, setSelectedSession] =
     useState<InspectionSession | null>(
-      activeSessions && activeSessions.length === 1 ? activeSessions[0] : null
+      activeSessions.length === 1 ? activeSessions[0] : null
     );
   return (
     <AlertDialog open={open}>
@@ -704,6 +726,92 @@ function ConfirmSessionPrompt({
             onClick={() => selectedSession && onContinue(selectedSession)}
           >
             Continue
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function InspectionForAssetCompletedAlert({
+  open,
+  activeSession,
+  setRouteDisabled,
+}: {
+  open: boolean;
+  activeSession: InspectionSession;
+  setRouteDisabled: (disabled: boolean) => void;
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <AlertDialog open={open}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Inspection Already Completed</AlertDialogTitle>
+          <AlertDialogDescription>
+            An inspection has already been completed for this asset in the
+            current route session.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            onClick={() => {
+              setRouteDisabled(true);
+            }}
+          >
+            Inspect without route
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => navigate("next?sessionId=" + activeSession.id)}
+          >
+            Continue to next asset in route
+          </AlertDialogAction>
+        </AlertDialogFooter>
+        <Button
+          variant="link"
+          onClick={() => {
+            navigate(
+              "/inspect?action=reset-session&sessionId=" + activeSession.id
+            );
+          }}
+        >
+          or cancel current session and restart route
+        </Button>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function SessionExpiredAlert({
+  open,
+  onContinue,
+  onContinueWithoutRoute,
+}: {
+  open: boolean;
+  onContinue: () => void;
+  onContinueWithoutRoute: () => void;
+}) {
+  return (
+    <AlertDialog open={open}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Session Expired</AlertDialogTitle>
+          <AlertDialogDescription>
+            This route session has expired. Please start a new session to
+            continue.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel
+            onClick={() => {
+              onContinueWithoutRoute();
+            }}
+          >
+            Inspect without route
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={() => onContinue()}>
+            Start new route session
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -17,7 +17,7 @@ import type { z } from "zod";
 import { api } from "~/.server/api";
 import { guard } from "~/.server/guard";
 import {
-  getInspectionRouteAndSessionData,
+  fetchActiveInspectionRouteContext,
   validateInspectionSession,
 } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
@@ -61,7 +61,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const tag = await api.tags.getForAssetSetup(request, tagExternalId);
 
   if (tag.asset?.id) {
-    return getInspectionRouteAndSessionData(request, tag.asset?.id).then(
+    return fetchActiveInspectionRouteContext(request, tag.asset?.id).then(
       (result) => ({
         tag: tag,
         ...result,
@@ -205,7 +205,7 @@ export default function InspectSetup({
 
   return (
     <>
-      <div className="grid gap-4">
+      <div className="grid gap-4 max-w-md self-center">
         {showRouteCard && (
           <Card>
             <CardHeader>
