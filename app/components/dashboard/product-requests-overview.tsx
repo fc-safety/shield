@@ -279,8 +279,8 @@ export default function ProductRequestsOverview() {
   return error ? (
     <ErrorDashboardTile />
   ) : (
-    <>
-      <Card>
+    <div>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>
             <Package /> Recent Supply Requests
@@ -446,7 +446,7 @@ export default function ProductRequestsOverview() {
         onOpenChange={reviewRequest.setOpen}
         request={reviewRequest.data}
       />
-    </>
+    </div>
   );
 }
 
@@ -541,6 +541,7 @@ function ReviewProductRequestModal({
         open={open}
         onOpenChange={onOpenChange}
         dialogClassName="sm:max-w-lg"
+        trigger={null}
       >
         <>
           <div className="flex flex-col gap-4 py-4">
