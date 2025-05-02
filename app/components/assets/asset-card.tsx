@@ -24,7 +24,10 @@ export default function AssetCard({ asset, className }: AssetCardProps) {
           name={asset.product.name}
           imageUrl={asset.product.imageUrl}
           custom={!!asset.product.client}
-          className="grow rounded-l-none rounded-tl-xl"
+          className={cn(
+            "grow rounded-l-none rounded-tl-xl",
+            !asset.tag && "rounded-bl-xl"
+          )}
         />
         {asset.tag && (
           <div className="flex items-center justify-center gap-1 rounded-bl-xl w-32 sm:w-40 text-center bg-background border-t border-r border-border text-xs font-bold px-2 py-1">
