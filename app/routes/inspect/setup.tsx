@@ -170,7 +170,6 @@ export default function InspectSetup({
             updateMany: [],
           },
     } satisfies TForm,
-    mode: "onBlur",
   });
 
   const {

@@ -328,6 +328,11 @@ export default function InspectionAlertsOverview() {
                         hidden: !cells.site,
                       },
                       {
+                        label: "Asset",
+                        value: renderCell(cells.asset),
+                        hidden: !cells.asset,
+                      },
+                      {
                         label: "Level",
                         value: renderCell(cells.level),
                         hidden: !cells.level,

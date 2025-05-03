@@ -51,7 +51,11 @@ export default function AssetQuestionResponseTypeInput<
         "No",
         ...(valueType === "INDETERMINATE_BINARY" ? ["N/A"] : []),
       ].map((operand) => (
-        <ToggleGroupItem key={operand} value={operand}>
+        <ToggleGroupItem
+          key={operand}
+          value={operand}
+          className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        >
           {operand}
         </ToggleGroupItem>
       ))}

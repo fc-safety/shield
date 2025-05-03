@@ -15,7 +15,7 @@ export const validateInspectionSession = async (
   const inspectionToken = inspectionSession.get("inspectionToken");
 
   if (!inspectionToken) {
-    throw new Response("No active inspection session.", {
+    throw new Response("No active inspection session. Try scanning a tag.", {
       status: 400,
     });
   }
@@ -29,7 +29,7 @@ export const validateInspectionSession = async (
   if (!validateInspectionTokenResult.isValid) {
     throw new Response(
       validateInspectionTokenResult.reason ??
-        "Failed to validate inspection session.",
+        "Failed to validate inspection session. Try scanning a tag again.",
       {
         status: 400,
       }

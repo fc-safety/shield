@@ -279,7 +279,6 @@ function InspectionPage({
       latitude: -999,
       comments: "",
     } satisfies TForm,
-    mode: "onBlur",
   });
 
   const {
