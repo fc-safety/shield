@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
@@ -6,12 +7,7 @@ import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset } from "~/lib/models";
-import {
-  createAssetSchema,
-  createAssetSchemaResolver,
-  updateAssetSchema,
-  updateAssetSchemaResolver,
-} from "~/lib/schema";
+import { createAssetSchema, updateAssetSchema } from "~/lib/schema";
 import { hasMultiSiteVisibility, isGlobalAdmin } from "~/lib/users";
 import { isEmpty } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
@@ -57,7 +53,9 @@ export default function AssetDetailsForm({
   const isNew = !asset;
 
   const form = useForm<TForm>({
-    resolver: asset ? updateAssetSchemaResolver : createAssetSchemaResolver,
+    resolver: zodResolver(
+      (asset ? updateAssetSchema : createAssetSchema) as z.Schema<TForm>
+    ),
     values: asset
       ? {
           ...asset,
@@ -110,6 +108,7 @@ export default function AssetDetailsForm({
     submit(data, {
       path: "/api/proxy/assets",
       id: asset?.id,
+      viewContext: context,
     });
   };
 

@@ -127,6 +127,7 @@ export default function AssetCombobox({
           clientId={clientId}
           siteId={siteId}
           context={viewContext}
+          className="absolute"
         />
       ) : (
         <Dialog open={createNew.open} onOpenChange={createNew.setOpen}>

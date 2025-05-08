@@ -13,10 +13,12 @@ export default function StepSingleProgram({
   serialNumber,
   onRestart,
   onStepBackward,
+  onRegisterTag,
 }: {
   serialNumber: string;
   onRestart: () => void;
   onStepBackward: () => void;
+  onRegisterTag: (tagUrl: string) => void;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { mutate: getGeneratedTagUrl, isPending: isGeneratingTagUrl } =
@@ -49,10 +51,12 @@ export default function StepSingleProgram({
       subtitle="Follow the steps to finish programming."
       onStepBackward={onStepBackward}
       footerSlotEnd={
-        <Button onClick={onRestart} variant="outline">
+        <Button onClick={onRestart} variant="secondary">
           <RotateCcw /> Write another tag
         </Button>
       }
+      onContinue={() => onRegisterTag(writeData ?? "")}
+      continueButtonText="(Optional) Register tag"
     >
       <SubStep idx={0} title="Copy the following URL to your clipboard.">
         <div className="h-16 flex flex-col gap-2 items-center justify-center rounded-md bg-background text-foreground px-4 py-2 ring ring-accent">

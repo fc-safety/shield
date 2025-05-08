@@ -30,6 +30,9 @@ interface ResponsiveDialogProps
       "disableDisplayTable"
     > {
   className?: string;
+  classNames?: {
+    trigger?: string;
+  };
   dialogClassName?: string;
   drawerClassName?: string;
   open?: boolean;
@@ -51,6 +54,7 @@ interface ResponsiveDialogProps
 
 export function ResponsiveDialog({
   className,
+  classNames,
   dialogClassName,
   drawerClassName,
   open: openProp,
@@ -72,7 +76,9 @@ export function ResponsiveDialog({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogTrigger asChild={!!trigger}>{trigger}</DialogTrigger>
+        <DialogTrigger asChild={!!trigger} className={classNames?.trigger}>
+          {trigger}
+        </DialogTrigger>
         <DialogContent
           className={cn(
             "sm:max-w-[425px] rounded-lg",

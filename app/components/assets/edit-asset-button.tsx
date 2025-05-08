@@ -10,6 +10,7 @@ interface EditAssetButtonProps extends ComponentProps<typeof AssetDetailsForm> {
   trigger?: React.ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  className?: string;
 }
 
 export default function EditAssetButton({
@@ -17,6 +18,7 @@ export default function EditAssetButton({
   trigger,
   open: openProp,
   onOpenChange,
+  className,
   ...props
 }: EditAssetButtonProps) {
   const [open, setOpen] = useState(false);
@@ -26,6 +28,9 @@ export default function EditAssetButton({
       onOpenChange={onOpenChange ?? setOpen}
       title={asset ? "Edit Asset" : "Add New Asset"}
       dialogClassName="sm:max-w-lg"
+      classNames={{
+        trigger: className,
+      }}
       trigger={
         trigger !== undefined ? (
           trigger

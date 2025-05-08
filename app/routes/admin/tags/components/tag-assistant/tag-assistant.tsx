@@ -10,6 +10,7 @@ import StepPreprocessBatchFile from "./steps/preprocess-batch-file";
 import StepSelectClient from "./steps/select-client";
 import StepSelectMode from "./steps/select-mode";
 import StepSingleProgram from "./steps/single-program";
+import StepSingleRegister from "./steps/single-register";
 import StepSingleSerialNumberInput from "./steps/single-serial-number-input";
 import StepUploadBatchFile from "./steps/upload-batch-file";
 import type { Mode } from "./types/core";
@@ -27,6 +28,13 @@ interface AssistantState {
   serialNumberRangeStart?: string;
   serialNumberRangeEnd?: string;
   serialNumbers?: string[];
+
+  // Tag registration
+  currentTagUrl?: string;
+  clientId?: string;
+  siteId?: string;
+  assetId?: string;
+  registrationCompleted: boolean;
 
   // Batch file mode
   batchFile?: File;
@@ -65,6 +73,7 @@ export default function TagAssistant() {
   const [assistantState, setAssistantState] = useImmer<AssistantState>({
     mode: "preprogram-single",
     serialNumberMethod: "sequential",
+    registrationCompleted: false,
   });
 
   return (
@@ -151,6 +160,51 @@ const CurrentStep = ({
               stepTo(StepSingleSerialNumberInput.StepId, "backward");
               setAssistantState((draft) => {
                 draft.serialNumberRangeStart = undefined;
+              });
+            }}
+            onRegisterTag={(tagUrl: string) => {
+              stepTo(StepSingleRegister.StepId, "forward");
+              setAssistantState((draft) => {
+                draft.currentTagUrl = tagUrl;
+              });
+            }}
+          />
+        );
+      case StepSingleRegister.StepId:
+        return (
+          <StepSingleRegister
+            tagUrl={assistantState.currentTagUrl ?? ""}
+            onStepBackward={() => stepTo(StepSingleProgram.StepId, "backward")}
+            onRestart={() => {
+              stepTo(StepSingleSerialNumberInput.StepId, "backward");
+              setAssistantState((draft) => {
+                draft.serialNumberRangeStart = undefined;
+                draft.assetId = undefined;
+                draft.registrationCompleted = false;
+              });
+            }}
+            clientId={assistantState.clientId}
+            siteId={assistantState.siteId}
+            assetId={assistantState.assetId}
+            setClientId={(clientId) => {
+              setAssistantState((draft) => {
+                draft.clientId = clientId;
+              });
+            }}
+            setSiteId={(siteId) => {
+              setAssistantState((draft) => {
+                draft.siteId = siteId;
+              });
+            }}
+            setAssetId={(assetId) => {
+              setAssistantState((draft) => {
+                draft.assetId = assetId;
+              });
+            }}
+            isRegistrationCompleted={assistantState.registrationCompleted}
+            onRegistrationCompleted={() => {
+              setAssistantState((draft) => {
+                draft.registrationCompleted = true;
               });
             }}
           />

@@ -8,6 +8,7 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -15,12 +16,7 @@ import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Tag } from "~/lib/models";
-import {
-  createTagSchema,
-  createTagSchemaResolver,
-  updateTagSchema,
-  updateTagSchemaResolver,
-} from "~/lib/schema";
+import { createTagSchema, updateTagSchema } from "~/lib/schema";
 import { buildUrl } from "~/lib/urls";
 import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
@@ -52,7 +48,9 @@ export default function TagDetailsForm({
   const [isAddingSequentialTag, setIsAddingSequentialTag] = useState(false);
 
   const form = useForm<TForm>({
-    resolver: tag ? updateTagSchemaResolver : createTagSchemaResolver,
+    resolver: zodResolver(
+      (tag ? updateTagSchema : createTagSchema) as z.Schema<TForm>
+    ),
     values: tag
       ? {
           ...tag,

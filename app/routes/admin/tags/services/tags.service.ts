@@ -1,3 +1,6 @@
+import type { z } from "zod";
+import type { createTagSchema } from "~/lib/schema";
+
 export const generateSignedTagUrl = async (
   fetcher: typeof fetch,
   serialNumber: string,
@@ -191,4 +194,25 @@ const handleDownloadFileFromURL = (
   // Clean up
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
+};
+
+export const registerTag = async (
+  fetcher: typeof fetch,
+  data: z.infer<typeof createTagSchema>
+) => {
+  const response = await fetcher("/tags", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to register tag.", {
+      cause: response,
+    });
+  }
+
+  return response.json();
 };

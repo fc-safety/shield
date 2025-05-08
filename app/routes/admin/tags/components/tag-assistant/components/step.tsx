@@ -9,6 +9,7 @@ export default function Step({
   subtitle,
   onContinue,
   continueDisabled,
+  continueButtonText,
   onStepBackward,
   children,
   footerSlotEnd: footerSlotRight,
@@ -19,6 +20,7 @@ export default function Step({
   subtitle?: ReactNode;
   onContinue?: () => void;
   continueDisabled?: boolean;
+  continueButtonText?: string;
   onStepBackward?: () => void;
   footerSlotEnd?: ReactNode;
   footerSlotStart?: ReactNode;
@@ -50,7 +52,7 @@ export default function Step({
         {footerSlotRight}
         {onContinue && (
           <Button onClick={onContinue} disabled={continueDisabled}>
-            Continue
+            {continueButtonText ?? "Continue"}
             <ArrowRight />
           </Button>
         )}
