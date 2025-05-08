@@ -5,3 +5,15 @@ export const BANNER_LOGO_LIGHT_URL =
   "https://content.fc-safety.com/fc_shield_logo_full_05x-light.png";
 export const BANNER_LOGO_DARK_URL =
   "https://content.fc-safety.com/fc_shield_logo_full_05x-dark.png";
+
+export const ASSET_QUESTION_TONES = {
+  NEUTRAL: "NEUTRAL",
+  POSITIVE: "POSITIVE",
+  NEGATIVE: "NEGATIVE",
+} as const;
+
+export const ASSET_QUESTION_TONE_OPTIONS = [
+  { label: "Neutral", value: ASSET_QUESTION_TONES.NEUTRAL },
+  { label: "Positive", value: ASSET_QUESTION_TONES.POSITIVE },
+  { label: "Negative", value: ASSET_QUESTION_TONES.NEGATIVE },
+] as const;

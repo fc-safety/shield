@@ -34,6 +34,7 @@ import {
 } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { useAuth } from "~/contexts/auth-context";
+import { ASSET_QUESTION_TONES } from "~/lib/constants";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import type { AssetQuestion } from "~/lib/models";
 import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
@@ -320,6 +321,9 @@ export default function InspectSetup({
                                 // Disabling for now.
                                 // TODO: Not sure if questions should be able to be updated after setup.
                                 disabled={isSetup || !question}
+                                tone={
+                                  question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL
+                                }
                               />
                             </FormControl>
                             <FormMessage />

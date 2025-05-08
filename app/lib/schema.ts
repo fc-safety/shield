@@ -468,6 +468,7 @@ export const createAssetQuestionSchema = z.object({
   order: z.coerce.number().optional(),
   prompt: z.string().nonempty(),
   valueType: z.enum(AssetQuestionResponseTypes),
+  tone: z.string().optional(),
   assetAlertCriteria: z
     .object({
       createMany: z.object({

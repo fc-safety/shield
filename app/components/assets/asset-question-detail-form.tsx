@@ -19,11 +19,16 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import {
+  ASSET_QUESTION_TONE_OPTIONS,
+  ASSET_QUESTION_TONES,
+} from "~/lib/constants";
 import {
   AlertLevels,
   AssetQuestionResponseTypes,
@@ -35,15 +40,14 @@ import {
 } from "~/lib/models";
 import {
   createAssetAlertCriterionSchema,
-  createAssetQuestionSchemaResolver,
+  createAssetQuestionSchema,
   ruleOperatorsSchema,
-  updateAssetQuestionSchemaResolver,
+  updateAssetQuestionSchema,
   type CreateAssetAlertCriterionRule,
-  type createAssetQuestionSchema,
-  type updateAssetQuestionSchema,
 } from "~/lib/schema";
 import type { ResponseValueImage } from "~/lib/types";
 import { cn, humanize } from "~/lib/utils";
+import HelpPopover from "../help-popover";
 import AssetQuestionResponseTypeInput from "./asset-question-response-input";
 import ConsumableCombobox from "./consumable-combobox";
 
@@ -79,9 +83,11 @@ export default function AssetQuestionDetailForm({
   const isNew = !assetQuestion;
 
   const form = useForm<TForm>({
-    resolver: assetQuestion
-      ? updateAssetQuestionSchemaResolver
-      : createAssetQuestionSchemaResolver,
+    resolver: zodResolver(
+      (assetQuestion
+        ? updateAssetQuestionSchema
+        : createAssetQuestionSchema) as z.Schema<TForm>
+    ),
     values: assetQuestion
       ? {
           ...assetQuestion,
@@ -112,6 +118,7 @@ export default function AssetQuestionDetailForm({
                 },
               }
             : undefined,
+          tone: assetQuestion?.tone ?? ASSET_QUESTION_TONES.NEUTRAL,
         }
       : {
           ...FORM_DEFAULTS,
@@ -124,6 +131,7 @@ export default function AssetQuestionDetailForm({
     formState: { isDirty, isValid },
     watch,
     setValue,
+    getFieldState,
   } = form;
 
   const type = watch("type");
@@ -174,6 +182,33 @@ export default function AssetQuestionDetailForm({
   const createAlertTriggers = watch("assetAlertCriteria.createMany.data");
   const updateAlertTriggers = watch("assetAlertCriteria.updateMany");
   const deleteAlertTriggers = watch("assetAlertCriteria.deleteMany");
+  const valueType = watch("valueType");
+  const tone = watch("tone");
+
+  // Automatically set the tone based on question type if the question is new.
+  useEffect(() => {
+    if (
+      !isNew ||
+      !valueType ||
+      !TONE_SUPPORTED_VALUE_TYPES.includes(valueType) ||
+      getFieldState("tone").isTouched
+    ) {
+      return;
+    }
+
+    if (type === "SETUP" && tone !== ASSET_QUESTION_TONES.NEUTRAL) {
+      form.setValue("tone", ASSET_QUESTION_TONES.NEUTRAL, {
+        shouldDirty: true,
+      });
+    } else if (
+      type === "INSPECTION" &&
+      tone !== ASSET_QUESTION_TONES.POSITIVE
+    ) {
+      form.setValue("tone", ASSET_QUESTION_TONES.POSITIVE, {
+        shouldDirty: true,
+      });
+    }
+  }, [valueType, form, tone, type, getFieldState]);
 
   const alertTriggers: {
     idx: number;
@@ -359,6 +394,46 @@ export default function AssetQuestionDetailForm({
             </FormItem>
           )}
         />
+
+        {valueType && TONE_SUPPORTED_VALUE_TYPES.includes(valueType) && (
+          <FormField
+            control={form.control}
+            name="tone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center gap-1">
+                  Tone
+                  <HelpPopover classNames={{ content: "space-y-2" }}>
+                    <p>
+                      The tone is used to provide visual aids to inspectors.
+                    </p>
+                    <p>
+                      For example, a "Positive" tone will display a green
+                      checkmark when the answer is "Yes". "Negative" will
+                      display a red X when the answer is "Yes".
+                    </p>
+                  </HelpPopover>
+                </FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger onBlur={field.onBlur}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ASSET_QUESTION_TONE_OPTIONS.map((tone) => (
+                        <SelectItem key={tone.value} value={tone.value}>
+                          {tone.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         <FormField
           control={form.control}
           name="order"
@@ -812,3 +887,8 @@ const consumableConfigMappingTypeToResponseType: Record<
 > = {
   EXPIRATION_DATE: "DATE",
 };
+
+const TONE_SUPPORTED_VALUE_TYPES: AssetQuestionResponseType[] = [
+  "BINARY",
+  "INDETERMINATE_BINARY",
+];

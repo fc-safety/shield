@@ -50,6 +50,7 @@ import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Textarea } from "~/components/ui/textarea";
 import { useAuth } from "~/contexts/auth-context";
+import { ASSET_QUESTION_TONES } from "~/lib/constants";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import type {
   Asset,
@@ -411,6 +412,9 @@ function InspectionPage({
                               onValueChange={onChange}
                               onBlur={onBlur}
                               valueType={question?.valueType ?? "BINARY"}
+                              tone={
+                                question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL
+                              }
                             />
                           </FormControl>
                           <FormMessage />

@@ -251,6 +251,7 @@ export interface AssetQuestion extends BaseModel {
   order?: number | null;
   prompt: string;
   valueType: AssetQuestionResponseType;
+  tone: string | null;
   assetAlertCriteria?: AssetAlertCriterion[];
   productCategory?: ProductCategory | null;
   productCategoryId: string | null;

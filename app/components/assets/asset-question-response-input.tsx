@@ -1,12 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Loader2, Plus } from "lucide-react";
+import { Check, Loader2, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ASSET_QUESTION_TONES } from "~/lib/constants";
 import type { AssetQuestionResponseType } from "~/lib/models";
 import type { ResponseValueImage } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
-import { formatDateAsTimestamp, formatTimestampAsDate } from "~/lib/utils";
+import { cn, formatDateAsTimestamp, formatTimestampAsDate } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
@@ -26,6 +27,7 @@ interface AssetQuestionResponseTypeInputProps<
   onValueChange: (value: TValue<T>) => void;
   onBlur: () => void;
   disabled?: boolean;
+  tone?: string;
 }
 
 export default function AssetQuestionResponseTypeInput<
@@ -36,6 +38,7 @@ export default function AssetQuestionResponseTypeInput<
   onValueChange,
   onBlur,
   disabled = false,
+  tone,
 }: AssetQuestionResponseTypeInputProps<T>) {
   return valueType === "BINARY" || valueType === "INDETERMINATE_BINARY" ? (
     <ToggleGroup
@@ -50,15 +53,34 @@ export default function AssetQuestionResponseTypeInput<
         "Yes",
         "No",
         ...(valueType === "INDETERMINATE_BINARY" ? ["N/A"] : []),
-      ].map((operand) => (
-        <ToggleGroupItem
-          key={operand}
-          value={operand}
-          className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-        >
-          {operand}
-        </ToggleGroupItem>
-      ))}
+      ].map((operand) => {
+        const isPositiveTone = tone === ASSET_QUESTION_TONES.POSITIVE;
+        const isNegativeTone = tone === ASSET_QUESTION_TONES.NEGATIVE;
+
+        const showPositive =
+          (isPositiveTone && operand === "Yes") ||
+          (isNegativeTone && operand === "No");
+        const showNegative =
+          (isNegativeTone && operand === "Yes") ||
+          (isPositiveTone && operand === "No");
+
+        return (
+          <ToggleGroupItem
+            key={operand}
+            value={operand}
+            className={cn(
+              showNegative &&
+                "data-[state=on]:bg-destructive data-[state=on]:text-destructive-foreground",
+              showPositive &&
+                "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            )}
+          >
+            {showPositive && <Check />}
+            {showNegative && <X />}
+            {operand}
+          </ToggleGroupItem>
+        );
+      })}
     </ToggleGroup>
   ) : valueType === "DATE" ? (
     <Input
