@@ -13,10 +13,8 @@ import {
 } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
-import {
-  FetchOptions,
-  getAllSettledAuthenticatedData,
-} from "~/.server/api-utils";
+import { api } from "~/.server/api";
+import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
@@ -44,38 +42,25 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
-import {
-  type AnsiCategory,
-  type ProductCategory,
-  type ResultsPage,
-} from "~/lib/models";
-import type { QueryParams } from "~/lib/urls";
+import { type AnsiCategory, type ProductCategory } from "~/lib/models";
 import { can, isGlobalAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const query = { limit: 10000 } as QueryParams;
+  const { user } = await requireUserSession(request);
+  const canReadAnsiCategories = can(user, "read", "ansi-categories");
 
-  return getAllSettledAuthenticatedData<
-    [ResultsPage<ProductCategory>, ResultsPage<AnsiCategory>]
-  >(request, [
-    FetchOptions.resources.productCategories().get().build({ params: query }),
-    FetchOptions.resources
-      .ansiCategories()
-      .get()
-      .build({ params: { limit: 10000 } }),
-  ]).then(([productCategoryResult, ansiCategoryResult]) => {
-    return {
-      productCategories:
-        productCategoryResult.status === "fulfilled"
-          ? productCategoryResult.value.results
-          : [],
-      ansiCategories:
-        ansiCategoryResult.status === "fulfilled"
-          ? ansiCategoryResult.value.results
-          : [],
-    };
-  });
+  const [productCategories, ansiCategories] = await Promise.all([
+    api.productCategories.list(request, { limit: 10000 }),
+    canReadAnsiCategories
+      ? api.ansiCategories.list(request, { limit: 10000 })
+      : Promise.resolve(null),
+  ]);
+
+  return {
+    productCategories: productCategories.results,
+    ansiCategories: ansiCategories?.results ?? [],
+  };
 }
 
 export default function ProductCategories({

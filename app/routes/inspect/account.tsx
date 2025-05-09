@@ -1,4 +1,4 @@
-import { requireUserSession } from "~/.server/sessions";
+import { requireUserSession } from "~/.server/user-sesssion";
 import AccountCard from "~/components/account/AccountCard";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "../+types/account";

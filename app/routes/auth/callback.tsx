@@ -1,7 +1,8 @@
+import { createId } from "@paralleldrive/cuid2";
 import { redirect } from "react-router";
 import { authenticator, type Tokens } from "~/.server/authenticator";
 import { requestContext } from "~/.server/request-context";
-import { userSessionStorage } from "~/.server/sessions";
+import { getSession, userSessionStorage } from "~/.server/sessions";
 import type { Route } from "./+types/callback";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -12,9 +13,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     return redirect("/login");
   }
 
-  const session = await userSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const session = await getSession(request, userSessionStorage);
+  if (!session.has("id")) {
+    session.set("id", createId());
+  }
   session.set("tokens", tokens);
 
   const returnTo = session.get("returnTo") ?? "/";

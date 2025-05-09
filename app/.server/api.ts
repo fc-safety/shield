@@ -32,13 +32,7 @@ import type {
 } from "~/lib/types";
 import type { QueryParams } from "~/lib/urls";
 import { INSPECTION_TOKEN_HEADER } from "~/routes/inspect/constants/headers";
-import {
-  CRUD,
-  defaultDataGetter,
-  FetchOptions,
-  getAuthenticatedData,
-  type FetchBuildOptions,
-} from "./api-utils";
+import { ApiFetcher, CRUD, type FetchBuildOptions } from "./api-utils";
 
 const backendCreateInspectionSchema = createInspectionSchema.extend({
   useragent: z.string(),
@@ -52,25 +46,14 @@ export const api = {
     ...CRUD.for<Asset>("/assets").all(),
 
     // Asset setup questions
-    setup: (request: Request, input: z.infer<typeof setupAssetSchema>) => {
-      return getAuthenticatedData<Asset>(request, [
-        FetchOptions.url("/assets/:id/setup", { id: input.id })
-          .post()
-          .json(input)
-          .build(),
-      ]);
-    },
-    updateSetup: (
-      request: Request,
-      input: z.infer<typeof setupAssetSchema>
-    ) => {
-      return getAuthenticatedData<Asset>(request, [
-        FetchOptions.url("/assets/:id/setup", { id: input.id })
-          .patch()
-          .json(input)
-          .build(),
-      ]);
-    },
+    setup: (request: Request, input: z.infer<typeof setupAssetSchema>) =>
+      ApiFetcher.create(request, "/assets/:id/setup", { id: input.id })
+        .json(input)
+        .post<Asset>(),
+    updateSetup: (request: Request, input: z.infer<typeof setupAssetSchema>) =>
+      ApiFetcher.create(request, "/assets/:id/setup", { id: input.id })
+        .json(input)
+        .patch<Asset>(),
   },
   alerts: {
     ...CRUD.for<Alert>("/alerts"),
@@ -78,37 +61,27 @@ export const api = {
       request: Request,
       id: string,
       input: z.infer<typeof resolveAlertSchema>
-    ) => {
-      return getAuthenticatedData<Alert>(request, [
-        FetchOptions.url(`/alerts/${id}/resolve`).post().json(input).build(),
-      ]);
-    },
+    ) =>
+      ApiFetcher.create(request, `/alerts/${id}/resolve`, { id })
+        .json(input)
+        .post<Alert>(),
   },
   tags: {
     ...CRUD.for<Tag>("/tags").all(),
     create: (request: Request, input: z.infer<typeof createTagSchema>) =>
-      getAuthenticatedData<Tag>(request, [
-        FetchOptions.url("/tags").post().json(input).build(),
-      ]),
+      ApiFetcher.create(request, "/tags").json(input).post<Tag>(),
     getForInspection: (request: Request, externalId: string) =>
-      getAuthenticatedData<Tag>(request, [
-        FetchOptions.url("/tags/for-inspection/:externalId", { externalId })
-          .get()
-          .build(),
-      ]),
+      ApiFetcher.create(request, "/tags/for-inspection/:externalId", {
+        externalId,
+      }).get<Tag>(),
     checkRegistration: (request: Request, inspectionToken: string) =>
-      getAuthenticatedData<Tag>(request, [
-        FetchOptions.url("/tags/check-registration")
-          .get()
-          .setHeader(INSPECTION_TOKEN_HEADER, inspectionToken)
-          .build(),
-      ]),
+      ApiFetcher.create(request, "/tags/check-registration")
+        .setHeader(INSPECTION_TOKEN_HEADER, inspectionToken)
+        .get<Tag>(),
     getForAssetSetup: (request: Request, externalId: string) =>
-      getAuthenticatedData<Tag>(request, [
-        FetchOptions.url("/tags/for-asset-setup/:externalId", { externalId })
-          .get()
-          .build(),
-      ]),
+      ApiFetcher.create(request, "/tags/for-asset-setup/:externalId", {
+        externalId,
+      }).get<Tag>(),
   },
   inspections: {
     ...CRUD.for<Inspection>("/inspections").all(),
@@ -117,91 +90,70 @@ export const api = {
       input: z.infer<typeof backendCreateInspectionSchema>,
       options: FetchBuildOptions
     ) =>
-      getAuthenticatedData<{
+      ApiFetcher.create(request, "/inspections").json(input).post<{
         inspection: Inspection;
         session: InspectionSession | null;
-      }>(request, [
-        FetchOptions.url("/inspections").post().json(input).build(options),
-      ]),
+      }>(options),
     getSession: (request: Request, id: string) =>
-      getAuthenticatedData<InspectionSession>(request, [
-        FetchOptions.url("/inspections/sessions/:id", { id }).get().build(),
-      ]),
+      ApiFetcher.create(request, "/inspections/sessions/:id", {
+        id,
+      }).get<InspectionSession>(),
     getActiveOrRecentlyExpiredSessionsForAsset: (
       request: Request,
       assetId: string
     ) =>
-      getAuthenticatedData<InspectionSession[]>(request, [
-        FetchOptions.url("/inspections/active-sessions/asset/:assetId", {
+      ApiFetcher.create(
+        request,
+        "/inspections/active-sessions/asset/:assetId",
+        {
           assetId,
-        })
-          .get()
-          .build(),
-      ]),
+        }
+      ).get<InspectionSession[]>(),
     cancelRouteSession: (request: Request, id: string) =>
-      getAuthenticatedData<InspectionSession>(request, [
-        FetchOptions.url("/inspections/sessions/:id/cancel", { id })
-          .post()
-          .build(),
-      ]),
+      ApiFetcher.create(request, "/inspections/sessions/:id/cancel", {
+        id,
+      }).post(),
   },
   inspectionsPublic: {
-    isValidTagUrl: (request: Request, tagUrl: string) => {
-      const { url, options } = FetchOptions.url(
-        "/inspections-public/is-valid-tag-url",
-        { url: tagUrl }
-      )
-        .get()
-        .build();
-
-      return defaultDataGetter<{
+    isValidTagUrl: (request: Request, tagUrl: string) =>
+      ApiFetcher.create(request, "/inspections-public/is-valid-tag-url", {
+        url: tagUrl,
+      }).get<{
         isValid: boolean;
         inspectionToken?: string;
-      }>(fetch(url, options));
-    },
+      }>({
+        bypassAuth: true,
+      }),
     isValidTagId: (
       request: Request,
       { id, extId }: { id?: string; extId?: string }
-    ) => {
-      const { url, options } = FetchOptions.url(
-        "/inspections-public/is-valid-tag-id",
-        { id, extId }
-      )
-        .get()
-        .build();
-
-      return defaultDataGetter<{
+    ) =>
+      ApiFetcher.create(request, "/inspections-public/is-valid-tag-id", {
+        id,
+        extId,
+      }).get<{
         isValid: boolean;
         tag: { id: string; externalId: string } | null;
         inspectionToken?: string;
-      }>(fetch(url, options));
-    },
-    validateInspectionToken: (request: Request, token: string) => {
-      const { url, options } = FetchOptions.url(
-        "/inspections-public/validate-token"
-      )
-        .get()
+      }>(),
+    validateInspectionToken: (request: Request, token: string) =>
+      ApiFetcher.create(request, "/inspections-public/validate-token")
         .setHeader(INSPECTION_TOKEN_HEADER, token)
-        .build();
-
-      return defaultDataGetter<{
-        isValid: boolean;
-        reason: string | null;
-        tagExternalId: string;
-        serialNumber: string;
-        expiresOn: string;
-      }>(fetch(url, options));
-    },
+        .get<{
+          isValid: boolean;
+          reason: string | null;
+          tagExternalId: string;
+          serialNumber: string;
+          expiresOn: string;
+        }>(),
   },
   inspectionRoutes: {
     ...CRUD.for<InspectionRoute>("/inspection-routes").all(),
 
     getForAssetId: (request: Request, assetId: string) =>
-      getAuthenticatedData<InspectionRoute[]>(request, [
-        FetchOptions.url("/inspection-routes/asset/:assetId", { assetId })
-          .get()
-          .build(),
-      ]),
+      ApiFetcher.create(request, "/inspection-routes/asset/:assetId", {
+        assetId,
+      }).get<InspectionRoute[]>(),
   },
   productRequests: {
     ...CRUD.for<ProductRequest>("/product-requests").all(),
@@ -217,16 +169,15 @@ export const api = {
     ...CRUD.for<Client>("/clients").all(),
   },
   users: CRUD.for<ClientUser>(`/users`).all(),
-  sites: CRUD.for<Site>("/sites").except(["list"]),
+  sites: CRUD.for<Site>("/sites").all(),
 
   // Other ADMIN
   roles: CRUD.for<Role>("/roles").all(),
   settings: {
     getGlobal: (request: Request) =>
-      getAuthenticatedData<SettingsBlock<z.infer<typeof globalSettingsSchema>>>(
-        request,
-        [FetchOptions.url("/settings/global").get().build()]
-      ),
+      ApiFetcher.create(request, "/settings/global").get<
+        SettingsBlock<z.infer<typeof globalSettingsSchema>>
+      >(),
   },
   vaultOwnerships: {
     ...CRUD.for<VaultOwnership>("/vault-ownerships").all(),
@@ -234,24 +185,21 @@ export const api = {
       request: Request,
       input: z.infer<typeof createVaultOwnershipSchema>
     ) =>
-      getAuthenticatedData<VaultOwnership>(request, [
-        FetchOptions.url("/vault-ownerships").post().json(input).build(),
-      ]),
+      ApiFetcher.create(request, "/vault-ownerships")
+        .json(input)
+        .post<VaultOwnership>(),
     getByKey: (request: Request, key: string) =>
-      getAuthenticatedData<VaultOwnership>(request, [
-        FetchOptions.url("/vault-ownerships/key/:key", { key }).get().build(),
-      ]),
+      ApiFetcher.create(request, "/vault-ownerships/key/:key", {
+        key,
+      }).get<VaultOwnership>(),
   },
   reports: {
     list: (request: Request) =>
-      getAuthenticatedData<ListReportsResult[]>(request, [
-        FetchOptions.url("/reports").get().build(),
-      ]),
+      ApiFetcher.create(request, "/reports").get<ListReportsResult[]>(),
     get: (request: Request, id: string, query: QueryParams) =>
-      getAuthenticatedData<GetReportResult>(request, [
-        FetchOptions.url("/reports/:id", { id, ...query })
-          .get()
-          .build(),
-      ]),
+      ApiFetcher.create(request, "/reports/:id", {
+        id,
+        ...query,
+      }).get<GetReportResult>(),
   },
 };

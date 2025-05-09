@@ -59,6 +59,7 @@ export interface Role {
   notificationGroups: string[];
   createdOn: string;
   updatedOn: string;
+  clientAssignable: boolean;
 }
 
 export interface Permission {

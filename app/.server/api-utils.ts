@@ -2,6 +2,7 @@ import { data } from "react-router";
 import type { ResultsPage } from "~/lib/models";
 import {
   buildUrl,
+  isAbsoluteUrl,
   stringifyQuery,
   type PathParams,
   type QueryParams,
@@ -13,7 +14,7 @@ import {
   refreshTokensOrRelogin,
   requireUserSession,
   type LoginRedirectOptions,
-} from "./sessions";
+} from "./user-sesssion";
 
 export const ResourceBasePaths = {
   assets: "/assets",
@@ -38,10 +39,6 @@ export const ResourceBasePaths = {
 type ResourceKey = keyof typeof ResourceBasePaths;
 
 type NativeFetchParameters = Parameters<typeof fetch>;
-type FetchArguments = {
-  url: NativeFetchParameters[0];
-  options?: NativeFetchParameters[1];
-};
 
 const VIEW_CONTEXTS = ["admin", "user"] as const;
 export type ViewContext = (typeof VIEW_CONTEXTS)[number];
@@ -78,7 +75,7 @@ export class FetchOptions {
     ])
   ) as Record<ResourceKey, () => FetchOptions>;
 
-  public static builder(
+  public static create(
     url: NativeFetchParameters[0],
     options?: NativeFetchParameters[1]
   ) {
@@ -141,6 +138,7 @@ export class FetchOptions {
       url.search = `?${stringifyQuery(params)}`;
       return url;
     });
+    return this;
   }
 
   public addQueryParams(params: QueryParams) {
@@ -151,6 +149,7 @@ export class FetchOptions {
       });
       return url;
     });
+    return this;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -253,54 +252,50 @@ export const catchResponse = async <T>(
     });
 };
 
-type AtLeastOneFetch = [FetchArguments, ...FetchArguments[]];
-type AtLeastOneAwaitableResponse = [Promise<Response>, ...Promise<Response>[]];
 export const fetchAuthenticated = async (
   request: Request,
-  fetchArgs: AtLeastOneFetch,
-  options: LoginRedirectOptions = {}
+  url: Parameters<typeof fetch>[0],
+  fetchOptions: Parameters<typeof fetch>[1] = {},
+  authOptions: LoginRedirectOptions = {}
 ) => {
   const { user, session, getSessionToken } = await requireUserSession(
     request,
-    options
+    authOptions
   );
 
-  const getResponses = (accessToken: string) => {
-    return fetchArgs.map(async ({ url, options = {} }) => {
-      options.headers = new Headers(options?.headers);
-      options.headers.set("Authorization", `Bearer ${accessToken}`);
+  const getResponse = (accessToken: string) => {
+    fetchOptions.headers = new Headers(fetchOptions?.headers);
+    fetchOptions.headers.set("Authorization", `Bearer ${accessToken}`);
 
-      return fetch(url, options);
-    }) as AtLeastOneAwaitableResponse;
+    return fetch(url, fetchOptions);
   };
 
-  let awaitableResponses = getResponses(user.tokens.accessToken);
+  let response = await getResponse(user.tokens.accessToken);
 
   // Peek at the first response returned to see if it's a 401.
   // This is the most efficient way to find out if the token is still active.
   // For the majority of requests, the status will be 200, and we can bypass
   // any other token validation. Only on a 401 do we take the time to refresh
   // or reinitiate login.
-  const testResponse = await Promise.any(awaitableResponses);
-  if (testResponse.status === 401) {
+  if (response.status === 401) {
     user.tokens = await refreshTokensOrRelogin(request, session, user.tokens);
 
+    // Update session using request context middleware.
     const sessionToken = await getSessionToken(session);
     requestContext.set("setCookieHeaderValues", (values) => ({
       ...values,
       authSession: sessionToken,
     }));
 
-    awaitableResponses = getResponses(user.tokens.accessToken);
+    response = await getResponse(user.tokens.accessToken);
   }
 
-  return awaitableResponses;
+  return response;
 };
 
 export const defaultDataGetter = async <T = unknown>(
-  responses: Promise<Response> | AtLeastOneAwaitableResponse
+  response: Promise<Response>
 ) => {
-  const response = Array.isArray(responses) ? responses[0] : responses;
   return response.then(async (r) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { body, isJson } = await tryJson<T>(r);
@@ -327,68 +322,118 @@ export const defaultDataGetter = async <T = unknown>(
 
 export const getAuthenticatedData = async <T>(
   request: Request,
-  fetchArgs: AtLeastOneFetch,
+  url: Parameters<typeof fetch>[0],
+  fetchOptions: Parameters<typeof fetch>[1] = {},
   {
     getData = defaultDataGetter,
     ...passThroughOptions
   }: LoginRedirectOptions & {
-    getData?: (responses: AtLeastOneAwaitableResponse) => Promise<T>;
+    getData?: (response: Promise<Response>) => Promise<T>;
   } = {}
 ) => {
-  const responses = await fetchAuthenticated(
+  const awaitableResponse = fetchAuthenticated(
     request,
-    fetchArgs,
+    url,
+    fetchOptions,
     passThroughOptions
   );
-  return await getData(responses);
+  return await getData(awaitableResponse);
 };
 
-export const getManyAuthenticatedData = async <
-  TMany extends readonly unknown[]
->(
-  request: Request,
-  fetchArgs: AtLeastOneFetch,
-  passThroughOptions: LoginRedirectOptions = {}
-) => {
-  const responses = await fetchAuthenticated(
-    request,
-    fetchArgs,
-    passThroughOptions
-  );
-  return responses.map(defaultDataGetter) as {
-    [key in keyof TMany]: ReturnType<typeof defaultDataGetter<TMany[key]>>;
-  };
-};
+interface ApiFetcherOptions<T> extends FetchBuildOptions, LoginRedirectOptions {
+  getData?: (response: Promise<Response>) => Promise<T>;
+  bypassAuth?: boolean;
+}
 
-export const getAllAuthenticatedData = async <TMany extends readonly unknown[]>(
-  request: Request,
-  fetchArgs: AtLeastOneFetch,
-  passThroughOptions: LoginRedirectOptions = {}
-) => {
-  return await Promise.all(
-    await getManyAuthenticatedData<TMany>(
-      request,
-      fetchArgs,
-      passThroughOptions
-    )
-  );
-};
+export class ApiFetcher {
+  private request: Request;
+  private fetchOptionsBuilder: FetchOptions;
 
-export const getAllSettledAuthenticatedData = async <
-  TMany extends readonly unknown[]
->(
-  request: Request,
-  fetchArgs: AtLeastOneFetch,
-  passThroughOptions: LoginRedirectOptions = {}
-) => {
-  return await Promise.allSettled(
-    await getManyAuthenticatedData<TMany>(
-      request,
-      fetchArgs,
-      passThroughOptions
-    )
-  );
-};
+  constructor(request: Request, fetchOptionsBuilder: FetchOptions) {
+    this.request = request;
+    this.fetchOptionsBuilder = fetchOptionsBuilder;
+  }
+
+  public static create(
+    request: Request,
+    url: Parameters<typeof fetch>[0]
+  ): ApiFetcher;
+  public static create<TPath extends string>(
+    request: Request,
+    path: TPath,
+    params?: QueryParams & PathParams<TPath>
+  ): ApiFetcher;
+  public static create<T, TPath extends string>(
+    request: Request,
+    urlOrPath: Parameters<typeof fetch>[0] | TPath,
+    params?: QueryParams & PathParams<TPath>
+  ) {
+    if (typeof urlOrPath === "string" && !isAbsoluteUrl(urlOrPath)) {
+      return new ApiFetcher(request, FetchOptions.url(urlOrPath, params));
+    }
+    return new ApiFetcher(request, FetchOptions.create(urlOrPath));
+  }
+
+  public fetch<T>(options: ApiFetcherOptions<T> = {}) {
+    const { url, options: fetchOptions } =
+      this.fetchOptionsBuilder.build(options);
+    if (options.bypassAuth) {
+      const getData = options.getData ?? defaultDataGetter;
+      return getData(fetch(url, fetchOptions));
+    }
+    return getAuthenticatedData<T>(this.request, url, fetchOptions, options);
+  }
+
+  public get<T>(options?: ApiFetcherOptions<T>) {
+    this.fetchOptionsBuilder.get();
+    return this.fetch<T>(options);
+  }
+
+  public post<T>(options?: ApiFetcherOptions<T>) {
+    this.fetchOptionsBuilder.post();
+    return this.fetch<T>(options);
+  }
+
+  public patch<T>(options?: ApiFetcherOptions<T>) {
+    this.fetchOptionsBuilder.patch();
+    return this.fetch<T>(options);
+  }
+
+  public delete<T>(options?: ApiFetcherOptions<T>) {
+    this.fetchOptionsBuilder.delete();
+    return this.fetch<T>(options);
+  }
+
+  public setHeaders(headers: HeadersInit) {
+    this.fetchOptionsBuilder.setHeaders(headers);
+    return this;
+  }
+
+  public setHeader(key: string, value: string) {
+    this.fetchOptionsBuilder.setHeader(key, value);
+    return this;
+  }
+
+  public appendHeader(key: string, value: string) {
+    this.fetchOptionsBuilder.appendHeader(key, value);
+    return this;
+  }
+
+  public setQueryParams(params: QueryParams) {
+    this.fetchOptionsBuilder.setQueryParams(params);
+    return this;
+  }
+
+  public addQueryParams(params: QueryParams) {
+    this.fetchOptionsBuilder.addQueryParams(params);
+    return this;
+  }
+
+  public json(body: unknown) {
+    this.fetchOptionsBuilder.json(body);
+    return this;
+  }
+}
 
 interface AllCrudActions<T> {
   list: (
@@ -415,27 +460,23 @@ function buildCrud<T>(path: string): AllCrudActions<T> {
           request: Request,
           query: QueryParams = {},
           options: FetchBuildOptions = {}
-        ) => {
-          return getAuthenticatedData<ResultsPage<T>>(request, [
-            FetchOptions.url(path, {
-              order: {
-                createdOn: "desc",
-              },
-              ...query,
-            }).build(options),
-          ]);
-        };
+        ) =>
+          ApiFetcher.create(request, path, {
+            order: {
+              createdOn: "desc",
+            },
+            ...query,
+          }).get<ResultsPage<T>>(options);
         break;
       case "get":
         acc[action] = (
           request: Request,
           id: string,
           options: FetchBuildOptions = {}
-        ) => {
-          return getAuthenticatedData<T>(request, [
-            FetchOptions.url(`${path}/:id`, { id }).build(options),
-          ]);
-        };
+        ) =>
+          ApiFetcher.create(request, `${path}/:id`, {
+            id,
+          }).get<T>(options);
         break;
       default:
         break;

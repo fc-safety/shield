@@ -1,7 +1,7 @@
 import { FileSpreadsheet, Route as RouteIcon } from "lucide-react";
 import { data, Link, Outlet } from "react-router";
 import { config } from "~/.server/config";
-import { requireUserSession } from "~/.server/sessions";
+import { requireUserSession } from "~/.server/user-sesssion";
 import {
   AppSidebar,
   DEFAULT_USER_ROUTES,

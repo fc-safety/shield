@@ -20,6 +20,10 @@ export interface QueryParams {
     | QueryParams[];
 }
 
+export const isAbsoluteUrl = (url: string) => {
+  return /^[a-z]?:\/\//.test(url);
+};
+
 export const stringifyQuery = qs.stringify;
 
 export const buildPath = <TPath extends string>(

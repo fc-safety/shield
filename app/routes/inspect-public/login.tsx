@@ -1,7 +1,7 @@
 import { History, LogIn } from "lucide-react";
 import { Form, Link } from "react-router";
 import { validateInspectionSession } from "~/.server/inspections";
-import { getLoginRedirect } from "~/.server/sessions";
+import { getLoginRedirect } from "~/.server/user-sesssion";
 import { Button } from "~/components/ui/button";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/login";

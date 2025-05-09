@@ -191,7 +191,7 @@ export const getSiteSchema = ({
       .partial();
   }
 
-  return schema;
+  return schema as z.Schema<any>;
 };
 
 export const createUserSchema = z.object({
@@ -676,6 +676,7 @@ export const buildSetupAssetSchema = (
 export const createRoleSchema = z.object({
   name: z.string().nonempty(),
   description: z.string().optional(),
+  clientAssignable: z.boolean().default(false),
 });
 export const createRoleSchemaResolver = zodResolver(createRoleSchema);
 

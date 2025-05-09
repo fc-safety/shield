@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Factory, FireExtinguisher, Pencil } from "lucide-react";
 import { type UIMatch } from "react-router";
 import { api } from "~/.server/api";
-import { requireUserSession } from "~/.server/sessions";
+import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
 import LinkPreview from "~/components/link-preview";

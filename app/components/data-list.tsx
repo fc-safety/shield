@@ -2,12 +2,14 @@ import { Label } from "@/components/ui/label";
 import type { ReactNode } from "react";
 import { Fragment } from "react/jsx-runtime";
 import { cn } from "~/lib/utils";
+import HelpPopover from "./help-popover";
 
 interface DataListProps {
   title?: string;
   details: {
     label: ReactNode;
     value: ReactNode | undefined | null;
+    help?: ReactNode;
     hidden?: boolean;
   }[];
   defaultValue?: React.ReactNode;
@@ -52,15 +54,15 @@ export default function DataList({
       >
         {details
           .filter(({ hidden }) => !hidden)
-          .map(({ label, value }) => (
+          .map(({ label, value, help }) => (
             <Fragment key={String(label)}>
               <dt
                 className={cn(
-                  "text-muted-foreground text-sm",
+                  "text-muted-foreground text-sm flex items-center gap-1",
                   classNames?.detailLabel
                 )}
               >
-                {label}
+                {label} {help && <HelpPopover>{help}</HelpPopover>}
               </dt>
               <dd className="text-sm">{value || defaultValue}</dd>
             </Fragment>

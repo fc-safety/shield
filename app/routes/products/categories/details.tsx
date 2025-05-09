@@ -15,7 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { type To, type UIMatch } from "react-router";
-import { FetchOptions, getAllAuthenticatedData } from "~/.server/api-utils";
+import { ApiFetcher } from "~/.server/api-utils";
 import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
 import GradientScrollArea from "~/components/gradient-scroll-area";
@@ -48,11 +48,11 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  const [productCategory, genericManufacturer] = await getAllAuthenticatedData<
-    [ProductCategory, Manufacturer]
-  >(request, [
-    FetchOptions.resources.productCategories().byId(id).get().build(),
-    FetchOptions.resources.manufacturers().byId("generic").get().build(),
+  const [productCategory, genericManufacturer] = await Promise.all([
+    ApiFetcher.create(request, "/product-categories/:id", {
+      id,
+    }).get<ProductCategory>(),
+    ApiFetcher.create(request, "/manufacturers/generic").get<Manufacturer>(),
   ]);
 
   return {

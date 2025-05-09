@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import type { User } from "./authenticator";
-import { requireUserSession } from "./sessions";
+import { requireUserSession } from "./user-sesssion";
 
 const handleGuard = async (
   request: Request,

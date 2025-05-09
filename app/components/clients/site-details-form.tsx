@@ -79,7 +79,9 @@ export default function SiteDetailsForm({
   );
 
   const form = useForm<TForm>({
-    resolver: zodResolver(getSiteSchema({ create: !site, isSiteGroup })),
+    resolver: zodResolver(
+      getSiteSchema({ create: !site, isSiteGroup }) as z.Schema<TForm>
+    ),
     values: site
       ? {
           ...site,

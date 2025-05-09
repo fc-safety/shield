@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { requireUserSession } from "~/.server/sessions";
+import { requireUserSession } from "~/.server/user-sesssion";
 import { Button } from "~/components/ui/button";
 import {
   Card,

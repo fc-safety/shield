@@ -1,6 +1,9 @@
 import { redirect } from "react-router";
 import { requestContext } from "~/.server/request-context";
-import { refreshTokensOrRelogin, requireUserSession } from "~/.server/sessions";
+import {
+  refreshTokensOrRelogin,
+  requireUserSession,
+} from "~/.server/user-sesssion";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/refresh-auth";
 

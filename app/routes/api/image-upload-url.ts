@@ -3,7 +3,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createId } from "@paralleldrive/cuid2";
 import { api } from "~/.server/api";
 import { config } from "~/.server/config";
-import { requireUserSession } from "~/.server/sessions";
+import { requireUserSession } from "~/.server/user-sesssion";
 import { buildUrl } from "~/lib/urls";
 import { getSearchParams } from "~/lib/utils";
 import type { Route } from "./+types/image-upload-url";

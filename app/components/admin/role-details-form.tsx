@@ -7,17 +7,14 @@ import {
   FormMessage,
   Form as FormProvider,
 } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import {
-  createRoleSchemaResolver,
-  updateRoleSchemaResolver,
-  type createRoleSchema,
-  type updateRoleSchema,
-} from "~/lib/schema";
+import { createRoleSchema, updateRoleSchema } from "~/lib/schema";
 import type { Role } from "~/lib/types";
 import { Input } from "../ui/input";
+import { Switch } from "../ui/switch";
 import { Textarea } from "../ui/textarea";
 
 type TForm = z.infer<typeof createRoleSchema | typeof updateRoleSchema>;
@@ -38,7 +35,9 @@ export default function RoleDetailsForm({
   const isNew = !role;
 
   const form = useForm<TForm>({
-    resolver: isNew ? createRoleSchemaResolver : updateRoleSchemaResolver,
+    resolver: zodResolver(
+      (isNew ? createRoleSchema : updateRoleSchema) as z.Schema<TForm>
+    ),
     defaultValues: role ?? FORM_DEFAULTS,
     mode: "onBlur",
   });
@@ -82,6 +81,23 @@ export default function RoleDetailsForm({
               <FormLabel>Description</FormLabel>
               <FormControl>
                 <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="clientAssignable"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assignable by clients</FormLabel>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  className="block"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

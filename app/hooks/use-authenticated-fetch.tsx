@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
 import type { User } from "~/.server/authenticator";
 import { useAuth } from "~/contexts/auth-context";
-import { buildUrl } from "~/lib/urls";
+import { buildUrl, isAbsoluteUrl } from "~/lib/urls";
 import { isTokenExpired } from "~/lib/users";
 
 // Add this outside the hook to share across all instances
@@ -100,8 +100,4 @@ const doFetch = async (
   options.headers.set("Authorization", `Bearer ${accessToken}`);
 
   return fetch(url, options);
-};
-
-const isAbsoluteUrl = (url: string) => {
-  return url.startsWith("http://") || url.startsWith("https://");
 };

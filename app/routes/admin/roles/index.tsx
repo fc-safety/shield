@@ -59,6 +59,13 @@ const roleColumns: ColumnDef<Role>[] = [
     cell: ({ getValue }) => (getValue() as string) || <>&mdash;</>,
   },
   {
+    accessorKey: "clientAssignable",
+    header: ({ column, table }) => (
+      <DataTableColumnHeader column={column} table={table} />
+    ),
+    cell: ({ getValue }) => ((getValue() as boolean) ? "Yes" : "No"),
+  },
+  {
     accessorFn: (role) => {
       const p = role.permissions.find((p) => p.startsWith("visibility"));
       return p ? p.replace("visibility:", "") : "self";

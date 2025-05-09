@@ -33,10 +33,7 @@ const ErrorTitle = ({
   children: ReactNode | ReactNode[];
 }) => (
   <div
-    className={cn(
-      "font-semibold text-xs flex gap-1 items-center capitalize",
-      className
-    )}
+    className={cn("font-semibold text-xs flex gap-1 items-center", className)}
   >
     {children}
   </div>

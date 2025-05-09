@@ -3,6 +3,7 @@ import { useFetcher } from "react-router";
 import { toast } from "sonner";
 import type { ViewContext } from "~/.server/api-utils";
 import { buildErrorDisplay } from "~/lib/error-handling";
+import { cleanErrorMessage } from "~/lib/errors";
 import { buildPath, type QueryParams } from "~/lib/urls";
 
 export function useModalFetcher<T>({
@@ -101,7 +102,9 @@ export function useModalFetcher<T>({
           errorReported.current = true;
           toast.error(
             buildErrorDisplay(fetcher.data.error, {
-              defaultErrorMessage,
+              defaultErrorMessage:
+                defaultErrorMessage ??
+                asString(cleanErrorMessage(fetcher.data.error)),
             }),
             {
               duration: 5000,
@@ -127,3 +130,10 @@ export function useModalFetcher<T>({
     data: fetcher.data as T | null,
   };
 }
+
+const asString = (strOrArray: string | string[]) => {
+  if (Array.isArray(strOrArray)) {
+    return strOrArray.join("\n");
+  }
+  return strOrArray;
+};

@@ -72,6 +72,9 @@ export default [
       // route("build/:id?", "./routes/reports/build.tsx"),
       route(":id", "./routes/reports/details.tsx"),
     ]),
+    route("my-organization", "./routes/my-organization/layout.tsx", [
+      index("./routes/my-organization/index.tsx"),
+    ]),
 
     // Product Routes
     route("products", "./routes/products/layout.tsx", [

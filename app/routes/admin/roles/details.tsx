@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useBeforeUnload, useBlocker, type UIMatch } from "react-router";
 import type { z } from "zod";
 import { create } from "zustand";
-import { FetchOptions, getAllAuthenticatedData } from "~/.server/api-utils";
+import { ApiFetcher } from "~/.server/api-utils";
 import EditRoleButton from "~/components/admin/edit-role-button";
 import DataList from "~/components/data-list";
 import { Button } from "~/components/ui/button";
@@ -51,17 +51,22 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  return getAllAuthenticatedData<
-    [Role, GetPermissionsResponse, NotificationGroup[]]
-  >(request, [
-    FetchOptions.url("/roles/:id", { id }).get().build(),
-    FetchOptions.url("/roles/permissions").get().build(),
-    FetchOptions.url("/roles/notification-groups").get().build(),
-  ]).then(([role, permissions, notificationGroups]) => ({
+  const [role, permissions, notificationGroups] = await Promise.all([
+    ApiFetcher.create(request, "/roles/:id", { id }).get<Role>(),
+    ApiFetcher.create(
+      request,
+      "/roles/permissions"
+    ).get<GetPermissionsResponse>(),
+    ApiFetcher.create(request, "/roles/notification-groups").get<
+      NotificationGroup[]
+    >(),
+  ]);
+
+  return {
     role,
     permissions,
     notificationGroups,
-  }));
+  };
 };
 
 const usePermissionsStore = create<{
@@ -230,6 +235,11 @@ export default function AdminRoleDetails({
               {
                 label: "Description",
                 value: role.description,
+              },
+              {
+                label: "Client Assignable",
+                value: role.clientAssignable ? "Yes" : "No",
+                help: "If true, clients can assign this role to their own users.",
               },
             ]}
             defaultValue={<>&mdash;</>}
