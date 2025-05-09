@@ -246,6 +246,11 @@ export const catchResponse = async <T>(
       let error: unknown = null;
 
       if (errorOrResponse instanceof Response) {
+        // Redirects must be rethrown so the application can handle them.
+        if (errorOrResponse.status >= 300 && errorOrResponse.status < 400) {
+          throw errorOrResponse;
+        }
+
         if (options.codes && !options.codes.includes(errorOrResponse.status)) {
           throw errorOrResponse;
         }
