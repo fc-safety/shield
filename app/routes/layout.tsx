@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { Outlet } from "react-router";
 import { config } from "~/.server/config";
-import { requireUserSession } from "~/.server/sessions";
+import { requireUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
