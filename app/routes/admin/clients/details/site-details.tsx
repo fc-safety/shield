@@ -1,4 +1,4 @@
-import { type UIMatch } from "react-router";
+import { type ShouldRevalidateFunctionArgs, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import { catchResponse } from "~/.server/api-utils";
 import ClientSitesCard from "~/components/clients/client-sites-card";
@@ -6,6 +6,15 @@ import ClientUsersCard from "~/components/clients/client-users-card";
 import SiteDetailsCard from "~/components/clients/site-details-card";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/site-details";
+
+// When deleting a site, we don't want to revalidate the page. This would
+// cause a 404 before the page could navigate back.
+export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
+  if (arg.formMethod === "DELETE") {
+    return false;
+  }
+  return arg.defaultShouldRevalidate;
+};
 
 export const handle = {
   breadcrumb: ({

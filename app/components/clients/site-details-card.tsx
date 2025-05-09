@@ -27,7 +27,8 @@ export default function SiteDetailsCard({
 }) {
   const { user } = useAuth();
   const canUpdateSite = can(user, "update", "sites");
-  const canDeleteSite = can(user, "delete", "sites");
+  const canDeleteSite =
+    site.externalId !== user.siteId && can(user, "delete", "sites");
 
   const navigate = useNavigate();
 
@@ -44,6 +45,7 @@ export default function SiteDetailsCard({
       title: "Delete Site",
     },
   });
+
   return (
     <>
       <Card className="h-max">
