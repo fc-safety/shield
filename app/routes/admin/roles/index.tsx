@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { Users } from "lucide-react";
 import { Link } from "react-router";
-import { FetchOptions, getAuthenticatedData } from "~/.server/api-utils";
+import { ApiFetcher } from "~/.server/api-utils";
 import { guardOrSendHome } from "~/.server/guard";
 import EditRoleButton from "~/components/admin/edit-role-button";
 import { DataTable } from "~/components/data-table/data-table";
@@ -15,9 +15,7 @@ import type { Route } from "./+types/index";
 export const loader = async ({ request }: Route.LoaderArgs) => {
   await guardOrSendHome(request, (user) => isGlobalAdmin(user));
 
-  return getAuthenticatedData<Role[]>(request, [
-    FetchOptions.url("/roles").get().build(),
-  ]);
+  return ApiFetcher.create(request, "/roles").get<Role[]>();
 };
 
 export default function AdminRoles({
