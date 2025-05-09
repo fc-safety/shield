@@ -2,6 +2,7 @@ import { AppSidebar, type SidebarGroup } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator";
 import {
   BookOpenText,
+  Building,
   Building2,
   CircleHelp,
   Factory,
@@ -74,6 +75,12 @@ export default function Layout({
           title: "Reports",
           url: "reports",
           icon: FileSpreadsheet,
+        },
+        {
+          title: "My Organization",
+          url: "my-organization",
+          icon: Building,
+          hide: !can(user, "read", "clients"),
         },
       ],
     },

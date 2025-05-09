@@ -47,6 +47,7 @@ export type FetchBuildOptions = {
   context?: ViewContext;
   params?: QueryParams;
   headers?: HeadersInit;
+  method?: NonNullable<NativeFetchParameters[1]>["method"];
 };
 
 export class FetchOptions {
@@ -159,7 +160,16 @@ export class FetchOptions {
     return this;
   }
 
+  public body(body: BodyInit | null | undefined) {
+    this.options.body = body;
+    return this;
+  }
+
   public build(options: FetchBuildOptions = {}) {
+    if (options.method) {
+      this.options.method = options.method;
+    }
+
     if (options.context) {
       this.options.headers.set("X-View-Context", options.context);
     }
@@ -431,6 +441,11 @@ export class ApiFetcher {
 
   public json(body: unknown) {
     this.fetchOptionsBuilder.json(body);
+    return this;
+  }
+
+  public body(body: BodyInit | null | undefined) {
+    this.fetchOptionsBuilder.body(body);
     return this;
   }
 }

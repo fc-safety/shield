@@ -1,4 +1,4 @@
-import { catchResponse, getAuthenticatedData } from "~/.server/api-utils";
+import { ApiFetcher, catchResponse } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { buildUrl } from "~/lib/urls";
 import { getSearchParams, validateParam } from "~/lib/utils";
@@ -40,23 +40,19 @@ const proxy = async ({
     config.API_BASE_URL,
     Object.fromEntries(query.entries())
   );
-  const awaitableData = getAuthenticatedData(
+
+  const awaitableData = ApiFetcher.create(
     request,
-    [
-      {
-        url,
-        options: {
-          method: method,
-          body: method !== "GET" ? await request.text() : undefined,
-          headers,
-        },
-      },
-    ],
-    {
+    pathSplat,
+    Object.fromEntries(query.entries())
+  )
+    .setHeaders(headers)
+    .body(method !== "GET" ? await request.text() : undefined)
+    .fetch({
+      method,
       returnTo:
         headers.get("referer") ?? headers.get("x-return-to") ?? undefined,
-    }
-  );
+    });
 
   if (doThrow) {
     return awaitableData;

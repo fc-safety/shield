@@ -113,10 +113,14 @@ export const refreshTokensOrRelogin = async (
   try {
     let tokenPromise = globalThis.REFRESH_SESSION_TOKEN_MAP.get(sessionId);
     if (!tokenPromise) {
-      tokenPromise = new Promise(async (resolve) => {
-        const tokens = await doRefreshToken(refreshToken);
-        globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId);
-        resolve(tokens);
+      tokenPromise = new Promise(async (resolve, reject) => {
+        try {
+          const tokens = await doRefreshToken(refreshToken);
+          globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId);
+          resolve(tokens);
+        } catch (e) {
+          reject(e);
+        }
       });
       globalThis.REFRESH_SESSION_TOKEN_MAP.set(sessionId, tokenPromise);
     }

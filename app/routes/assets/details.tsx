@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
 import { Link, type UIMatch } from "react-router";
-import { FetchOptions, getAuthenticatedData } from "~/.server/api-utils";
+import { ApiFetcher } from "~/.server/api-utils";
 import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
@@ -92,12 +92,13 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
-  return getAuthenticatedData<Asset>(request, [
-    FetchOptions.resources.assets().byId(id).get().build(),
-  ]).then((asset) => ({
+  const asset = await ApiFetcher.create(request, "/assets/:id", {
+    id,
+  }).get<Asset>();
+  return {
     asset,
     defaultTab: getSearchParam(request, "tab") ?? "consumables",
-  }));
+  };
 };
 
 export default function AssetDetails({
