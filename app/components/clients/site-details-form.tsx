@@ -403,7 +403,7 @@ export default function SiteDetailsForm({
                     {subsites?.map((subsite) => (
                       <FormItem
                         key={subsite.id}
-                        className="flex items-center space-x-2 space-y-0"
+                        className="flex flex-row items-center space-x-1 space-y-0"
                       >
                         <Checkbox
                           id={`subsite-${subsite.id}`}

@@ -1,7 +1,9 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { PhoneCall, Star } from "lucide-react";
 import { Link, type To } from "react-router";
+import { useAuth } from "~/contexts/auth-context";
 import type { Site } from "~/lib/models";
+import { can } from "~/lib/users";
 import { beautifyPhone } from "~/lib/utils";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
@@ -26,6 +28,9 @@ export default function SitesTable({
   parentSiteId,
   buildToSite,
 }: SitesTableProps) {
+  const { user } = useAuth();
+  const canCreateSite = can(user, "create", "sites");
+
   const columns: ColumnDef<Site>[] = [
     {
       accessorKey: "name",
@@ -81,12 +86,14 @@ export default function SitesTable({
         columns={columns}
         searchPlaceholder="Search sites..."
         actions={[
-          <EditSiteButton
-            key="add"
-            clientId={clientId}
-            parentSiteId={parentSiteId}
-            viewContext="admin"
-          />,
+          canCreateSite ? (
+            <EditSiteButton
+              key="add"
+              clientId={clientId}
+              parentSiteId={parentSiteId}
+              viewContext="admin"
+            />
+          ) : null,
         ]}
       />
     </>

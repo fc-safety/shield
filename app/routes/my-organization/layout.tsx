@@ -4,7 +4,7 @@ import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
 export const handle = {
-  breadcrumb: () => ({ label: "Organization" }),
+  breadcrumb: () => ({ label: "My Organization" }),
 };
 
 export const meta: Route.MetaFunction = ({ matches }) => {

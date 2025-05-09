@@ -20,19 +20,15 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
-  const siteId = validateParam(params, "siteId");
+  const siteId = validateParam(params, "id");
 
-  const site = await api.sites.get(request, siteId, { context: "admin" });
+  const site = await api.sites.get(request, siteId);
   const usersResult = catchResponse(
-    api.users.list(
-      request,
-      {
-        clientId: site.clientId,
-        siteExternalId: site.externalId,
-        limit: 10000,
-      },
-      { context: "admin" }
-    ),
+    api.users.list(request, {
+      clientId: site.clientId,
+      siteExternalId: site.externalId,
+      limit: 10000,
+    }),
     { codes: [403] }
   );
 
@@ -42,7 +38,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   };
 };
 
-export default function SiteDetails({
+export default function MyOrganizationSiteDetails({
   loaderData: { site, users },
 }: Route.ComponentProps) {
   const isSiteGroup = !!site?.subsites && site.subsites.length > 0;

@@ -10,11 +10,13 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { z } from "zod";
+import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Site } from "~/lib/models";
 import type { updateUserSchema } from "~/lib/schema";
 import type { ClientUser } from "~/lib/types";
+import { can } from "~/lib/users";
 import { beautifyPhone } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
 import { DataTable } from "../data-table/data-table";
@@ -45,6 +47,10 @@ export default function ClientUsersTable({
   users,
   getSiteByExternalId,
 }: ClientUsersTableProps) {
+  const { user } = useAuth();
+  const canCreateUser = can(user, "create", "users");
+  const canUpdateUser = can(user, "update", "users");
+
   const editUser = useOpenData<ClientUser>();
   const updateRole = useOpenData<ClientUser>();
   const resetPassword = useOpenData<ClientUser>();
@@ -133,11 +139,17 @@ export default function ClientUsersTable({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => editUser.openData(user)}>
+                <DropdownMenuItem
+                  onSelect={() => editUser.openData(user)}
+                  disabled={!canUpdateUser}
+                >
                   <Pencil />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => updateRole.openData(user)}>
+                <DropdownMenuItem
+                  onSelect={() => updateRole.openData(user)}
+                  disabled={!canUpdateUser}
+                >
                   {user.roleName ? (
                     <>
                       <UserPen />
@@ -150,7 +162,10 @@ export default function ClientUsersTable({
                     </>
                   )}
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => resetPassword.openData(user)}>
+                <DropdownMenuItem
+                  onSelect={() => resetPassword.openData(user)}
+                  disabled={!canUpdateUser}
+                >
                   <SquareAsterisk />
                   Reset Password
                 </DropdownMenuItem>
@@ -158,6 +173,7 @@ export default function ClientUsersTable({
                   onSelect={() =>
                     setUserActive(user.id, { active: !user.active })
                   }
+                  disabled={!canUpdateUser}
                 >
                   {user.active ? (
                     <>
@@ -192,12 +208,14 @@ export default function ClientUsersTable({
         }}
         searchPlaceholder="Search users..."
         actions={[
-          <EditUserButton
-            key="add"
-            clientId={clientId}
-            siteExternalId={siteExternalId}
-            viewContext="admin"
-          />,
+          canCreateUser ? (
+            <EditUserButton
+              key="add"
+              clientId={clientId}
+              siteExternalId={siteExternalId}
+              viewContext="admin"
+            />
+          ) : null,
         ]}
       />
       <ResponsiveDialog
@@ -213,7 +231,7 @@ export default function ClientUsersTable({
           viewContext="admin"
         />
       </ResponsiveDialog>
-      {updateRole.data && (
+      {canUpdateUser && updateRole.data && (
         <ResponsiveDialog
           title={updateRole.data?.roleName ? "Change Role" : "Assign Role"}
           open={updateRole.open}
@@ -227,7 +245,7 @@ export default function ClientUsersTable({
           />
         </ResponsiveDialog>
       )}
-      {resetPassword.data && (
+      {canUpdateUser && resetPassword.data && (
         <ResponsiveDialog
           title="Reset Password"
           open={resetPassword.open}

@@ -14,8 +14,10 @@ import { Skeleton } from "../ui/skeleton";
 import EditClientButton from "./edit-client-button";
 
 export default function ClientDetailsCard({
+  title = "Client Details",
   client,
 }: {
+  title?: string;
   client: Client | undefined;
 }) {
   const { user } = useAuth();
@@ -27,7 +29,7 @@ export default function ClientDetailsCard({
         <CardTitle>
           <Building2 />
           <div className="inline-flex items-center gap-4">
-            Client Details
+            {title}
             <div className="flex gap-2">
               {canEditClient && (
                 <EditClientButton

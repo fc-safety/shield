@@ -53,7 +53,7 @@ export default function ClientDetails({
   return (
     <div className="grid gap-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
-        <ClientDetailsCard client={client} />
+        <ClientDetailsCard title="My Organization" client={client} />
         {sites && (
           <div className="grid gap-4">
             <ClientSiteGroupCard

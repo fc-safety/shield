@@ -1,6 +1,4 @@
 import { ApiFetcher, catchResponse } from "~/.server/api-utils";
-import { config } from "~/.server/config";
-import { buildUrl } from "~/lib/urls";
 import { getSearchParams, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/proxy";
 const INSPECTION_TOKEN_HEADER = "x-inspection-token";
@@ -34,12 +32,6 @@ const proxy = async ({
   if (inspectionToken) {
     headers.set(INSPECTION_TOKEN_HEADER, inspectionToken);
   }
-
-  const url = buildUrl(
-    pathSplat,
-    config.API_BASE_URL,
-    Object.fromEntries(query.entries())
-  );
 
   const awaitableData = ApiFetcher.create(
     request,

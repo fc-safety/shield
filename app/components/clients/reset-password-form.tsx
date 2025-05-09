@@ -18,6 +18,7 @@ import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import type { ClientUser } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
+import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import ConfirmationDialog from "../confirmation-dialog";
 import DataList from "../data-list";
@@ -43,8 +44,10 @@ export default function ResetPasswordForm({
   clientId,
   onSubmitted,
 }: ResetPasswordFormProps) {
-  const { clientId: appClientId } = useAuth();
+  const { clientId: appClientId, user: currentUser } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
+
+  const canSendResetPasswordEmail = can(currentUser, "notify", "users");
 
   const {
     mutate: sendResetPasswordEmailMutation,
@@ -185,11 +188,18 @@ export default function ResetPasswordForm({
               be able to reset their password using the link in the email.
             </p>
           </div>
+          {!canSendResetPasswordEmail && (
+            <p className="text-xs text-destructive italic text-center">
+              You do not have permission to send password reset emails.
+            </p>
+          )}
           <Button
             type="button"
             onClick={() => sendResetPasswordEmailMutation()}
             disabled={
-              sendResetPasswordEmailLoading || sendResetPasswordEmailSuccess
+              sendResetPasswordEmailLoading ||
+              sendResetPasswordEmailSuccess ||
+              !canSendResetPasswordEmail
             }
           >
             {sendResetPasswordEmailLoading ? (
@@ -266,26 +276,30 @@ export default function ResetPasswordForm({
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="sendEmail"
-                render={({ field: { onChange, value, ...field } }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        {...field}
-                        checked={value}
-                        onCheckedChange={onChange}
-                      />
-                    </FormControl>
-                    <FormLabel className="font-normal">
-                      Send email with new password to{" "}
-                      <span className="font-bold underline">{user.email}</span>
-                    </FormLabel>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {canSendResetPasswordEmail && (
+                <FormField
+                  control={form.control}
+                  name="sendEmail"
+                  render={({ field: { onChange, value, ...field } }) => (
+                    <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          {...field}
+                          checked={value}
+                          onCheckedChange={onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">
+                        Send email with new password to{" "}
+                        <span className="font-bold underline">
+                          {user.email}
+                        </span>
+                      </FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <Button
