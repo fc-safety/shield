@@ -9,7 +9,7 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Site } from "~/lib/models";
-import { can } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import ConfirmationDialog from "../confirmation-dialog";
 import { CopyableText } from "../copyable-text";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
@@ -26,6 +26,7 @@ export default function SiteDetailsCard({
   site: Site;
 }) {
   const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
   const canUpdateSite = can(user, "update", "sites");
   const canDeleteSite =
     site.externalId !== user.siteId && can(user, "delete", "sites");
@@ -84,6 +85,7 @@ export default function SiteDetailsCard({
                 {
                   label: "External ID",
                   value: <CopyableText text={site.externalId} />,
+                  hidden: !userIsGlobalAdmin,
                 },
                 {
                   label: "Is Primary Site",

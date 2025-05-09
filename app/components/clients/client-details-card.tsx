@@ -5,7 +5,7 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client } from "~/lib/models";
-import { can } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
 import ConfirmationDialog from "../confirmation-dialog";
@@ -26,6 +26,7 @@ export default function ClientDetailsCard({
   client: Client | undefined;
 }) {
   const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
   const canEditClient = can(user, "update", "clients");
   const canDeleteClient =
     client &&
@@ -100,6 +101,7 @@ export default function ClientDetailsCard({
                     {
                       label: "External ID",
                       value: <CopyableText text={client.externalId} />,
+                      hidden: !userIsGlobalAdmin,
                     },
                     {
                       label: isAfter(client.startedOn, new Date())

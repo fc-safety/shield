@@ -9,20 +9,18 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter, isValid as isValidDate, parseISO } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "react-router";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
+import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
-import {
-  createClientSchemaResolver,
-  updateClientSchemaResolver,
-  type createClientSchema,
-  type updateClientSchema,
-} from "~/lib/schema";
+import { createClientSchema, updateClientSchema } from "~/lib/schema";
+import { isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
 import { Label } from "../ui/label";
@@ -55,12 +53,17 @@ export default function ClientDetailsForm({
   client,
   onSubmitted,
 }: ClientDetailsFormProps) {
+  const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
+
   const isNew = !client;
   const currentlyPopulatedZip = useRef<string | null>(null);
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
 
   const form = useForm<TForm>({
-    resolver: client ? updateClientSchemaResolver : createClientSchemaResolver,
+    resolver: zodResolver(
+      (client ? updateClientSchema : createClientSchema) as z.Schema<TForm>
+    ),
     values: client
       ? {
           ...client,
@@ -164,27 +167,29 @@ export default function ClientDetailsForm({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="externalId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>External ID</FormLabel>
-              <FormControl>
-                {isNew ? (
-                  <Input
-                    {...field}
-                    placeholder="Automatically generated"
-                    tabIndex={-1}
-                  />
-                ) : (
-                  <CopyableInput {...field} readOnly />
-                )}
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {userIsGlobalAdmin && (
+          <FormField
+            control={form.control}
+            name="externalId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>External ID</FormLabel>
+                <FormControl>
+                  {isNew ? (
+                    <Input
+                      {...field}
+                      placeholder="Automatically generated"
+                      tabIndex={-1}
+                    />
+                  ) : (
+                    <CopyableInput {...field} readOnly />
+                  )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="name"

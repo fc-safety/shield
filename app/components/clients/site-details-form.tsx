@@ -14,10 +14,12 @@ import { useForm } from "react-hook-form";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
 import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { type ResultsPage, type Site } from "~/lib/models";
 import { baseSiteSchema, getSiteSchema } from "~/lib/schema";
 import { type QueryParams } from "~/lib/urls";
+import { isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
 import { Checkbox } from "../ui/checkbox";
@@ -43,6 +45,9 @@ export default function SiteDetailsForm({
   isSiteGroup = false,
   viewContext = "user",
 }: SiteDetailsFormProps) {
+  const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
+
   const isNew = !site;
   const currentlyPopulatedZip = useRef<string | null>(null);
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
@@ -246,27 +251,29 @@ export default function SiteDetailsForm({
             )}
           />
         )}
-        <FormField
-          control={form.control}
-          name="externalId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>External ID</FormLabel>
-              <FormControl>
-                {isNew ? (
-                  <Input
-                    {...field}
-                    placeholder="Automatically generated"
-                    tabIndex={-1}
-                  />
-                ) : (
-                  <CopyableInput {...field} readOnly />
-                )}
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {userIsGlobalAdmin && (
+          <FormField
+            control={form.control}
+            name="externalId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>External ID</FormLabel>
+                <FormControl>
+                  {isNew ? (
+                    <Input
+                      {...field}
+                      placeholder="Automatically generated"
+                      tabIndex={-1}
+                    />
+                  ) : (
+                    <CopyableInput {...field} readOnly />
+                  )}
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="name"

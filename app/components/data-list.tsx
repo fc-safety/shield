@@ -47,7 +47,7 @@ export default function DataList({
       {title && <Label>{title}</Label>}
       <dl
         className={cn(
-          "grid gap-y-2 gap-x-4 sm:gap-x-8",
+          "grid items-start gap-y-2 gap-x-4 sm:gap-x-8",
           fluid ? "grid-cols-[auto_1fr]" : "grid-cols-2",
           classNames?.details
         )}
