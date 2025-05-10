@@ -1,49 +1,10 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useFetcher } from "react-router";
-import type { User } from "~/.server/authenticator";
+import { useCallback } from "react";
 import { useAuth } from "~/contexts/auth-context";
 import { buildUrl, isAbsoluteUrl } from "~/lib/urls";
 import { isTokenExpired } from "~/lib/users";
 
-// Add this outside the hook to share across all instances
-let pendingRefresh: Promise<User> | null = null;
-
 export function useAuthenticatedFetch() {
-  const fetcher = useFetcher<User>();
-  const resolveAuthRefresh = useRef<((user: User) => void) | null>(null);
-  const { user, apiUrl } = useAuth();
-
-  const refreshAuth = useCallback(() => {
-    // If there's already a refresh in progress, return that Promise
-    if (pendingRefresh) {
-      return pendingRefresh;
-    }
-
-    // Create new refresh Promise and store it
-    pendingRefresh = new Promise<User>((resolve) => {
-      resolveAuthRefresh.current = resolve;
-    });
-
-    fetcher.submit(null, {
-      method: "POST",
-      action: getRefreshAuthAction(),
-    });
-
-    return pendingRefresh;
-  }, [fetcher]);
-
-  useEffect(() => {
-    if (
-      resolveAuthRefresh.current &&
-      fetcher.state === "idle" &&
-      fetcher.data
-    ) {
-      resolveAuthRefresh.current(fetcher.data);
-      resolveAuthRefresh.current = null;
-      // Clear the pending refresh after it's complete
-      pendingRefresh = null;
-    }
-  }, [fetcher.state, fetcher.data]);
+  const { user, apiUrl, refreshAuth } = useAuth();
 
   const fetchAuthenticated = useCallback(
     async (url: Parameters<typeof fetch>[0], options?: RequestInit) => {
@@ -85,11 +46,6 @@ export function useAuthenticatedFetch() {
     fetchOrThrow: fetchOrThrow,
   };
 }
-
-const getRefreshAuthAction = () =>
-  typeof document !== "undefined"
-    ? `/action/refresh-auth?returnTo=${window.location.href}`
-    : "/action/refresh-auth";
 
 const doFetch = async (
   accessToken: string,
