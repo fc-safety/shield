@@ -71,7 +71,13 @@ export default function AssetDetailsForm({
               id: asset.siteId,
             },
           },
-          client: undefined,
+          client: clientId
+            ? {
+                connect: {
+                  id: clientId,
+                },
+              }
+            : undefined,
         }
       : {
           ...FORM_DEFAULTS,
@@ -229,7 +235,7 @@ export default function AssetDetailsForm({
                     disabled={
                       isGlobalAdmin(user) &&
                       context === "admin" &&
-                      !!formClientId
+                      !formClientId
                     }
                     viewContext={context}
                   />

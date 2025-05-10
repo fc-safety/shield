@@ -1,13 +1,18 @@
+import { Shield } from "lucide-react";
 import {
   useRouteLoaderData,
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 import { api } from "~/.server/api";
+import { requireUserSession } from "~/.server/user-sesssion";
+import AssetsTable from "~/components/assets/assets-table";
 import ClientDetailsCard from "~/components/clients/client-details-card";
 import ClientSiteGroupCard from "~/components/clients/client-site-group-card";
 import ClientSitesCard from "~/components/clients/client-sites-card";
 import ClientUsersCard from "~/components/clients/client-users-card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Client } from "~/lib/models";
+import { can } from "~/lib/users";
 import { validateParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -22,19 +27,33 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
+  const { user } = await requireUserSession(request);
 
-  return api.users
-    .list(request, { limit: 10000, clientId: id }, { context: "admin" })
-    .catch((e) => {
-      if (e instanceof Response && e.status === 403) {
-        return null;
-      }
-      throw e;
-    });
+  const getAssets = async () =>
+    api.assets.list(
+      request,
+      { limit: 10000, clientId: id },
+      { context: "admin" }
+    );
+
+  if (can(user, "read", "users")) {
+    const [users, assets] = await Promise.all([
+      api.users.list(
+        request,
+        { limit: 10000, clientId: id },
+        { context: "admin" }
+      ),
+      getAssets(),
+    ]);
+
+    return { users, assets };
+  }
+
+  return { users: null, assets: await getAssets() };
 };
 
 export default function ClientDetails({
-  loaderData: users,
+  loaderData: { users, assets },
 }: Route.ComponentProps) {
   const client = useRouteLoaderData<Client>(
     "routes/admin/clients/details/layout"
@@ -63,6 +82,20 @@ export default function ClientDetails({
           clientId={client?.id ?? ""}
         />
       )}
+      <Card className="col-span-full">
+        <CardHeader>
+          <CardTitle>
+            <Shield /> Assets
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AssetsTable
+            assets={assets.results}
+            clientId={client?.id}
+            viewContext="admin"
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
