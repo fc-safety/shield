@@ -20,6 +20,7 @@ import { useAuth } from "~/contexts/auth-context";
 import type { Alert } from "~/lib/models";
 import { resolveAlertSchema, resolveAlertSchemaResolver } from "~/lib/schema";
 import { can } from "~/lib/users";
+import { isNil } from "~/lib/utils";
 import DataList from "../data-list";
 import {
   Dialog,
@@ -144,7 +145,7 @@ function InspectionAlert({
           },
           {
             label: "Answer",
-            value: alert.assetQuestionResponse?.value && (
+            value: !isNil(alert.assetQuestionResponse?.value) && (
               <DisplayInspectionValue
                 value={alert.assetQuestionResponse?.value}
               />
