@@ -96,6 +96,8 @@ export const requireUserSession = async (
   };
 };
 
+const REFRESH_TOKEN_PROMISE_TIMEOUT_MS = 5000;
+
 export const refreshTokensOrRelogin = async (
   request: Request,
   session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
@@ -116,10 +118,16 @@ export const refreshTokensOrRelogin = async (
       tokenPromise = new Promise(async (resolve, reject) => {
         try {
           const tokens = await doRefreshToken(refreshToken);
-          globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId);
           resolve(tokens);
         } catch (e) {
           reject(e);
+        } finally {
+          // Keep promise for 5 secondsd to allow near-simultaneous requests to reuse
+          // the same promise.
+          setTimeout(
+            () => globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId),
+            REFRESH_TOKEN_PROMISE_TIMEOUT_MS
+          );
         }
       });
       globalThis.REFRESH_SESSION_TOKEN_MAP.set(sessionId, tokenPromise);
@@ -133,7 +141,13 @@ export const refreshTokensOrRelogin = async (
     // Return new tokens
     return tokensResponse;
   } catch (e) {
-    logger.warn("Token refresh failed", { details: e });
+    // In case of an error preventing promise cleanup, make sure it's done now. Otherwise
+    // subsequent refreshes will always result in a login redirect (usually resets the user
+    // page, which is jarring).
+    if (globalThis.REFRESH_SESSION_TOKEN_MAP.has(sessionId)) {
+      globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId);
+    }
+    logger.warn({ details: e }, "Token refresh failed");
     throw await getLoginRedirect(request, session, options);
   }
 };
