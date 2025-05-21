@@ -17,12 +17,17 @@ interface DataListProps {
     container?: string;
     details?: string;
     detailLabel?: string;
+    detailValue?: string;
   };
   /**
    * @deprecated Use `classNames.container` instead
    */
   className?: string;
+  /**
+   * @deprecated Use `variant` instead
+   */
   fluid?: boolean;
+  variant?: "default" | "fluid" | "thirds";
   emptyListMessage?: string;
 }
 
@@ -33,6 +38,7 @@ export default function DataList({
   classNames,
   className,
   fluid = false,
+  variant = "default",
   emptyListMessage = "No data available.",
 }: DataListProps) {
   return (
@@ -48,7 +54,8 @@ export default function DataList({
       <dl
         className={cn(
           "grid items-start gap-y-2 gap-x-4 sm:gap-x-8",
-          fluid ? "grid-cols-[auto_1fr]" : "grid-cols-2",
+          variant === "fluid" || fluid ? "grid-cols-[auto_1fr]" : "grid-cols-2",
+          variant === "thirds" && "grid-cols-3",
           classNames?.details
         )}
       >
@@ -64,7 +71,15 @@ export default function DataList({
               >
                 {label} {help && <HelpPopover>{help}</HelpPopover>}
               </dt>
-              <dd className="text-sm">{value || defaultValue}</dd>
+              <dd
+                className={cn(
+                  "text-sm",
+                  variant === "thirds" && "col-span-2",
+                  classNames?.detailValue
+                )}
+              >
+                {value || defaultValue}
+              </dd>
             </Fragment>
           ))}
         {details.length === 0 && (

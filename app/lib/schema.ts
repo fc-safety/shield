@@ -21,9 +21,11 @@ export const addressSchema = z.object({
     .nullable(z.string())
     .optional()
     .transform((street2) => street2 || undefined),
-  city: z.string().nonempty(),
-  state: z.string().min(2),
-  zip: z.string().length(5),
+  city: z.nullable(z.string().nonempty()),
+  state: z.nullable(z.string().min(2)),
+  zip: z.nullable(z.string().length(5)),
+  county: z.nullable(z.string().nonempty()),
+  country: z.nullable(z.string().nonempty()),
 });
 export const addressSchemaResolver = zodResolver(addressSchema);
 

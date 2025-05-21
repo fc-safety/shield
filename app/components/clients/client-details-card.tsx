@@ -11,6 +11,7 @@ import ActiveIndicator2 from "../active-indicator-2";
 import ConfirmationDialog from "../confirmation-dialog";
 import { CopyableText } from "../copyable-text";
 import DataList from "../data-list";
+import DisplayAddress from "../display-address";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -115,6 +116,7 @@ export default function ClientDetailsCard({
                     },
                   ]}
                   defaultValue={<>&mdash;</>}
+                  variant="thirds"
                 />
               </div>
               <div className="grid gap-4">
@@ -123,20 +125,7 @@ export default function ClientDetailsCard({
                   details={[
                     {
                       label: "Address",
-                      value: (
-                        <span>
-                          {client.address.street1}
-                          <br />
-                          {client.address.street2 && (
-                            <>
-                              {client.address.street2}
-                              <br />
-                            </>
-                          )}
-                          {client.address.city}, {client.address.state}{" "}
-                          {client.address.zip}
-                        </span>
-                      ),
+                      value: <DisplayAddress address={client.address} />,
                     },
                     {
                       label: "Phone Number",
@@ -144,6 +133,7 @@ export default function ClientDetailsCard({
                     },
                   ]}
                   defaultValue={<>&mdash;</>}
+                  variant="thirds"
                 />
               </div>
               <div className="grid gap-4">
@@ -160,6 +150,7 @@ export default function ClientDetailsCard({
                     },
                   ]}
                   defaultValue={<>&mdash;</>}
+                  variant="thirds"
                 />
               </div>
             </>

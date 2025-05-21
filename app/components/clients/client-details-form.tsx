@@ -42,6 +42,8 @@ const FORM_DEFAULTS = {
       city: "",
       state: "",
       zip: "",
+      county: null,
+      country: null,
     },
   },
   status: "PENDING",
@@ -265,11 +267,11 @@ export default function ClientDetailsForm({
         <FormField
           control={form.control}
           name={isNew ? "address.create.zip" : "address.update.zip"}
-          render={({ field }) => (
+          render={({ field: { value, ...field } }) => (
             <FormItem>
               <FormLabel>Zip</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -279,11 +281,15 @@ export default function ClientDetailsForm({
           <FormField
             control={form.control}
             name={isNew ? "address.create.city" : "address.update.city"}
-            render={({ field }) => (
+            render={({ field: { value, ...field } }) => (
               <FormItem>
                 <FormLabel>City</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={zipPopulatePending} />
+                  <Input
+                    {...field}
+                    value={value ?? ""}
+                    disabled={zipPopulatePending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -292,11 +298,15 @@ export default function ClientDetailsForm({
           <FormField
             control={form.control}
             name={isNew ? "address.create.state" : "address.update.state"}
-            render={({ field }) => (
+            render={({ field: { value, ...field } }) => (
               <FormItem>
                 <FormLabel>State</FormLabel>
                 <FormControl>
-                  <Input {...field} disabled={zipPopulatePending} />
+                  <Input
+                    {...field}
+                    value={value ?? ""}
+                    disabled={zipPopulatePending}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

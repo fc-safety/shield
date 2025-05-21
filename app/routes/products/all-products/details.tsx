@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
+import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator from "~/components/active-indicator";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -60,13 +61,18 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
+  const { user } = await requireUserSession(request);
+  const userIsGlobalAdmin = isGlobalAdmin(user);
+
   const id = validateParam(params, "id");
 
-  return api.products.get(request, id).then((product) => {
-    return {
-      product,
-    };
-  });
+  return api.products
+    .get(request, id, { context: userIsGlobalAdmin ? "admin" : "user" })
+    .then((product) => {
+      return {
+        product,
+      };
+    });
 };
 
 export default function ProductDetails({

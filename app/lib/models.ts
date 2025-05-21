@@ -181,9 +181,11 @@ export interface Address {
   id: string;
   street1: string;
   street2: string | null;
-  city: string;
-  state: string;
-  zip: string;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  county: string | null;
+  country: string | null;
 }
 
 export const ClientStatuses = ["PENDING", "ACTIVE", "INACTIVE"] as const;

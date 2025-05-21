@@ -12,6 +12,7 @@ import type { Site } from "~/lib/models";
 import { can, isGlobalAdmin } from "~/lib/users";
 import ConfirmationDialog from "../confirmation-dialog";
 import { CopyableText } from "../copyable-text";
+import DisplayAddress from "../display-address";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
@@ -95,7 +96,7 @@ export default function SiteDetailsCard({
                 {
                   label: "Parent Site",
                   value: (
-                    <Button variant="link" className="px-0">
+                    <Button variant="link" className="p-0 px-0 py-0 h-auto">
                       <Link to={`../sites/${site.parentSiteId}`}>
                         {site.parentSite?.name}
                       </Link>
@@ -104,6 +105,7 @@ export default function SiteDetailsCard({
                   hidden: !site.parentSite,
                 },
               ]}
+              variant="thirds"
             />
           </div>
           <div className="grid gap-4">
@@ -112,20 +114,7 @@ export default function SiteDetailsCard({
               details={[
                 {
                   label: "Address",
-                  value: (
-                    <span>
-                      {site.address.street1}
-                      <br />
-                      {site.address.street2 && (
-                        <>
-                          {site.address.street2}
-                          <br />
-                        </>
-                      )}
-                      {site.address.city}, {site.address.state}{" "}
-                      {site.address.zip}
-                    </span>
-                  ),
+                  value: <DisplayAddress address={site.address} />,
                 },
                 {
                   label: "Phone Number",
@@ -133,6 +122,7 @@ export default function SiteDetailsCard({
                 },
               ]}
               defaultValue={<>&mdash;</>}
+              variant="thirds"
             />
           </div>
           <div className="grid gap-4">
@@ -149,6 +139,7 @@ export default function SiteDetailsCard({
                 },
               ]}
               defaultValue={<>&mdash;</>}
+              variant="thirds"
             />
           </div>
           {canDeleteSite && (

@@ -76,11 +76,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     };
   }
 
-  return api.products.list(request, query).then((r) => ({
-    products: r.results,
-    isGlobalAdmin,
-    onlyMyProducts,
-  }));
+  return api.products
+    .list(request, query, { context: isGlobalAdmin ? "admin" : "user" })
+    .then((r) => ({
+      products: r.results,
+      isGlobalAdmin,
+      onlyMyProducts,
+    }));
 };
 
 export default function AllProducts({

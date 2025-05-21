@@ -226,6 +226,7 @@ export default function AssetDetails({
                   },
                 ]}
                 defaultValue={<>&mdash;</>}
+                variant="thirds"
               />
             </div>
             <div className="grid gap-4">
@@ -245,6 +246,7 @@ export default function AssetDetails({
                     value: asset.placement,
                   },
                 ]}
+                variant="thirds"
               />
             </div>
             <div className="grid gap-4">
@@ -263,6 +265,7 @@ export default function AssetDetails({
                         value: <DisplayInspectionValue value={r.value} />,
                       })) ?? []
                     }
+                    variant="thirds"
                   />
                 ) : (
                   <span className="text-sm text-muted-foreground">

@@ -64,6 +64,8 @@ export default function SiteDetailsForm({
             city: "",
             state: "",
             zip: "",
+            county: "",
+            country: "",
           },
         },
         phoneNumber: "",
@@ -321,11 +323,11 @@ export default function SiteDetailsForm({
         <FormField
           control={form.control}
           name={isNew ? "address.create.zip" : "address.update.zip"}
-          render={({ field }) => (
+          render={({ field: { value, ...field } }) => (
             <FormItem>
               <FormLabel>Zip</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input {...field} value={value ?? ""} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -335,12 +337,13 @@ export default function SiteDetailsForm({
           <FormField
             control={form.control}
             name={isNew ? "address.create.city" : "address.update.city"}
-            render={({ field }) => (
+            render={({ field: { value, ...field } }) => (
               <FormItem>
                 <FormLabel>City</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
+                    value={value ?? ""}
                     disabled={zipPopulatePending}
                     tabIndex={-1}
                   />
@@ -352,12 +355,13 @@ export default function SiteDetailsForm({
           <FormField
             control={form.control}
             name={isNew ? "address.create.state" : "address.update.state"}
-            render={({ field }) => (
+            render={({ field: { value, ...field } }) => (
               <FormItem>
                 <FormLabel>State</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
+                    value={value ?? ""}
                     disabled={zipPopulatePending}
                     tabIndex={-1}
                   />

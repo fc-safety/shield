@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -22,14 +23,9 @@ import {
   type Product,
   type ProductCategory,
 } from "~/lib/models";
-import {
-  createProductSchema,
-  createProductSchemaResolver,
-  updateProductSchemaResolver,
-  type updateProductSchema,
-} from "~/lib/schema";
+import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
-import { can } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { slugify } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
 import AnsiCategoryCombobox from "./ansi-category-combobox";
@@ -59,6 +55,7 @@ export default function ProductDetailsForm({
 }: ProductDetailsFormProps) {
   const { user } = useAuth();
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
+  const userIsGlobalAdmin = isGlobalAdmin(user);
 
   const isNew = !product;
   const requireConsumable = Boolean(consumable || parentProduct);
@@ -91,7 +88,9 @@ export default function ProductDetailsForm({
   } satisfies TForm;
 
   const form = useForm<TForm>({
-    resolver: isNew ? createProductSchemaResolver : updateProductSchemaResolver,
+    resolver: zodResolver(
+      (isNew ? createProductSchema : updateProductSchema) as z.Schema<TForm>
+    ),
     values: product
       ? {
           ...product,
@@ -189,6 +188,7 @@ export default function ProductDetailsForm({
       submit(data, {
         path: "/api/proxy/products",
         id: product?.id,
+        viewContext: userIsGlobalAdmin ? "admin" : "user",
       });
 
     if (image) {
