@@ -77,7 +77,6 @@ export default function ClientDetailsForm({
           },
         }
       : FORM_DEFAULTS,
-    mode: "onBlur",
   });
 
   const {

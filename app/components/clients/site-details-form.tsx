@@ -118,7 +118,6 @@ export default function SiteDetailsForm({
               : undefined,
         }
       : FORM_DEFAULTS,
-    mode: "onBlur",
   });
 
   const {
