@@ -59,6 +59,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
     <div className="bg-background w-full h-full min-h-svh flex flex-col">
       <Header
+        showBreadcrumb={false}
         rightSlot={
           <>
             <Button variant="secondary" asChild>
@@ -124,6 +125,7 @@ export default function Layout({
           <SidebarInset>
             <Header
               homeTo="/inspect"
+              showBreadcrumb={false}
               leftSlot={
                 <>
                   <SidebarTrigger className="-ml-1" />

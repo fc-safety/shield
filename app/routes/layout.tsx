@@ -19,7 +19,7 @@ import {
   Terminal,
   Users,
 } from "lucide-react";
-import { Outlet } from "react-router";
+import { Outlet, useMatches } from "react-router";
 import { config } from "~/.server/config";
 import { requireUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
@@ -50,13 +50,15 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function Layout({
   loaderData: { user, apiUrl, appHost, googleMapsApiKey, authClientId },
 }: Route.ComponentProps) {
+  const matches = useMatches();
+
   const groups: SidebarGroup[] = [
     {
       groupTitle: "My Shield",
       items: [
         {
-          title: "Dashboard",
-          url: "dashboard",
+          title: "Command Center",
+          url: "command-center",
           icon: LayoutDashboard,
         },
         {
@@ -189,7 +191,7 @@ export default function Layout({
             <Header
               leftSlot={
                 <>
-                  <SidebarTrigger className="-ml-1" />
+                  <SidebarTrigger className="-ml-1.5" />
                   <Separator orientation="vertical" className="mr-2 h-4" />
                 </>
               }

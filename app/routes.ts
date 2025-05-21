@@ -61,6 +61,7 @@ export default [
   // App Routes
   layout("./routes/layout.tsx", [
     index("./routes/index.tsx"),
+    route("command-center", "./routes/command-center.tsx"),
     route("dashboard", "./routes/dashboard.tsx"),
     route("assets", "./routes/assets/layout.tsx", [
       index("./routes/assets/index.tsx"),
