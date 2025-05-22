@@ -297,6 +297,7 @@ function ProductRequestForm({
                             <Trash />
                           </Button>
                           <Input
+                            autoFocus={false}
                             type="number"
                             {...field}
                             className="w-16"
