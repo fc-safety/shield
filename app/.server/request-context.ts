@@ -1,5 +1,8 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import type { unstable_MiddlewareFunction } from "react-router";
+import {
+  UNSAFE_ErrorResponseImpl,
+  type unstable_MiddlewareFunction,
+} from "react-router";
 
 interface RequestContext {
   requestId: number;
@@ -22,14 +25,23 @@ export const createRequestContext: unstable_MiddlewareFunction = async (
 ) => {
   const requestStorage = globalThis.REQUEST_CONTEXT;
   if (!requestStorage.getStore()) {
-    const res = await new Promise<Awaited<ReturnType<typeof next>>>((resolve) =>
-      requestStorage.run(
-        { requestId: idSeq++, setCookieHeaderValues: {} },
-        async () => {
-          const res = await next();
-          resolve(res);
-        }
-      )
+    const res = await new Promise<Awaited<ReturnType<typeof next>>>(
+      (resolve, reject) =>
+        requestStorage.run(
+          { requestId: idSeq++, setCookieHeaderValues: {} },
+          async () => {
+            try {
+              const res = await next();
+              resolve(res);
+            } catch (error) {
+              if (error instanceof UNSAFE_ErrorResponseImpl) {
+                resolve(error);
+              } else {
+                reject(error);
+              }
+            }
+          }
+        )
     );
     return res;
   } else {
