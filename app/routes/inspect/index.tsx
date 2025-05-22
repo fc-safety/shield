@@ -65,6 +65,7 @@ import { can, getUserDisplayName } from "~/lib/users";
 import { buildTitle, getSearchParams, isNil } from "~/lib/utils";
 import RouteProgressCard from "~/routes/inspect/components/route-progress-card";
 import type { Route } from "./+types/index";
+import { getUserOrHandleInspectLoginRedirect } from "./.server/inspect-auth";
 import { INSPECTION_TOKEN_HEADER } from "./constants/headers";
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -138,6 +139,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
+  await getUserOrHandleInspectLoginRedirect(request);
+
   // TODO: Redirect based on user access.
   // [✅] PUBLIC: View public inspection history.
   // [✅] INSPECTOR: Begin inspection.

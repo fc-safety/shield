@@ -135,7 +135,9 @@ export const api = {
         isValid: boolean;
         tag: { id: string; externalId: string } | null;
         inspectionToken?: string;
-      }>(),
+      }>({
+        bypassAuth: true,
+      }),
     validateInspectionToken: (request: Request, token: string) =>
       ApiFetcher.create(request, "/inspections-public/validate-token")
         .setHeader(INSPECTION_TOKEN_HEADER, token)
@@ -145,7 +147,9 @@ export const api = {
           tagExternalId: string;
           serialNumber: string;
           expiresOn: string;
-        }>(),
+        }>({
+          bypassAuth: true,
+        }),
   },
   inspectionRoutes: {
     ...CRUD.for<InspectionRoute>("/inspection-routes").all(),

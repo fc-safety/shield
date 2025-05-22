@@ -6,7 +6,6 @@ import Footer from "~/components/footer";
 import Header from "~/components/header";
 import { Button } from "~/components/ui/button";
 import type { Route } from "./+types/layout";
-import ShieldBannerLogo from "./components/shield-banner-logo";
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
@@ -27,7 +26,7 @@ export default function PublicInspectLayout() {
   const isLoginPage = location.pathname.split("/").pop() === "login";
 
   return (
-    <BaseLayout showBackButton={!isLoginPage} showBannerLogo={!isLoginPage}>
+    <BaseLayout showBackButton={!isLoginPage}>
       <Outlet />
     </BaseLayout>
   );
@@ -36,10 +35,8 @@ export default function PublicInspectLayout() {
 function BaseLayout({
   showBackButton = false,
   children,
-  showBannerLogo = true,
 }: PropsWithChildren<{
   showBackButton?: boolean;
-  showBannerLogo?: boolean;
 }>) {
   return (
     <div className="bg-background w-full h-full min-h-svh flex flex-col">
@@ -56,7 +53,6 @@ function BaseLayout({
         }
       />
       <main className="flex flex-col grow items-center px-4 sm:px-6 pb-6 sm:pb-12 lg:px-8">
-        {showBannerLogo && <ShieldBannerLogo className="mb-12" />}
         {children}
       </main>
       <Footer />
