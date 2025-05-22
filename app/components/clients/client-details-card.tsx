@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter, startOfDay } from "date-fns";
-import { Building2, CopyPlus, Pencil } from "lucide-react";
+import { Building2, CopyPlus, Loader2, Pencil } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
@@ -251,17 +251,16 @@ function DuplicateDemoClientDialog({
 
   const navigate = useNavigate();
 
-  const { submitJson: submitDuplicateDemoClient } = useModalFetcher<
-    DataOrError<Client>
-  >({
-    defaultErrorMessage: "Error: Failed to duplicate demo client",
-    onData: (data) => {
-      if (data.data?.id) {
-        navigate(`../${data.data.id}`);
-        onOpenChange(false);
-      }
-    },
-  });
+  const { submitJson: submitDuplicateDemoClient, isSubmitting } =
+    useModalFetcher<DataOrError<Client>>({
+      defaultErrorMessage: "Error: Failed to duplicate demo client",
+      onData: (data) => {
+        if (data.data?.id) {
+          navigate(`../${data.data.id}`);
+          onOpenChange(false);
+        }
+      },
+    });
 
   const onSubmit = (data: TDuplicateDemoClientForm) => {
     submitDuplicateDemoClient(data, {
@@ -306,7 +305,10 @@ function DuplicateDemoClientDialog({
               </FormItem>
             )}
           />
-          <Button type="submit">Duplicate Client</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="animate-spin" /> : <CopyPlus />}
+            {isSubmitting ? "Duplicating..." : "Duplicate Client"}
+          </Button>
         </form>
       </FormProvider>
     </ResponsiveDialog>
