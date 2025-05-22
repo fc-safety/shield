@@ -26,7 +26,7 @@ export default function PublicInspectLayout() {
   const isLoginPage = location.pathname.split("/").pop() === "login";
 
   return (
-    <BaseLayout showBackButton={!isLoginPage}>
+    <BaseLayout showBackButton={!isLoginPage} showBannerLogo={!isLoginPage}>
       <Outlet />
     </BaseLayout>
   );
@@ -34,9 +34,11 @@ export default function PublicInspectLayout() {
 
 function BaseLayout({
   showBackButton = false,
+  showBannerLogo = true,
   children,
 }: PropsWithChildren<{
   showBackButton?: boolean;
+  showBannerLogo?: boolean;
 }>) {
   return (
     <div className="bg-background w-full h-full min-h-svh flex flex-col">
@@ -51,6 +53,7 @@ function BaseLayout({
             </Button>
           ) : null
         }
+        showBannerLogo={showBannerLogo}
       />
       <main className="flex flex-col grow items-center px-4 sm:px-6 pb-6 sm:pb-12 lg:px-8">
         {children}

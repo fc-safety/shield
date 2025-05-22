@@ -10,11 +10,13 @@ export default function Header({
   rightSlot,
   homeTo = "/",
   showBreadcrumb = true,
+  showBannerLogo = true,
 }: {
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
   homeTo?: string;
   showBreadcrumb?: boolean;
+  showBannerLogo?: boolean;
 }) {
   const matches = useMatches();
 
@@ -22,18 +24,20 @@ export default function Header({
     <header className="flex flex-col shrink-0 gap-2 py-4 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:py-2">
       <div className="flex items-center gap-x-2">
         {leftSlot}
-        <Link to={homeTo}>
-          <img
-            src={BANNER_LOGO_LIGHT_URL}
-            alt=""
-            className="h-4 w-auto object-contain dark:hidden"
-          />
-          <img
-            src={BANNER_LOGO_DARK_URL}
-            alt=""
-            className="h-4 w-auto object-contain hidden dark:block"
-          />
-        </Link>
+        {showBannerLogo && (
+          <Link to={homeTo}>
+            <img
+              src={BANNER_LOGO_LIGHT_URL}
+              alt=""
+              className="h-4 w-auto object-contain dark:hidden"
+            />
+            <img
+              src={BANNER_LOGO_DARK_URL}
+              alt=""
+              className="h-4 w-auto object-contain hidden dark:block"
+            />
+          </Link>
+        )}
         <div className="flex-1" />
         <div className="flex items-center gap-2">
           {rightSlot}
