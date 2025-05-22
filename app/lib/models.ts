@@ -200,6 +200,7 @@ export interface Client extends BaseModel {
   phoneNumber: string;
   homeUrl?: string;
   defaultInspectionCycle: number;
+  demoMode: boolean;
   sites?: Site[];
   _count?: { sites: number };
 }

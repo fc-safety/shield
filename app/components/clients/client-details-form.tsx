@@ -10,7 +10,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, isAfter, isValid as isValidDate, parseISO } from "date-fns";
+import {
+  format,
+  isAfter,
+  isValid as isValidDate,
+  parseISO,
+  startOfDay,
+} from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "react-router";
@@ -25,6 +31,7 @@ import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { Switch } from "../ui/switch";
 
 type TForm = z.infer<typeof createClientSchema | typeof updateClientSchema>;
 interface ClientDetailsFormProps {
@@ -210,8 +217,8 @@ export default function ClientDetailsForm({
           render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
               <FormLabel>
-                {!value || isAfter(value, new Date())
-                  ? "Starts On"
+                {!value || isAfter(value, startOfDay(new Date()))
+                  ? "Starting On"
                   : "Started On"}
               </FormLabel>
               <FormControl>
@@ -345,6 +352,25 @@ export default function ClientDetailsForm({
                 The default number of days each asset should be inspected.
               </FormDescription>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="demoMode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Demo Mode</FormLabel>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <FormDescription>
+                When enabled, this client will be enabled to perform special
+                actions not suitable for production environments.
+              </FormDescription>
             </FormItem>
           )}
         />

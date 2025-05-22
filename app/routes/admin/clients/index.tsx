@@ -14,6 +14,7 @@ import { api } from "~/.server/api";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import EditClientButton from "~/components/clients/edit-client-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -75,8 +76,12 @@ export default function ClientsIndex({
         ),
 
         cell: ({ row, getValue }) => (
-          <Link to={row.original.id} className="hover:underline">
+          <Link
+            to={row.original.id}
+            className="hover:underline flex items-center gap-2"
+          >
             {getValue() as string}
+            {row.original.demoMode && <Badge variant="default">Demo</Badge>}
           </Link>
         ),
       },

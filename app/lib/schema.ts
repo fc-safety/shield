@@ -110,6 +110,7 @@ export const createClientSchema = z.object({
     .optional()
     .transform((url) => url || undefined),
   defaultInspectionCycle: z.coerce.number().default(30),
+  demoMode: z.boolean().optional(),
 });
 export const createClientSchemaResolver = zodResolver(createClientSchema);
 
