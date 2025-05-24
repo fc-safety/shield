@@ -1,4 +1,3 @@
-import { Home } from "lucide-react";
 import { Link, useMatches } from "react-router";
 import { BANNER_LOGO_DARK_URL, BANNER_LOGO_LIGHT_URL } from "~/lib/constants";
 import { validateBreadcrumb } from "~/lib/utils";
@@ -21,7 +20,7 @@ export default function Header({
   const matches = useMatches();
 
   return (
-    <header className="flex flex-col shrink-0 gap-2 py-4 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:py-2">
+    <header className="flex flex-col shrink-0 gap-y-1 py-4 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:py-2">
       <div className="flex items-center gap-x-2">
         {leftSlot}
         {showBannerLogo && (
@@ -49,7 +48,7 @@ export default function Header({
           items={[
             {
               to: homeTo,
-              label: <Home size={16} />,
+              label: "Home",
               id: "home",
             },
             ...matches.filter(validateBreadcrumb).map((match) => ({
