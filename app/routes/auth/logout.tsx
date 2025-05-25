@@ -10,7 +10,11 @@ import type { Route } from "./+types/logout";
 export async function loader({ request }: Route.LoaderArgs) {
   const returnTo = getSearchParam(request, "returnTo");
   const postLogoutUrl =
-    URL.parse(returnTo ?? "/", config.APP_HOST)?.toString() ?? "";
+    (returnTo || !config.POST_LOGOUT_URL
+      ? URL.parse(returnTo ?? "/", config.APP_HOST)?.toString()
+      : config.POST_LOGOUT_URL) ??
+    config.POST_LOGOUT_URL ??
+    "";
 
   // Clear any existing middleware set cookie values.
   requestContext.set("setCookieHeaderValues", (values) => {

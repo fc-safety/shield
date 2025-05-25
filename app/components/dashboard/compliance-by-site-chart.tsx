@@ -169,24 +169,29 @@ export function ComplianceBySiteChart() {
   return series ? (
     <Card className="flex flex-col">
       <CardContent className="flex-1 pt-4 sm:pt-6 flex flex-col items-center">
-        {Array.isArray(series) && series.length === 0 && (
+        {Array.isArray(series) && series.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-muted-foreground">No assets found.</div>
+            <div className="text-muted-foreground text-sm">
+              No assets to display.
+            </div>
           </div>
+        ) : (
+          <ReactECharts
+            theme={theme ?? undefined}
+            option={chartOption}
+            onClick={(e) => {
+              const siteId = (e.data as { id: string }).id;
+              navigate(
+                `/assets?inspectionStatus=${e.seriesId}&siteId=${siteId}`
+              );
+            }}
+            className="w-full h-full"
+            style={{
+              minHeight:
+                300 + (mySitesById ? Object.keys(mySitesById).length : 3) * 20,
+            }}
+          />
         )}
-        <ReactECharts
-          theme={theme ?? undefined}
-          option={chartOption}
-          onClick={(e) => {
-            const siteId = (e.data as { id: string }).id;
-            navigate(`/assets?inspectionStatus=${e.seriesId}&siteId=${siteId}`);
-          }}
-          className="w-full h-full"
-          style={{
-            minHeight:
-              300 + (mySitesById ? Object.keys(mySitesById).length : 3) * 20,
-          }}
-        />
       </CardContent>
     </Card>
   ) : error ? (

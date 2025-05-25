@@ -9,3 +9,5 @@ node_modules
 .cursor
 .env
 .env.*
+
+.DS_Store

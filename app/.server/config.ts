@@ -3,6 +3,7 @@ import { z } from "zod";
 const configSchema = z.object({
   // General
   APP_HOST: z.string(),
+  POST_LOGOUT_URL: z.string().optional(),
 
   // Authentication
   CLIENT_ID: z.string(),
