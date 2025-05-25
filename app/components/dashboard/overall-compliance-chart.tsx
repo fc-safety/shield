@@ -25,7 +25,8 @@ export function OverallComplianceChart() {
 
   const { data: rawAssets, error } = useQuery({
     queryKey: ["assets-with-latest-inspection"],
-    queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
+    queryFn: () =>
+      getAssetsWithLatestInspection(fetch).then((r) => [] as Asset[]),
   });
 
   const data = React.useMemo(
@@ -145,20 +146,23 @@ export function OverallComplianceChart() {
   return data ? (
     <Card className="flex flex-col">
       <CardContent className="flex-1 pt-4 sm:pt-6 flex flex-col items-center">
-        {data.length === 0 && (
+        {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-muted-foreground">No assets found.</div>
+            <div className="text-muted-foreground text-sm">
+              No assets to display.
+            </div>
           </div>
+        ) : (
+          <ReactECharts
+            theme={theme ?? undefined}
+            option={chartOption}
+            onClick={(e) => {
+              const status = (e.data as { id: string }).id;
+              navigate(`/assets?inspectionStatus=${status}`);
+            }}
+            className="w-full aspect-square max-w-(--breakpoint-sm)"
+          />
         )}
-        <ReactECharts
-          theme={theme ?? undefined}
-          option={chartOption}
-          onClick={(e) => {
-            const status = (e.data as { id: string }).id;
-            navigate(`/assets?inspectionStatus=${status}`);
-          }}
-          className="w-full aspect-square max-w-(--breakpoint-sm)"
-        />
       </CardContent>
     </Card>
   ) : error ? (

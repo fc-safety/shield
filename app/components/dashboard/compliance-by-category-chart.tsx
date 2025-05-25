@@ -239,33 +239,36 @@ export function ComplianceByCategoryChart() {
   return series ? (
     <Card className="flex flex-col">
       <CardContent className="flex-1 pt-4 sm:pt-6 flex flex-col items-center">
-        {Array.isArray(series) && series.length === 0 && (
+        {Array.isArray(series) && series.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-muted-foreground">No assets found.</div>
+            <div className="text-muted-foreground text-sm">
+              No assets to display.
+            </div>
           </div>
+        ) : (
+          <ReactECharts
+            theme={theme ?? undefined}
+            option={chartOption}
+            onClick={(e) => {
+              const productCategoryId = (e.data as { id: string }).id;
+              navigate(
+                `/assets?inspectionStatus=${e.seriesId}&productCategoryId=${productCategoryId}`
+              );
+            }}
+            className="w-full h-full"
+            style={{
+              // Allow chart to grow vertically to fit the number of product categories.
+              // However, because this allows Y Axis labels to get progressively smaller
+              // with a lower limit of 20px.
+              minHeight:
+                300 +
+                (productCategoriesById
+                  ? Object.keys(productCategoriesById).length
+                  : 3) *
+                  20,
+            }}
+          />
         )}
-        <ReactECharts
-          theme={theme ?? undefined}
-          option={chartOption}
-          onClick={(e) => {
-            const productCategoryId = (e.data as { id: string }).id;
-            navigate(
-              `/assets?inspectionStatus=${e.seriesId}&productCategoryId=${productCategoryId}`
-            );
-          }}
-          className="w-full h-full"
-          style={{
-            // Allow chart to grow vertically to fit the number of product categories.
-            // However, because this allows Y Axis labels to get progressively smaller
-            // with a lower limit of 20px.
-            minHeight:
-              300 +
-              (productCategoriesById
-                ? Object.keys(productCategoriesById).length
-                : 3) *
-                20,
-          }}
-        />
       </CardContent>
     </Card>
   ) : error ? (
