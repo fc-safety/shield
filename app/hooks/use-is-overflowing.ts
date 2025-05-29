@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useEventListener, useResizeObserver } from "usehooks-ts";
 
 export default function useIsOverflowing({
@@ -21,18 +21,26 @@ export default function useIsOverflowing({
     ref.current?.scrollHeight ?? 0
   );
 
-  useResizeObserver({
-    ref,
-    box: "border-box",
-    onResize: ({ width, height }) => {
+  const handleResize = useCallback(
+    ({ width, height }: { width?: number; height?: number }) => {
       const el = ref.current;
-      if (!el) return;
       setViewportWidth(width ?? el.clientWidth);
       setViewportHeight(height ?? el.clientHeight);
       setScrollWidth(el.scrollWidth);
       setScrollHeight(el.scrollHeight);
     },
+    [ref]
+  );
+
+  useResizeObserver({
+    ref,
+    box: "border-box",
+    onResize: handleResize,
   });
+
+  useEffect(() => {
+    handleResize({});
+  }, [handleResize, ref.current]);
 
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -67,5 +75,6 @@ export default function useIsOverflowing({
     isOverflowingX,
     isScrollMaxedY,
     isScrollMaxedX,
+    recalculate: () => handleResize({}),
   };
 }

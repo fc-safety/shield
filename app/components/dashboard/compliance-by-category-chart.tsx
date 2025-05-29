@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption } from "echarts";
+import { Shapes, Shield } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
-import { Card, CardContent } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
@@ -176,29 +177,30 @@ export function ComplianceByCategoryChart() {
       // Background color of the chart
       backgroundColor: "transparent",
       // Title of the chart
-      title: {
-        text: "Compliance by Category",
-        subtext: `You are viewing the compliance status of assets broken down by product category.`,
-        left: "center",
-        top: "0%",
-        textStyle: {
-          fontSize: 16,
-          fontWeight: 600,
-        },
-        subtextStyle: {
-          width: 320,
-          overflow: "break",
-          fontSize: 14,
-          color: themeValues?.mutedForeground,
-        },
-        itemGap: 8,
-      },
+      // title: {
+      // text: "Compliance by Category",
+      // subtext: `Breakdown of compliance by product category.`,
+      // left: "center",
+      // top: "0%",
+      // textStyle: {
+      //   fontSize: 16,
+      //   fontWeight: 600,
+      // },
+      // subtextStyle: {
+      //   width: 320,
+      //   overflow: "break",
+      //   fontSize: 14,
+      //   color: themeValues?.mutedForeground,
+      //   lineHeight: 8,
+      // },
+      //   itemGap: 8,
+      // },
       // Specifies how to draw the bar chart within the container
       grid: {
         left: "3%",
         right: "4%",
-        bottom: "8%",
-        top: "14%",
+        bottom: "14%",
+        top: "0%",
         containLabel: true,
       },
       xAxis: {
@@ -238,7 +240,12 @@ export function ComplianceByCategoryChart() {
 
   return series ? (
     <Card className="flex flex-col">
-      <CardContent className="flex-1 pt-4 sm:pt-6 flex flex-col items-center">
+      <CardHeader>
+        <CardTitle>
+          <Shield />+<Shapes /> Compliance by Category
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col items-center">
         {Array.isArray(series) && series.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="text-muted-foreground text-sm">
@@ -258,10 +265,10 @@ export function ComplianceByCategoryChart() {
             className="w-full h-full"
             style={{
               // Allow chart to grow vertically to fit the number of product categories.
-              // However, because this allows Y Axis labels to get progressively smaller
+              // However, this allows Y Axis labels to get progressively smaller
               // with a lower limit of 20px.
               minHeight:
-                300 +
+                200 +
                 (productCategoriesById
                   ? Object.keys(productCategoriesById).length
                   : 3) *

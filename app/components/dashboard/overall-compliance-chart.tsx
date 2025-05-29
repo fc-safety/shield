@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import type { PieSeriesOption } from "echarts";
+import { Shield } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
-import { Card, CardContent } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
@@ -25,8 +26,7 @@ export function OverallComplianceChart() {
 
   const { data: rawAssets, error } = useQuery({
     queryKey: ["assets-with-latest-inspection"],
-    queryFn: () =>
-      getAssetsWithLatestInspection(fetch).then((r) => [] as Asset[]),
+    queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
   });
 
   const data = React.useMemo(
@@ -86,29 +86,30 @@ export function OverallComplianceChart() {
       // Background color of the chart
       backgroundColor: "transparent",
       // Title of the chart
-      title: {
-        text: "Overall Compliance",
-        subtext: `You are viewing the compliance status of a total of ${totalAssets} assets.`,
-        left: "center",
-        top: "0%",
-        textStyle: {
-          fontSize: 16,
-          fontWeight: 600,
-        },
-        subtextStyle: {
-          width: 320,
-          overflow: "break",
-          fontSize: 14,
-          color: themeValues?.mutedForeground,
-        },
-        itemGap: 8,
-      },
+      // title: {
+      // text: "Overall Compliance",
+      // subtext: `Breakdown of compliance for all ${totalAssets} assets.`,
+      // left: "center",
+      // top: "0%",
+      // textStyle: {
+      //   fontSize: 16,
+      //   fontWeight: 600,
+      // },
+      // subtextStyle: {
+      //   width: 320,
+      //   overflow: "break",
+      //   fontSize: 14,
+      //   color: themeValues?.mutedForeground,
+      //   lineHeight: 8,
+      // },
+      //   itemGap: 8,
+      // },
 
       series: [
         {
           name: "Inspection Status",
           type: "pie",
-          radius: ["40%", "70%"],
+          radius: ["40%", "75%"],
           avoidLabelOverlap: false,
           startAngle: 270,
           padAngle: 5,
@@ -135,8 +136,8 @@ export function OverallComplianceChart() {
             show: true,
           },
           data: data || [],
-          top: 16,
-          center: ["50%", "50%"],
+          top: 0,
+          center: ["50%", "42%"],
         },
       ],
     }),
@@ -145,7 +146,12 @@ export function OverallComplianceChart() {
 
   return data ? (
     <Card className="flex flex-col">
-      <CardContent className="flex-1 pt-4 sm:pt-6 flex flex-col items-center">
+      <CardHeader>
+        <CardTitle>
+          <Shield /> Overall Compliance
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col items-center">
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="text-muted-foreground text-sm">
@@ -160,7 +166,7 @@ export function OverallComplianceChart() {
               const status = (e.data as { id: string }).id;
               navigate(`/assets?inspectionStatus=${status}`);
             }}
-            className="w-full aspect-square max-w-(--breakpoint-sm)"
+            className="w-full grow min-h-[250px] max-w-(--breakpoint-sm)"
           />
         )}
       </CardContent>

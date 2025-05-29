@@ -9,13 +9,8 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { format, subDays } from "date-fns";
-import {
-  Check,
-  ChevronsUpDown,
-  CornerDownRight,
-  ShieldAlert,
-} from "lucide-react";
+import { subDays } from "date-fns";
+import { Check, ChevronsUpDown, ShieldAlert } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useImmer } from "use-immer";
@@ -28,7 +23,6 @@ import { stringifyQuery } from "~/lib/urls";
 import { hasMultiSiteVisibility } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import AssetInspectionAlert from "../assets/asset-inspection-alert";
-import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
@@ -99,7 +93,7 @@ export default function InspectionAlertsOverview() {
           return (
             <Link
               to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
-              className="flex items-center gap-2 group"
+              className="inline-flex items-center gap-2 group"
             >
               <span className="group-hover:underline">{assetName}</span>
               {row.original.asset?.product?.productCategory?.icon && (
@@ -166,10 +160,9 @@ export default function InspectionAlertsOverview() {
             assetId={row.original.assetId}
             alertId={row.original.id}
             trigger={
-              <Button variant="secondary" size="sm">
-                <CornerDownRight />
-                Details
-              </Button>
+              <button type="button" className="underline text-xs font-semibold">
+                more
+              </button>
             }
           />
         ),
@@ -291,9 +284,9 @@ export default function InspectionAlertsOverview() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <GradientScrollArea className="h-[350px]" variant="card">
+        <GradientScrollArea className="h-[300px]" variant="card">
           {isLoading ? (
-            <Skeleton className="h-[400px] w-full" />
+            <Skeleton className="h-[300px] w-full" />
           ) : isEmpty ? (
             <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
               No alerts to display.
@@ -313,42 +306,23 @@ export default function InspectionAlertsOverview() {
               >
                 <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
                   {renderCell(cells.date)}
+                  <div className="flex items-center gap-1">
+                    {renderCell(cells.asset)}
+                    <span className="text-muted-foreground">•</span>
+                    {renderCell(cells.level)}
+                  </div>
                 </div>
                 <div>
-                  <DataList
-                    details={[
-                      {
-                        label: "Date",
-                        value: format(inspection.createdOn, "PPpp"),
-                        hidden: !cells.date,
-                      },
-                      {
-                        label: "Site",
-                        value: renderCell(cells.site),
-                        hidden: !cells.site,
-                      },
-                      {
-                        label: "Asset",
-                        value: renderCell(cells.asset),
-                        hidden: !cells.asset,
-                      },
-                      {
-                        label: "Level",
-                        value: renderCell(cells.level),
-                        hidden: !cells.level,
-                      },
-                      {
-                        label: "Resolved",
-                        value: renderCell(cells.resolved),
-                        hidden: !cells.resolved,
-                      },
-                    ]}
-                    defaultValue={<>&mdash;</>}
-                    fluid
-                    classNames={{
-                      details: "gap-0.5",
-                    }}
-                  />
+                  <p className="text-sm">
+                    {cells.site ? (
+                      <span className="font-semibold">
+                        [{renderCell(cells.site)}]
+                      </span>
+                    ) : (
+                      ""
+                    )}{" "}
+                    An alert was triggered {renderCell(cells.date)}.
+                  </p>
                 </div>
                 <div className="flex">{renderCell(cells.details)}</div>
               </div>

@@ -22,7 +22,6 @@ import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import AssetInspectionDialog from "../assets/asset-inspection-dialog";
-import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
@@ -93,7 +92,7 @@ export default function InspectionsOverview() {
           return (
             <Link
               to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
-              className="flex items-center gap-2 group"
+              className="inline-flex items-center gap-2 group"
             >
               <span className="group-hover:underline">{assetName}</span>
               {row.original.asset.product.productCategory.icon && (
@@ -133,7 +132,23 @@ export default function InspectionsOverview() {
       {
         id: "details",
         cell: ({ row }) => (
-          <AssetInspectionDialog inspectionId={row.original.id} />
+          <AssetInspectionDialog
+            inspectionId={row.original.id}
+            trigger={(isLoading, preloadInspection, setOpen) => (
+              <button
+                type="button"
+                className={cn(
+                  "underline text-xs font-semibold",
+                  isLoading && "animate-pulse"
+                )}
+                onMouseEnter={() => preloadInspection(row.original.id)}
+                onTouchStart={() => preloadInspection(row.original.id)}
+                onClick={() => setOpen(true)}
+              >
+                more
+              </button>
+            )}
+          />
         ),
       },
     ],
@@ -253,9 +268,9 @@ export default function InspectionsOverview() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <GradientScrollArea className="h-[350px]" variant="card">
+        <GradientScrollArea className="h-[300px]" variant="card">
           {isLoading ? (
-            <Skeleton className="h-[400px] w-full" />
+            <Skeleton className="h-[300px] w-full" />
           ) : isEmpty ? (
             <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
               No inspections to display.
@@ -274,43 +289,21 @@ export default function InspectionsOverview() {
                 className="py-2 flex flex-col gap-2 border-t border-border"
               >
                 <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
-                  {renderCell(cells.date)}
+                  {format(inspection.createdOn, "PPpp")}
+                  {renderCell(cells.asset)}
                 </div>
                 <div>
-                  <DataList
-                    details={[
-                      {
-                        label: "Date",
-                        value: format(inspection.createdOn, "PPpp"),
-                        hidden: !cells.date,
-                      },
-                      {
-                        label: "Site",
-                        value: renderCell(cells.site),
-                        hidden: !cells.site,
-                      },
-                      {
-                        label: "Inspected by",
-                        value: renderCell(cells.inspector),
-                        hidden: !cells.inspector,
-                      },
-                      {
-                        label: "Asset",
-                        value: renderCell(cells.asset),
-                        hidden: !cells.asset,
-                      },
-                      {
-                        label: "Comments",
-                        value: renderCell(cells.comments),
-                        hidden: !cells.comments,
-                      },
-                    ]}
-                    defaultValue={<>&mdash;</>}
-                    fluid
-                    classNames={{
-                      details: "gap-0.5",
-                    }}
-                  />
+                  <p className="text-sm">
+                    {cells.site ? (
+                      <span className="font-semibold">
+                        [{renderCell(cells.site)}]
+                      </span>
+                    ) : (
+                      ""
+                    )}{" "}
+                    {renderCell(cells.inspector)} inspected{" "}
+                    {inspection.asset.name} {renderCell(cells.date)}.
+                  </p>
                 </div>
                 <div className="flex">{renderCell(cells.details)}</div>
               </div>

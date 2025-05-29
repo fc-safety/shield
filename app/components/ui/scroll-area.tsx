@@ -43,12 +43,21 @@ const ScrollArea = React.forwardRef<
     ref
   ) => {
     const viewportRef = useRef<HTMLDivElement>(null);
-    const { isOverflowingX, isOverflowingY, isScrollMaxedX, isScrollMaxedY } =
-      useIsOverflowing({
-        ref: viewportRef,
-        scrollbarOffsetX: 8,
-        scrollbarOffsetY: 8,
-      });
+    const {
+      isOverflowingX,
+      isOverflowingY,
+      isScrollMaxedX,
+      isScrollMaxedY,
+      recalculate,
+    } = useIsOverflowing({
+      ref: viewportRef,
+      scrollbarOffsetX: 8,
+      scrollbarOffsetY: 8,
+    });
+
+    useEffect(() => {
+      recalculate();
+    }, [children]);
 
     useEffect(() => {
       onIsOverflowingX?.(isOverflowingX);

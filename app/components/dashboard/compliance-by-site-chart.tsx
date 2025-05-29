@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import type { EChartsOption } from "echarts";
+import { Shield, Warehouse } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
-import { Card, CardContent } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
@@ -130,28 +131,29 @@ export function ComplianceBySiteChart() {
       backgroundColor: "transparent",
       // Title of the chart
       title: {
-        text: "Compliance by Site",
-        subtext: `You are viewing the compliance status of assets broken down by site.`,
+        // text: "Compliance by Site",
+        // subtext: `Breakdown of compliance by site.`,
         left: "center",
         top: "0%",
-        textStyle: {
-          fontSize: 16,
-          fontWeight: 600,
-        },
-        subtextStyle: {
-          width: 320,
-          overflow: "break",
-          fontSize: 14,
-          color: themeValues?.mutedForeground,
-        },
+        // textStyle: {
+        //   fontSize: 16,
+        //   fontWeight: 600,
+        // },
+        // subtextStyle: {
+        //   width: 320,
+        //   overflow: "break",
+        //   fontSize: 14,
+        //   color: themeValues?.mutedForeground,
+        //   lineHeight: 8,
+        // },
         itemGap: 8,
       },
       // Specifies how to draw the bar chart within the container
       grid: {
         left: "3%",
         right: "4%",
-        bottom: "8%",
-        top: "16%",
+        bottom: "14%",
+        top: "0%",
         containLabel: true,
       },
       xAxis: {
@@ -168,7 +170,12 @@ export function ComplianceBySiteChart() {
 
   return series ? (
     <Card className="flex flex-col">
-      <CardContent className="flex-1 pt-4 sm:pt-6 flex flex-col items-center">
+      <CardHeader>
+        <CardTitle>
+          <Shield />+<Warehouse /> Compliance by Site
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col items-center">
         {Array.isArray(series) && series.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="text-muted-foreground text-sm">
@@ -188,7 +195,7 @@ export function ComplianceBySiteChart() {
             className="w-full h-full"
             style={{
               minHeight:
-                300 + (mySitesById ? Object.keys(mySitesById).length : 3) * 20,
+                200 + (mySitesById ? Object.keys(mySitesById).length : 3) * 20,
             }}
           />
         )}

@@ -9,7 +9,7 @@ const proxy = async ({
 }: Route.ActionArgs | Route.LoaderArgs) => {
   const pathSplat = validateParam(params, "*");
   const query = getSearchParams(request);
-  const headers = new Headers(request.headers);
+  const headers = new Headers();
 
   headers.delete("cookie");
 

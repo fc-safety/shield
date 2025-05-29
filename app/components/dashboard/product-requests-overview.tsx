@@ -374,9 +374,9 @@ export default function ProductRequestsOverview() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <GradientScrollArea className="h-[350px]" variant="card">
+          <GradientScrollArea className="h-[300px]" variant="card">
             {isLoading ? (
-              <Skeleton className="h-[400px] w-full" />
+              <Skeleton className="h-[300px] w-full" />
             ) : isEmpty ? (
               <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
                 No supply requests to display.
@@ -395,44 +395,22 @@ export default function ProductRequestsOverview() {
                   className="py-2 flex flex-col gap-2 border-t border-border"
                 >
                   <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
-                    {renderCell(cells.orderedOn)}
+                    {format(productRequest.createdOn, "PPpp")}
                     {renderCell(cells.status)}
                   </div>
-                  <div>
-                    <DataList
-                      details={[
-                        {
-                          label: "Date",
-                          value: format(productRequest.createdOn, "PPpp"),
-                          hidden: !cells.orderedOn,
-                        },
-                        {
-                          label: "Site",
-                          value: renderCell(cells.site),
-                          hidden: !cells.site,
-                        },
-                        {
-                          label: "Requested by",
-                          value: renderCell(cells.requestor),
-                          hidden: !cells.requestor,
-                        },
-                        {
-                          label: "Asset",
-                          value: renderCell(cells.asset),
-                          hidden: !cells.asset,
-                        },
-                        {
-                          label: "Items",
-                          value: renderCell(cells.items),
-                          hidden: !cells.items,
-                        },
-                      ]}
-                      defaultValue={<>&mdash;</>}
-                      fluid
-                      classNames={{
-                        details: "gap-0.5",
-                      }}
-                    />
+                  <div className="space-y-1">
+                    <p className="text-sm">
+                      {cells.site ? (
+                        <span className="font-semibold">
+                          [{renderCell(cells.site)}]
+                        </span>
+                      ) : (
+                        ""
+                      )}{" "}
+                      {renderCell(cells.requestor)} requested these supplies{" "}
+                      {renderCell(cells.orderedOn)}:
+                    </p>
+                    <p className="text-sm">{renderCell(cells.items)}</p>
                   </div>
                   <div className="flex">{renderCell(cells.details)}</div>
                 </div>
