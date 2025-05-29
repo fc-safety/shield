@@ -3,6 +3,14 @@ import { getSearchParams, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/proxy";
 const INSPECTION_TOKEN_HEADER = "x-inspection-token";
 
+const ALLOWED_PASSTHROUGH_HEADERS = [
+  "Content-Type",
+  "X-View-Context",
+  "X-Inspection-Token",
+  "Accept",
+  "Referer",
+];
+
 const proxy = async ({
   request,
   params,
@@ -11,7 +19,11 @@ const proxy = async ({
   const query = getSearchParams(request);
   const headers = new Headers();
 
-  headers.delete("cookie");
+  for (const header of ALLOWED_PASSTHROUGH_HEADERS) {
+    if (request.headers.has(header)) {
+      headers.set(header, request.headers.get(header)!);
+    }
+  }
 
   const method = (query.get("_method") ?? request.method).toUpperCase();
   query.delete("_method");
