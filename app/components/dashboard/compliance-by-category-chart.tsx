@@ -13,8 +13,9 @@ import { getAssetInspectionStatus } from "~/lib/model-utils";
 import type { Asset, ProductCategory, ResultsPage } from "~/lib/models";
 import { countBy } from "~/lib/utils";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
-import BlankDashboardTile from "./blank-dashboard-tile";
-import ErrorDashboardTile from "./error-dashboard-tile";
+import EmptyStateOverlay from "./components/empty-state-overlay";
+import ErrorOverlay from "./components/error-overlay";
+import LoadingOverlay from "./components/loading-overlay";
 
 export function ComplianceByCategoryChart({
   refreshKey,
@@ -28,10 +29,19 @@ export function ComplianceByCategoryChart({
 
   const navigate = useNavigate();
 
-  const { data: rawAssets, error } = useQuery({
-    queryKey: ["assets-with-latest-inspection", refreshKey],
+  const {
+    data: rawAssets,
+    error,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["assets-with-latest-inspection"],
     queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
   });
+
+  useEffect(() => {
+    refetch();
+  }, [refreshKey, refetch]);
 
   const { data: productCategories } = useQuery({
     queryKey: ["product-categories-200"],
@@ -180,25 +190,6 @@ export function ComplianceByCategoryChart({
       },
       // Background color of the chart
       backgroundColor: "transparent",
-      // Title of the chart
-      // title: {
-      // text: "Compliance by Category",
-      // subtext: `Breakdown of compliance by product category.`,
-      // left: "center",
-      // top: "0%",
-      // textStyle: {
-      //   fontSize: 16,
-      //   fontWeight: 600,
-      // },
-      // subtextStyle: {
-      //   width: 320,
-      //   overflow: "break",
-      //   fontSize: 14,
-      //   color: themeValues?.mutedForeground,
-      //   lineHeight: 8,
-      // },
-      //   itemGap: 8,
-      // },
       // Specifies how to draw the bar chart within the container
       grid: {
         left: "3%",
@@ -242,50 +233,45 @@ export function ComplianceByCategoryChart({
     [series, themeValues, nonEmptyProductCategories, iconMap]
   );
 
-  return series ? (
-    <Card className="flex flex-col">
+  return (
+    <Card className="flex flex-col relative">
       <CardHeader>
         <CardTitle>
           <Shield />+<Shapes /> Compliance by Category
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col items-center">
-        {Array.isArray(series) && series.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-muted-foreground text-sm">
-              No assets to display.
-            </div>
-          </div>
-        ) : (
-          <ReactECharts
-            theme={theme ?? undefined}
-            option={chartOption}
-            onClick={(e) => {
-              const productCategoryId = (e.data as { id: string }).id;
-              navigate(
-                `/assets?inspectionStatus=${e.seriesId}&productCategoryId=${productCategoryId}`
-              );
-            }}
-            className="w-full h-full"
-            style={{
-              // Allow chart to grow vertically to fit the number of product categories.
-              // However, this allows Y Axis labels to get progressively smaller
-              // with a lower limit of 20px.
-              minHeight:
-                200 +
-                (productCategoriesById
-                  ? Object.keys(productCategoriesById).length
-                  : 3) *
-                  20,
-            }}
-          />
-        )}
+        <ReactECharts
+          theme={theme ?? undefined}
+          option={chartOption}
+          onClick={(e) => {
+            const productCategoryId = (e.data as { id: string }).id;
+            navigate(
+              `/assets?inspectionStatus=${e.seriesId}&productCategoryId=${productCategoryId}`
+            );
+          }}
+          className="w-full h-full"
+          style={{
+            // Allow chart to grow vertically to fit the number of product categories.
+            // However, this allows Y Axis labels to get progressively smaller
+            // with a lower limit of 20px.
+            minHeight:
+              150 +
+              (productCategoriesById
+                ? Object.keys(productCategoriesById).length
+                : 3) *
+                20,
+          }}
+        />
       </CardContent>
+      {isLoading ? (
+        <LoadingOverlay />
+      ) : error ? (
+        <ErrorOverlay>Error occurred while loading assets.</ErrorOverlay>
+      ) : series && Array.isArray(series) && series.length === 0 ? (
+        <EmptyStateOverlay>No assets to display.</EmptyStateOverlay>
+      ) : null}
     </Card>
-  ) : error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <BlankDashboardTile className="animate-pulse h-full" />
   );
 }
 

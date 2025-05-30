@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { format, subDays } from "date-fns";
 import { Check, ChevronsUpDown, ShieldAlert } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useImmer } from "use-immer";
 import { useAppState } from "~/contexts/app-state-context";
@@ -36,8 +36,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Skeleton } from "../ui/skeleton";
-import ErrorDashboardTile from "./error-dashboard-tile";
+import ErrorOverlay from "./components/error-overlay";
+import LoadingOverlay from "./components/loading-overlay";
 
 export default function InspectionAlertsOverview({
   refreshKey,
@@ -69,10 +69,14 @@ export default function InspectionAlertsOverview({
     });
   };
 
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["inspection-alerts", queryParams, refreshKey] as const,
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ["inspection-alerts", queryParams] as const,
     queryFn: ({ queryKey }) => getInspectionAlerts(fetch, queryKey[1]),
   });
+
+  useEffect(() => {
+    refetch();
+  }, [refreshKey, refetch]);
 
   const columns: ColumnDef<Alert>[] = useMemo(
     () => [
@@ -208,10 +212,8 @@ export default function InspectionAlertsOverview({
   const { rows } = table.getRowModel();
   const isEmpty = !rows.length;
 
-  return error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <Card>
+  return (
+    <Card className="h-max relative">
       <CardHeader>
         <CardTitle>
           <ShieldAlert /> Recent Alerts
@@ -289,9 +291,7 @@ export default function InspectionAlertsOverview({
           </DropdownMenu>
         </div>
         <GradientScrollArea className="h-[300px]" variant="card">
-          {isLoading ? (
-            <Skeleton className="h-[300px] w-full" />
-          ) : isEmpty ? (
+          {!isLoading && isEmpty ? (
             <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
               No alerts to display.
             </p>
@@ -334,6 +334,11 @@ export default function InspectionAlertsOverview({
           })}
         </GradientScrollArea>
       </CardContent>
+      {isLoading ? (
+        <LoadingOverlay />
+      ) : error ? (
+        <ErrorOverlay>Error occurred while loading alerts.</ErrorOverlay>
+      ) : null}
     </Card>
   );
 }

@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { format, subDays } from "date-fns";
 import { Check, ChevronsUpDown, SearchCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useImmer } from "use-immer";
 import { useAppState } from "~/contexts/app-state-context";
@@ -35,8 +35,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Skeleton } from "../ui/skeleton";
-import ErrorDashboardTile from "./error-dashboard-tile";
+import ErrorOverlay from "./components/error-overlay";
+import LoadingOverlay from "./components/loading-overlay";
 
 export default function InspectionsOverview({
   refreshKey,
@@ -68,10 +68,14 @@ export default function InspectionsOverview({
     });
   };
 
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["recent-inspections", queryParams, refreshKey] as const,
+  const { data, error, isLoading, refetch } = useQuery({
+    queryKey: ["recent-inspections", queryParams] as const,
     queryFn: ({ queryKey }) => getRecentInspections(fetch, queryKey[1]),
   });
+
+  useEffect(() => {
+    refetch();
+  }, [refreshKey, refetch]);
 
   const columns: ColumnDef<Inspection>[] = useMemo(
     () => [
@@ -192,10 +196,8 @@ export default function InspectionsOverview({
   const { rows } = table.getRowModel();
   const isEmpty = !rows.length;
 
-  return error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <Card>
+  return (
+    <Card className="h-max relative">
       <CardHeader>
         <CardTitle>
           <SearchCheck /> Recent Inspections
@@ -273,9 +275,7 @@ export default function InspectionsOverview({
           </DropdownMenu>
         </div>
         <GradientScrollArea className="h-[300px]" variant="card">
-          {isLoading ? (
-            <Skeleton className="h-[300px] w-full" />
-          ) : isEmpty ? (
+          {!isLoading && isEmpty ? (
             <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
               No inspections to display.
             </p>
@@ -315,6 +315,11 @@ export default function InspectionsOverview({
           })}
         </GradientScrollArea>
       </CardContent>
+      {isLoading ? (
+        <LoadingOverlay />
+      ) : error ? (
+        <ErrorOverlay>Error occurred while loading inspections.</ErrorOverlay>
+      ) : null}
     </Card>
   );
 }

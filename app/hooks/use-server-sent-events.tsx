@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "~/contexts/auth-context";
 import { buildUrl } from "~/lib/urls";
 import { useAuthenticatedFetch } from "./use-authenticated-fetch";
@@ -35,20 +35,26 @@ export const useServerSentEvents = ({
       });
   }, [fetchOrThrow, token]);
 
+  const url = useMemo(
+    () =>
+      token &&
+      buildUrl("/events/db/listen", apiUrl, {
+        token,
+        models,
+        operations,
+      }).toString(),
+    [apiUrl, models, operations, token]
+  );
+
   useEffect(() => {
-    if (!token) {
+    if (!url) {
       return;
     }
 
     if (eventSourceMap.has(key)) {
       listeners.get(key)?.add(onEvent);
     } else {
-      const url = buildUrl("/events/db/listen", apiUrl, {
-        token,
-        models,
-        operations,
-      });
-      const eventSource = new EventSource(url.toString());
+      const eventSource = new EventSource(url);
       eventSourceMap.set(key, eventSource);
 
       listeners.set(key, new Set([onEvent]));
@@ -71,5 +77,5 @@ export const useServerSentEvents = ({
         }
       }
     };
-  }, [token, models, operations]);
+  }, [url]);
 };

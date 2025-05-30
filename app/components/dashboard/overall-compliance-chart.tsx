@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { PieSeriesOption } from "echarts";
 import { Shield } from "lucide-react";
 import * as React from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -13,8 +13,9 @@ import { getAssetInspectionStatus } from "~/lib/model-utils";
 import type { Asset, ResultsPage } from "~/lib/models";
 import { countBy } from "~/lib/utils";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
-import BlankDashboardTile from "./blank-dashboard-tile";
-import ErrorDashboardTile from "./error-dashboard-tile";
+import EmptyStateOverlay from "./components/empty-state-overlay";
+import ErrorOverlay from "./components/error-overlay";
+import LoadingOverlay from "./components/loading-overlay";
 
 export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
   const [theme] = useTheme();
@@ -24,10 +25,19 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
 
   const navigate = useNavigate();
 
-  const { data: rawAssets, error } = useQuery({
-    queryKey: ["assets-with-latest-inspection", refreshKey],
+  const {
+    data: rawAssets,
+    error,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["assets-with-latest-inspection"],
     queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
   });
+
+  useEffect(() => {
+    refetch();
+  }, [refreshKey, refetch]);
 
   const data = React.useMemo(
     () =>
@@ -83,28 +93,7 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
         left: "center",
         formatter: "{name}",
       },
-      // Background color of the chart
       backgroundColor: "transparent",
-      // Title of the chart
-      // title: {
-      // text: "Overall Compliance",
-      // subtext: `Breakdown of compliance for all ${totalAssets} assets.`,
-      // left: "center",
-      // top: "0%",
-      // textStyle: {
-      //   fontSize: 16,
-      //   fontWeight: 600,
-      // },
-      // subtextStyle: {
-      //   width: 320,
-      //   overflow: "break",
-      //   fontSize: 14,
-      //   color: themeValues?.mutedForeground,
-      //   lineHeight: 8,
-      // },
-      //   itemGap: 8,
-      // },
-
       series: [
         {
           name: "Inspection Status",
@@ -144,37 +133,35 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
     [data, themeValues, totalAssets]
   );
 
-  return data ? (
-    <Card className="flex flex-col">
+  return (
+    <Card className="flex flex-col relative">
       <CardHeader>
         <CardTitle>
           <Shield /> Overall Compliance
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col items-center">
-        {data.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-muted-foreground text-sm">
-              No assets to display.
-            </div>
-          </div>
-        ) : (
-          <ReactECharts
-            theme={theme ?? undefined}
-            option={chartOption}
-            onClick={(e) => {
-              const status = (e.data as { id: string }).id;
-              navigate(`/assets?inspectionStatus=${status}`);
-            }}
-            className="w-full grow min-h-[250px] max-w-(--breakpoint-sm)"
-          />
-        )}
+        <ReactECharts
+          theme={theme ?? undefined}
+          settings={{
+            silent: true,
+          }}
+          option={chartOption}
+          onClick={(e) => {
+            const status = (e.data as { id: string }).id;
+            navigate(`/assets?inspectionStatus=${status}`);
+          }}
+          className="w-full grow min-h-[250px] max-w-(--breakpoint-sm)"
+        />
       </CardContent>
+      {isLoading ? (
+        <LoadingOverlay />
+      ) : error ? (
+        <ErrorOverlay>Error occurred while loading assets.</ErrorOverlay>
+      ) : data && data.length === 0 ? (
+        <EmptyStateOverlay>No assets to display.</EmptyStateOverlay>
+      ) : null}
     </Card>
-  ) : error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <BlankDashboardTile className="animate-pulse h-full" />
   );
 }
 
