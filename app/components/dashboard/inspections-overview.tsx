@@ -38,7 +38,11 @@ import {
 import { Skeleton } from "../ui/skeleton";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
-export default function InspectionsOverview() {
+export default function InspectionsOverview({
+  refreshKey,
+}: {
+  refreshKey: number;
+}) {
   const { appState, setAppState } = useAppState();
 
   const { user } = useAuth();
@@ -65,7 +69,7 @@ export default function InspectionsOverview() {
   };
 
   const { data, error, isLoading } = useQuery({
-    queryKey: ["recent-inspections", queryParams] as const,
+    queryKey: ["recent-inspections", queryParams, refreshKey] as const,
     queryFn: ({ queryKey }) => getRecentInspections(fetch, queryKey[1]),
   });
 

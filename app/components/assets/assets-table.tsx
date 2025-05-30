@@ -314,7 +314,7 @@ export default function AssetsTable({
                           {},
                           {
                             method: "delete",
-                            action: `/assets/${asset.id}`,
+                            action: `/api/proxy/assets/${asset.id}`,
                           }
                         );
                       };

@@ -16,7 +16,7 @@ import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
 import BlankDashboardTile from "./blank-dashboard-tile";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
-export function ComplianceBySiteChart() {
+export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
   const [theme] = useTheme();
   const themeValues = useThemeValues();
 
@@ -25,7 +25,7 @@ export function ComplianceBySiteChart() {
   const navigate = useNavigate();
 
   const { data: rawAssets, error } = useQuery({
-    queryKey: ["assets-with-latest-inspection"],
+    queryKey: ["assets-with-latest-inspection", refreshKey],
     queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
   });
 

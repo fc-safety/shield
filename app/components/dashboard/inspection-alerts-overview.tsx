@@ -9,7 +9,7 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { subDays } from "date-fns";
+import { format, subDays } from "date-fns";
 import { Check, ChevronsUpDown, ShieldAlert } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -39,7 +39,11 @@ import {
 import { Skeleton } from "../ui/skeleton";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
-export default function InspectionAlertsOverview() {
+export default function InspectionAlertsOverview({
+  refreshKey,
+}: {
+  refreshKey: number;
+}) {
   const { appState, setAppState } = useAppState();
 
   const { user } = useAuth();
@@ -66,7 +70,7 @@ export default function InspectionAlertsOverview() {
   };
 
   const { data, error, isLoading } = useQuery({
-    queryKey: ["inspection-alerts", queryParams] as const,
+    queryKey: ["inspection-alerts", queryParams, refreshKey] as const,
     queryFn: ({ queryKey }) => getInspectionAlerts(fetch, queryKey[1]),
   });
 
@@ -293,7 +297,7 @@ export default function InspectionAlertsOverview() {
             </p>
           ) : null}
           {rows.map((row) => {
-            const inspection = row.original;
+            const alert = row.original;
             const cells = row.getVisibleCells().reduce((acc, cell) => {
               acc[String(cell.column.id)] = cell;
               return acc;
@@ -301,11 +305,11 @@ export default function InspectionAlertsOverview() {
 
             return (
               <div
-                key={inspection.id}
+                key={alert.id}
                 className="py-2 flex flex-col gap-2 border-t border-border"
               >
                 <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
-                  {renderCell(cells.date)}
+                  {format(alert.createdOn, "PPpp")}
                   <div className="flex items-center gap-1">
                     {renderCell(cells.asset)}
                     <span className="text-muted-foreground">•</span>

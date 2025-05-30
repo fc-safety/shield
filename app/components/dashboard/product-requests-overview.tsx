@@ -47,7 +47,11 @@ import {
 import { Skeleton } from "../ui/skeleton";
 import ErrorDashboardTile from "./error-dashboard-tile";
 
-export default function ProductRequestsOverview() {
+export default function ProductRequestsOverview({
+  refreshKey,
+}: {
+  refreshKey: number;
+}) {
   const { appState, setAppState } = useAppState();
 
   const { user } = useAuth();
@@ -74,7 +78,7 @@ export default function ProductRequestsOverview() {
   };
 
   const { data, error, isLoading } = useQuery({
-    queryKey: ["product-requests", productRequestsQuery] as const,
+    queryKey: ["product-requests", productRequestsQuery, refreshKey] as const,
     queryFn: ({ queryKey }) => getProductRequests(fetch, queryKey[1]),
   });
 
