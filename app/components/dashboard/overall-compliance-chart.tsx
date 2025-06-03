@@ -9,13 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
-import { getAssetInspectionStatus } from "~/lib/model-utils";
-import type { Asset, ResultsPage } from "~/lib/models";
-import { countBy } from "~/lib/utils";
+import {
+  AssetInspectionsStatuses,
+  type AssetInspectionsStatus,
+} from "~/lib/enums";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
+import { getComplianceHistory } from "./services/stats";
+import type { AssetRow } from "./types/stats";
 
 export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
   const [theme] = useTheme();
@@ -26,53 +29,52 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
   const navigate = useNavigate();
 
   const {
-    data: rawAssets,
+    data: complianceHistory,
     error,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["assets-with-latest-inspection"],
-    queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
+    queryKey: ["compliance-history", 1] as const,
+    queryFn: ({ queryKey: [, months] }) => getComplianceHistory(fetch, months),
   });
 
   useEffect(() => {
     refetch();
   }, [refreshKey, refetch]);
 
-  const data = React.useMemo(
-    () =>
-      rawAssets &&
-      themeValues !== null &&
-      countBy(
-        rawAssets.map((a) => {
-          const status = getAssetInspectionStatus(
-            a.inspections ?? [],
-            a.inspectionCycle ?? a.client?.defaultInspectionCycle
-          );
-          return {
-            status,
-          };
-        }),
-        "status"
+  const data = React.useMemo(() => {
+    if (!complianceHistory || !complianceHistory.length) {
+      return null;
+    }
+
+    if (themeValues === null) {
+      return null;
+    }
+
+    return (
+      Object.entries(complianceHistory[0].assetsByComplianceStatus) as [
+        AssetInspectionsStatus,
+        AssetRow[]
+      ][]
+    )
+      .sort(([statusA], [statusB]) => sortByStatus()(statusA, statusB))
+      .map(
+        ([status, assets]) =>
+          ({
+            id: status,
+            name: getStatusLabel(status),
+            value: assets.length,
+            itemStyle: {
+              color: themeValues[status],
+            },
+          } satisfies NonNullable<PieSeriesOption["data"]>[number])
       )
-        .sort(sortByStatus())
-        .map(
-          ({ status, count }) =>
-            ({
-              id: status,
-              name: getStatusLabel(status),
-              value: count,
-              itemStyle: {
-                color: themeValues[status],
-              },
-            } satisfies NonNullable<PieSeriesOption["data"]>[number])
-        ),
-    [rawAssets, themeValues]
-  );
+      .filter((d) => d.value > 0);
+  }, [complianceHistory, themeValues]);
 
   const totalAssets = React.useMemo(
-    () => (data ? data.reduce((acc, curr) => acc + curr.value, 0) : 0),
-    [data]
+    () => complianceHistory?.[0]?.totalAssets ?? 0,
+    [complianceHistory]
   );
 
   const chartOption = useMemo(
@@ -96,9 +98,9 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
       backgroundColor: "transparent",
       series: [
         {
-          name: "Inspection Status",
+          name: "Compliance Status",
           type: "pie",
-          radius: ["40%", "75%"],
+          radius: ["30%", "65%"],
           avoidLabelOverlap: false,
           startAngle: 270,
           padAngle: 5,
@@ -128,6 +130,60 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
           top: 0,
           center: ["50%", "42%"],
         },
+        {
+          name: "Compliance Status General",
+          type: "pie",
+          radius: ["73%", "75%"],
+          avoidLabelOverlap: false,
+          startAngle: 270,
+          padAngle: 5,
+          itemStyle: {
+            borderRadius: 10,
+            borderWidth: 2,
+            borderColor: "rgba(255, 255, 255, 0.1)",
+          },
+          label: {
+            show: false,
+          },
+          emphasis: {
+            disabled: true,
+          },
+          labelLine: {
+            show: true,
+          },
+          data: Object.values(
+            data?.reduce((acc, d) => {
+              if (
+                d.id === "COMPLIANT_DUE_LATER" ||
+                d.id === "COMPLIANT_DUE_SOON"
+              ) {
+                if (!acc.compliant) {
+                  acc.compliant = {
+                    id: "compliant",
+                    name: "Compliant",
+                    value: 0,
+                    itemStyle: d.itemStyle,
+                  };
+                }
+                (acc.compliant as any).value += d.value;
+              } else {
+                if (!acc.nonCompliant) {
+                  acc.nonCompliant = {
+                    id: "nonCompliant",
+                    name: "Non-Compliant",
+                    value: 0,
+                    itemStyle: d.itemStyle,
+                  };
+                }
+                (acc.nonCompliant as any).value += d.value;
+              }
+              return acc;
+            }, {} as Record<string, NonNullable<PieSeriesOption["data"]>[number]>) ||
+              {}
+          ),
+          top: 0,
+          center: ["50%", "42%"],
+        },
       ],
     }),
     [data, themeValues, totalAssets]
@@ -140,7 +196,7 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
           <Shield /> Overall Compliance
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col items-center">
+      <CardContent className="h-[calc(100%-64px)] flex flex-col items-center">
         <ReactECharts
           theme={theme ?? undefined}
           settings={{
@@ -149,9 +205,16 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
           option={chartOption}
           onClick={(e) => {
             const status = (e.data as { id: string }).id;
+            if (
+              !AssetInspectionsStatuses.includes(
+                status as AssetInspectionsStatus
+              )
+            ) {
+              return;
+            }
             navigate(`/assets?inspectionStatus=${status}`);
           }}
-          className="w-full grow min-h-[250px] max-w-(--breakpoint-sm)"
+          className="w-full flex-1 min-h-[250px] max-w-(--breakpoint-sm)"
         />
       </CardContent>
       {isLoading ? (
@@ -164,13 +227,3 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
     </Card>
   );
 }
-
-const getAssetsWithLatestInspection = async (
-  fetch: (url: string, options: RequestInit) => Promise<Response>
-) => {
-  const response = await fetch("/assets/latest-inspection?limit=10000", {
-    method: "GET",
-  });
-
-  return response.json() as Promise<ResultsPage<Asset>>;
-};

@@ -28,12 +28,12 @@ export default function Header({
             <img
               src={BANNER_LOGO_LIGHT_URL}
               alt=""
-              className="h-4 w-auto object-contain dark:hidden"
+              className="h-5 w-auto object-contain dark:hidden"
             />
             <img
               src={BANNER_LOGO_DARK_URL}
               alt=""
-              className="h-4 w-auto object-contain hidden dark:block"
+              className="h-5 w-auto object-contain hidden dark:block"
             />
           </Link>
         )}

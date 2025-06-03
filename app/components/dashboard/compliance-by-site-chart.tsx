@@ -1,38 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
-import type { EChartsOption } from "echarts";
-import { Shield, Warehouse } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
+import { ChevronRight, Shield, Warehouse } from "lucide-react";
 import * as React from "react";
-import { useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
-import { useTheme } from "remix-themes";
+import { useEffect } from "react";
+import { Link } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
-import { useThemeValues } from "~/hooks/use-theme-values";
-import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
-import { getAssetInspectionStatus } from "~/lib/model-utils";
-import type { Asset, ResultsPage, Site } from "~/lib/models";
-import { countBy } from "~/lib/utils";
-import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
+import type { AssetInspectionsStatus } from "~/lib/enums";
+import type { ResultsPage, Site } from "~/lib/models";
+import { DataTable } from "../data-table/data-table";
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
+import PercentWithProgressBar from "./components/percent-with-progress-bar";
+import { getComplianceHistory } from "./services/stats";
 
 export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
-  const [theme] = useTheme();
-  const themeValues = useThemeValues();
-
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const navigate = useNavigate();
-
   const {
-    data: rawAssets,
+    data: complianceHistory,
     error,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["assets-with-latest-inspection"],
-    queryFn: () => getAssetsWithLatestInspection(fetch).then((r) => r.results),
+    queryKey: ["compliance-history", 1] as const,
+    queryFn: ({ queryKey: [, months] }) => getComplianceHistory(fetch, months),
   });
 
   useEffect(() => {
@@ -43,160 +36,121 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
     queryKey: ["my-sites-200"],
     queryFn: () => getMySites(fetch).then((r) => r.results),
   });
-  const mySitesById = React.useMemo(
-    () =>
-      mySites &&
-      Object.fromEntries(
-        mySites
-          .slice()
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((s) => [s.id, s])
-      ),
-    [mySites]
-  );
 
-  const series = React.useMemo((): EChartsOption["series"] => {
-    if (!rawAssets || !mySitesById || themeValues === null) {
-      return;
+  const siteRows = React.useMemo(() => {
+    if (!mySites || !complianceHistory || !complianceHistory.length) {
+      return null;
     }
 
-    const assetStatuses = rawAssets.map((a) => {
-      const status = getAssetInspectionStatus(
-        a.inspections ?? [],
-        a.inspectionCycle ?? a.client?.defaultInspectionCycle
-      );
-      return {
-        asset: a,
-        status,
-      };
-    });
+    const newGrouping: Record<
+      string,
+      Record<AssetInspectionsStatus, number>
+    > = {};
 
-    const totalCountsBySiteIdArray = countBy(rawAssets, "siteId");
-    const totalCountsBySiteId = Object.fromEntries(
-      totalCountsBySiteIdArray.map(({ siteId, count }) => [siteId, count])
+    Object.entries(complianceHistory[0].assetsByComplianceStatus).forEach(
+      ([rawStatus, assets]) => {
+        assets.forEach((asset) => {
+          const status = rawStatus as AssetInspectionsStatus;
+          if (!newGrouping[asset.site.id]) {
+            newGrouping[asset.site.id] = {
+              COMPLIANT_DUE_LATER: 0,
+              COMPLIANT_DUE_SOON: 0,
+              NON_COMPLIANT_INSPECTED: 0,
+              NON_COMPLIANT_NEVER_INSPECTED: 0,
+            };
+          }
+          newGrouping[asset.site.id][status] += 1;
+        });
+      }
     );
 
-    return countBy(assetStatuses, "status")
-      .sort(sortByStatus())
-      .map(({ status, items }) => {
-        const assets = items.map(({ asset }) => asset);
-        const countsBySiteArray = countBy(assets, "siteId");
-        const countsBySiteId = Object.fromEntries(
-          countsBySiteArray.map(({ siteId, count }) => [siteId, count])
-        );
-
+    return mySites.map(({ id: siteId, name: siteName }) => {
+      const assetsByStatus = newGrouping[siteId];
+      if (!assetsByStatus) {
         return {
-          id: status,
-          name: getStatusLabel(status),
-          type: "bar",
-          stack: "total",
-          label: {
-            show: true,
-            formatter: (params) => {
-              const siteId = (params.data as { id: string }).id;
-              return `${
-                Math.round(
-                  (+(params.value ?? 0) / (totalCountsBySiteId[siteId] || 1)) *
-                    10000
-                ) / 100
-              }%`;
-            },
-          },
-          emphasis: {
-            focus: "series",
-          },
-          itemStyle: {
-            color: themeValues[status],
-          },
-          data: Object.entries(mySitesById).map(([siteId, site]) => ({
-            id: siteId,
-            name: site.name,
-            value: countsBySiteId[siteId] ?? 0,
-          })),
-        } satisfies NonNullable<EChartsOption["series"]>;
-      });
-  }, [rawAssets, themeValues, mySitesById]);
+          id: siteId,
+          name: siteName,
+          score: 0,
+          totalAssets: 0,
+        };
+      }
 
-  const chartOption = useMemo(
-    (): ReactEChartsProps["option"] => ({
-      // Global chart text style
-      textStyle: {
-        fontFamily: themeValues?.fontFamily,
+      const totalCompliant =
+        assetsByStatus.COMPLIANT_DUE_LATER + assetsByStatus.COMPLIANT_DUE_SOON;
+      const totalNonCompliant =
+        assetsByStatus.NON_COMPLIANT_INSPECTED +
+        assetsByStatus.NON_COMPLIANT_NEVER_INSPECTED;
+      const total = totalCompliant + totalNonCompliant;
+      const score = totalCompliant / total;
+
+      return {
+        id: siteId,
+        name: siteName,
+        score,
+        totalAssets: total,
+      };
+    });
+  }, [mySites, complianceHistory]);
+
+  const columns = React.useMemo((): ColumnDef<
+    NonNullable<typeof siteRows>[number]
+  >[] => {
+    return [
+      {
+        header: "Site",
+        accessorKey: "name",
       },
-      // Tooltip when hovering over a slice of the pie chart
-      tooltip: {
-        trigger: "axis",
-        axisPointer: {
-          // Use axis to trigger tooltip
-          type: "shadow", // 'shadow' as default; can also be 'line' or 'shadow'
+      {
+        header: "Assets",
+        accessorKey: "totalAssets",
+        // size: 50,
+        meta: {
+          align: "right",
         },
       },
-      // Legend at the bottom of the chart
-      legend: {
-        bottom: "0%",
-        left: "center",
-        formatter: "{name}",
+      {
+        header: "Score",
+        accessorKey: "score",
+        // size: 100,
+        meta: {
+          align: "right",
+        },
+        cell: ({ row }) => (
+          <PercentWithProgressBar value={row.original.score} />
+        ),
       },
-      // Background color of the chart
-      backgroundColor: "transparent",
-      // Title of the chart
-      title: {
-        // text: "Compliance by Site",
-        // subtext: `Breakdown of compliance by site.`,
-        left: "center",
-        top: "0%",
-        // textStyle: {
-        //   fontSize: 16,
-        //   fontWeight: 600,
-        // },
-        // subtextStyle: {
-        //   width: 320,
-        //   overflow: "break",
-        //   fontSize: 14,
-        //   color: themeValues?.mutedForeground,
-        //   lineHeight: 8,
-        // },
-        itemGap: 8,
+      {
+        id: "details",
+        cell: ({ row }) => (
+          <Link to={`/assets?siteId=${row.original.id}`}>
+            <ChevronRight className="size-4.5 text-primary" />
+          </Link>
+        ),
       },
-      // Specifies how to draw the bar chart within the container
-      grid: {
-        left: "3%",
-        right: "4%",
-        bottom: "14%",
-        top: "0%",
-        containLabel: true,
-      },
-      xAxis: {
-        type: "value",
-      },
-      yAxis: {
-        type: "category",
-        data: mySitesById ? Object.values(mySitesById).map((s) => s.name) : [],
-      },
-      series,
-    }),
-    [series, themeValues, mySitesById]
-  );
+    ];
+  }, []);
 
   return (
-    <Card className="flex flex-col relative">
+    <Card className="relative flex flex-col">
       <CardHeader>
         <CardTitle>
           <Shield />+<Warehouse /> Compliance by Site
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col items-center">
-        <ReactECharts
-          theme={theme ?? undefined}
-          option={chartOption}
-          onClick={(e) => {
-            const siteId = (e.data as { id: string }).id;
-            navigate(`/assets?inspectionStatus=${e.seriesId}&siteId=${siteId}`);
+      <CardContent className="min-h-0 flex-1 flex flex-col bg-inherit rounded-[inherit]">
+        <DataTable
+          columns={columns}
+          data={siteRows ?? []}
+          hidePagination
+          initialState={{
+            pagination: {
+              pageIndex: 0,
+              pageSize: siteRows?.length ?? 1000,
+            },
+            sorting: [{ id: "score", desc: false }],
           }}
-          className="w-full h-full"
-          style={{
-            minHeight:
-              150 + (mySitesById ? Object.keys(mySitesById).length : 3) * 20,
+          classNames={{
+            container: "max-h-full",
           }}
         />
       </CardContent>
@@ -204,22 +158,12 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
         <LoadingOverlay />
       ) : error ? (
         <ErrorOverlay>Error occurred while loading assets.</ErrorOverlay>
-      ) : series && Array.isArray(series) && series.length === 0 ? (
-        <EmptyStateOverlay>No assets to display.</EmptyStateOverlay>
+      ) : mySites && mySites.length === 0 ? (
+        <EmptyStateOverlay>No sites to display assets for.</EmptyStateOverlay>
       ) : null}
     </Card>
   );
 }
-
-const getAssetsWithLatestInspection = async (
-  fetch: (url: string, options: RequestInit) => Promise<Response>
-) => {
-  const response = await fetch("/assets/latest-inspection?limit=10000", {
-    method: "GET",
-  });
-
-  return response.json() as Promise<ResultsPage<Asset>>;
-};
 
 const getMySites = async (
   fetch: (url: string, options: RequestInit) => Promise<Response>

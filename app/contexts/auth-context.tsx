@@ -135,7 +135,9 @@ const CHECK_ACCESS_TOKEN_INTERVAL_SECONDS = 30;
 
 const getRefreshAuthAction = () =>
   typeof document !== "undefined"
-    ? `/action/refresh-auth?returnTo=${window.location.href}`
+    ? `/action/refresh-auth?returnTo=${encodeURIComponent(
+        window.location.href
+      )}`
     : "/action/refresh-auth";
 
 const getDocument = () => {

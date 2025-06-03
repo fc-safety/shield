@@ -213,13 +213,13 @@ export default function InspectionAlertsOverview({
   const isEmpty = !rows.length;
 
   return (
-    <Card className="h-max relative">
+    <Card className="relative flex flex-col">
       <CardHeader>
         <CardTitle>
           <ShieldAlert /> Recent Alerts
         </CardTitle>
       </CardHeader>
-      <CardContent className="bg-inherit space-y-4 rounded-[inherit]">
+      <CardContent className="min-h-0 flex-1 flex flex-col bg-inherit space-y-4 rounded-[inherit]">
         <div className="flex gap-2 flex-wrap items-center justify-between">
           <DateRangeSelect
             value={
@@ -290,7 +290,7 @@ export default function InspectionAlertsOverview({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <GradientScrollArea className="h-[300px]" variant="card">
+        <GradientScrollArea className="flex-1" variant="card">
           {!isLoading && isEmpty ? (
             <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
               No alerts to display.

@@ -191,14 +191,14 @@ export default function Layout({
             <Header
               leftSlot={
                 <>
-                  <SidebarTrigger className="-ml-1.5" />
-                  <Separator orientation="vertical" className="mr-2 h-4" />
+                  <SidebarTrigger className="-ml-1.5 [&_svg]:size-5" />
+                  <Separator orientation="vertical" className="mr-2 h-5" />
                 </>
               }
             />
-            <main className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow">
+            <section className="flex flex-col p-2 sm:p-4 pb-6 sm:pb-12 grow">
               <Outlet />
-            </main>
+            </section>
             <Footer />
           </SidebarInset>
           <HelpSidebar />

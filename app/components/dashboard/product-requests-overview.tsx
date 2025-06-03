@@ -281,13 +281,13 @@ export default function ProductRequestsOverview({
   const isEmpty = !rows.length;
 
   return (
-    <Card className="h-max relative">
+    <Card className="relative flex flex-col">
       <CardHeader>
         <CardTitle>
           <Package /> Recent Supply Requests
         </CardTitle>
       </CardHeader>
-      <CardContent className="bg-inherit space-y-4 rounded-[inherit]">
+      <CardContent className="min-h-0 flex-1 flex flex-col bg-inherit space-y-4 rounded-[inherit]">
         {/* <VirtualizedDataTable
             height="100%"
             maxHeight={400}
@@ -375,7 +375,7 @@ export default function ProductRequestsOverview({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <GradientScrollArea className="h-[300px]" variant="card">
+        <GradientScrollArea className="flex-1" variant="card">
           {!isLoading && isEmpty ? (
             <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
               No supply requests to display.
