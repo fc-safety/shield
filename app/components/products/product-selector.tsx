@@ -211,13 +211,14 @@ export default function ProductSelector({
           <StepSelectProductCategory
             key="step0"
             productCategoryId={selected.productCategoryId}
-            setProductCategoryId={(id) =>
+            setProductCategoryId={(id) => {
               setSelected((draft) => {
                 draft.productCategoryId = id;
                 draft.manufacturerId = undefined;
                 draft.productId = undefined;
-              })
-            }
+              });
+              stepForward();
+            }}
             productCategories={productCategories}
           />
         ),
@@ -229,12 +230,13 @@ export default function ProductSelector({
           <StepSelectManufacturer
             key="step1"
             manufacturerId={selected.manufacturerId}
-            setManufacturerId={(id) =>
+            setManufacturerId={(id) => {
               setSelected((draft) => {
                 draft.manufacturerId = id;
                 draft.productId = undefined;
-              })
-            }
+              });
+              stepForward();
+            }}
             manufacturers={manufacturers}
           />
         ),
@@ -246,11 +248,12 @@ export default function ProductSelector({
           <StepSelectProduct
             key="step2"
             productId={selected.productId}
-            setProductId={(id) =>
+            setProductId={(id) => {
               setSelected((draft) => {
                 draft.productId = id;
-              })
-            }
+              });
+              stepForward();
+            }}
             products={narrowedProducts}
           />
         ),

@@ -100,7 +100,9 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
         {
           name: "Compliance Status",
           type: "pie",
-          radius: ["30%", "65%"],
+          radius: ["35%", "72%"],
+          top: 0,
+          center: ["50%", "43%"],
           avoidLabelOverlap: false,
           startAngle: 270,
           padAngle: 5,
@@ -127,13 +129,13 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
             show: true,
           },
           data: data || [],
-          top: 0,
-          center: ["50%", "42%"],
         },
         {
           name: "Compliance Status General",
           type: "pie",
-          radius: ["73%", "75%"],
+          radius: ["80%", "83%"],
+          top: 0,
+          center: ["50%", "43%"],
           avoidLabelOverlap: false,
           startAngle: 270,
           padAngle: 5,
@@ -186,8 +188,6 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
             }, {} as Record<string, NonNullable<PieSeriesOption["data"]>[number]>) ||
               {}
           ),
-          top: 0,
-          center: ["50%", "42%"],
         },
       ],
     }),

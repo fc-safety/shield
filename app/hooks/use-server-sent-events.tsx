@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useBeforeUnload } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import { buildUrl } from "~/lib/urls";
 import { useAuthenticatedFetch } from "./use-authenticated-fetch";
@@ -78,4 +79,16 @@ export const useServerSentEvents = ({
       }
     };
   }, [url]);
+
+  useBeforeUnload((e) => {
+    eventSourceMap.forEach((eventSource, key) => {
+      eventSource.close();
+      console.debug("closed event source", {
+        key,
+        closed: eventSource.readyState === eventSource.CLOSED,
+      });
+    });
+    eventSourceMap.clear();
+    listeners.clear();
+  });
 };
