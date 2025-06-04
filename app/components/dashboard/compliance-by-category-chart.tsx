@@ -13,7 +13,7 @@ import ProductCategoryIcon from "../products/product-category-icon";
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
-import PercentWithProgressBar from "./components/percent-with-progress-bar";
+import MiniStatusProgressBar from "./components/mini-status-progress-bar";
 import { getComplianceHistory } from "./services/stats";
 
 export function ComplianceByCategoryChart({
@@ -85,7 +85,7 @@ export function ComplianceByCategoryChart({
           assetsByStatus.NON_COMPLIANT_INSPECTED +
           assetsByStatus.NON_COMPLIANT_NEVER_INSPECTED;
         const total = totalCompliant + totalNonCompliant;
-        const score = totalCompliant / total;
+        const score = total ? totalCompliant / total : 0;
 
         return {
           id: category.id,
@@ -129,9 +129,7 @@ export function ComplianceByCategoryChart({
         meta: {
           align: "right",
         },
-        cell: ({ row }) => (
-          <PercentWithProgressBar value={row.original.score} />
-        ),
+        cell: ({ row }) => <MiniStatusProgressBar value={row.original.score} />,
       },
       {
         id: "details",

@@ -1,4 +1,4 @@
-export default function PercentWithProgressBar({ value }: { value: number }) {
+export default function MiniStatusProgressBar({ value }: { value: number }) {
   return (
     <div className="flex flex-col gap-y-0.5">
       <span>{(value * 100).toFixed(2)}%</span>

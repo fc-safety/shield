@@ -142,6 +142,11 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
             borderWidth: 2,
             borderColor: "rgba(255, 255, 255, 0.1)",
           },
+          tooltip: {
+            show: false,
+          },
+          legendHoverLink: false,
+          cursor: "default",
           label: {
             show: false,
           },
