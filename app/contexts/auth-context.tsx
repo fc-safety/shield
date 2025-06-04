@@ -10,6 +10,7 @@ import {
 import { useFetcher } from "react-router";
 import { useEventListener, useInterval } from "usehooks-ts";
 import type { User } from "~/.server/authenticator";
+import { buildUrl } from "~/lib/urls";
 import { isTokenExpired } from "~/lib/users";
 
 export const ANONYMOUS_USER: User = {
@@ -113,6 +114,36 @@ export const AuthProvider = ({
 
   // Every time the document becomes visible, refresh token if needed.
   useEventListener("visibilitychange", refreshAuthIfNeeded, documentRef);
+
+  const userIdentified = useRef(false);
+  useEffect(() => {
+    if (userIdentified.current) {
+      return;
+    }
+
+    userIdentified.current = true;
+    fetch(buildUrl("/support/identify", apiUrl), {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.tokens.accessToken}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed to identify user.");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          (window as any).Beacon("identify", data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to identify user.", err);
+      });
+  }, [user]);
 
   return (
     <AuthContext.Provider

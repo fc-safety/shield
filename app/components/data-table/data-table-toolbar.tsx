@@ -40,7 +40,7 @@ export function DataTableToolbar<TData>({
           placeholder={searchPlaceholder}
           value={(table.getState().globalFilter as string) ?? ""}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
-          className="h-8 max-w-[150px] lg:max-w-[250px] flex-1"
+          className="h-8 min-w-[100px] max-w-[150px] lg:min-w-[175px] lg:max-w-[250px] flex-1"
         />
         {(typeof filters === "function" ? filters({ table }) : filters)
           .filter(({ column }) => !!column)
