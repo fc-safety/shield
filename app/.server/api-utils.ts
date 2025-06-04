@@ -48,6 +48,7 @@ export type FetchBuildOptions = {
   params?: QueryParams;
   headers?: HeadersInit;
   method?: NonNullable<NativeFetchParameters[1]>["method"];
+  raw?: boolean;
 };
 
 export class FetchOptions {
@@ -188,6 +189,10 @@ export class FetchOptions {
 
     if (this.singleResourceKey) {
       this.addResourceKeyToUrl(this.singleResourceKey);
+    }
+
+    if (!options.raw) {
+      this.options.headers.set("Accept", "application/json");
     }
 
     return {

@@ -16,6 +16,7 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef, useState, type CSSProperties } from "react";
+import { cn } from "~/lib/utils";
 import {
   Table,
   TableBody,
@@ -38,6 +39,7 @@ interface Props<TData, TValue>
   initialState?: InitialTableState;
   hideToolbar?: boolean;
   loading?: boolean;
+  className?: string;
 }
 
 export default function VirtualizedTable<TData, TValue>({
@@ -48,6 +50,7 @@ export default function VirtualizedTable<TData, TValue>({
   initialState,
   hideToolbar,
   loading,
+  className,
   ...passThroughProps
 }: Props<TData, TValue>) {
   // The virtualizer will need a reference to the scrollable container element
@@ -92,7 +95,7 @@ export default function VirtualizedTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4 bg-inherit">
+    <div className={cn("flex flex-col gap-y-4 bg-inherit", className)}>
       {!hideToolbar && <DataTableToolbar table={table} {...passThroughProps} />}
       <Table
         className="grid bg-inherit"

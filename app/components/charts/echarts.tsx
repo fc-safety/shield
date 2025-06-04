@@ -30,7 +30,7 @@ export function ReactECharts({
   theme,
   onClick,
   getChart,
-}: ReactEChartsProps): JSX.Element {
+}: ReactEChartsProps): React.ReactNode {
   const chartRef = useRef<HTMLDivElement>(null);
   const [chart, setChart] = useState<ECharts | undefined>(undefined);
 

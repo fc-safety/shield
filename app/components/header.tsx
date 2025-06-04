@@ -20,7 +20,7 @@ export default function Header({
   const matches = useMatches();
 
   return (
-    <header className="flex flex-col shrink-0 gap-y-1 py-4 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:py-2">
+    <header className="flex flex-col shrink-0 gap-y-1 pt-4 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2">
       <div className="flex items-center gap-x-2">
         {leftSlot}
         {showBannerLogo && (
@@ -28,12 +28,12 @@ export default function Header({
             <img
               src={BANNER_LOGO_LIGHT_URL}
               alt=""
-              className="h-4 w-auto object-contain dark:hidden"
+              className="h-5 w-auto object-contain dark:hidden"
             />
             <img
               src={BANNER_LOGO_DARK_URL}
               alt=""
-              className="h-4 w-auto object-contain hidden dark:block"
+              className="h-5 w-auto object-contain hidden dark:block"
             />
           </Link>
         )}

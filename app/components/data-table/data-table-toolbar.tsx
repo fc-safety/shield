@@ -34,13 +34,13 @@ export function DataTableToolbar<TData>({
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex items-center justify-between gap-x-4 gap-y-1 flex-wrap">
       <div className="flex flex-1 items-center gap-2 flex-wrap">
         <Input
           placeholder={searchPlaceholder}
           value={(table.getState().globalFilter as string) ?? ""}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
-          className="h-8 w-[150px] lg:w-[250px]"
+          className="h-8 max-w-[150px] lg:max-w-[250px] flex-1"
         />
         {(typeof filters === "function" ? filters({ table }) : filters)
           .filter(({ column }) => !!column)

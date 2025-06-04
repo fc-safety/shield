@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { ComplianceByCategoryChart } from "~/components/dashboard/compliance-by-category-chart";
 import { ComplianceBySiteChart } from "~/components/dashboard/compliance-by-site-chart";
+import { ComplianceHistoryChart } from "~/components/dashboard/compliance-history-chart";
 import InspectionAlertsOverview from "~/components/dashboard/inspection-alerts-overview";
-import InspectionsOverview from "~/components/dashboard/inspections-overview";
 import { OverallComplianceChart } from "~/components/dashboard/overall-compliance-chart";
 import ProductRequestsOverview from "~/components/dashboard/product-requests-overview";
 import { useAuth } from "~/contexts/auth-context";
+import { useServerSentEvents } from "~/hooks/use-server-sent-events";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/command-center";
@@ -29,23 +31,71 @@ export default function Dashboard() {
   const canReadSites = can(user, "read", "sites");
   const canViewMultipleSites = hasMultiSiteVisibility(user);
 
+  const [overallComplianceRefreshKey, setOverallComplianceRefreshKey] =
+    useState(0);
+  const [complianceBySiteRefreshKey, setComplianceBySiteRefreshKey] =
+    useState(0);
+  const [complianceByCategoryRefreshKey, setComplianceByCategoryRefreshKey] =
+    useState(0);
+  const [productRequestsRefreshKey, setProductRequestsRefreshKey] = useState(0);
+  const [complianceHistoryKey, setComplianceHistoryKey] = useState(0);
+  const [inspectionAlertsRefreshKey, setInspectionAlertsRefreshKey] =
+    useState(0);
+
+  useServerSentEvents({
+    key: "command-center",
+    models: ["Asset", "Inspection", "Alert", "ProductRequest"],
+    onEvent: (event) => {
+      const payload = JSON.parse(event.data) as Record<string, string>;
+      if (payload.model === "Asset" || payload.model === "Inspection") {
+        setOverallComplianceRefreshKey((prev) => prev + 1);
+        setComplianceBySiteRefreshKey((prev) => prev + 1);
+        setComplianceByCategoryRefreshKey((prev) => prev + 1);
+        setComplianceHistoryKey((prev) => prev + 1);
+      }
+      if (payload.model === "ProductRequest") {
+        setProductRequestsRefreshKey((prev) => prev + 1);
+      }
+      if (payload.model === "Alert") {
+        setInspectionAlertsRefreshKey((prev) => prev + 1);
+      }
+    },
+  });
+
   const canReadDashboard =
     canReadAssets ||
     canReadInspections ||
     canReadProductRequests ||
     canReadAlerts;
 
+  // TODO: Refine styling so that the boxes fit really nicely on most screens.
   return (
-    <div className="flex flex-1 flex-col gap-4 grow">
-      <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-2 sm:gap-4">
-        {canReadAssets && <OverallComplianceChart />}
-        {canReadAssets && canViewMultipleSites && canReadSites && (
-          <ComplianceBySiteChart />
+    <div className="h-[calc(100vh-100px)] overflow-y-auto">
+      <div className="h-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 auto-rows-[minmax(400px,1fr)] gap-2 sm:gap-4">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-2 sm:gap-4"> */}
+        {canReadAssets && (
+          <OverallComplianceChart refreshKey={overallComplianceRefreshKey} />
         )}
-        {canReadAssets && <ComplianceByCategoryChart />}
-        {canReadProductRequests && <ProductRequestsOverview />}
-        {canReadInspections && <InspectionsOverview />}
-        {canReadAlerts && <InspectionAlertsOverview />}
+        {canReadAssets && canViewMultipleSites && canReadSites && (
+          <ComplianceBySiteChart refreshKey={complianceBySiteRefreshKey} />
+        )}
+        {canReadAssets && (
+          <ComplianceByCategoryChart
+            refreshKey={complianceByCategoryRefreshKey}
+          />
+        )}
+        {canReadProductRequests && (
+          <ProductRequestsOverview refreshKey={productRequestsRefreshKey} />
+        )}
+        {canReadAssets && (
+          <ComplianceHistoryChart refreshKey={complianceHistoryKey} />
+        )}
+        {/* {canReadInspections && (
+        <InspectionsOverview refreshKey={inspectionsRefreshKey} />
+      )} */}
+        {canReadAlerts && (
+          <InspectionAlertsOverview refreshKey={inspectionAlertsRefreshKey} />
+        )}
         {!canReadDashboard && (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="text-muted-foreground">
@@ -54,7 +104,6 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-      {/* <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" /> */}
     </div>
   );
 }

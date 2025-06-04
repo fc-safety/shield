@@ -39,25 +39,25 @@ export function InspectionStatusBadge({
 }: {
   status: AssetInspectionsStatus | undefined | null;
 }) {
-  return status === "COMPLIANT" ? (
+  return status === "COMPLIANT_DUE_LATER" ? (
     <StatusBadge
       icon={CircleCheck}
       status="Compliant"
       className="bg-status-compliant text-status-compliant-foreground hover:bg-status-compliant"
     />
-  ) : status === "DUE_SOON" ? (
+  ) : status === "COMPLIANT_DUE_SOON" ? (
     <StatusBadge
       icon={CircleAlert}
       status="Due Soon"
       className="bg-status-due-soon text-status-due-soon-foreground hover:bg-status-due-soon"
     />
-  ) : status === "NON_COMPLIANT" ? (
+  ) : status === "NON_COMPLIANT_INSPECTED" ? (
     <StatusBadge
       icon={CircleX}
       status="Non-Compliant"
       className="bg-status-non-compliant text-status-non-compliant-foreground hover:bg-status-non-compliant"
     />
-  ) : status === "NEVER" ? (
+  ) : status === "NON_COMPLIANT_NEVER_INSPECTED" ? (
     <StatusBadge
       icon={Clock}
       status="Never Inspected"

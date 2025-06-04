@@ -70,9 +70,9 @@ export function getThemeValues() {
     foreground: getColor(`--foreground`),
 
     // Special status colors
-    COMPLIANT: getColor(`--status-compliant`),
-    DUE_SOON: getColor(`--status-due-soon`),
-    NON_COMPLIANT: getColor(`--status-non-compliant`),
-    NEVER: getColor(`--status-never`),
+    COMPLIANT_DUE_LATER: getColor(`--status-compliant`),
+    COMPLIANT_DUE_SOON: getColor(`--status-due-soon`),
+    NON_COMPLIANT_INSPECTED: getColor(`--status-non-compliant`),
+    NON_COMPLIANT_NEVER_INSPECTED: getColor(`--status-never`),
   } as const;
 }

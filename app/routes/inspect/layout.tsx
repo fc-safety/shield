@@ -108,8 +108,8 @@ export default function Layout({
               showBreadcrumb={false}
               leftSlot={
                 <>
-                  <SidebarTrigger className="-ml-1" />
-                  <Separator orientation="vertical" className="mr-2 h-4" />
+                  <SidebarTrigger className="-ml-1.5 [&_svg]:size-5" />
+                  <Separator orientation="vertical" className="mr-2 h-5" />
                 </>
               }
             />

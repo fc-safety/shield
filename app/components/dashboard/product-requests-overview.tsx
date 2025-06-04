@@ -44,10 +44,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Skeleton } from "../ui/skeleton";
-import ErrorDashboardTile from "./error-dashboard-tile";
+import ErrorOverlay from "./components/error-overlay";
+import LoadingOverlay from "./components/loading-overlay";
 
-export default function ProductRequestsOverview() {
+export default function ProductRequestsOverview({
+  refreshKey,
+}: {
+  refreshKey: number;
+}) {
   const { appState, setAppState } = useAppState();
 
   const { user } = useAuth();
@@ -74,7 +78,7 @@ export default function ProductRequestsOverview() {
   };
 
   const { data, error, isLoading } = useQuery({
-    queryKey: ["product-requests", productRequestsQuery] as const,
+    queryKey: ["product-requests", productRequestsQuery, refreshKey] as const,
     queryFn: ({ queryKey }) => getProductRequests(fetch, queryKey[1]),
   });
 
@@ -276,18 +280,15 @@ export default function ProductRequestsOverview() {
   const { rows } = table.getRowModel();
   const isEmpty = !rows.length;
 
-  return error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <div>
-      <Card className="h-full">
-        <CardHeader>
-          <CardTitle>
-            <Package /> Recent Supply Requests
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="bg-inherit space-y-4 rounded-[inherit]">
-          {/* <VirtualizedDataTable
+  return (
+    <Card className="relative flex flex-col">
+      <CardHeader>
+        <CardTitle>
+          <Package /> Recent Supply Requests
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="min-h-0 flex-1 flex flex-col bg-inherit space-y-4 rounded-[inherit]">
+        {/* <VirtualizedDataTable
             height="100%"
             maxHeight={400}
             columns={columns}
@@ -301,152 +302,134 @@ export default function ProductRequestsOverview() {
             data={data?.results ?? []}
             loading={isLoading}
           /> */}
-          <div className="flex gap-2 flex-wrap items-center justify-between">
-            <DateRangeSelect
-              value={
-                productRequestsQuery.createdOn?.gte
-                  ? {
-                      from: productRequestsQuery.createdOn?.gte,
-                      to: productRequestsQuery.createdOn?.lte,
-                    }
-                  : undefined
+        <div className="flex gap-2 flex-wrap items-center justify-between">
+          <DateRangeSelect
+            value={
+              productRequestsQuery.createdOn?.gte
+                ? {
+                    from: productRequestsQuery.createdOn?.gte,
+                    to: productRequestsQuery.createdOn?.lte,
+                  }
+                : undefined
+            }
+            onValueChange={(dateRange, quickRangeId) => {
+              if (!dateRange) {
+                return;
               }
-              onValueChange={(dateRange, quickRangeId) => {
-                if (!dateRange) {
-                  return;
-                }
 
-                const newProductRequestsQuery = dateRange
-                  ? {
-                      ...productRequestsQuery,
-                      createdOn: {
-                        gte: dateRange.from,
-                        lte: dateRange.to,
-                      },
-                    }
-                  : productRequestsQuery;
-                handleSetProductRequestsQuery(
-                  newProductRequestsQuery,
-                  quickRangeId
-                );
-              }}
-              defaultQuickRangeId={
-                appState.dash_pr_quickRangeId ?? "last-30-days"
-              }
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Sort by
-                  <ChevronsUpDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {[
-                  {
-                    id: "newestFirst",
-                    sort: { id: "orderedOn", desc: true },
-                    label: "Newest first",
-                  },
-                  {
-                    id: "oldestFirst",
-                    sort: { id: "orderedOn", desc: false },
-                    label: "Oldest first",
-                  },
-                ].map(({ id, sort, label }) => (
-                  <DropdownMenuItem
-                    key={id}
-                    onSelect={() => {
-                      handleSortingChange([sort]);
-                    }}
-                  >
-                    <Check
-                      className={cn(
-                        "opacity-0",
-                        sorting.some(
-                          (s) => s.id === sort.id && s.desc === sort.desc
-                        ) && "opacity-100"
-                      )}
-                    />
-                    {label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <GradientScrollArea className="h-[350px]" variant="card">
-            {isLoading ? (
-              <Skeleton className="h-[400px] w-full" />
-            ) : isEmpty ? (
-              <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
-                No supply requests to display.
-              </p>
-            ) : null}
-            {rows.map((row) => {
-              const productRequest = row.original;
-              const cells = row.getVisibleCells().reduce((acc, cell) => {
-                acc[String(cell.column.id)] = cell;
-                return acc;
-              }, {} as Record<string, Cell<ProductRequest, unknown>>);
-
-              return (
-                <div
-                  key={productRequest.id}
-                  className="py-2 flex flex-col gap-2 border-t border-border"
-                >
-                  <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
-                    {renderCell(cells.orderedOn)}
-                    {renderCell(cells.status)}
-                  </div>
-                  <div>
-                    <DataList
-                      details={[
-                        {
-                          label: "Date",
-                          value: format(productRequest.createdOn, "PPpp"),
-                          hidden: !cells.orderedOn,
-                        },
-                        {
-                          label: "Site",
-                          value: renderCell(cells.site),
-                          hidden: !cells.site,
-                        },
-                        {
-                          label: "Requested by",
-                          value: renderCell(cells.requestor),
-                          hidden: !cells.requestor,
-                        },
-                        {
-                          label: "Asset",
-                          value: renderCell(cells.asset),
-                          hidden: !cells.asset,
-                        },
-                        {
-                          label: "Items",
-                          value: renderCell(cells.items),
-                          hidden: !cells.items,
-                        },
-                      ]}
-                      defaultValue={<>&mdash;</>}
-                      fluid
-                      classNames={{
-                        details: "gap-0.5",
-                      }}
-                    />
-                  </div>
-                  <div className="flex">{renderCell(cells.details)}</div>
-                </div>
+              const newProductRequestsQuery = dateRange
+                ? {
+                    ...productRequestsQuery,
+                    createdOn: {
+                      gte: dateRange.from,
+                      lte: dateRange.to,
+                    },
+                  }
+                : productRequestsQuery;
+              handleSetProductRequestsQuery(
+                newProductRequestsQuery,
+                quickRangeId
               );
-            })}
-          </GradientScrollArea>
-        </CardContent>
-      </Card>
+            }}
+            defaultQuickRangeId={
+              appState.dash_pr_quickRangeId ?? "last-30-days"
+            }
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                Sort by
+                <ChevronsUpDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {[
+                {
+                  id: "newestFirst",
+                  sort: { id: "orderedOn", desc: true },
+                  label: "Newest first",
+                },
+                {
+                  id: "oldestFirst",
+                  sort: { id: "orderedOn", desc: false },
+                  label: "Oldest first",
+                },
+              ].map(({ id, sort, label }) => (
+                <DropdownMenuItem
+                  key={id}
+                  onSelect={() => {
+                    handleSortingChange([sort]);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "opacity-0",
+                      sorting.some(
+                        (s) => s.id === sort.id && s.desc === sort.desc
+                      ) && "opacity-100"
+                    )}
+                  />
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <GradientScrollArea className="flex-1" variant="card">
+          {!isLoading && isEmpty ? (
+            <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
+              No supply requests to display.
+            </p>
+          ) : null}
+          {rows.map((row) => {
+            const productRequest = row.original;
+            const cells = row.getVisibleCells().reduce((acc, cell) => {
+              acc[String(cell.column.id)] = cell;
+              return acc;
+            }, {} as Record<string, Cell<ProductRequest, unknown>>);
+
+            return (
+              <div
+                key={productRequest.id}
+                className="py-2 flex flex-col gap-2 border-t border-border"
+              >
+                <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
+                  {format(productRequest.createdOn, "PPpp")}
+                  {renderCell(cells.status)}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm">
+                    {cells.site ? (
+                      <span className="font-semibold">
+                        [{renderCell(cells.site)}]
+                      </span>
+                    ) : (
+                      ""
+                    )}{" "}
+                    {renderCell(cells.requestor)} requested these supplies{" "}
+                    {renderCell(cells.orderedOn)}:
+                  </p>
+                  <p className="text-sm">{renderCell(cells.items)}</p>
+                </div>
+                <div className="flex">{renderCell(cells.details)}</div>
+              </div>
+            );
+          })}
+        </GradientScrollArea>
+      </CardContent>
+      {isLoading ? (
+        <LoadingOverlay />
+      ) : error ? (
+        <ErrorOverlay>
+          Error occurred while loading product requests.
+        </ErrorOverlay>
+      ) : null}
       <ReviewProductRequestModal
         open={reviewRequest.open}
         onOpenChange={reviewRequest.setOpen}
         request={reviewRequest.data}
       />
-    </div>
+    </Card>
   );
 }
 
@@ -541,7 +524,7 @@ function ReviewProductRequestModal({
         open={open}
         onOpenChange={onOpenChange}
         dialogClassName="sm:max-w-lg"
-        trigger={null}
+        trigger={<button className="hidden"></button>}
       >
         <>
           <div className="flex flex-col gap-4 py-4">

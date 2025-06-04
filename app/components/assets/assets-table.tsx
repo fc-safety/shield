@@ -314,7 +314,7 @@ export default function AssetsTable({
                           {},
                           {
                             method: "delete",
-                            action: `/assets/${asset.id}`,
+                            action: `/api/proxy/assets/${asset.id}`,
                           }
                         );
                       };
@@ -384,19 +384,19 @@ export default function AssetsTable({
             options: [
               {
                 label: "Compliant",
-                value: "COMPLIANT",
+                value: "COMPLIANT_DUE_LATER",
               },
               {
                 label: "Due Soon",
-                value: "DUE_SOON",
+                value: "COMPLIANT_DUE_SOON",
               },
               {
                 label: "Non-Compliant",
-                value: "NON_COMPLIANT",
+                value: "NON_COMPLIANT_INSPECTED",
               },
               {
                 label: "Never Inspected",
-                value: "NEVER",
+                value: "NON_COMPLIANT_NEVER_INSPECTED",
               },
             ] satisfies { label: string; value: AssetInspectionsStatus }[],
             title: "Inspection Status",

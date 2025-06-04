@@ -1,10 +1,12 @@
-import type { ProductCategory } from "~/lib/models";
 import Icon from "../icons/icon";
 
 export default function ProductCategoryIcon({
   category,
 }: {
-  category: ProductCategory;
+  category: {
+    icon?: string | null;
+    color?: string | null;
+  };
 }) {
   return (
     (category.icon || category.color) && (

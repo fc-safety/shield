@@ -10,13 +10,8 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { format, subDays } from "date-fns";
-import {
-  Check,
-  ChevronsUpDown,
-  CornerDownRight,
-  ShieldAlert,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { Check, ChevronsUpDown, ShieldAlert } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useImmer } from "use-immer";
 import { useAppState } from "~/contexts/app-state-context";
@@ -28,7 +23,6 @@ import { stringifyQuery } from "~/lib/urls";
 import { hasMultiSiteVisibility } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import AssetInspectionAlert from "../assets/asset-inspection-alert";
-import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
@@ -42,10 +36,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Skeleton } from "../ui/skeleton";
-import ErrorDashboardTile from "./error-dashboard-tile";
+import ErrorOverlay from "./components/error-overlay";
+import LoadingOverlay from "./components/loading-overlay";
 
-export default function InspectionAlertsOverview() {
+export default function InspectionAlertsOverview({
+  refreshKey,
+}: {
+  refreshKey: number;
+}) {
   const { appState, setAppState } = useAppState();
 
   const { user } = useAuth();
@@ -71,10 +69,14 @@ export default function InspectionAlertsOverview() {
     });
   };
 
-  const { data, error, isLoading } = useQuery({
+  const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["inspection-alerts", queryParams] as const,
     queryFn: ({ queryKey }) => getInspectionAlerts(fetch, queryKey[1]),
   });
+
+  useEffect(() => {
+    refetch();
+  }, [refreshKey, refetch]);
 
   const columns: ColumnDef<Alert>[] = useMemo(
     () => [
@@ -99,7 +101,7 @@ export default function InspectionAlertsOverview() {
           return (
             <Link
               to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
-              className="flex items-center gap-2 group"
+              className="inline-flex items-center gap-2 group"
             >
               <span className="group-hover:underline">{assetName}</span>
               {row.original.asset?.product?.productCategory?.icon && (
@@ -166,10 +168,9 @@ export default function InspectionAlertsOverview() {
             assetId={row.original.assetId}
             alertId={row.original.id}
             trigger={
-              <Button variant="secondary" size="sm">
-                <CornerDownRight />
-                Details
-              </Button>
+              <button type="button" className="underline text-xs font-semibold">
+                more
+              </button>
             }
           />
         ),
@@ -211,16 +212,14 @@ export default function InspectionAlertsOverview() {
   const { rows } = table.getRowModel();
   const isEmpty = !rows.length;
 
-  return error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <Card>
+  return (
+    <Card className="relative flex flex-col">
       <CardHeader>
         <CardTitle>
           <ShieldAlert /> Recent Alerts
         </CardTitle>
       </CardHeader>
-      <CardContent className="bg-inherit space-y-4 rounded-[inherit]">
+      <CardContent className="min-h-0 flex-1 flex flex-col bg-inherit space-y-4 rounded-[inherit]">
         <div className="flex gap-2 flex-wrap items-center justify-between">
           <DateRangeSelect
             value={
@@ -291,16 +290,14 @@ export default function InspectionAlertsOverview() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <GradientScrollArea className="h-[350px]" variant="card">
-          {isLoading ? (
-            <Skeleton className="h-[400px] w-full" />
-          ) : isEmpty ? (
+        <GradientScrollArea className="flex-1" variant="card">
+          {!isLoading && isEmpty ? (
             <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
               No alerts to display.
             </p>
           ) : null}
           {rows.map((row) => {
-            const inspection = row.original;
+            const alert = row.original;
             const cells = row.getVisibleCells().reduce((acc, cell) => {
               acc[String(cell.column.id)] = cell;
               return acc;
@@ -308,47 +305,28 @@ export default function InspectionAlertsOverview() {
 
             return (
               <div
-                key={inspection.id}
+                key={alert.id}
                 className="py-2 flex flex-col gap-2 border-t border-border"
               >
                 <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
-                  {renderCell(cells.date)}
+                  {format(alert.createdOn, "PPpp")}
+                  <div className="flex items-center gap-1">
+                    {renderCell(cells.asset)}
+                    <span className="text-muted-foreground">•</span>
+                    {renderCell(cells.level)}
+                  </div>
                 </div>
                 <div>
-                  <DataList
-                    details={[
-                      {
-                        label: "Date",
-                        value: format(inspection.createdOn, "PPpp"),
-                        hidden: !cells.date,
-                      },
-                      {
-                        label: "Site",
-                        value: renderCell(cells.site),
-                        hidden: !cells.site,
-                      },
-                      {
-                        label: "Asset",
-                        value: renderCell(cells.asset),
-                        hidden: !cells.asset,
-                      },
-                      {
-                        label: "Level",
-                        value: renderCell(cells.level),
-                        hidden: !cells.level,
-                      },
-                      {
-                        label: "Resolved",
-                        value: renderCell(cells.resolved),
-                        hidden: !cells.resolved,
-                      },
-                    ]}
-                    defaultValue={<>&mdash;</>}
-                    fluid
-                    classNames={{
-                      details: "gap-0.5",
-                    }}
-                  />
+                  <p className="text-sm">
+                    {cells.site ? (
+                      <span className="font-semibold">
+                        [{renderCell(cells.site)}]
+                      </span>
+                    ) : (
+                      ""
+                    )}{" "}
+                    An alert was triggered {renderCell(cells.date)}.
+                  </p>
                 </div>
                 <div className="flex">{renderCell(cells.details)}</div>
               </div>
@@ -356,6 +334,11 @@ export default function InspectionAlertsOverview() {
           })}
         </GradientScrollArea>
       </CardContent>
+      {isLoading ? (
+        <LoadingOverlay />
+      ) : error ? (
+        <ErrorOverlay>Error occurred while loading alerts.</ErrorOverlay>
+      ) : null}
     </Card>
   );
 }

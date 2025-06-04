@@ -54,6 +54,10 @@ interface DataTableProps<TData, TValue>
   initialState?: InitialTableState;
   hidePagination?: boolean;
   hideToolbar?: boolean;
+  classNames?: {
+    container?: string;
+    body?: string;
+  };
 }
 
 export function DataTable<TData, TValue>({
@@ -62,6 +66,7 @@ export function DataTable<TData, TValue>({
   initialState,
   hidePagination,
   hideToolbar,
+  classNames,
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
@@ -103,11 +108,18 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4">
+    <div
+      className={cn("flex flex-col gap-y-4 bg-inherit", classNames?.container)}
+    >
       {!hideToolbar && <DataTableToolbar table={table} {...passThroughProps} />}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+      <div className="flex-1 min-h-0 rounded-md border flex flex-col bg-inherit">
+        <Table
+          className="bg-inherit h-full rounded-[inherit]"
+          containerProps={{
+            className: "h-full bg-inherit rounded-[inherit] flex flex-col",
+          }}
+        >
+          <TableHeader className="sticky top-0 z-10 bg-inherit rounded-t-[inherit]">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header, idx) => {
@@ -123,7 +135,7 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
-          <TableBody>
+          <TableBody className={cn("min-h-0 flex-1", classNames?.body)}>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
@@ -176,11 +188,11 @@ export function DataTableHead<TData, TValue>({
         idx === 0 ? "pl-4" : "",
         idx === table.getVisibleFlatColumns().length - 1 ? "pr-4" : "",
         header.column.columnDef.meta?.align === "center"
-          ? "text-center"
+          ? "justify-center text-center"
           : header.column.columnDef.meta?.align === "right"
-          ? "text-right"
+          ? "justify-end text-end"
           : header.column.columnDef.meta?.align === "left"
-          ? "text-left"
+          ? "justify-start text-start"
           : null,
         className
       )}
@@ -211,11 +223,11 @@ export function DataTableCell<TData, TValue>({
         idx === 0 ? "pl-4" : "",
         idx === row.getVisibleCells().length - 1 ? "pr-4" : "",
         cell.column.columnDef.meta?.align === "center"
-          ? "text-center"
+          ? "justify-center text-center"
           : cell.column.columnDef.meta?.align === "right"
-          ? "text-right"
+          ? "justify-end text-end"
           : cell.column.columnDef.meta?.align === "left"
-          ? "text-left"
+          ? "justify-start text-start"
           : null,
         className
       )}

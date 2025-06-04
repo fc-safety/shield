@@ -1,17 +1,17 @@
 import type { AssetInspectionsStatus } from "./enums";
 
 export const STATUS_LABELS: Record<AssetInspectionsStatus, string> = {
-  COMPLIANT: "Compliant",
-  DUE_SOON: "Due Soon",
-  NON_COMPLIANT: "Non-Compliant",
-  NEVER: "Never",
+  COMPLIANT_DUE_LATER: "Compliant",
+  COMPLIANT_DUE_SOON: "Due Soon",
+  NON_COMPLIANT_INSPECTED: "Non-Compliant",
+  NON_COMPLIANT_NEVER_INSPECTED: "Never",
 };
 
 export const STATUS_SORT_VALUES: Record<AssetInspectionsStatus, number> = {
-  COMPLIANT: 0,
-  DUE_SOON: 1,
-  NON_COMPLIANT: 2,
-  NEVER: 3,
+  COMPLIANT_DUE_LATER: 0,
+  COMPLIANT_DUE_SOON: 1,
+  NON_COMPLIANT_INSPECTED: 2,
+  NON_COMPLIANT_NEVER_INSPECTED: 3,
 };
 
 type StatusInput =

@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { format, subDays } from "date-fns";
 import { Check, ChevronsUpDown, SearchCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useImmer } from "use-immer";
 import { useAppState } from "~/contexts/app-state-context";
@@ -22,7 +22,6 @@ import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import AssetInspectionDialog from "../assets/asset-inspection-dialog";
-import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
@@ -36,10 +35,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Skeleton } from "../ui/skeleton";
-import ErrorDashboardTile from "./error-dashboard-tile";
+import ErrorOverlay from "./components/error-overlay";
+import LoadingOverlay from "./components/loading-overlay";
 
-export default function InspectionsOverview() {
+export default function InspectionsOverview({
+  refreshKey,
+}: {
+  refreshKey: number;
+}) {
   const { appState, setAppState } = useAppState();
 
   const { user } = useAuth();
@@ -65,10 +68,14 @@ export default function InspectionsOverview() {
     });
   };
 
-  const { data, error, isLoading } = useQuery({
+  const { data, error, isLoading, refetch } = useQuery({
     queryKey: ["recent-inspections", queryParams] as const,
     queryFn: ({ queryKey }) => getRecentInspections(fetch, queryKey[1]),
   });
+
+  useEffect(() => {
+    refetch();
+  }, [refreshKey, refetch]);
 
   const columns: ColumnDef<Inspection>[] = useMemo(
     () => [
@@ -93,7 +100,7 @@ export default function InspectionsOverview() {
           return (
             <Link
               to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
-              className="flex items-center gap-2 group"
+              className="inline-flex items-center gap-2 group"
             >
               <span className="group-hover:underline">{assetName}</span>
               {row.original.asset.product.productCategory.icon && (
@@ -133,7 +140,23 @@ export default function InspectionsOverview() {
       {
         id: "details",
         cell: ({ row }) => (
-          <AssetInspectionDialog inspectionId={row.original.id} />
+          <AssetInspectionDialog
+            inspectionId={row.original.id}
+            trigger={(isLoading, preloadInspection, setOpen) => (
+              <button
+                type="button"
+                className={cn(
+                  "underline text-xs font-semibold",
+                  isLoading && "animate-pulse"
+                )}
+                onMouseEnter={() => preloadInspection(row.original.id)}
+                onTouchStart={() => preloadInspection(row.original.id)}
+                onClick={() => setOpen(true)}
+              >
+                more
+              </button>
+            )}
+          />
         ),
       },
     ],
@@ -173,16 +196,14 @@ export default function InspectionsOverview() {
   const { rows } = table.getRowModel();
   const isEmpty = !rows.length;
 
-  return error ? (
-    <ErrorDashboardTile />
-  ) : (
-    <Card>
+  return (
+    <Card className="h-full relative">
       <CardHeader>
         <CardTitle>
           <SearchCheck /> Recent Inspections
         </CardTitle>
       </CardHeader>
-      <CardContent className="bg-inherit space-y-4 rounded-[inherit]">
+      <CardContent className="h-[calc(100%-64px)] flex flex-col bg-inherit space-y-4 rounded-[inherit]">
         <div className="flex gap-2 flex-wrap items-center justify-between">
           <DateRangeSelect
             value={
@@ -253,10 +274,8 @@ export default function InspectionsOverview() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <GradientScrollArea className="h-[350px]" variant="card">
-          {isLoading ? (
-            <Skeleton className="h-[400px] w-full" />
-          ) : isEmpty ? (
+        <GradientScrollArea className="flex-1" variant="card">
+          {!isLoading && isEmpty ? (
             <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
               No inspections to display.
             </p>
@@ -274,43 +293,21 @@ export default function InspectionsOverview() {
                 className="py-2 flex flex-col gap-2 border-t border-border"
               >
                 <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
-                  {renderCell(cells.date)}
+                  {format(inspection.createdOn, "PPpp")}
+                  {renderCell(cells.asset)}
                 </div>
                 <div>
-                  <DataList
-                    details={[
-                      {
-                        label: "Date",
-                        value: format(inspection.createdOn, "PPpp"),
-                        hidden: !cells.date,
-                      },
-                      {
-                        label: "Site",
-                        value: renderCell(cells.site),
-                        hidden: !cells.site,
-                      },
-                      {
-                        label: "Inspected by",
-                        value: renderCell(cells.inspector),
-                        hidden: !cells.inspector,
-                      },
-                      {
-                        label: "Asset",
-                        value: renderCell(cells.asset),
-                        hidden: !cells.asset,
-                      },
-                      {
-                        label: "Comments",
-                        value: renderCell(cells.comments),
-                        hidden: !cells.comments,
-                      },
-                    ]}
-                    defaultValue={<>&mdash;</>}
-                    fluid
-                    classNames={{
-                      details: "gap-0.5",
-                    }}
-                  />
+                  <p className="text-sm">
+                    {cells.site ? (
+                      <span className="font-semibold">
+                        [{renderCell(cells.site)}]
+                      </span>
+                    ) : (
+                      ""
+                    )}{" "}
+                    {renderCell(cells.inspector)} inspected{" "}
+                    {inspection.asset.name} {renderCell(cells.date)}.
+                  </p>
                 </div>
                 <div className="flex">{renderCell(cells.details)}</div>
               </div>
@@ -318,6 +315,11 @@ export default function InspectionsOverview() {
           })}
         </GradientScrollArea>
       </CardContent>
+      {isLoading ? (
+        <LoadingOverlay />
+      ) : error ? (
+        <ErrorOverlay>Error occurred while loading inspections.</ErrorOverlay>
+      ) : null}
     </Card>
   );
 }
