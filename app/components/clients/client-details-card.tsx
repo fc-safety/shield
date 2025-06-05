@@ -22,7 +22,13 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { FormControl, FormField, FormItem, FormLabel } from "../ui/form";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "../ui/form";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
@@ -231,6 +237,7 @@ export default function ClientDetailsCard({
 const duplicateDemoClientSchema = z.object({
   name: z.string().min(1),
   emailDomain: z.string().min(1),
+  password: z.string().min(8),
 });
 type TDuplicateDemoClientForm = z.infer<typeof duplicateDemoClientSchema>;
 function DuplicateDemoClientDialog({
@@ -246,6 +253,7 @@ function DuplicateDemoClientDialog({
     resolver: zodResolver(duplicateDemoClientSchema),
     defaultValues: {
       name: "(Copy of) " + client.name,
+      password: "safetydemo1",
     },
   });
 
@@ -299,6 +307,24 @@ function DuplicateDemoClientDialog({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email Domain</FormLabel>
+                <FormDescription>
+                  This will be the new domain used for new user email addresses.
+                </FormDescription>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormDescription>
+                  This will be the password for all new users.
+                </FormDescription>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
