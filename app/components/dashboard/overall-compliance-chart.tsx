@@ -169,7 +169,10 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
                     id: "compliant",
                     name: "Compliant",
                     value: 0,
-                    itemStyle: d.itemStyle,
+                    itemStyle: {
+                      color:
+                        themeValues?.COMPLIANT_DUE_LATER ?? d.itemStyle.color,
+                    },
                   };
                 }
                 (acc.compliant as any).value += d.value;
@@ -179,7 +182,11 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
                     id: "nonCompliant",
                     name: "Non-Compliant",
                     value: 0,
-                    itemStyle: d.itemStyle,
+                    itemStyle: {
+                      color:
+                        themeValues?.NON_COMPLIANT_INSPECTED ??
+                        d.itemStyle.color,
+                    },
                   };
                 }
                 (acc.nonCompliant as any).value += d.value;

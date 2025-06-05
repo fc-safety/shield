@@ -4,7 +4,7 @@ export const STATUS_LABELS: Record<AssetInspectionsStatus, string> = {
   COMPLIANT_DUE_LATER: "Compliant",
   COMPLIANT_DUE_SOON: "Due Soon",
   NON_COMPLIANT_INSPECTED: "Non-Compliant",
-  NON_COMPLIANT_NEVER_INSPECTED: "Never",
+  NON_COMPLIANT_NEVER_INSPECTED: "Never Inspected",
 };
 
 export const STATUS_SORT_VALUES: Record<AssetInspectionsStatus, number> = {
