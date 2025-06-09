@@ -11,7 +11,13 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { format, subDays } from "date-fns";
-import { Check, ChevronsUpDown, Package } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  LayoutDashboard,
+  List,
+  Package,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useAppState, useAppStateValue } from "~/contexts/app-state-context";
@@ -43,6 +49,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import {
   DashboardCard,
   DashboardCardContent,
@@ -61,8 +68,7 @@ export default function ProductRequestsOverview({
   const [sorting, setSorting] = useAppStateValue("dash_pr_sort", [
     { id: "orderedOn", desc: true },
   ]);
-  // const [view, setView] = useAppStateValue("dash_pr_view", "summary");
-  const view: string = "details";
+  const [view, setView] = useAppStateValue("dash_pr_view", "summary");
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -94,7 +100,7 @@ export default function ProductRequestsOverview({
         <DashboardCardTitle>
           <Package /> Recent Supply Requests
           <div className="flex-1"></div>
-          {/* <ToggleGroup
+          <ToggleGroup
             type="single"
             variant="outline"
             size="sm"
@@ -109,7 +115,7 @@ export default function ProductRequestsOverview({
             <ToggleGroupItem value="details">
               <List />
             </ToggleGroupItem>
-          </ToggleGroup> */}
+          </ToggleGroup>
           {/* <Button variant="outline" size="iconSm">
             <Printer />
           </Button> */}

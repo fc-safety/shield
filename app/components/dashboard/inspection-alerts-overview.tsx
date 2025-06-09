@@ -352,11 +352,11 @@ function AlertsSummary({
                         alertLevel === "CRITICAL",
                       "bg-urgent-foreground/40 dark:bg-urgent/40 border-urgent/50 [&_svg]:text-urgent":
                         alertLevel === "URGENT",
-                      "bg-warning/40 dark:bg-warning/30 border-warning-foreground/30 [&_svg]:text-warning-foreground":
+                      "bg-warning/40 dark:bg-warning/10 border-warning-foreground/30 dark:border-warning-foreground/80 [&_svg]:text-warning-foreground":
                         alertLevel === "WARNING",
-                      "bg-info/40 dark:bg-info/30 border-info-foreground/30 [&_svg]:text-info-foreground":
+                      "bg-info/40 dark:bg-info/10 border-info-foreground/30 dark:border-info-foreground/80 [&_svg]:text-info-foreground":
                         alertLevel === "INFO",
-                      "bg-audit/40 dark:bg-audit/30 border-audit-foreground/30 [&_svg]:text-audit-foreground":
+                      "bg-audit/40 dark:bg-audit/10 border-audit-foreground/30 dark:border-audit/30 [&_svg]:text-audit-foreground [&_svg]:dark:text-audit":
                         alertLevel === "AUDIT",
                     }
                   )}
