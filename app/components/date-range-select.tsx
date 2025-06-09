@@ -12,6 +12,7 @@ import {
   subDays,
   subMonths,
 } from "date-fns";
+import { Calendar } from "lucide-react";
 import { useCallback, useMemo, useRef } from "react";
 import { useCustomInput } from "~/hooks/use-custom-input";
 import { formatDateAsTimestamp, formatTimestampAsDate } from "~/lib/utils";
@@ -54,6 +55,7 @@ interface DateRangeSelectProps<TPast extends boolean, TFuture extends boolean> {
   title?: string;
   past?: TPast;
   future?: TFuture;
+  iconOnly?: boolean;
 }
 
 export default function DateRangeSelect<
@@ -68,6 +70,7 @@ export default function DateRangeSelect<
   title = "Select Date Range",
   past = true as TPast,
   future = false as TFuture,
+  iconOnly = false,
 }: DateRangeSelectProps<TPast, TFuture>) {
   const filteredQuickDateRanges = useMemo(() => {
     return QUICK_DATE_RANGES.filter((qr) => {
@@ -142,10 +145,13 @@ export default function DateRangeSelect<
     <ResponsiveDialog
       title={title}
       trigger={
-        <Button type="button" variant="outline" size="sm">
-          <span className="border-r border-border pr-2 font-semibold">
-            Date Range
-          </span>
+        <Button type="button" variant="outline" size="sm" className="gap-2">
+          {iconOnly ? (
+            <Calendar />
+          ) : (
+            <span className="font-semibold">Date Range</span>
+          )}
+          <div className="h-4 border-r border-border"></div>
           {filteredQuickDateRanges.find((qr) => qr.id === appliedQuickRangeId)
             ?.label ||
             (appliedValue ? (

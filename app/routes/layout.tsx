@@ -9,7 +9,6 @@ import {
   FileSpreadsheet,
   FireExtinguisher,
   LayoutDashboard,
-  MailQuestion,
   Nfc,
   Package,
   Route as RouteIcon,
@@ -32,7 +31,7 @@ import {
 } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
-import { can, isGlobalAdmin } from "~/lib/users";
+import { can, isSuperAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -152,7 +151,7 @@ export default function Layout({
           ],
         },
       ],
-      hide: !user || !isGlobalAdmin(user),
+      hide: !user || !isSuperAdmin(user),
     },
     {
       groupTitle: "Support",
@@ -166,11 +165,6 @@ export default function Layout({
           title: "Docs",
           url: "docs",
           icon: BookOpenText,
-        },
-        {
-          title: "Contact",
-          url: "contact",
-          icon: MailQuestion,
         },
       ],
     },

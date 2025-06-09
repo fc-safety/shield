@@ -1,6 +1,9 @@
 export enum AlertsStatus {
+  CRITICAL,
   URGENT,
+  WARNING,
   INFO,
+  AUDIT,
   NONE,
 }
 

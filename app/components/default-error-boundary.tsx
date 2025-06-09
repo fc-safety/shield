@@ -5,11 +5,9 @@ import { Button } from "./ui/button";
 export default function DefaultErrorBoundary({
   error,
   homeTo = "/",
-  contactTo = "/contact",
 }: {
   error: unknown;
   homeTo?: To;
-  contactTo?: To;
 }) {
   const errorDisplay = useBoundaryError({ error });
 
@@ -43,10 +41,13 @@ export default function DefaultErrorBoundary({
         <Button asChild>
           <Link to={homeTo}>Go back home</Link>
         </Button>
-        <Button asChild variant="ghost">
-          <Link to={contactTo} target="_blank" rel="noreferrer">
-            Contact support <span aria-hidden="true">&rarr;</span>
-          </Link>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            (window as any).Beacon("open");
+          }}
+        >
+          Contact support <span aria-hidden="true">&rarr;</span>
         </Button>
       </div>
     </div>

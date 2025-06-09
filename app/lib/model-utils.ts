@@ -25,9 +25,31 @@ export const getAssetInspectionStatus = (
 
 export const getAssetAlertsStatus = (alerts: Alert[]): AlertsStatus => {
   const unresolvedAlerts = alerts.filter((a) => !a.resolved);
-  return unresolvedAlerts.some((a) => a.alertLevel === "URGENT")
-    ? AlertsStatus.URGENT
-    : unresolvedAlerts.some((a) => a.alertLevel === "INFO")
-    ? AlertsStatus.INFO
-    : AlertsStatus.NONE;
+
+  let hasCritical = false;
+  let hasUrgent = false;
+  let hasWarning = false;
+  let hasInfo = false;
+  let hasAudit = false;
+
+  for (const unresolvedAlert of unresolvedAlerts) {
+    if (unresolvedAlert.alertLevel === "CRITICAL") {
+      hasCritical = true;
+    } else if (unresolvedAlert.alertLevel === "URGENT") {
+      hasUrgent = true;
+    } else if (unresolvedAlert.alertLevel === "WARNING") {
+      hasWarning = true;
+    } else if (unresolvedAlert.alertLevel === "INFO") {
+      hasInfo = true;
+    } else if (unresolvedAlert.alertLevel === "AUDIT") {
+      hasAudit = true;
+    }
+  }
+
+  if (hasCritical) return AlertsStatus.CRITICAL;
+  if (hasUrgent) return AlertsStatus.URGENT;
+  if (hasWarning) return AlertsStatus.WARNING;
+  if (hasInfo) return AlertsStatus.INFO;
+  if (hasAudit) return AlertsStatus.AUDIT;
+  return AlertsStatus.NONE;
 };

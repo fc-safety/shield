@@ -4,12 +4,17 @@ import { ChevronRight, Shapes, Shield } from "lucide-react";
 import * as React from "react";
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { AssetInspectionsStatus } from "~/lib/enums";
 import type { ProductCategory, ResultsPage } from "~/lib/models";
 import { DataTable } from "../data-table/data-table";
 import ProductCategoryIcon from "../products/product-category-icon";
+import {
+  DashboardCard,
+  DashboardCardContent,
+  DashboardCardHeader,
+  DashboardCardTitle,
+} from "./components/dashboard-card";
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
@@ -143,13 +148,17 @@ export function ComplianceByCategoryChart({
   }, []);
 
   return (
-    <Card className="relative flex flex-col">
-      <CardHeader>
-        <CardTitle>
+    <DashboardCard>
+      <DashboardCardHeader>
+        <DashboardCardTitle>
           <Shield />+<Shapes /> Compliance by Category
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="min-h-0 flex-1 flex flex-col items-stretch bg-inherit rounded-[inherit]">
+          <div className="flex-1"></div>
+          {/* <Button variant="outline" size="iconSm">
+            <Printer />
+          </Button> */}
+        </DashboardCardTitle>
+      </DashboardCardHeader>
+      <DashboardCardContent className="min-h-0 flex-1 flex flex-col items-stretch bg-inherit rounded-[inherit]">
         <DataTable
           columns={columns}
           data={categoryRows ?? []}
@@ -165,7 +174,7 @@ export function ComplianceByCategoryChart({
             container: "max-h-full",
           }}
         />
-      </CardContent>
+      </DashboardCardContent>
       {isLoading ? (
         <LoadingOverlay />
       ) : error ? (
@@ -175,7 +184,7 @@ export function ComplianceByCategoryChart({
           No categories to display assets for.
         </EmptyStateOverlay>
       ) : null}
-    </Card>
+    </DashboardCard>
   );
 }
 

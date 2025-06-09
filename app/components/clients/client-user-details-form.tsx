@@ -7,16 +7,12 @@ import {
   FormMessage,
   Form as FormProvider,
 } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import {
-  createUserSchemaResolver,
-  updateUserSchemaResolver,
-  type createUserSchema,
-  type updateUserSchema,
-} from "~/lib/schema";
+import { createUserSchema, updateUserSchema } from "~/lib/schema";
 import type { ClientUser } from "~/lib/types";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { Input } from "../ui/input";
@@ -48,7 +44,7 @@ export default function ClientUserDetailsForm({
   const isNew = !user;
 
   const form = useForm<TForm>({
-    resolver: isNew ? createUserSchemaResolver : updateUserSchemaResolver,
+    resolver: zodResolver(isNew ? createUserSchema : updateUserSchema),
     defaultValues: user ?? {
       ...FORM_DEFAULTS,
       siteExternalId: siteExternalId ?? "",

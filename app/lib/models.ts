@@ -285,7 +285,13 @@ export interface Alert extends BaseModel {
   clientId: string;
 }
 
-export const AlertLevels = ["URGENT", "INFO"] as const;
+export const AlertLevels = [
+  "CRITICAL",
+  "URGENT",
+  "WARNING",
+  "INFO",
+  "AUDIT",
+] as const;
 export type AlertLevel = (typeof AlertLevels)[number];
 
 interface RuleMatch {

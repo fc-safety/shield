@@ -9,15 +9,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
 import {
-  createManufacturerSchemaResolver,
-  updateManufacturerSchemaResolver,
-  type createManufacturerSchema,
-  type updateManufacturerSchema,
+  createManufacturerSchema,
+  updateManufacturerSchema,
 } from "~/lib/schema";
 
 type TForm = z.infer<
@@ -42,9 +41,9 @@ export default function ManufacturerDetailsForm({
   const isNew = !manufacturer;
 
   const form = useForm<TForm>({
-    resolver: isNew
-      ? createManufacturerSchemaResolver
-      : updateManufacturerSchemaResolver,
+    resolver: zodResolver(
+      isNew ? createManufacturerSchema : updateManufacturerSchema
+    ),
     values: manufacturer
       ? {
           ...manufacturer,
@@ -80,7 +79,7 @@ export default function ManufacturerDetailsForm({
           control={form.control}
           name="active"
           render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem className="flex items-center gap-2 space-y-0">
+            <FormItem className="flex flex-row items-center gap-2 space-y-0">
               <FormControl>
                 <Switch
                   checked={value}

@@ -448,7 +448,8 @@ export const createAssetAlertCriterionRuleSchema: z.ZodType<CreateAssetAlertCrit
 
 export const createAssetAlertCriterionSchema = z.object({
   rule: createAssetAlertCriterionRuleSchema,
-  alertLevel: z.enum(["URGENT", "INFO"]),
+  alertLevel: z.enum(["CRITICAL", "URGENT", "WARNING", "INFO", "AUDIT"]),
+  autoResolve: z.boolean().default(false),
 });
 
 export const updateAssetAlertCriterionSchema = createAssetAlertCriterionSchema

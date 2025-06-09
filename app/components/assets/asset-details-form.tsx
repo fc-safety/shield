@@ -133,7 +133,7 @@ export default function AssetDetailsForm({
           name="active"
           render={({ field: { onChange, onBlur, value } }) => (
             <FormItem>
-              <div className="flex items-center gap-2 space-y-0">
+              <div className="flex flex-row items-center gap-2 space-y-0">
                 <FormControl>
                   <Switch
                     checked={value}

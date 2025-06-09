@@ -10,7 +10,6 @@ export default function page404() {
         data: "Page not found",
       }}
       homeTo="/inspect"
-      contactTo="/inspect/contact"
     />
   );
 }

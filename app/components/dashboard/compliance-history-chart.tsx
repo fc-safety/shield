@@ -5,12 +5,19 @@ import { History } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo } from "react";
 import { useTheme } from "remix-themes";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { useAppStateValue } from "~/contexts/app-state-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
 import type { AssetInspectionsStatus } from "~/lib/enums";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
+import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
+import {
+  DashboardCard,
+  DashboardCardContent,
+  DashboardCardHeader,
+  DashboardCardTitle,
+} from "./components/dashboard-card";
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
@@ -19,6 +26,7 @@ import { getComplianceHistory } from "./services/stats";
 export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
   const [theme] = useTheme();
   const themeValues = useThemeValues();
+  const [months, setMonths] = useAppStateValue("dash_comp_hist_months", 6);
 
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
@@ -28,7 +36,7 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["compliance-history", 6] as const,
+    queryKey: ["compliance-history", months] as const,
     queryFn: ({ queryKey: [, months] }) => getComplianceHistory(fetch, months),
   });
 
@@ -88,9 +96,9 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
         return {
           id: status,
           name: getStatusLabel(status),
-          type: "line",
+          type: "bar",
           stack: "total",
-          areaStyle: {},
+          // areaStyle: {},
           emphasis: {
             focus: "series",
           },
@@ -163,13 +171,30 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
   );
 
   return (
-    <Card className="flex flex-col relative">
-      <CardHeader>
-        <CardTitle>
+    <DashboardCard>
+      <DashboardCardHeader>
+        <DashboardCardTitle>
           <History /> Compliance History
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="h-[calc(100%-64px)] flex flex-col items-center">
+          <div className="flex-1"></div>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={String(months)}
+            onValueChange={(value) => {
+              setMonths(Number(value));
+            }}
+          >
+            <ToggleGroupItem value="3">3m</ToggleGroupItem>
+            <ToggleGroupItem value="6">6m</ToggleGroupItem>
+            <ToggleGroupItem value="12">12m</ToggleGroupItem>
+          </ToggleGroup>
+          {/* <Button variant="outline" size="iconSm">
+            <Printer />
+          </Button> */}
+        </DashboardCardTitle>
+      </DashboardCardHeader>
+      <DashboardCardContent className="h-[calc(100%-64px)] flex flex-col items-center">
         <ReactECharts
           theme={theme ?? undefined}
           settings={{
@@ -178,7 +203,7 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
           option={chartOption}
           className="w-full flex-1 min-h-[250px] max-w-(--breakpoint-sm)"
         />
-      </CardContent>
+      </DashboardCardContent>
       {isLoading ? (
         <LoadingOverlay />
       ) : error ? (
@@ -186,7 +211,7 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
       ) : series && Array.isArray(series) && series.length === 0 ? (
         <EmptyStateOverlay>No assets to display.</EmptyStateOverlay>
       ) : null}
-    </Card>
+    </DashboardCard>
   );
 }
 

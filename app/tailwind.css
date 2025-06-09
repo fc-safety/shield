@@ -78,11 +78,23 @@
   --color-status-never: hsl(var(--status-never));
   --color-status-never-foreground: hsl(var(--status-never-foreground));
 
-  --color-urgent: hsl(var(--urgent));
-  --color-urgent-foreground: hsl(var(--urgent-foreground));
+  --color-critical: var(--critical);
+  --color-critical-foreground: var(--critical-foreground);
 
-  --color-important: hsl(var(--important));
-  --color-important-foreground: hsl(var(--important-foreground));
+  --color-urgent: var(--urgent);
+  --color-urgent-foreground: var(--urgent-foreground);
+
+  --color-important: var(--important);
+  --color-important-foreground: var(--important-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  --color-audit: var(--audit);
+  --color-audit-foreground: var(--audit-foreground);
 
   --color-pending: hsl(var(--pending));
   --color-pending-foreground: hsl(var(--pending-foreground));
@@ -190,10 +202,18 @@
     --status-never: 0 0% 88%;
     --status-never-foreground: 0 0% 37.6%;
 
-    --urgent: 0 100% 60.6%;
-    --urgent-foreground: 0 0% 98%;
-    --important: 50.7 100% 39.6%;
-    --important-foreground: 0 0% 37.6%;
+    --critical: oklch(0.6466 0.1803 309.65);
+    --critical-foreground: oklch(0.9411 0.0198 308.72);
+    --urgent: oklch(0.6045 0.2253 25.77);
+    --urgent-foreground: oklch(0.8776 0.043 18);
+    --important: oklch(94.5% 0.129 101.54);
+    --important-foreground: oklch(47.6% 0.114 61.907);
+    --warning: oklch(94.5% 0.129 101.54);
+    --warning-foreground: oklch(47.6% 0.114 61.907);
+    --info: oklch(88.2% 0.059 254.128);
+    --info-foreground: oklch(42.4% 0.199 265.638);
+    --audit: oklch(92.8% 0.006 264.531);
+    --audit-foreground: oklch(27.8% 0.033 256.848);
 
     --pending: 50.5 99.2% 47.3%;
     --pending-foreground: 0 0% 98%;
@@ -248,10 +268,18 @@
     --status-never: 0 0% 24%;
     --status-never-foreground: 0 0% 90.2%;
 
-    --urgent: 0 60.6% 51.2%;
-    --urgent-foreground: 0 85.7% 97.3%;
-    --important: 44.8 100% 48.8%;
-    --important-foreground: 0 0% 36.9%;
+    --critical: oklch(0.5059 0.247 316.2);
+    --critical-foreground: oklch(0.8882 0.0634 316.05);
+    --urgent: oklch(0.5418 0.2066 26.17);
+    --urgent-foreground: oklch(0.8776 0.043 18);
+    --important: oklch(94.5% 0.129 101.54);
+    --important-foreground: oklch(47.6% 0.114 61.907);
+    --warning: oklch(94.5% 0.129 101.54);
+    --warning-foreground: oklch(47.6% 0.114 61.907);
+    --info: oklch(88.2% 0.059 254.128);
+    --info-foreground: oklch(42.4% 0.199 265.638);
+    --audit: oklch(0.8602 0.0018 247.84);
+    --audit-foreground: oklch(27.8% 0.033 256.848);
 
     --pending: 50.4 99.2% 42.9%;
     --pending-foreground: 0 0% 98%;

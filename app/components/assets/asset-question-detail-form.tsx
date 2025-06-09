@@ -20,7 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash } from "lucide-react";
+import { OctagonAlert, Plus, Trash } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import type { z } from "zod";
@@ -48,6 +48,7 @@ import {
 import type { ResponseValueImage } from "~/lib/types";
 import { cn, humanize } from "~/lib/utils";
 import HelpPopover from "../help-popover";
+import { Checkbox } from "../ui/checkbox";
 import AssetQuestionResponseTypeInput from "./asset-question-response-input";
 import ConsumableCombobox from "./consumable-combobox";
 
@@ -243,6 +244,7 @@ export default function AssetQuestionDetailForm({
         {
           alertLevel: "INFO",
           rule: {},
+          autoResolve: false,
         },
       ],
       { shouldDirty: true }
@@ -291,7 +293,7 @@ export default function AssetQuestionDetailForm({
           name="active"
           render={({ field: { onChange, onBlur, value } }) => (
             <FormItem>
-              <div className="flex items-center gap-2 space-y-0">
+              <div className="flex flex-row items-center gap-2 space-y-0">
                 <FormControl>
                   <Switch
                     checked={value}
@@ -551,6 +553,7 @@ export default function AssetQuestionDetailForm({
 
         {type === "INSPECTION" && (
           <div>
+            {/* TODO: Add help sidebar. */}
             <h3 className="mb-4 text-lg font-medium">Alert Triggers</h3>
             <div className="divide-y divide-y-border">
               {alertTriggers.map(({ idx, key, action, data }) => (
@@ -606,6 +609,8 @@ function AlertTrigger({
 }) {
   const form = useFormContext<TForm>();
   const { control } = form;
+  const tone = form.watch("tone");
+
   return (
     <div className={cn("flex flex-row items-center gap-4", className)}>
       <Button
@@ -630,19 +635,50 @@ function AlertTrigger({
                 <FormLabel>Trigger</FormLabel>
                 <FormControl>
                   <Select value={value} onValueChange={onChange}>
-                    <SelectTrigger onBlur={onBlur}>
-                      <SelectValue />
+                    <SelectTrigger
+                      onBlur={onBlur}
+                      // TODO: Use theme colors instead.
+                      className={cn(
+                        value === "CRITICAL" &&
+                          "bg-critical text-critical-foreground border-critical",
+                        value === "URGENT" &&
+                          "bg-urgent text-urgent-foreground border-urgent",
+                        value === "WARNING" &&
+                          "bg-warning text-warning-foreground border-warning-foreground",
+                        value === "INFO" &&
+                          "bg-info text-info-foreground border-info-foreground",
+                        value === "AUDIT" &&
+                          "bg-audit text-audit-foreground border-audit-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-1 [&_svg]:size-4 [&_svg]:shrink-0">
+                        {value === "CRITICAL" && <OctagonAlert />}
+                        <SelectValue />
+                      </div>
                     </SelectTrigger>
                     <SelectContent side="top">
                       {AlertLevels.map((level) => (
-                        <SelectItem key={level} value={level}>
+                        <SelectItem
+                          key={level}
+                          value={level}
+                          // className={cn(
+                          //   "font-bold",
+                          //   level === "CRITICAL" && "focus:text-purple-700",
+                          //   level === "URGENT" && "focus:text-red-700",
+                          //   level === "WARNING" && "focus:text-yellow-700",
+                          //   level === "INFO" && "focus:text-blue-700",
+                          //   level === "AUDIT" && "focus:text-secondary"
+                          // )}
+                        >
                           {humanize(level)}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </FormControl>
-                <span className="w-max shrink-0">level alert when:</span>
+                <FormLabel className="w-max shrink-0">
+                  level alert when:
+                </FormLabel>
               </div>
               <FormMessage />
             </FormItem>
@@ -662,8 +698,36 @@ function AlertTrigger({
                   onValueChange={onChange}
                   onBlur={onBlur}
                   value={value}
+                  tone={tone}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name={
+            action === "create"
+              ? `assetAlertCriteria.createMany.data.${idx}.autoResolve`
+              : `assetAlertCriteria.updateMany.${idx}.data.autoResolve`
+          }
+          render={({ field: { onChange, value } }) => (
+            <FormItem>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                  <Checkbox checked={value} onCheckedChange={onChange} />
+                </FormControl>
+                <FormLabel className="flex items-center gap-1">
+                  Resolve automatically?
+                  <HelpPopover>
+                    <p>
+                      If enabled, the alert will be automatically resolved when
+                      it is triggered.
+                    </p>
+                  </HelpPopover>
+                </FormLabel>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -677,12 +741,14 @@ interface AlertTriggerInputProps {
   onValueChange: (value: CreateAssetAlertCriterionRule) => void;
   onBlur: () => void;
   value?: CreateAssetAlertCriterionRule;
+  tone?: string;
 }
 
 function AlertTriggerInput({
   onValueChange,
   onBlur,
   value,
+  tone,
 }: AlertTriggerInputProps) {
   const form = useFormContext<TForm>();
   const { watch } = form;
@@ -777,6 +843,7 @@ function AlertTriggerInput({
           onValueChange={handleChangeOperand}
           onBlur={onBlur}
           value={operand}
+          tone={tone}
         />
       )}
     </div>

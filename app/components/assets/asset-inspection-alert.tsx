@@ -110,10 +110,16 @@ function InspectionAlert({
       <div className="flex gap-2 items-center">
         {alert.resolved ? (
           <ShieldCheck className="text-primary size-10" />
+        ) : alert.alertLevel === "CRITICAL" ? (
+          <ShieldX className="fill-critical text-critical-foreground size-10" />
         ) : alert.alertLevel === "URGENT" ? (
-          <ShieldX className="text-urgent size-10" />
+          <ShieldX className="fill-urgent text-urgent-foreground size-10" />
+        ) : alert.alertLevel === "WARNING" ? (
+          <ShieldAlert className="fill-warning text-warning-foreground size-10" />
+        ) : alert.alertLevel === "INFO" ? (
+          <ShieldAlert className="fill-info text-info-foreground size-10" />
         ) : (
-          <ShieldAlert className="text-important size-10" />
+          <ShieldAlert className="fill-audit text-audit-foreground size-10" />
         )}
         <div>
           <p className="text-xs text-muted-foreground">
@@ -209,7 +215,13 @@ function InspectionAlert({
                 <FormControl>
                   <Textarea
                     {...field}
-                    readOnly={alert.resolved || !canResolve}
+                    readOnly={alert.resolved}
+                    disabled={!canResolve}
+                    title={
+                      !canResolve
+                        ? "You do not have permission to resolve this alert."
+                        : undefined
+                    }
                   />
                 </FormControl>
                 <FormDescription>

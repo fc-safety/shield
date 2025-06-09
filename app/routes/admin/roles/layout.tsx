@@ -1,12 +1,10 @@
 import { Outlet } from "react-router";
 import { guardOrSendHome } from "~/.server/guard";
-import { isGlobalAdmin } from "~/lib/users";
+import { isSuperAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
 export const handle = {
-  /*************  ✨ Codeium Command ⭐  *************/
-  /******  766c112a-d389-45a0-af37-0cf1f5de8f54  *******/
   breadcrumb: () => ({
     label: "Roles",
   }),
@@ -17,7 +15,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await guardOrSendHome(request, (user) => isGlobalAdmin(user));
+  await guardOrSendHome(request, (user) => isSuperAdmin(user));
   return null;
 };
 

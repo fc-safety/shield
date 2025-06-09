@@ -32,7 +32,6 @@ export default [
 
     // User routes
     route("account", "./routes/inspect/account.tsx"),
-    route("contact", "./routes/inspect/contact.tsx"),
     route("*", "./routes/inspect/404.tsx"),
   ]),
 
@@ -40,7 +39,6 @@ export default [
     index("./routes/inspect-public/index.tsx"),
     route("login", "./routes/inspect-public/login.tsx"),
     route("history", "./routes/inspect-public/history.tsx"),
-    route("contact", "./routes/inspect-public/contact.tsx"),
   ]),
 
   // Action Routes
@@ -137,7 +135,6 @@ export default [
       index("./routes/docs/index.tsx"),
       route("writing-nfc-tags", "./routes/docs/writing-nfc-tags.tsx"),
     ]),
-    route("contact", "./routes/contact.tsx"),
 
     // User routes
     route("account", "./routes/account.tsx"),

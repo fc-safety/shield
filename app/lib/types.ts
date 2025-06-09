@@ -22,6 +22,7 @@ export interface AppState {
   };
   dash_pr_sort?: SortingState;
   dash_pr_quickRangeId?: QuickRangeId<"past">;
+  dash_pr_view?: "summary" | "details";
 
   // -> Inspections
   dash_insp_query?: QueryParams & {
@@ -42,6 +43,10 @@ export interface AppState {
   };
   dash_alert_sort?: SortingState;
   dash_alert_quickRangeId?: QuickRangeId<"past">;
+  dash_alert_view?: "summary" | "details";
+
+  // -> Compliance History
+  dash_comp_hist_months?: number;
 
   // Products
   products_showAll?: boolean;
