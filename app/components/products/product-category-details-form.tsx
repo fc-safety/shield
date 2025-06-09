@@ -10,15 +10,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ProductCategory } from "~/lib/models";
 import {
-  createProductCategorySchemaResolver,
-  updateProductCategorySchemaResolver,
-  type createProductCategorySchema,
-  type updateProductCategorySchema,
+  createProductCategorySchema,
+  updateProductCategorySchema,
 } from "~/lib/schema";
 import IconSelector from "../icons/icon-selector";
 
@@ -47,9 +46,9 @@ export default function ProductCategoryDetailsForm({
   const isNew = !productCategory;
 
   const form = useForm<TForm>({
-    resolver: isNew
-      ? createProductCategorySchemaResolver
-      : updateProductCategorySchemaResolver,
+    resolver: zodResolver(
+      isNew ? createProductCategorySchema : updateProductCategorySchema
+    ),
     values: productCategory
       ? {
           ...productCategory,
@@ -95,7 +94,7 @@ export default function ProductCategoryDetailsForm({
           control={form.control}
           name="active"
           render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem className="flex items-center gap-2 space-y-0">
+            <FormItem className="flex flex-row items-center gap-2 space-y-0">
               <FormControl>
                 <Switch
                   checked={value}

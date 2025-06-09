@@ -73,17 +73,35 @@ export function InspectionStatusBadge({
 }
 
 export function AlertsStatusBadge({ status }: { status: AlertsStatus }) {
-  return status === AlertsStatus.URGENT ? (
+  return status === AlertsStatus.CRITICAL ? (
+    <StatusBadge
+      icon={ShieldX}
+      status="Critical Alerts Present"
+      className="bg-critical text-critical-foreground hover:bg-critical"
+    />
+  ) : status === AlertsStatus.URGENT ? (
     <StatusBadge
       icon={ShieldX}
       status="Urgent Alerts Present"
       className="bg-urgent text-urgent-foreground hover:bg-urgent"
     />
-  ) : status === AlertsStatus.INFO ? (
+  ) : status === AlertsStatus.WARNING ? (
     <StatusBadge
       icon={ShieldAlert}
       status="Alerts Present"
       className="bg-important text-important-foreground hover:bg-important"
+    />
+  ) : status === AlertsStatus.INFO ? (
+    <StatusBadge
+      icon={ShieldAlert}
+      status="Info Alerts Present"
+      className="bg-important text-important-foreground hover:bg-important"
+    />
+  ) : status === AlertsStatus.AUDIT ? (
+    <StatusBadge
+      icon={ShieldX}
+      status="Audit Alerts Present"
+      className="bg-audit text-audit-foreground hover:bg-audit"
     />
   ) : (
     <StatusBadge

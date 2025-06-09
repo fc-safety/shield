@@ -49,11 +49,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         }
       />
       <main className="grid grow place-items-center px-6 py-24 sm:py-32 lg:px-8">
-        <DefaultErrorBoundary
-          error={error}
-          homeTo="/inspect"
-          contactTo="/inspect/contact"
-        />
+        <DefaultErrorBoundary error={error} homeTo="/inspect" />
       </main>
       <Footer />
     </div>

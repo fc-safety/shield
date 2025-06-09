@@ -219,7 +219,7 @@ export default function ProductDetailsForm({
           control={form.control}
           name="active"
           render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem className="flex items-center gap-2 space-y-0">
+            <FormItem className="flex flex-row items-center gap-2 space-y-0">
               <FormControl>
                 <Switch
                   checked={value}

@@ -5,7 +5,6 @@ import * as React from "react";
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
@@ -14,6 +13,12 @@ import {
   type AssetInspectionsStatus,
 } from "~/lib/enums";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
+import {
+  DashboardCard,
+  DashboardCardContent,
+  DashboardCardHeader,
+  DashboardCardTitle,
+} from "./components/dashboard-card";
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
@@ -202,13 +207,17 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
   );
 
   return (
-    <Card className="flex flex-col relative">
-      <CardHeader>
-        <CardTitle>
+    <DashboardCard>
+      <DashboardCardHeader>
+        <DashboardCardTitle>
           <Shield /> Overall Compliance
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="h-[calc(100%-64px)] flex flex-col items-center">
+          <div className="flex-1"></div>
+          {/* <Button variant="outline" size="iconSm">
+            <Printer />
+          </Button> */}
+        </DashboardCardTitle>
+      </DashboardCardHeader>
+      <DashboardCardContent className="h-[calc(100%-64px)] flex flex-col items-center">
         <ReactECharts
           theme={theme ?? undefined}
           settings={{
@@ -228,7 +237,7 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
           }}
           className="w-full flex-1 min-h-[250px] max-w-(--breakpoint-sm)"
         />
-      </CardContent>
+      </DashboardCardContent>
       {isLoading ? (
         <LoadingOverlay />
       ) : error ? (
@@ -236,6 +245,6 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
       ) : data && data.length === 0 ? (
         <EmptyStateOverlay>No assets to display.</EmptyStateOverlay>
       ) : null}
-    </Card>
+    </DashboardCard>
   );
 }

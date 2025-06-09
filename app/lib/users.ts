@@ -7,7 +7,10 @@ import {
   type TVisibility,
 } from "./permissions";
 
-export const MULTI_CLIENT_VISIBILITIES: TVisibility[] = ["global"] as const;
+export const MULTI_CLIENT_VISIBILITIES: TVisibility[] = [
+  "super-admin",
+  "global",
+] as const;
 
 export const MULTI_SITE_VISIBILITIES: TVisibility[] = [
   ...MULTI_CLIENT_VISIBILITIES,
@@ -16,8 +19,12 @@ export const MULTI_SITE_VISIBILITIES: TVisibility[] = [
   "multi-site",
 ];
 
+export function isSuperAdmin(user: User) {
+  return visibility(user) === "super-admin";
+}
+
 export function isGlobalAdmin(user: User) {
-  return visibility(user) === "global";
+  return visibility(user) === "global" || isSuperAdmin(user);
 }
 
 export function visibility(user: User): TVisibility {

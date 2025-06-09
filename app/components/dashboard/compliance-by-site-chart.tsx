@@ -4,11 +4,16 @@ import { ChevronRight, Shield, Warehouse } from "lucide-react";
 import * as React from "react";
 import { useEffect } from "react";
 import { Link } from "react-router";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { AssetInspectionsStatus } from "~/lib/enums";
 import type { ResultsPage, Site } from "~/lib/models";
 import { DataTable } from "../data-table/data-table";
+import {
+  DashboardCard,
+  DashboardCardContent,
+  DashboardCardHeader,
+  DashboardCardTitle,
+} from "./components/dashboard-card";
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
@@ -129,13 +134,17 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
   }, []);
 
   return (
-    <Card className="relative flex flex-col">
-      <CardHeader>
-        <CardTitle>
+    <DashboardCard>
+      <DashboardCardHeader>
+        <DashboardCardTitle>
           <Shield />+<Warehouse /> Compliance by Site
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="min-h-0 flex-1 flex flex-col bg-inherit rounded-[inherit]">
+          <div className="flex-1"></div>
+          {/* <Button variant="outline" size="iconSm">
+            <Printer />
+          </Button> */}
+        </DashboardCardTitle>
+      </DashboardCardHeader>
+      <DashboardCardContent className="min-h-0 flex-1 flex flex-col bg-inherit rounded-[inherit]">
         <DataTable
           columns={columns}
           data={siteRows ?? []}
@@ -151,7 +160,7 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
             container: "max-h-full",
           }}
         />
-      </CardContent>
+      </DashboardCardContent>
       {isLoading ? (
         <LoadingOverlay />
       ) : error ? (
@@ -159,7 +168,7 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
       ) : mySites && mySites.length === 0 ? (
         <EmptyStateOverlay>No sites to display assets for.</EmptyStateOverlay>
       ) : null}
-    </Card>
+    </DashboardCard>
   );
 }
 

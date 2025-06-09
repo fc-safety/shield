@@ -11,11 +11,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
     <BaseLayout>
       <div className="flex flex-col grow items-center justify-center">
-        <DefaultErrorBoundary
-          error={error}
-          homeTo="/public-inspect/login"
-          contactTo="/public-inspect/contact"
-        />
+        <DefaultErrorBoundary error={error} homeTo="/public-inspect/login" />
       </div>
     </BaseLayout>
   );

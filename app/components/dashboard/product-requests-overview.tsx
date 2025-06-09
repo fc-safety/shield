@@ -7,15 +7,14 @@ import {
   useReactTable,
   type Cell,
   type ColumnDef,
+  type OnChangeFn,
   type SortingState,
 } from "@tanstack/react-table";
 import { format, subDays } from "date-fns";
 import { Check, ChevronsUpDown, Package } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { useImmer } from "use-immer";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { useAppState } from "~/contexts/app-state-context";
+import { useAppState, useAppStateValue } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -44,6 +43,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+  DashboardCard,
+  DashboardCardContent,
+  DashboardCardHeader,
+  DashboardCardTitle,
+} from "./components/dashboard-card";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 
@@ -53,34 +58,229 @@ export default function ProductRequestsOverview({
   refreshKey: number;
 }) {
   const { appState, setAppState } = useAppState();
+  const [sorting, setSorting] = useAppStateValue("dash_pr_sort", [
+    { id: "orderedOn", desc: true },
+  ]);
+  // const [view, setView] = useAppStateValue("dash_pr_view", "summary");
+  const view: string = "details";
 
-  const { user } = useAuth();
-  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  const [productRequestsQuery, setProductRequestsQuery] = useImmer(
-    appState.dash_pr_query ?? {
-      createdOn: {
-        gte: subDays(new Date(), 30).toISOString(),
-        lte: new Date().toISOString(),
-      },
-    }
-  );
+  const productRequestsQuery = useMemo(() => {
+    return (
+      appState.dash_pr_query ?? {
+        createdOn: {
+          gte: subDays(new Date(), 30).toISOString(),
+          lte: new Date().toISOString(),
+        },
+      }
+    );
+  }, [appState.dash_pr_query]);
 
   const handleSetProductRequestsQuery = (
     newProductRequestsQuery: typeof productRequestsQuery,
     quickRangeId?: QuickRangeId
   ) => {
-    setProductRequestsQuery(newProductRequestsQuery);
     setAppState({
       dash_pr_query: newProductRequestsQuery,
       dash_pr_quickRangeId: quickRangeId,
     });
   };
 
+  return (
+    <DashboardCard>
+      <DashboardCardHeader>
+        <DashboardCardTitle>
+          <Package /> Recent Supply Requests
+          <div className="flex-1"></div>
+          {/* <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={view}
+            onValueChange={(value) => {
+              setView(value as "summary" | "details");
+            }}
+          >
+            <ToggleGroupItem value="summary">
+              <LayoutDashboard />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="details">
+              <List />
+            </ToggleGroupItem>
+          </ToggleGroup> */}
+          {/* <Button variant="outline" size="iconSm">
+            <Printer />
+          </Button> */}
+        </DashboardCardTitle>
+      </DashboardCardHeader>
+      <DashboardCardContent className="min-h-0 flex-1 flex flex-col bg-inherit space-y-4 rounded-[inherit]">
+        {/* <VirtualizedDataTable
+          height="100%"
+          maxHeight={400}
+          columns={columns}
+          initialState={{
+            sorting: [{ id: "orderedOn", desc: true }],
+            columnVisibility: {
+              site: hasMultiSiteVisibility(user),
+              review: can(user, "review", "product-requests"),
+            },
+          }}
+          data={data?.results ?? []}
+          loading={isLoading}
+        /> */}
+        <div className="flex gap-2 flex-wrap items-center justify-between">
+          <DateRangeSelect
+            value={
+              productRequestsQuery.createdOn?.gte
+                ? {
+                    from: productRequestsQuery.createdOn?.gte,
+                    to: productRequestsQuery.createdOn?.lte,
+                  }
+                : undefined
+            }
+            onValueChange={(dateRange, quickRangeId) => {
+              if (!dateRange) {
+                return;
+              }
+
+              const newProductRequestsQuery = dateRange
+                ? {
+                    ...productRequestsQuery,
+                    createdOn: {
+                      gte: dateRange.from,
+                      lte: dateRange.to,
+                    },
+                  }
+                : productRequestsQuery;
+              handleSetProductRequestsQuery(
+                newProductRequestsQuery,
+                quickRangeId
+              );
+            }}
+            defaultQuickRangeId={
+              appState.dash_pr_quickRangeId ?? "last-30-days"
+            }
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(view === "summary" && "hidden")}
+              >
+                Sort by
+                <ChevronsUpDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {[
+                {
+                  id: "newestFirst",
+                  sort: { id: "orderedOn", desc: true },
+                  label: "Newest first",
+                },
+                {
+                  id: "oldestFirst",
+                  sort: { id: "orderedOn", desc: false },
+                  label: "Oldest first",
+                },
+              ].map(({ id, sort, label }) => (
+                <DropdownMenuItem
+                  key={id}
+                  onSelect={() => {
+                    setSorting([sort]);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "opacity-0",
+                      sorting.some(
+                        (s) => s.id === sort.id && s.desc === sort.desc
+                      ) && "opacity-100"
+                    )}
+                  />
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {view === "summary" ? (
+          <ProductRequestsSummary
+            refreshKey={refreshKey}
+            queryParams={productRequestsQuery}
+            setIsLoading={setIsLoading}
+            setError={setError}
+          />
+        ) : (
+          <ProductRequestsDetails
+            refreshKey={refreshKey}
+            queryParams={productRequestsQuery}
+            sorting={sorting}
+            setSorting={setSorting}
+            setIsLoading={setIsLoading}
+            setError={setError}
+          />
+        )}
+      </DashboardCardContent>
+      {isLoading ? (
+        <LoadingOverlay />
+      ) : error ? (
+        <ErrorOverlay>
+          Error occurred while loading product requests.
+        </ErrorOverlay>
+      ) : null}
+    </DashboardCard>
+  );
+}
+
+function ProductRequestsSummary({
+  refreshKey,
+  queryParams,
+  setIsLoading,
+  setError,
+}: {
+  refreshKey: number;
+  queryParams: QueryParams;
+  setIsLoading: (isLoading: boolean) => void;
+  setError: (error: Error | null) => void;
+}) {
+  return <div>ProductRequestsSummary</div>;
+}
+
+function ProductRequestsDetails({
+  refreshKey,
+  queryParams,
+  sorting,
+  setSorting,
+  setIsLoading,
+  setError,
+}: {
+  refreshKey: number;
+  queryParams: QueryParams;
+  sorting: SortingState;
+  setSorting: OnChangeFn<SortingState>;
+  setIsLoading: (isLoading: boolean) => void;
+  setError: (error: Error | null) => void;
+}) {
+  const { user } = useAuth();
+  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
+
   const { data, error, isLoading } = useQuery({
-    queryKey: ["product-requests", productRequestsQuery, refreshKey] as const,
+    queryKey: ["product-requests", queryParams, refreshKey] as const,
     queryFn: ({ queryKey }) => getProductRequests(fetch, queryKey[1]),
   });
+
+  useEffect(() => {
+    setIsLoading(isLoading);
+  }, [isLoading, setIsLoading]);
+
+  useEffect(() => {
+    setError(error);
+  }, [error, setError]);
 
   const reviewRequest = useOpenData<ProductRequest>();
 
@@ -246,10 +446,6 @@ export default function ProductRequestsOverview({
     [reviewRequest]
   );
 
-  const [sorting, setSorting] = useState<SortingState>(
-    appState.dash_pr_sort ?? [{ id: "orderedOn", desc: true }]
-  );
-
   const productRequests = useMemo(() => data?.results ?? [], [data]);
   const table = useReactTable({
     data: productRequests,
@@ -270,166 +466,58 @@ export default function ProductRequestsOverview({
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const handleSortingChange = (sorting: SortingState) => {
-    table.setSorting(sorting);
-    setAppState({
-      dash_pr_sort: sorting,
-    });
-  };
-
   const { rows } = table.getRowModel();
   const isEmpty = !rows.length;
 
   return (
-    <Card className="relative flex flex-col">
-      <CardHeader>
-        <CardTitle>
-          <Package /> Recent Supply Requests
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="min-h-0 flex-1 flex flex-col bg-inherit space-y-4 rounded-[inherit]">
-        {/* <VirtualizedDataTable
-            height="100%"
-            maxHeight={400}
-            columns={columns}
-            initialState={{
-              sorting: [{ id: "orderedOn", desc: true }],
-              columnVisibility: {
-                site: hasMultiSiteVisibility(user),
-                review: can(user, "review", "product-requests"),
-              },
-            }}
-            data={data?.results ?? []}
-            loading={isLoading}
-          /> */}
-        <div className="flex gap-2 flex-wrap items-center justify-between">
-          <DateRangeSelect
-            value={
-              productRequestsQuery.createdOn?.gte
-                ? {
-                    from: productRequestsQuery.createdOn?.gte,
-                    to: productRequestsQuery.createdOn?.lte,
-                  }
-                : undefined
-            }
-            onValueChange={(dateRange, quickRangeId) => {
-              if (!dateRange) {
-                return;
-              }
+    <>
+      <GradientScrollArea className="flex-1" variant="card">
+        {!isLoading && isEmpty ? (
+          <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
+            No supply requests to display.
+          </p>
+        ) : null}
+        {rows.map((row) => {
+          const productRequest = row.original;
+          const cells = row.getVisibleCells().reduce((acc, cell) => {
+            acc[String(cell.column.id)] = cell;
+            return acc;
+          }, {} as Record<string, Cell<ProductRequest, unknown>>);
 
-              const newProductRequestsQuery = dateRange
-                ? {
-                    ...productRequestsQuery,
-                    createdOn: {
-                      gte: dateRange.from,
-                      lte: dateRange.to,
-                    },
-                  }
-                : productRequestsQuery;
-              handleSetProductRequestsQuery(
-                newProductRequestsQuery,
-                quickRangeId
-              );
-            }}
-            defaultQuickRangeId={
-              appState.dash_pr_quickRangeId ?? "last-30-days"
-            }
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Sort by
-                <ChevronsUpDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {[
-                {
-                  id: "newestFirst",
-                  sort: { id: "orderedOn", desc: true },
-                  label: "Newest first",
-                },
-                {
-                  id: "oldestFirst",
-                  sort: { id: "orderedOn", desc: false },
-                  label: "Oldest first",
-                },
-              ].map(({ id, sort, label }) => (
-                <DropdownMenuItem
-                  key={id}
-                  onSelect={() => {
-                    handleSortingChange([sort]);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "opacity-0",
-                      sorting.some(
-                        (s) => s.id === sort.id && s.desc === sort.desc
-                      ) && "opacity-100"
-                    )}
-                  />
-                  {label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        <GradientScrollArea className="flex-1" variant="card">
-          {!isLoading && isEmpty ? (
-            <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
-              No supply requests to display.
-            </p>
-          ) : null}
-          {rows.map((row) => {
-            const productRequest = row.original;
-            const cells = row.getVisibleCells().reduce((acc, cell) => {
-              acc[String(cell.column.id)] = cell;
-              return acc;
-            }, {} as Record<string, Cell<ProductRequest, unknown>>);
-
-            return (
-              <div
-                key={productRequest.id}
-                className="py-2 flex flex-col gap-2 border-t border-border"
-              >
-                <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
-                  {format(productRequest.createdOn, "PPpp")}
-                  {renderCell(cells.status)}
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm">
-                    {cells.site ? (
-                      <span className="font-semibold">
-                        [{renderCell(cells.site)}]
-                      </span>
-                    ) : (
-                      ""
-                    )}{" "}
-                    {renderCell(cells.requestor)} requested these supplies{" "}
-                    {renderCell(cells.orderedOn)}:
-                  </p>
-                  <p className="text-sm">{renderCell(cells.items)}</p>
-                </div>
-                <div className="flex">{renderCell(cells.details)}</div>
+          return (
+            <div
+              key={productRequest.id}
+              className="py-2 flex flex-col gap-2 border-t border-border"
+            >
+              <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
+                {format(productRequest.createdOn, "PPpp")}
+                {renderCell(cells.status)}
               </div>
-            );
-          })}
-        </GradientScrollArea>
-      </CardContent>
-      {isLoading ? (
-        <LoadingOverlay />
-      ) : error ? (
-        <ErrorOverlay>
-          Error occurred while loading product requests.
-        </ErrorOverlay>
-      ) : null}
+              <div className="space-y-1">
+                <p className="text-sm">
+                  {cells.site ? (
+                    <span className="font-semibold">
+                      [{renderCell(cells.site)}]
+                    </span>
+                  ) : (
+                    ""
+                  )}{" "}
+                  {renderCell(cells.requestor)} requested these supplies{" "}
+                  {renderCell(cells.orderedOn)}:
+                </p>
+                <p className="text-sm">{renderCell(cells.items)}</p>
+              </div>
+              <div className="flex">{renderCell(cells.details)}</div>
+            </div>
+          );
+        })}
+      </GradientScrollArea>
       <ReviewProductRequestModal
         open={reviewRequest.open}
         onOpenChange={reviewRequest.setOpen}
         request={reviewRequest.data}
       />
-    </Card>
+    </>
   );
 }
 

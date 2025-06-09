@@ -70,9 +70,8 @@ export default function Dashboard() {
 
   // TODO: Refine styling so that the boxes fit really nicely on most screens.
   return (
-    <div className="h-[calc(100vh-100px)] overflow-y-auto">
-      <div className="h-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 auto-rows-[minmax(400px,1fr)] gap-2 sm:gap-4">
-        {/* <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-2 sm:gap-4"> */}
+    <div className="h-[calc(100vh-110px)] overflow-y-auto">
+      <div className="h-full grid grid-cols-[repeat(auto-fill,minmax(375px,1fr))] 2xl:grid-cols-3 auto-rows-[minmax(400px,1fr)] gap-2 sm:gap-4">
         {canReadAssets && (
           <OverallComplianceChart refreshKey={overallComplianceRefreshKey} />
         )}
@@ -97,7 +96,7 @@ export default function Dashboard() {
           <InspectionAlertsOverview refreshKey={inspectionAlertsRefreshKey} />
         )}
         {!canReadDashboard && (
-          <div className="flex flex-col items-center justify-center h-full">
+          <div className="flex flex-col items-center justify-center h-full col-span-full">
             <div className="text-muted-foreground">
               You do not have permission to view any dashboard items.
             </div>

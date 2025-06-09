@@ -8,13 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { isGlobalAdmin } from "~/lib/users";
+import { isSuperAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
 import { Paragraph } from "./components/Paragraph";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
-  const userIsGlobalAdmin = isGlobalAdmin(user);
+  const userIsSuperAdmin = isSuperAdmin(user);
 
   const docLinks: {
     label: string;
@@ -24,7 +24,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     {
       label: "Writing NFC Tags",
       href: "/docs/writing-nfc-tags",
-      hidden: !userIsGlobalAdmin,
+      hidden: !userIsSuperAdmin,
     },
   ];
 

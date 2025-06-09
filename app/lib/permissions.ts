@@ -1,4 +1,5 @@
 export const VISIBILITY = {
+  SUPER_ADMIN: "visibility:super-admin",
   GLOBAL: "visibility:global",
   CLIENT_SITES: "visibility:client-sites",
   SITE_GROUP: "visibility:site-group",

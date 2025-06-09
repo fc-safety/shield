@@ -9,11 +9,11 @@ import { DataTableColumnHeader } from "~/components/data-table/data-table-column
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Role } from "~/lib/types";
-import { isGlobalAdmin } from "~/lib/users";
+import { isSuperAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await guardOrSendHome(request, (user) => isGlobalAdmin(user));
+  await guardOrSendHome(request, (user) => isSuperAdmin(user));
 
   return ApiFetcher.create(request, "/roles").get<Role[]>();
 };

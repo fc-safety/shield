@@ -76,18 +76,35 @@ export default function UpdateUserRoleForm({
     if (
       selectedRole &&
       selectedRole.id === data.roleId &&
-      selectedRole.permissions.some((p) => p === VISIBILITY.GLOBAL)
+      selectedRole.permissions.some(
+        (p) => p === VISIBILITY.GLOBAL || p === VISIBILITY.SUPER_ADMIN
+      )
     ) {
-      setAssignGlobalAdminAction((draft) => {
-        draft.open = true;
-        draft.title = "Assign Global Admin Role";
-        draft.message =
-          "Are you sure you want to make the user a global admin? Doing so will give them full access to view and manage data for all clients.";
-        draft.requiredUserInput = user.email;
-        draft.onConfirm = () => {
-          doSubmit();
-        };
-      });
+      if (selectedRole.permissions.some((p) => p === VISIBILITY.GLOBAL)) {
+        setAssignGlobalAdminAction((draft) => {
+          draft.open = true;
+          draft.title = "Assign Global Admin Role";
+          draft.message =
+            "Are you sure you want to make the user a global admin? Doing so will give them full access to view and manage data for all clients.";
+          draft.requiredUserInput = user.email;
+          draft.onConfirm = () => {
+            doSubmit();
+          };
+        });
+      } else if (
+        selectedRole.permissions.some((p) => p === VISIBILITY.SUPER_ADMIN)
+      ) {
+        setAssignGlobalAdminAction((draft) => {
+          draft.open = true;
+          draft.title = "Assign Super Admin Role";
+          draft.message =
+            "Are you sure you want to make the user a super admin? Doing so will give them full access to admin controls and the ability to view and manage data for all clients.";
+          draft.requiredUserInput = user.email;
+          draft.onConfirm = () => {
+            doSubmit();
+          };
+        });
+      }
     } else {
       doSubmit();
     }
