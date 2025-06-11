@@ -1,24 +1,34 @@
-import { useMemo, type ComponentProps } from "react";
 import type { ProductRequestStatus } from "~/lib/models";
+import { cn } from "~/lib/utils";
 import { Badge } from "../ui/badge";
 
 export function ProductRequestStatusBadge({
   status,
+  children,
+  className,
 }: {
   status: ProductRequestStatus;
+  children?: React.ReactNode;
+  className?: string;
 }) {
-  const variant = useMemo((): ComponentProps<typeof Badge>["variant"] => {
-    switch (status) {
-      case "NEW":
-        return "status_new";
-      case "PROCESSING":
-      case "COMPLETE":
-        return "secondary";
-      case "FULFILLED":
-        return "default";
-      default:
-        return "outline";
-    }
-  }, [status]);
-  return <Badge variant={variant}>{status}</Badge>;
+  return (
+    <Badge
+      className={cn(
+        {
+          "bg-warning/40 dark:bg-warning/20 border-warning-foreground/50 dark:border-warning/50 text-warning-foreground dark:text-warning":
+            status === "NEW",
+          "bg-info/40 dark:bg-info/20 border-info-foreground/50 dark:border-info/50 text-info-foreground dark:text-info":
+            status === "PROCESSING",
+          "bg-info/40 dark:bg-info/20 border-info-foreground/50 dark:border-info/50 text-primary":
+            status === "FULFILLED",
+          "bg-primary/10 border-primary/50 text-primary": status === "COMPLETE",
+          "bg-audit/40 dark:bg-audit/10 border-audit-foreground/50 dark:border-audit/50 text-audit-foreground dark:text-audit":
+            status === "CANCELLED",
+        },
+        className
+      )}
+    >
+      {children ?? status}
+    </Badge>
+  );
 }
