@@ -53,6 +53,9 @@ export interface AppState {
   products_grp?: string[];
   categories_showAll?: boolean;
   manufacturers_showAll?: boolean;
+
+  // Legacy Redirect
+  show_legacy_redirect?: boolean;
 }
 
 export interface Role {

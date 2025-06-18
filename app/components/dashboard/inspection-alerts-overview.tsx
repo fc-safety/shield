@@ -306,7 +306,7 @@ function AlertsSummary({
             <div
               key={options.label}
               className={cn(
-                "flex items-center gap-2 justify-between rounded-lg p-2 sm:p-4",
+                "flex items-center gap-2 justify-between rounded-lg p-2 sm:p-4 shadow-sm",
                 options.coloring
               )}
             >
@@ -346,7 +346,7 @@ function AlertsSummary({
                 <div
                   key={alertLevel}
                   className={cn(
-                    "rounded-lg py-1 px-3 border flex items-center gap-3",
+                    "rounded-lg py-1 px-3 border flex items-center gap-3 shadow-sm",
                     {
                       "bg-critical-foreground/50 dark:bg-critical/20 border-critical/50 [&_svg]:text-critical":
                         alertLevel === "CRITICAL",

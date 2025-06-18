@@ -17,3 +17,5 @@ export const ASSET_QUESTION_TONE_OPTIONS = [
   { label: "Positive", value: ASSET_QUESTION_TONES.POSITIVE },
   { label: "Negative", value: ASSET_QUESTION_TONES.NEGATIVE },
 ] as const;
+
+export const MARK_LEGACY_REDIRECT_VIEWED_QUERY_KEY = "mark-legacy-viewed";

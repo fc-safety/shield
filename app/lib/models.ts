@@ -188,7 +188,12 @@ export interface Address {
   country: string | null;
 }
 
-export const ClientStatuses = ["PENDING", "ACTIVE", "INACTIVE"] as const;
+export const ClientStatuses = [
+  "PENDING",
+  "ACTIVE",
+  "INACTIVE",
+  "LEGACY",
+] as const;
 
 export interface Client extends BaseModel {
   externalId: string;

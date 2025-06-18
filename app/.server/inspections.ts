@@ -1,5 +1,8 @@
 import { redirect } from "react-router";
-import { inspectionSessionStorage } from "~/.server/sessions";
+import {
+  appStateSessionStorage,
+  inspectionSessionStorage,
+} from "~/.server/sessions";
 import type { InspectionRoute, InspectionSession } from "~/lib/models";
 import { dateSort, getSearchParams } from "../lib/utils";
 import { api } from "./api";
@@ -100,20 +103,38 @@ export const validateTagRequestAndBuildSession = async (
       throw new Response("Tag not found", { status: 404 });
     }
 
+    const headers = new Headers();
+
     // Step 3 (part B): If this is a valid new tag URL, set session data and redirect
     // to remove the tag params from the URL.
     inspectionSession.set("activeTag", extId);
     inspectionSession.set("tagActivatedOn", new Date().toISOString());
     inspectionSession.set("inspectionToken", inspectionToken);
 
+    // When referred to from the legacy Tags page, we want to show the legacy redirect
+    // landing page (unless it's been explicitly marked as viewed).
+    if (requestQuery.get("ref") === "legacy") {
+      const appStateSession = await appStateSessionStorage.getSession(
+        request.headers.get("cookie")
+      );
+      if (appStateSession.get("show_legacy_redirect") !== false) {
+        appStateSession.set("show_legacy_redirect", true);
+      }
+      headers.append(
+        "Set-Cookie",
+        await appStateSessionStorage.commitSession(appStateSession)
+      );
+    }
+
+    headers.append(
+      "Set-Cookie",
+      await inspectionSessionStorage.commitSession(inspectionSession)
+    );
+
     // Redirect to remove the tag params from the URL. This prevents users from bookmarking or
     // sharing the tag URL.
     throw redirect(redirectTo, {
-      headers: {
-        "Set-Cookie": await inspectionSessionStorage.commitSession(
-          inspectionSession
-        ),
-      },
+      headers,
     });
   }
 

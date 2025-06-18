@@ -10,6 +10,9 @@ export default [
   // Health routes
   route("health", "./routes/health.tsx"),
 
+  // Legacy user routes
+  route("legacy-redirect", "./routes/legacy-redirect.tsx"),
+
   // Auth Routes
   route("login", "./routes/auth/login.tsx"),
   route("logout", "./routes/auth/logout.tsx"),
