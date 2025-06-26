@@ -2,6 +2,7 @@ import {
   format,
   formatDistanceToNow,
   startOfDay,
+  startOfMonth,
   startOfWeek,
   subHours,
   subMinutes,
@@ -224,5 +225,9 @@ const QUICK_INTERVALS: QuickInterval[] = [
   {
     label: "Clear This Week",
     startDate: startOfWeek(new Date()).toISOString(),
+  },
+  {
+    label: "Clear This Month",
+    startDate: startOfMonth(new Date()).toISOString(),
   },
 ];

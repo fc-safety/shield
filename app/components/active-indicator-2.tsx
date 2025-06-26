@@ -4,7 +4,7 @@ export default function ActiveIndicator2({
   active: activeProp,
   className,
 }: {
-  active: boolean | "active" | "inactive" | "pending";
+  active: boolean | "active" | "inactive" | "pending" | "legacy";
   className?: string;
 }) {
   const status =

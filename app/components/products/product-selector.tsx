@@ -29,6 +29,7 @@ import { cn, dedupById } from "~/lib/utils";
 import { ManufacturerCard } from "./manufacturer-selector";
 import ProductCard from "./product-card";
 import { ProductCategoryCard } from "./product-category-selector";
+
 interface ProductSelectorProps {
   value?: string;
   onValueChange?: (value: string) => void;

@@ -1,6 +1,6 @@
 import { Link, useMatches } from "react-router";
 import { BANNER_LOGO_DARK_URL, BANNER_LOGO_LIGHT_URL } from "~/lib/constants";
-import { validateBreadcrumb } from "~/lib/utils";
+import { cn, validateBreadcrumb } from "~/lib/utils";
 import { BreadcrumbResponsive } from "./breadcrumb-responsive";
 import { ModeToggle } from "./mode-toggle";
 
@@ -10,17 +10,24 @@ export default function Header({
   homeTo = "/",
   showBreadcrumb = true,
   showBannerLogo = true,
+  className,
 }: {
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
   homeTo?: string;
   showBreadcrumb?: boolean;
   showBannerLogo?: boolean;
+  className?: string;
 }) {
   const matches = useMatches();
 
   return (
-    <header className="flex flex-col shrink-0 gap-y-1 pt-4 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2">
+    <header
+      className={cn(
+        "flex flex-col shrink-0 gap-y-1 pt-4 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2",
+        className
+      )}
+    >
       <div className="flex items-center gap-x-2">
         {leftSlot}
         {showBannerLogo && (

@@ -2,14 +2,11 @@ import { useMutation } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, Table } from "lucide-react";
 import { useCallback, useMemo, type ReactNode } from "react";
-import { useRevalidator, useSearchParams } from "react-router";
 import { api } from "~/.server/api";
+import { getAppState } from "~/.server/sessions";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import VirtualizedTable from "~/components/data-table/virtualized-data-table";
-import DateRangeSelect, {
-  QUICK_DATE_RANGES,
-  type QuickRangeId,
-} from "~/components/date-range-select";
+import DateRangeSelect from "~/components/date-range-select";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -24,12 +21,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { useAppStateValue } from "~/contexts/app-state-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { GetReportResult } from "~/lib/types";
 import type { QueryParams } from "~/lib/urls";
-import { buildTitleFromBreadcrumb, getSearchParams } from "~/lib/utils";
+import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/details";
 import { downloadReportCsv } from "./utils";
+import { getDefaultDateRange } from "./utils/core";
 
 export const handle = {
   breadcrumb: () => ({ label: "Details" }),
@@ -39,26 +38,14 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
-const getDefaultDateRange = (quickRangeId: QuickRangeId<"both">) => {
-  const quickRange =
-    QUICK_DATE_RANGES.find((range) => range.id === quickRangeId) ??
-    QUICK_DATE_RANGES[0];
-  return {
-    from: quickRange.value.from(),
-    to: quickRange.value.to(),
-  };
-};
-
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const requestQuery = getSearchParams(request);
+  const { id: reportId } = params;
 
-  const dateRange = {
-    from: requestQuery.get("dr_from"),
-    to: requestQuery.get("dr_to"),
-  };
+  const { reports_dateRanges } = await getAppState(request);
+  const { from, to, quickRangeId } = reports_dateRanges?.[reportId] ?? {};
+  const dateRange = { from, to };
 
-  const defaultQuickRangeId =
-    (requestQuery.get("qr_id") as QuickRangeId<"both"> | undefined) ?? null;
+  const defaultQuickRangeId = quickRangeId ?? null;
   let defaultDateRange: {
     from: string;
     to: string;
@@ -77,11 +64,13 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     query.endDate = defaultDateRange.to;
   }
 
-  return api.reports.get(request, params.id, query).then((report) => ({
+  const report = await api.reports.get(request, reportId, query);
+
+  return {
     report,
     defaultQuickRangeId,
     defaultDateRange,
-  }));
+  };
 };
 
 export default function ReportDetails({
@@ -89,14 +78,17 @@ export default function ReportDetails({
 }: Route.ComponentProps) {
   const { fetch } = useAuthenticatedFetch();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { revalidate } = useRevalidator();
+  const [reportDateRanges, setReportDateRanges] = useAppStateValue(
+    "reports_dateRanges",
+    {}
+  );
+  const reportDateRange = reportDateRanges[report.id];
 
   const { mutate: mutateExportCsv } = useMutation({
     mutationFn: (reportId: string) =>
       downloadReportCsv(fetch, reportId, {
-        startDate: searchParams.get("dr_from") ?? defaultDateRange?.from,
-        endDate: searchParams.get("dr_to") ?? defaultDateRange?.to,
+        startDate: reportDateRange?.from ?? defaultDateRange?.from,
+        endDate: reportDateRange?.to ?? defaultDateRange?.to,
       }),
   });
 
@@ -140,35 +132,37 @@ export default function ReportDetails({
         <DateRangeSelect
           key="date-range-select"
           defaultQuickRangeId={
-            (searchParams.get("qr_id") as QuickRangeId) ?? defaultQuickRangeId
+            reportDateRange?.quickRangeId ?? defaultQuickRangeId ?? undefined
           }
           value={
-            searchParams.has("dr_from")
+            reportDateRange
               ? {
-                  from: searchParams.get("dr_from")!,
-                  to: searchParams.get("dr_to")!,
+                  from: reportDateRange.from,
+                  to: reportDateRange.to,
                 }
               : undefined
           }
           onValueChange={(dateRange, quickRangeId) => {
-            setSearchParams((draft) => {
-              const handleSet = (
-                key: string,
-                value: string | null | undefined
-              ) => {
-                if (value) {
-                  draft.set(key, value);
+            setReportDateRanges(
+              (draft) => {
+                if (dateRange) {
+                  return {
+                    ...draft,
+                    [report.id]: {
+                      ...draft[report.id],
+                      from: dateRange.from,
+                      to: dateRange.to ?? "",
+                      quickRangeId,
+                    },
+                  };
                 } else {
-                  draft.delete(key);
+                  return Object.fromEntries(
+                    Object.entries(draft).filter(([key]) => key !== report.id)
+                  ) as typeof draft;
                 }
-              };
-              handleSet("dr_from", dateRange?.from);
-              handleSet("dr_to", dateRange?.to);
-              handleSet("qr_id", quickRangeId);
-
-              return draft;
-            });
-            revalidate();
+              },
+              { revalidate: true }
+            );
           }}
           past={
             report.dateRangeSupport === "PAST" ||
@@ -182,7 +176,7 @@ export default function ReportDetails({
       );
     }
     return filters;
-  }, [report, searchParams, setSearchParams, defaultQuickRangeId, revalidate]);
+  }, [report, reportDateRange, setReportDateRanges, defaultQuickRangeId]);
 
   return (
     <>

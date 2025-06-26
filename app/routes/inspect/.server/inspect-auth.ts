@@ -1,7 +1,23 @@
+import { redirect } from "react-router";
+import { appStateSessionStorage } from "~/.server/sessions";
 import { requireUserSession } from "~/.server/user-sesssion";
+import { MARK_LEGACY_REDIRECT_VIEWED_QUERY_KEY } from "~/lib/constants";
 import { getSearchParam } from "~/lib/utils";
 
 export async function getUserOrHandleInspectLoginRedirect(request: Request) {
+  // If the user is being referred to from the legacy Tags page, we want to show
+  // the legacy redirect landing page (unless it's been explicitly marked as viewed).
+  const appStateSession = await appStateSessionStorage.getSession(
+    request.headers.get("cookie")
+  );
+  if (appStateSession.get("show_legacy_redirect")) {
+    throw redirect(
+      `/legacy-redirect?returnTo=${encodeURIComponent(
+        request.url
+      )}&${MARK_LEGACY_REDIRECT_VIEWED_QUERY_KEY}`
+    );
+  }
+
   // Respond to the user intent (used if they are redirected from elsewhere).
   // Don't ask them if they want to login if the intent indicates they expect
   // to login.

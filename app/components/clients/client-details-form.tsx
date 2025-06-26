@@ -29,6 +29,7 @@ import { createClientSchema, updateClientSchema } from "~/lib/schema";
 import { isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
+import LegacyIdField from "../legacy-id-field";
 import { Label } from "../ui/label";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Switch } from "../ui/switch";
@@ -198,6 +199,12 @@ export default function ClientDetailsForm({
             )}
           />
         )}
+        <LegacyIdField
+          form={form}
+          fieldName="legacyClientId"
+          label="Legacy Client ID"
+          description="Client ID from the legacy Shield system"
+        />
         <FormField
           control={form.control}
           name="name"

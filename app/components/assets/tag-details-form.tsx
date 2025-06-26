@@ -22,6 +22,7 @@ import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
 import { CopyableText } from "../copyable-text";
 import DataList from "../data-list";
+import LegacyIdField from "../legacy-id-field";
 import { Card, CardHeader } from "../ui/card";
 import AssetCombobox from "./asset-combobox";
 
@@ -173,6 +174,12 @@ export default function TagDetailsForm({
           </Card>
         )}
         <Input type="hidden" {...form.register("id")} hidden />
+        <LegacyIdField
+          form={form}
+          fieldName="legacyTagId"
+          label="Legacy Tag ID"
+          description="Tag ID from the legacy Shield system"
+        />
         <FormField
           control={form.control}
           name="serialNumber"

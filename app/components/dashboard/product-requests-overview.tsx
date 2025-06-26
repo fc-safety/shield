@@ -14,9 +14,14 @@ import { format, subDays } from "date-fns";
 import {
   Check,
   ChevronsUpDown,
+  Clock,
   LayoutDashboard,
   List,
+  MinusCircle,
   Package,
+  PackageCheck,
+  Star,
+  type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -24,14 +29,14 @@ import { useAppState, useAppStateValue } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useOpenData } from "~/hooks/use-open-data";
-import type {
-  ProductRequest,
-  ProductRequestStatus,
-  ResultsPage,
+import {
+  type ProductRequest,
+  type ProductRequestStatus,
+  type ResultsPage,
 } from "~/lib/models";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
-import { cn } from "~/lib/utils";
+import { cn, humanize } from "~/lib/utils";
 import { ProductRequestStatusBadge } from "../assets/product-request-status-badge";
 import { ProductRequestCard } from "../assets/product-requests";
 import DataList from "../data-list";
@@ -138,6 +143,7 @@ export default function ProductRequestsOverview({
         /> */}
         <div className="flex gap-2 flex-wrap items-center justify-between">
           <DateRangeSelect
+            iconOnly
             value={
               productRequestsQuery.createdOn?.gte
                 ? {
@@ -254,7 +260,63 @@ function ProductRequestsSummary({
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: Error | null) => void;
 }) {
-  return <div>ProductRequestsSummary</div>;
+  const { fetchOrThrow: fetch } = useAuthenticatedFetch();
+
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["product-requests", queryParams, refreshKey] as const,
+    queryFn: ({ queryKey }) => getProductRequests(fetch, queryKey[1]),
+  });
+
+  useEffect(() => {
+    setIsLoading(isLoading);
+  }, [isLoading, setIsLoading]);
+
+  useEffect(() => {
+    setError(error);
+  }, [error, setError]);
+
+  const productRequests = useMemo(() => data?.results ?? [], [data]);
+
+  const productRequestsCounts = useMemo(() => {
+    return DISPLAY_STATUSES.map(({ status, icon }) => ({
+      status,
+      icon,
+      count: productRequests.filter((request) => request.status === status)
+        .length,
+    }));
+  }, [productRequests]);
+
+  return (
+    <GradientScrollArea className="flex-1" variant="card">
+      <div className="flex flex-col gap-4">
+        {productRequestsCounts.map(({ status, icon: Icon, count }) => (
+          <div
+            key={status}
+            className={cn("rounded-lg flex items-center gap-4")}
+          >
+            <ProductRequestStatusBadge
+              status={status}
+              className="shrink-0 size-10 p-2 flex items-center justify-center"
+            >
+              <Icon className="size-5" />
+            </ProductRequestStatusBadge>
+            <div className="flex items-center gap-x-2 text-sm sm:text-base">
+              <h5 className="font-semibold">{humanize(status)}</h5>
+              <h6 className="text-muted-foreground">
+                (
+                {productRequests.length > 0
+                  ? ((count / productRequests.length) * 100).toFixed(0)
+                  : 0}
+                %)
+              </h6>
+            </div>
+            <div className="flex-1"></div>
+            <h5 className="leading-tight font-bold">{count}</h5>
+          </div>
+        ))}
+      </div>
+    </GradientScrollArea>
+  );
 }
 
 function ProductRequestsDetails({
@@ -672,6 +734,32 @@ function ReviewProductRequestModal({
 }
 
 const MAX_ITEMS_IN_SUMMARY = 5;
+
+const DISPLAY_STATUSES: {
+  status: ProductRequestStatus;
+  icon: LucideIcon;
+}[] = [
+  {
+    status: "NEW",
+    icon: Star,
+  },
+  {
+    status: "PROCESSING",
+    icon: Clock,
+  },
+  {
+    status: "FULFILLED",
+    icon: PackageCheck,
+  },
+  {
+    status: "COMPLETE",
+    icon: Check,
+  },
+  {
+    status: "CANCELLED",
+    icon: MinusCircle,
+  },
+];
 
 const renderCell = (cell: Cell<ProductRequest, unknown> | undefined | null) =>
   cell ? flexRender(cell.column.columnDef.cell, cell.getContext()) : null;

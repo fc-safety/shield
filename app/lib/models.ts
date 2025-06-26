@@ -14,6 +14,7 @@ export interface BaseModel {
 }
 
 export interface Asset extends BaseModel {
+  legacyAssetId?: string | null;
   setupOn: string | null;
   active: boolean;
   name: string;
@@ -39,6 +40,7 @@ export interface Asset extends BaseModel {
 }
 
 export interface Consumable extends BaseModel {
+  legacyInventoryId?: string | null;
   asset?: Asset;
   assetId: string;
   product: Product;
@@ -60,6 +62,7 @@ export interface AssetQuestionResponse extends BaseModel {
 export interface Tag extends BaseModel {
   externalId: string;
   serialNumber: string;
+  legacyTagId?: string | null;
   asset?: Asset | null;
   siteId?: string;
   clientId?: string;
@@ -68,6 +71,7 @@ export interface Tag extends BaseModel {
 }
 
 export interface Inspection extends BaseModel {
+  legacyLogId?: string | null;
   asset: Asset;
   inspector?: Person;
   status: InspectionStatus;
@@ -143,6 +147,7 @@ export interface CompletedInspectionRoutePoint extends BaseModel {
 }
 
 export interface ProductRequest extends BaseModel {
+  legacyRequestId?: string | null;
   status: ProductRequestStatus;
   requestor: Person;
   productRequestApprovals?: ProductRequestApproval[];
@@ -172,6 +177,7 @@ export interface ProductRequestApproval extends BaseModel {
 }
 
 export interface ProductRequestItem extends BaseModel {
+  legacyRequestItemId?: string | null;
   product: Product;
   quantity: number;
   addedBy: Person;
@@ -188,10 +194,16 @@ export interface Address {
   country: string | null;
 }
 
-export const ClientStatuses = ["PENDING", "ACTIVE", "INACTIVE"] as const;
+export const ClientStatuses = [
+  "PENDING",
+  "ACTIVE",
+  "INACTIVE",
+  "LEGACY",
+] as const;
 
 export interface Client extends BaseModel {
   externalId: string;
+  legacyClientId?: string | null;
   status: (typeof ClientStatuses)[number];
   startedOn: string;
   name: string;
@@ -207,6 +219,8 @@ export interface Client extends BaseModel {
 
 export interface Site extends BaseModel {
   externalId: string;
+  legacySiteId?: string | null;
+  legacyGroupId?: string | null;
   name: string;
   address: Address;
   addressId: string;
@@ -248,6 +262,7 @@ export type AssetQuestionResponseType =
   (typeof AssetQuestionResponseTypes)[number];
 
 export interface AssetQuestion extends BaseModel {
+  legacyQuestionId?: string | null;
   active: boolean;
   type: AssetQuestionType;
   required: boolean;
@@ -265,6 +280,7 @@ export interface AssetQuestion extends BaseModel {
 }
 
 export interface Alert extends BaseModel {
+  legacyAlertId?: string | null;
   alertLevel: AlertLevel;
   message: string;
   asset?: Asset;
@@ -327,6 +343,7 @@ export interface AssetAlertCriterion extends BaseModel {
 }
 
 export interface ProductCategory extends BaseModel {
+  legacyCategoryId?: string | null;
   active: boolean;
   name: string;
   shortName?: string | null;
@@ -341,6 +358,7 @@ export interface ProductCategory extends BaseModel {
 }
 
 export interface Manufacturer extends BaseModel {
+  legacyManufacturerId?: string | null;
   active: boolean;
   name: string;
   homeUrl?: string | null;
@@ -360,6 +378,8 @@ export interface AnsiCategory extends BaseModel {
 export const ProductTypes = ["CONSUMABLE", "PRIMARY"] as const;
 
 export interface Product extends BaseModel {
+  legacyProductId?: string | null;
+  legacyConsumableId?: string | null;
   active: boolean;
   manufacturer: Manufacturer;
   manufacturerId: string;

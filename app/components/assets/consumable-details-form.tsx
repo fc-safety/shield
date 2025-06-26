@@ -1,14 +1,11 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isValid as isValidDate, parseISO } from "date-fns";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Consumable } from "~/lib/models";
-import {
-  createConsumableSchemaResolver,
-  updateConsumableSchemaResolver,
-  type createConsumableSchema,
-  type updateConsumableSchema,
-} from "~/lib/schema";
+import { createConsumableSchema, updateConsumableSchema } from "~/lib/schema";
+import LegacyIdField from "../legacy-id-field";
 import { Button } from "../ui/button";
 import {
   Form,
@@ -51,12 +48,15 @@ export default function ConsumableDetailsForm({
   } satisfies TForm;
 
   const form = useForm<TForm>({
-    resolver: isNew
-      ? createConsumableSchemaResolver
-      : updateConsumableSchemaResolver,
+    resolver: zodResolver(
+      (isNew
+        ? createConsumableSchema
+        : updateConsumableSchema) as z.Schema<TForm>
+    ),
     values: consumable
       ? {
           ...consumable,
+          legacyInventoryId: consumable.legacyInventoryId,
           expiresOn: consumable.expiresOn ?? undefined,
           asset: {
             connect: {
@@ -70,7 +70,10 @@ export default function ConsumableDetailsForm({
             connect: { id: consumable.siteId },
           },
         }
-      : FORM_DEFAULTS,
+      : {
+          ...FORM_DEFAULTS,
+          legacyInventoryId: undefined,
+        },
     mode: "onBlur",
   });
 
@@ -94,6 +97,12 @@ export default function ConsumableDetailsForm({
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
         <Input type="hidden" {...form.register("asset.connect.id")} hidden />
+        <LegacyIdField
+          form={form}
+          fieldName="legacyInventoryId"
+          label="Legacy Inventory ID"
+          description="Inventory ID from the legacy Shield system"
+        />
 
         <FormField
           control={form.control}

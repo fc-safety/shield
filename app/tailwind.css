@@ -210,8 +210,8 @@
     --important-foreground: oklch(47.6% 0.114 61.907);
     --warning: oklch(94.5% 0.129 101.54);
     --warning-foreground: oklch(47.6% 0.114 61.907);
-    --info: oklch(88.2% 0.059 254.128);
-    --info-foreground: oklch(42.4% 0.199 265.638);
+    --info: oklch(0.8426 0.0851 242.49);
+    --info-foreground: oklch(0.5067 0.1806 255.71);
     --audit: oklch(92.8% 0.006 264.531);
     --audit-foreground: oklch(27.8% 0.033 256.848);
 
@@ -276,8 +276,8 @@
     --important-foreground: oklch(47.6% 0.114 61.907);
     --warning: oklch(94.5% 0.129 101.54);
     --warning-foreground: oklch(47.6% 0.114 61.907);
-    --info: oklch(88.2% 0.059 254.128);
-    --info-foreground: oklch(42.4% 0.199 265.638);
+    --info: oklch(0.8426 0.0851 242.49);
+    --info-foreground: oklch(0.5067 0.1806 255.71);
     --audit: oklch(0.8602 0.0018 247.84);
     --audit-foreground: oklch(27.8% 0.033 256.848);
 

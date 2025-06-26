@@ -19,9 +19,10 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { type ResultsPage, type Site } from "~/lib/models";
 import { baseSiteSchema, getSiteSchema } from "~/lib/schema";
 import { type QueryParams } from "~/lib/urls";
-import { isGlobalAdmin } from "~/lib/users";
+import { isSuperAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
+import LegacyIdField from "../legacy-id-field";
 import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
@@ -46,7 +47,7 @@ export default function SiteDetailsForm({
   viewContext = "user",
 }: SiteDetailsFormProps) {
   const { user } = useAuth();
-  const userIsGlobalAdmin = isGlobalAdmin(user);
+  const userIsSuperAdmin = isSuperAdmin(user);
 
   const isNew = !site;
   const currentlyPopulatedZip = useRef<string | null>(null);
@@ -252,7 +253,7 @@ export default function SiteDetailsForm({
             )}
           />
         )}
-        {userIsGlobalAdmin && (
+        {userIsSuperAdmin && (
           <FormField
             control={form.control}
             name="externalId"
@@ -273,6 +274,21 @@ export default function SiteDetailsForm({
                 <FormMessage />
               </FormItem>
             )}
+          />
+        )}
+        {isSiteGroup ? (
+          <LegacyIdField
+            form={form}
+            fieldName="legacyGroupId"
+            label="Legacy Group ID"
+            description="Group ID from the legacy Shield system"
+          />
+        ) : (
+          <LegacyIdField
+            form={form}
+            fieldName="legacySiteId"
+            label="Legacy Site ID"
+            description="Site ID from the legacy Shield system"
           />
         )}
         <FormField

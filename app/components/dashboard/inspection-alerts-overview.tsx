@@ -306,7 +306,7 @@ function AlertsSummary({
             <div
               key={options.label}
               className={cn(
-                "flex items-center gap-2 justify-between rounded-lg p-2 sm:p-4",
+                "flex items-center gap-2 justify-between rounded-lg p-2 sm:p-4 shadow-sm",
                 options.coloring
               )}
             >
@@ -346,17 +346,17 @@ function AlertsSummary({
                 <div
                   key={alertLevel}
                   className={cn(
-                    "rounded-lg py-1 px-3 border flex items-center gap-3",
+                    "rounded-lg py-1 px-3 border flex items-center gap-3 shadow-sm",
                     {
-                      "bg-critical-foreground/50 dark:bg-critical/40 border-critical/50 [&_svg]:text-critical":
+                      "bg-critical-foreground/50 dark:bg-critical/20 border-critical/50 [&_svg]:text-critical":
                         alertLevel === "CRITICAL",
-                      "bg-urgent-foreground/40 dark:bg-urgent/40 border-urgent/50 [&_svg]:text-urgent":
+                      "bg-urgent-foreground/40 dark:bg-urgent/20 border-urgent/50 [&_svg]:text-urgent":
                         alertLevel === "URGENT",
-                      "bg-warning/40 dark:bg-warning/10 border-warning-foreground/30 dark:border-warning-foreground/80 [&_svg]:text-warning-foreground":
+                      "bg-warning/40 dark:bg-warning/20 border-warning-foreground/50 dark:border-warning/50 [&_svg]:text-warning-foreground dark:[&_svg]:text-warning":
                         alertLevel === "WARNING",
-                      "bg-info/40 dark:bg-info/10 border-info-foreground/30 dark:border-info-foreground/80 [&_svg]:text-info-foreground":
+                      "bg-info/40 dark:bg-info/20 border-info-foreground/50 dark:border-info/50 [&_svg]:text-info-foreground dark:[&_svg]:text-info":
                         alertLevel === "INFO",
-                      "bg-audit/40 dark:bg-audit/10 border-audit-foreground/30 dark:border-audit/30 [&_svg]:text-audit-foreground [&_svg]:dark:text-audit":
+                      "bg-audit/40 dark:bg-audit/10 border-audit-foreground/50 dark:border-audit/50 [&_svg]:text-audit-foreground [&_svg]:dark:text-audit":
                         alertLevel === "AUDIT",
                     }
                   )}

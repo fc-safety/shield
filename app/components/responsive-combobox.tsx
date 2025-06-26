@@ -87,16 +87,18 @@ export function ResponsiveCombobox({
         <Button
           type="button"
           variant="outline"
-          className={cn("w-[150px] justify-between", className)}
+          className={cn("w-[150px] justify-between text-start", className)}
           onMouseOver={onMouseOver}
           onTouchStart={onTouchStart}
           disabled={disabled}
         >
-          {value ? (
-            <>{displayValue ? displayValue(value) : value}</>
-          ) : (
-            <>{placeholder ?? "Select"}</>
-          )}
+          <div className="text-ellipsis overflow-hidden whitespace-nowrap flex-1">
+            {value ? (
+              <>{displayValue ? displayValue(value) : value}</>
+            ) : (
+              <>{placeholder ?? "Select"}</>
+            )}
+          </div>
           <ChevronsUpDown className="opacity-50" />
         </Button>
       )}
@@ -158,7 +160,7 @@ function AsPopover({
   renderContent,
 }: BoxTypeProps) {
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal>
       {renderInput({
         renderTrigger: (trigger) => (
           <PopoverTrigger asChild>{trigger}</PopoverTrigger>
