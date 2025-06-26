@@ -56,6 +56,16 @@ export interface AppState {
 
   // Legacy Redirect
   show_legacy_redirect?: boolean;
+
+  // Reports
+  reports_dateRanges?: Record<
+    string,
+    {
+      from: string;
+      to: string;
+      quickRangeId?: QuickRangeId<"both">;
+    }
+  >;
 }
 
 export interface Role {

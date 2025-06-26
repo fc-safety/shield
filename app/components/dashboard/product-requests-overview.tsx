@@ -303,7 +303,11 @@ function ProductRequestsSummary({
             <div className="flex items-center gap-x-2 text-sm sm:text-base">
               <h5 className="font-semibold">{humanize(status)}</h5>
               <h6 className="text-muted-foreground">
-                ({((count / productRequests.length) * 100).toFixed(0)}%)
+                (
+                {productRequests.length > 0
+                  ? ((count / productRequests.length) * 100).toFixed(0)
+                  : 0}
+                %)
               </h6>
             </div>
             <div className="flex-1"></div>

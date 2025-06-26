@@ -62,32 +62,50 @@ export const useAppState = () => {
   return context;
 };
 
-export const useAppStateValue = <
-  K extends keyof AppState,
-  T extends NonNullable<AppState[K]>,
-  U extends T | undefined
->(
+export function useAppStateValue<K extends keyof AppState>(
   key: K,
-  defaultValue: U
-) => {
+  defaultValue: NonNullable<AppState[K]>
+): [
+  NonNullable<AppState[K]>,
+  (
+    value:
+      | NonNullable<AppState[K]>
+      | ((prev: NonNullable<AppState[K]>) => AppState[K])
+  ) => void
+];
+export function useAppStateValue<K extends keyof AppState>(
+  key: K
+): [
+  AppState[K],
+  (value: AppState[K] | ((prev: AppState[K]) => AppState[K])) => void
+];
+export function useAppStateValue<K extends keyof AppState>(
+  key: K,
+  defaultValue?: AppState[K]
+): [
+  AppState[K],
+  (value: AppState[K] | ((prev: AppState[K]) => AppState[K])) => void
+] {
   const context = useContext(AppStateContext);
   if (!context) {
     throw new Error("useAppState must be used within a AppStateProvider");
   }
 
   const setAppState = useCallback(
-    (appStateSetter: T | ((appState: T) => T)) => {
+    (
+      appStateSetter: AppState[K] | ((appState: AppState[K]) => AppState[K])
+    ) => {
       const setter =
         typeof appStateSetter === "function"
           ? (prev: Partial<AppState>) => ({
               ...prev,
-              [key]: appStateSetter(prev[key] as T),
+              [key]: appStateSetter(prev[key] ?? (defaultValue as AppState[K])),
             })
           : { [key]: appStateSetter };
       context.setAppState(setter);
     },
-    [context]
+    [context, key]
   );
 
   return [context.appState[key] ?? defaultValue, setAppState] as const;
-};
+}

@@ -6,16 +6,12 @@ import {
   FileSpreadsheet,
   Table,
 } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router";
-import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
-import DateRangeSelect, {
-  QUICK_DATE_RANGES,
-  type QuickRangeId,
-} from "~/components/date-range-select";
+import DateRangeSelect from "~/components/date-range-select";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -25,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { useAppStateValue } from "~/contexts/app-state-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type {
   DateRangeSupport,
@@ -34,6 +31,7 @@ import type {
 import type { Route } from "./+types/index";
 import type { QuickRangeIdFromDateRangeSupport } from "./types";
 import { downloadReportCsv } from "./utils";
+import { getDefaultDateRange, getDefaultQuickRangeId } from "./utils/core";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   return api.reports.list(request).then((reports) => ({
@@ -41,43 +39,38 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }));
 };
 
-const getDefaultQuickRangeId = (
-  dateRangeSupport: DateRangeSupport
-): QuickRangeIdFromDateRangeSupport<DateRangeSupport> => {
-  switch (dateRangeSupport) {
-    case "FUTURE":
-      return "next-30-days";
-    default:
-      return "last-90-days";
-  }
-};
-
-const getDefaultDateRange = (quickRangeId: QuickRangeId<"both">) => {
-  const quickRange =
-    QUICK_DATE_RANGES.find((range) => range.id === quickRangeId) ??
-    QUICK_DATE_RANGES[0];
-  return {
-    from: quickRange.value.from(),
-    to: quickRange.value.to(),
-    quickRangeId,
-  };
-};
-
 export default function ReportsIndex({
   loaderData: { reports },
 }: Route.ComponentProps) {
   const { fetch } = useAuthenticatedFetch();
 
-  const [reportDateRanges, setReportDateRanges] = useImmer<
-    Record<
-      string,
-      {
-        from: string;
-        to: string;
-        quickRangeId?: QuickRangeId<"both">;
+  const [reportDateRanges, setReportDateRanges] = useAppStateValue(
+    "reports_dateRanges",
+    {}
+  );
+
+  useEffect(() => {
+    if (reports.every((report) => reportDateRanges[report.id])) {
+      return;
+    }
+
+    const newDateRanges = { ...reportDateRanges };
+    for (const report of reports) {
+      if (reportDateRanges[report.id]) {
+        continue;
       }
-    >
-  >({});
+
+      const defaultQuickRangeId = getDefaultQuickRangeId(
+        report.dateRangeSupport
+      );
+      newDateRanges[report.id] = {
+        ...getDefaultDateRange(getDefaultQuickRangeId(report.dateRangeSupport)),
+        quickRangeId: defaultQuickRangeId,
+      };
+    }
+
+    setReportDateRanges(newDateRanges);
+  }, [reports, reportDateRanges, setReportDateRanges]);
 
   const getReportQuery = useCallback(
     (reportId: string, dateRangeSupport: DateRangeSupport) => {
@@ -167,16 +160,17 @@ export default function ReportsIndex({
                   return;
                 }
 
-                setReportDateRanges((draft) => {
-                  draft[report.id] = {
+                setReportDateRanges((draft) => ({
+                  ...draft,
+                  [report.id]: {
                     from: newDateRange.from,
                     to: newDateRange.to ?? dateRange.to,
                     quickRangeId:
                       quickRangeId as QuickRangeIdFromDateRangeSupport<
                         typeof report.dateRangeSupport
                       >,
-                  };
-                });
+                  },
+                }));
               }}
               defaultQuickRangeId={quickRangeId}
               past={
