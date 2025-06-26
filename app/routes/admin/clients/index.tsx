@@ -9,7 +9,7 @@ import {
   Trash,
 } from "lucide-react";
 import { useMemo } from "react";
-import { Link } from "react-router";
+import { Link, useRevalidator } from "react-router";
 import { api } from "~/.server/api";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import EditClientButton from "~/components/clients/edit-client-button";
@@ -34,6 +34,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client } from "~/lib/models";
 import { beautifyPhone } from "~/lib/utils";
 import type { Route } from "./+types/index";
+import MigrationAssistantButton from "./components/migration-assistant/migration-assistant-button";
 
 export function loader({ request }: Route.LoaderArgs) {
   return api.clients.list(request, { limit: 10000 }, { context: "admin" });
@@ -42,6 +43,7 @@ export function loader({ request }: Route.LoaderArgs) {
 export default function ClientsIndex({
   loaderData: clients,
 }: Route.ComponentProps) {
+  const { revalidate } = useRevalidator();
   const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete client",
   });
@@ -188,7 +190,13 @@ export default function ClientsIndex({
             columns={columns}
             data={clients.results}
             searchPlaceholder="Search clients..."
-            actions={[<EditClientButton key="add" />]}
+            actions={[
+              <EditClientButton key="add" />,
+              <MigrationAssistantButton
+                key="migration"
+                onComplete={() => revalidate()}
+              />,
+            ]}
           />
         </CardContent>
       </Card>
