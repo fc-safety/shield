@@ -15,7 +15,7 @@ import {
   type VisibilityState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { cn } from "~/lib/utils";
 import {
   Table,
@@ -166,6 +166,12 @@ function VirtualizedTableBody<TData>({
         : undefined,
     overscan: 5,
   });
+
+  useEffect(() => {
+    // Rows don't always recalculate on client side navigation, so we need to explicitly
+    // measure them on component mount.
+    rowVirtualizer.measure();
+  }, []);
 
   return (
     <TableBody

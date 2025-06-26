@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, Table } from "lucide-react";
 import { useCallback, useMemo, type ReactNode } from "react";
-import { useRevalidator } from "react-router";
 import { api } from "~/.server/api";
 import { getAppState } from "~/.server/sessions";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -78,7 +77,6 @@ export default function ReportDetails({
   loaderData: { report, defaultQuickRangeId, defaultDateRange },
 }: Route.ComponentProps) {
   const { fetch } = useAuthenticatedFetch();
-  const { revalidate } = useRevalidator();
 
   const [reportDateRanges, setReportDateRanges] = useAppStateValue(
     "reports_dateRanges",
@@ -145,24 +143,26 @@ export default function ReportDetails({
               : undefined
           }
           onValueChange={(dateRange, quickRangeId) => {
-            setReportDateRanges((draft) => {
-              if (dateRange) {
-                return {
-                  ...draft,
-                  [report.id]: {
-                    ...draft[report.id],
-                    from: dateRange.from,
-                    to: dateRange.to ?? "",
-                    quickRangeId,
-                  },
-                };
-              } else {
-                return Object.fromEntries(
-                  Object.entries(draft).filter(([key]) => key !== report.id)
-                ) as typeof draft;
-              }
-            });
-            revalidate();
+            setReportDateRanges(
+              (draft) => {
+                if (dateRange) {
+                  return {
+                    ...draft,
+                    [report.id]: {
+                      ...draft[report.id],
+                      from: dateRange.from,
+                      to: dateRange.to ?? "",
+                      quickRangeId,
+                    },
+                  };
+                } else {
+                  return Object.fromEntries(
+                    Object.entries(draft).filter(([key]) => key !== report.id)
+                  ) as typeof draft;
+                }
+              },
+              { revalidate: true }
+            );
           }}
           past={
             report.dateRangeSupport === "PAST" ||
@@ -176,13 +176,7 @@ export default function ReportDetails({
       );
     }
     return filters;
-  }, [
-    report,
-    reportDateRange,
-    setReportDateRanges,
-    defaultQuickRangeId,
-    revalidate,
-  ]);
+  }, [report, reportDateRange, setReportDateRanges, defaultQuickRangeId]);
 
   return (
     <>

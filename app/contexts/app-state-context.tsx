@@ -5,12 +5,18 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
+import { useRevalidator } from "react-router";
 import type { AppState } from "~/lib/types";
+
+type SetAppStateOptions = {
+  revalidate?: boolean;
+};
 
 const AppStateContext = createContext<{
   appState: AppState;
   setAppState: (
-    appState: Partial<AppState> | ((appState: AppState) => Partial<AppState>)
+    appState: Partial<AppState> | ((appState: AppState) => Partial<AppState>),
+    options?: SetAppStateOptions
   ) => Promise<void>;
 } | null>(null);
 
@@ -19,12 +25,14 @@ export const AppStateProvider = ({
   appState,
 }: PropsWithChildren<{ appState: AppState }>) => {
   const [localAppState, setLocalAppState] = useState(appState);
+  const { revalidate } = useRevalidator();
 
   const setAppState = useCallback(
     async (
       appStateSetter:
         | Partial<AppState>
-        | ((appState: AppState) => Partial<AppState>)
+        | ((appState: AppState) => Partial<AppState>),
+      options: SetAppStateOptions = {}
     ) => {
       const appStateToSet =
         typeof appStateSetter === "function"
@@ -43,6 +51,10 @@ export const AppStateProvider = ({
           "Content-Type": "application/json",
         },
       });
+
+      if (options.revalidate) {
+        revalidate();
+      }
     },
     [appState]
   );
@@ -70,21 +82,28 @@ export function useAppStateValue<K extends keyof AppState>(
   (
     value:
       | NonNullable<AppState[K]>
-      | ((prev: NonNullable<AppState[K]>) => AppState[K])
+      | ((prev: NonNullable<AppState[K]>) => AppState[K]),
+    options?: SetAppStateOptions
   ) => void
 ];
 export function useAppStateValue<K extends keyof AppState>(
   key: K
 ): [
   AppState[K],
-  (value: AppState[K] | ((prev: AppState[K]) => AppState[K])) => void
+  (
+    value: AppState[K] | ((prev: AppState[K]) => AppState[K]),
+    options?: SetAppStateOptions
+  ) => void
 ];
 export function useAppStateValue<K extends keyof AppState>(
   key: K,
   defaultValue?: AppState[K]
 ): [
   AppState[K],
-  (value: AppState[K] | ((prev: AppState[K]) => AppState[K])) => void
+  (
+    value: AppState[K] | ((prev: AppState[K]) => AppState[K]),
+    options?: SetAppStateOptions
+  ) => void
 ] {
   const context = useContext(AppStateContext);
   if (!context) {
@@ -93,7 +112,8 @@ export function useAppStateValue<K extends keyof AppState>(
 
   const setAppState = useCallback(
     (
-      appStateSetter: AppState[K] | ((appState: AppState[K]) => AppState[K])
+      appStateSetter: AppState[K] | ((appState: AppState[K]) => AppState[K]),
+      options?: SetAppStateOptions
     ) => {
       const setter =
         typeof appStateSetter === "function"
@@ -102,7 +122,7 @@ export function useAppStateValue<K extends keyof AppState>(
               [key]: appStateSetter(prev[key] ?? (defaultValue as AppState[K])),
             })
           : { [key]: appStateSetter };
-      context.setAppState(setter);
+      context.setAppState(setter, options);
     },
     [context, key]
   );
