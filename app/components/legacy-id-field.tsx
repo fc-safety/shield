@@ -24,7 +24,7 @@ export default function LegacyIdField({
   fieldName,
   label,
   description,
-  readOnly = true,
+  readOnly = false,
 }: LegacyIdFieldProps) {
   const { user } = useAuth();
   const userIsSuperAdmin = isSuperAdmin(user);
