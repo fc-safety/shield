@@ -18,6 +18,7 @@ import {
   createManufacturerSchema,
   updateManufacturerSchema,
 } from "~/lib/schema";
+import LegacyIdField from "../legacy-id-field";
 
 type TForm = z.infer<
   typeof createManufacturerSchema | typeof updateManufacturerSchema
@@ -92,6 +93,12 @@ export default function ManufacturerDetailsForm({
               <FormMessage />
             </FormItem>
           )}
+        />
+        <LegacyIdField
+          form={form}
+          fieldName="legacyManufacturerId"
+          label="Legacy Manufacturer ID"
+          description="Manufacturer ID from the legacy Shield system"
         />
         <FormField
           control={form.control}

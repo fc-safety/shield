@@ -20,6 +20,7 @@ import {
   updateProductCategorySchema,
 } from "~/lib/schema";
 import IconSelector from "../icons/icon-selector";
+import LegacyIdField from "../legacy-id-field";
 
 type TForm = z.infer<
   typeof createProductCategorySchema | typeof updateProductCategorySchema
@@ -107,6 +108,12 @@ export default function ProductCategoryDetailsForm({
               <FormMessage />
             </FormItem>
           )}
+        />
+        <LegacyIdField
+          form={form}
+          fieldName="legacyCategoryId"
+          label="Legacy Category ID"
+          description="Category ID from the legacy Shield system"
         />
         <FormField
           control={form.control}

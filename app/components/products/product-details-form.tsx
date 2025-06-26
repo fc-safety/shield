@@ -28,6 +28,7 @@ import { buildPath } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { slugify } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
+import LegacyIdField from "../legacy-id-field";
 import AnsiCategoryCombobox from "./ansi-category-combobox";
 import ManufacturerSelector from "./manufacturer-selector";
 import { ProductImage } from "./product-card";
@@ -233,6 +234,21 @@ export default function ProductDetailsForm({
             </FormItem>
           )}
         />
+        {productType === "PRIMARY" ? (
+          <LegacyIdField
+            form={form}
+            fieldName="legacyProductId"
+            label="Legacy Product ID"
+            description="Product ID from the legacy Shield system"
+          />
+        ) : (
+          <LegacyIdField
+            form={form}
+            fieldName="legacyConsumableId"
+            label="Legacy Consumable ID"
+            description="Consumable ID from the legacy Shield system"
+          />
+        )}
         {!parentProduct && (
           <>
             {!productCategory && (

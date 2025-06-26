@@ -48,6 +48,7 @@ import {
 import type { ResponseValueImage } from "~/lib/types";
 import { cn, humanize } from "~/lib/utils";
 import HelpPopover from "../help-popover";
+import LegacyIdField from "../legacy-id-field";
 import { Checkbox } from "../ui/checkbox";
 import AssetQuestionResponseTypeInput from "./asset-question-response-input";
 import ConsumableCombobox from "./consumable-combobox";
@@ -307,6 +308,12 @@ export default function AssetQuestionDetailForm({
               <FormMessage />
             </FormItem>
           )}
+        />
+        <LegacyIdField
+          form={form}
+          fieldName="legacyQuestionId"
+          label="Legacy Question ID"
+          description="Question ID from the legacy Shield system"
         />
         <FormField
           control={form.control}

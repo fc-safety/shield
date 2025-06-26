@@ -52,9 +52,11 @@ export default function RouteDetailsForm({
   const isNew = !route;
 
   const form = useForm<TForm>({
-    resolver: isNew
-      ? createInspectionRouteSchemaResolver
-      : updateInspectionRouteSchemaResolver,
+    resolver: zodResolver(
+      (isNew
+        ? createInspectionRouteSchema
+        : updateInspectionRouteSchema) as z.Schema<TForm>
+    ),
     values: isNew
       ? FORM_DEFAULTS
       : {

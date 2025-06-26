@@ -12,6 +12,7 @@ import { hasMultiSiteVisibility, isGlobalAdmin } from "~/lib/users";
 import { isEmpty } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
+import LegacyIdField from "../legacy-id-field";
 import ProductSelector from "../products/product-selector";
 import {
   FormControl,
@@ -147,6 +148,12 @@ export default function AssetDetailsForm({
               <FormMessage />
             </FormItem>
           )}
+        />
+        <LegacyIdField
+          form={form}
+          fieldName="legacyAssetId"
+          label="Legacy Asset ID"
+          description="Asset ID from the legacy Shield system"
         />
         <FormField
           control={form.control}

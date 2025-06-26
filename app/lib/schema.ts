@@ -91,6 +91,7 @@ export const fromAddressSchema = z.union([
 ]);
 
 export const createClientSchema = z.object({
+  legacyClientId: z.string().nullable().optional(),
   externalId: z
     .string()
     .length(24)
@@ -125,6 +126,8 @@ export const updateClientSchemaResolver = zodResolver(updateClientSchema);
 
 export const baseSiteSchema = z.object({
   id: z.string().optional(),
+  legacySiteId: z.string().nullable().optional(),
+  legacyGroupId: z.string().nullable().optional(),
   externalId: z
     .string()
     .length(24)
@@ -198,6 +201,7 @@ export const getSiteSchema = ({
 };
 
 export const createUserSchema = z.object({
+  legacyUserId: z.string().nullable().optional(),
   active: z.boolean().optional(),
   firstName: z.string().nonempty(),
   lastName: z.string().nonempty(),
@@ -221,6 +225,7 @@ export const assignUserRoleSchemaResolver = zodResolver(assignUserRoleSchema);
 
 export const createProductCategorySchema = z.object({
   id: z.string().optional(),
+  legacyCategoryId: z.string().nullable().optional(),
   active: z.boolean(),
   name: z.string().nonempty(),
   shortName: z.string().optional(),
@@ -242,6 +247,7 @@ export const updateProductCategorySchemaResolver = zodResolver(
 
 export const createManufacturerSchema = z.object({
   id: z.string().optional(),
+  legacyManufacturerId: z.string().nullable().optional(),
   active: z.boolean(),
   name: z
     .string()
@@ -280,6 +286,8 @@ export const updateAnsiCategorySchema = createAnsiCategorySchema
 
 export const createProductSchema = z.object({
   id: z.string().optional(),
+  legacyProductId: z.string().nullable().optional(),
+  legacyConsumableId: z.string().nullable().optional(),
   active: z.boolean().default(true),
   manufacturer: z.object({
     connect: z.object({
@@ -312,6 +320,7 @@ export const updateProductSchemaResolver = zodResolver(updateProductSchema);
 
 export const createTagSchema = z.object({
   id: z.string().optional(),
+  legacyTagId: z.string().nullable().optional(),
   serialNumber: z.string().nonempty(),
   externalId: z.string().optional(),
   asset: optionalConnectSchema,
@@ -342,6 +351,7 @@ export const registerTagSchema = z.object({
 export const registerTagSchemaResolver = zodResolver(registerTagSchema);
 
 export const createAssetSchema = z.object({
+  legacyAssetId: z.string().nullable().optional(),
   active: z.boolean(),
   name: z.string().nonempty(),
   location: z.string().nonempty(),
@@ -364,6 +374,7 @@ export const updateAssetSchema = createAssetSchema
 export const updateAssetSchemaResolver = zodResolver(updateAssetSchema);
 
 export const createConsumableSchema = z.object({
+  legacyInventoryId: z.string().nullable().optional(),
   asset: z.object({
     connect: z.object({
       id: z.string(),
@@ -395,6 +406,7 @@ export const createProductRequestItemSchema = z.object({
 });
 
 export const createProductRequestSchema = z.object({
+  legacyRequestId: z.string().nullable().optional(),
   productRequestItems: z.object({
     createMany: z.object({
       data: z.array(createProductRequestItemSchema).min(1),
@@ -466,6 +478,7 @@ export const createConsumableConfigSchema = z.object({
 });
 
 export const createAssetQuestionSchema = z.object({
+  legacyQuestionId: z.string().nullable().optional(),
   active: z.boolean().default(true),
   type: z.enum(AssetQuestionTypes),
   required: z.boolean().default(false),
@@ -539,6 +552,7 @@ export const createAssetQuestionResponseSchemaResolver = zodResolver(
 );
 
 export const createInspectionSchema = z.object({
+  legacyLogId: z.string().nullable().optional(),
   asset: z.object({
     connect: z.object({
       id: z.string().nonempty(),
