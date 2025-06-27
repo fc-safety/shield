@@ -139,13 +139,11 @@ export default function ProductDetailsForm({
 
   const [image, setImage] = useState<File | null>(null);
   const handleImageChange =
-    (onChange: (value: unknown) => void) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
+    (onChange: (value: unknown) => void) => (file: File | null) => {
       if (file) {
         setImage(file);
       }
-      onChange(e.target.value);
+      onChange(file?.name);
     };
 
   const { mutate: uploadImage, isPending: isUploadingImage } = useMutation<
@@ -384,15 +382,8 @@ export default function ProductDetailsForm({
                 />
               )}
               <FormControl>
-                {/* <Input
-                  {...field}
-                  onChange={handleImageChange(onChange)}
-                  type="file"
-                  accept="image/*"
-                /> */}
                 <ImageUploadInput
-                  onImageChange={setImage}
-                  onError={(e) => console.error(e)}
+                  onImageChange={handleImageChange(onChange)}
                   accept="image/*"
                   className="w-full"
                 />
