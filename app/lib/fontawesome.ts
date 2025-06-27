@@ -7,7 +7,7 @@ export const searchIcons = async (query: string) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      query: `query { search (version: "${FONT_AWESOME_VERSION}", query: "${query}", first: 20) { id, label, familyStylesByLicense { free { style } } }}`,
+      query: `query { search (version: "${FONT_AWESOME_VERSION}", query: "${query}", first: 20) { id, label }}`,
     }),
   })
     .then(
@@ -22,9 +22,5 @@ export const searchIcons = async (query: string) => {
           };
         }>
     )
-    .then((data) =>
-      data.data.search.filter(
-        ({ familyStylesByLicense }) => familyStylesByLicense.free.length > 0
-      )
-    );
+    .then((data) => data.data.search);
 };
