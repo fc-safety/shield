@@ -22,6 +22,7 @@ import {
 } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
+import { config } from "./.server/config";
 import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
@@ -31,7 +32,6 @@ import { Toaster } from "./components/ui/sonner";
 import { AppStateProvider } from "./contexts/app-state-context";
 import QueryContext from "./contexts/query-context";
 import globalStyles from "./global.css?url";
-import { FONT_AWESOME_VERSION } from "./lib/constants";
 import styles from "./tailwind.css?url";
 
 export const unstable_middleware = [
@@ -49,6 +49,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return data({
     theme: getTheme(),
     appState: appStateSession.data,
+    fontAwesomeKitId: config.FONT_AWESOME_KIT_ID,
   });
 }
 
@@ -65,14 +66,6 @@ export const links: Route.LinksFunction = () => [
   // },
   { rel: "stylesheet", href: styles },
   { rel: "stylesheet", href: globalStyles },
-  {
-    rel: "stylesheet",
-    href: `https://cdnjs.cloudflare.com/ajax/libs/font-awesome/${FONT_AWESOME_VERSION}/css/all.min.css`,
-    integrity:
-      "sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==",
-    crossOrigin: "anonymous",
-    referrerPolicy: "no-referrer",
-  },
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   // Fallback to png if svg is not supported
   {
@@ -165,6 +158,12 @@ function BaseLayout({ children }: PropsWithChildren) {
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
         <Links />
+
+        {/* Font Awesome Kit */}
+        <script
+          src={`https://kit.fontawesome.com/${data?.fontAwesomeKitId ?? ""}.js`}
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="bg-background">
         {children}

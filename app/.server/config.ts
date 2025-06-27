@@ -37,6 +37,9 @@ const configSchema = z.object({
   AWS_PRIVATE_CDN_KEY_PAIR_ID: z.string(),
   AWS_PRIVATE_CDN_PRIVATE_KEY: z.string(),
   AWS_PRIVATE_OBJECT_EXPIRATION_SECONDS: z.coerce.number().default(60 * 60),
+
+  // Font Awesome
+  FONT_AWESOME_KIT_ID: z.string().default("02452665a9"),
 });
 
 export const config = configSchema.parse(process.env);
