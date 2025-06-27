@@ -28,7 +28,9 @@ import { buildPath } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { slugify } from "~/lib/utils";
 import ClientCombobox from "../clients/client-combobox";
+import { ImageUploadInput } from "../image-upload-input";
 import LegacyIdField from "../legacy-id-field";
+import { Label } from "../ui/label";
 import AnsiCategoryCombobox from "./ansi-category-combobox";
 import ManufacturerSelector from "./manufacturer-selector";
 import { ProductImage } from "./product-card";
@@ -373,7 +375,7 @@ export default function ProductDetailsForm({
           name="imageUrl"
           render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
-              <FormLabel>Image</FormLabel>
+              <Label>Image</Label>
               {(image || value) && (
                 <ProductImage
                   imageUrl={image?.name ? URL.createObjectURL(image) : value}
@@ -382,11 +384,17 @@ export default function ProductDetailsForm({
                 />
               )}
               <FormControl>
-                <Input
+                {/* <Input
                   {...field}
                   onChange={handleImageChange(onChange)}
                   type="file"
                   accept="image/*"
+                /> */}
+                <ImageUploadInput
+                  onImageChange={setImage}
+                  onError={(e) => console.error(e)}
+                  accept="image/*"
+                  className="w-full"
                 />
               </FormControl>
               <FormMessage />
