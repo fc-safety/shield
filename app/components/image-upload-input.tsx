@@ -42,7 +42,7 @@ const ImageUploadInput = forwardRef<HTMLInputElement, ImageUploadInputProps>(
 
     const handleUrlSubmit = async () => {
       let cleanedUrl = url.trim();
-      if (!cleanedUrl.match(/^[a-z]:\/\//)) {
+      if (!cleanedUrl.match(/^[a-z]+:\/\//)) {
         cleanedUrl = `https://${cleanedUrl}`;
       }
 
