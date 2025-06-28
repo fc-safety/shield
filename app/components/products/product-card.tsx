@@ -55,6 +55,11 @@ export default function ProductCard({
                   ) : (
                     <span>{product.name}</span>
                   )}
+                  {product.sku && (
+                    <span className="text-xs font-light text-muted-foreground">
+                      SKU: {product.sku}
+                    </span>
+                  )}
                 </div>
                 {renderEditButton?.()}
               </CardTitle>

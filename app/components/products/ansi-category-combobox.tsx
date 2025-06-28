@@ -4,7 +4,6 @@ import { useFetcher } from "react-router";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AnsiCategory, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
-import Icon from "../icons/icon";
 import { ResponsiveCombobox } from "../responsive-combobox";
 import EditAnsiCategoryButton from "./edit-ansi-category-button";
 
@@ -108,11 +107,21 @@ export function AnsiCategoryDisplay({
     <div className={cn(className)}>
       <div className="flex items-center gap-2" title={ansiCategory.name}>
         {ansiCategory.icon ? (
-          <Icon
-            iconId={ansiCategory.icon}
-            color={ansiCategory.color}
-            className="text-lg"
-          />
+          <div
+            style={
+              {
+                "--ansi-bg": ansiCategory.color ?? "hsl(var(--secondary))",
+                "--ansi-icon-color": ansiCategory.color
+                  ? "hsl(var(--background))"
+                  : "hsl(var(--secondary-foreground))",
+              } as React.CSSProperties
+            }
+            className={cn(
+              "text-sm text-[var(--ansi-icon-color)] bg-[var(--ansi-bg)] rounded-sm size-6 flex items-center justify-center"
+            )}
+          >
+            <i className={`fa-solid fa-${ansiCategory.icon}`} />
+          </div>
         ) : (
           <div
             className="size-4 rounded-sm"

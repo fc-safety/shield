@@ -386,6 +386,7 @@ export default function ProductDetailsForm({
                   onImageChange={handleImageChange(onChange)}
                   accept="image/*"
                   className="w-full"
+                  {...field}
                 />
               </FormControl>
               <FormMessage />

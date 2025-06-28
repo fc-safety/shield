@@ -20,6 +20,7 @@ import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
+import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
 import CustomTag from "~/components/products/custom-tag";
 import EditAnsiCategoryButton from "~/components/products/edit-ansi-category-button";
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
@@ -379,18 +380,8 @@ function AnsiCategoriesCard({
                   />
                 ),
                 cell: ({ row, getValue }) => {
-                  const icon = getValue() as string;
-                  return icon ? (
-                    <Icon
-                      iconId={icon}
-                      color={row.original.color}
-                      className="text-lg"
-                    />
-                  ) : (
-                    <div
-                      className="size-5 rounded-sm"
-                      style={{ backgroundColor: row.original.color ?? "gray" }}
-                    />
+                  return (
+                    <AnsiCategoryDisplay ansiCategory={row.original} iconOnly />
                   );
                 },
               },
