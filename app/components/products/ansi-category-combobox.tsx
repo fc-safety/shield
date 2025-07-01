@@ -124,7 +124,7 @@ export function AnsiCategoryDisplay({
           </div>
         ) : (
           <div
-            className="size-4 rounded-sm"
+            className="size-6 rounded-sm"
             style={{ backgroundColor: ansiCategory.color ?? "gray" }}
           />
         )}
