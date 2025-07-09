@@ -331,7 +331,9 @@ export default function ProductDetailsForm({
                     <AnsiCategoryCombobox
                       value={field.value?.connect?.id}
                       onValueChange={(id) =>
-                        field.onChange({ connect: { id } })
+                        field.onChange(
+                          id ? { connect: { id } } : { disconnect: true }
+                        )
                       }
                       onBlur={field.onBlur}
                       className="flex w-full"
