@@ -48,21 +48,20 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  const [productCategory, genericManufacturer] = await Promise.all([
+  const [productCategory] = await Promise.all([
     ApiFetcher.create(request, "/product-categories/:id", {
       id,
     }).get<ProductCategory>(),
-    ApiFetcher.create(request, "/manufacturers/generic").get<Manufacturer>(),
+    // ApiFetcher.create(request, "/manufacturers/generic").get<Manufacturer>(),
   ]);
 
   return {
     productCategory,
-    genericManufacturer,
+    // genericManufacturer,
     optimizedProductImageUrls: new Map(
       (productCategory.products ?? [])
         .filter(
-          (p) =>
-            p.type === "PRIMARY" || p.manufacturerId === genericManufacturer.id
+          (p) => p.type === "PRIMARY" // || p.manufacturerId === genericManufacturer.id
         )
         .filter(
           (
@@ -82,7 +81,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 export default function ProductCategoryDetails({
   loaderData: {
     productCategory,
-    genericManufacturer,
+    // genericManufacturer,
     optimizedProductImageUrls,
   },
 }: Route.ComponentProps) {

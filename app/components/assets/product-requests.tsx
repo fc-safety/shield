@@ -16,7 +16,6 @@ import {
 } from "~/components/ui/form";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
-import { GENERIC_MANUFACTURER_NAME } from "~/lib/constants";
 import type {
   AnsiCategory,
   Product,
@@ -154,24 +153,25 @@ function ProductRequestForm({
   useEffect(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
       fetcher.load(
-        buildPath("/api/proxy/products/", {
-          OR: [
-            {
-              parentProduct: {
-                id: parentProductId,
-              },
+        buildPath(
+          "/api/proxy/products/",
+          // OR: [
+          {
+            parentProduct: {
+              id: parentProductId,
             },
-            {
-              manufacturer: {
-                name: GENERIC_MANUFACTURER_NAME,
-                parentProductId: "_NULL",
-              },
-              productCategory: {
-                id: productCategoryId,
-              },
-            },
-          ],
-        })
+          }
+          // {
+          //   manufacturer: {
+          //     name: GENERIC_MANUFACTURER_NAME,
+          //     parentProductId: "_NULL",
+          //   },
+          //   productCategory: {
+          //     id: productCategoryId,
+          //   },
+          // },
+          // ],
+        )
       );
     }
   }, [fetcher, parentProductId, productCategoryId]);
