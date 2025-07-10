@@ -1,6 +1,5 @@
-import { BANNER_LOGO_LIGHT_URL } from "~/lib/constants";
+import { useOptimizedImageUrls } from "~/contexts/optimized-image-context";
 
-import { BANNER_LOGO_DARK_URL } from "~/lib/constants";
 import { cn } from "~/lib/utils";
 
 export default function ShieldBannerLogo({
@@ -8,15 +7,20 @@ export default function ShieldBannerLogo({
 }: {
   className?: string;
 }) {
+  const {
+    bannerLogoDark: { h24px: bannerLogoDarkUrl },
+    bannerLogoLight: { h24px: bannerLogoLightUrl },
+  } = useOptimizedImageUrls();
+
   return (
     <>
       <img
-        src={BANNER_LOGO_LIGHT_URL}
+        src={bannerLogoLightUrl}
         alt="FC Safety Shield"
         className={cn("w-64 dark:hidden", className)}
       />
       <img
-        src={BANNER_LOGO_DARK_URL}
+        src={bannerLogoDarkUrl}
         alt="FC Safety Shield"
         className={cn("w-64 hidden dark:block", className)}
       />{" "}

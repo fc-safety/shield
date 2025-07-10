@@ -23,6 +23,7 @@ import {
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import { config } from "./.server/config";
+import { buildImageProxyUrl } from "./.server/images";
 import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
@@ -30,8 +31,13 @@ import Header from "./components/header";
 import { Button } from "./components/ui/button";
 import { Toaster } from "./components/ui/sonner";
 import { AppStateProvider } from "./contexts/app-state-context";
+import {
+  OptimizedImageProvider,
+  type OptimizedImageUrls,
+} from "./contexts/optimized-image-context";
 import QueryContext from "./contexts/query-context";
 import globalStyles from "./global.css?url";
+import { BANNER_LOGO_DARK_URL, BANNER_LOGO_LIGHT_URL } from "./lib/constants";
 import styles from "./tailwind.css?url";
 
 export const unstable_middleware = [
@@ -46,10 +52,21 @@ export async function loader({ request }: Route.LoaderArgs) {
   const appStateSession = await appStateSessionStorage.getSession(
     request.headers.get("cookie")
   );
+
+  const optimizedImageUrls: OptimizedImageUrls = {
+    bannerLogoLight: {
+      h24px: buildImageProxyUrl(BANNER_LOGO_LIGHT_URL, ["h:24"]),
+    },
+    bannerLogoDark: {
+      h24px: buildImageProxyUrl(BANNER_LOGO_DARK_URL, ["h:24"]),
+    },
+  };
+
   return data({
     theme: getTheme(),
     appState: appStateSession.data,
     fontAwesomeKitId: config.FONT_AWESOME_KIT_ID,
+    optimizedImageUrls,
   });
 }
 
@@ -137,11 +154,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       specifiedTheme={data?.theme ?? null}
       themeAction="/action/set-theme"
     >
-      <AppStateProvider appState={data?.appState ?? {}}>
-        <QueryContext>
-          <BaseLayout>{children}</BaseLayout>
-        </QueryContext>
-      </AppStateProvider>
+      <OptimizedImageProvider optimizedImageUrls={data!.optimizedImageUrls}>
+        <AppStateProvider appState={data?.appState ?? {}}>
+          <QueryContext>
+            <BaseLayout>{children}</BaseLayout>
+          </QueryContext>
+        </AppStateProvider>
+      </OptimizedImageProvider>
     </ThemeProvider>
   );
 }

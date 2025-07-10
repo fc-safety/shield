@@ -1,5 +1,5 @@
 import { Link, useMatches } from "react-router";
-import { BANNER_LOGO_DARK_URL, BANNER_LOGO_LIGHT_URL } from "~/lib/constants";
+import { useOptimizedImageUrls } from "~/contexts/optimized-image-context";
 import { cn, validateBreadcrumb } from "~/lib/utils";
 import { BreadcrumbResponsive } from "./breadcrumb-responsive";
 import { ModeToggle } from "./mode-toggle";
@@ -21,6 +21,11 @@ export default function Header({
 }) {
   const matches = useMatches();
 
+  const {
+    bannerLogoDark: { h24px: bannerLogoDarkUrl },
+    bannerLogoLight: { h24px: bannerLogoLightUrl },
+  } = useOptimizedImageUrls();
+
   return (
     <header
       className={cn(
@@ -33,12 +38,12 @@ export default function Header({
         {showBannerLogo && (
           <Link to={homeTo}>
             <img
-              src={BANNER_LOGO_LIGHT_URL}
+              src={bannerLogoLightUrl}
               alt=""
               className="h-5 w-auto object-contain dark:hidden"
             />
             <img
-              src={BANNER_LOGO_DARK_URL}
+              src={bannerLogoDarkUrl}
               alt=""
               className="h-5 w-auto object-contain hidden dark:block"
             />

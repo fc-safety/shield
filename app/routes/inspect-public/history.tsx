@@ -18,6 +18,7 @@ import {
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { defaultDataGetter, FetchOptions } from "~/.server/api-utils";
+import { buildImageProxyUrl } from "~/.server/images";
 import { validateInspectionSession } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
 import { Button } from "~/components/ui/button";
@@ -48,11 +49,23 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     asset: Asset | null;
     unresolvedAlerts: Alert[];
     inspections: Inspection[];
-  }>(fetch(url, options));
+  }>(fetch(url, options)).then((results) => ({
+    ...results,
+    processedProductImageUrl:
+      results.asset?.product.imageUrl &&
+      buildImageProxyUrl(results.asset.product.imageUrl, [
+        "rs:fit:160:160:1:1",
+      ]),
+  }));
 };
 
 export default function PublicInspectHistoryView({
-  loaderData: { asset, inspections, unresolvedAlerts },
+  loaderData: {
+    asset,
+    inspections,
+    unresolvedAlerts,
+    processedProductImageUrl,
+  },
 }: Route.ComponentProps) {
   if (!asset) {
     return (
@@ -75,6 +88,7 @@ export default function PublicInspectHistoryView({
       asset={asset}
       inspections={inspections}
       unresolvedAlerts={unresolvedAlerts}
+      processedProductImageUrl={processedProductImageUrl}
     />
   );
 }
@@ -83,10 +97,12 @@ function PublicInspectHistory({
   asset,
   inspections,
   unresolvedAlerts,
+  processedProductImageUrl,
 }: {
   asset: Asset;
   inspections: Inspection[];
   unresolvedAlerts: Alert[];
+  processedProductImageUrl: string | null | undefined;
 }) {
   const columns = useMemo(
     (): ColumnDef<Inspection>[] => [
@@ -164,7 +180,10 @@ function PublicInspectHistory({
 
   return (
     <div className="w-full max-w-md flex flex-col items-stretch gap-4">
-      <AssetCard asset={asset} />
+      <AssetCard
+        asset={asset}
+        processedProductImageUrl={processedProductImageUrl}
+      />
 
       {unresolvedAlerts.length > 0 && (
         <Card>

@@ -61,6 +61,7 @@ export default [
     route("inspections/:id", "./routes/api/inspections.ts"),
     route("proxy/*", "./routes/api/proxy.ts"),
     route("image-upload-url", "./routes/api/image-upload-url.ts"),
+    route("image-proxy-url", "./routes/api/image-proxy-url.ts"),
   ]),
 
   // App Routes

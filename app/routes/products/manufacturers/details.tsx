@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { Factory, FireExtinguisher, Pencil } from "lucide-react";
 import { type UIMatch } from "react-router";
 import { api } from "~/.server/api";
+import { buildImageProxyUrl } from "~/.server/images";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
@@ -40,12 +41,26 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       canEdit:
         isGlobalAdmin(user) ||
         manufacturer.client?.externalId === user.clientId,
+      optimizedProductImageUrls: new Map(
+        (manufacturer.products ?? [])
+          .filter(
+            (
+              p
+            ): p is typeof p & {
+              imageUrl: NonNullable<(typeof p)["imageUrl"]>;
+            } => !!p.imageUrl
+          )
+          .map((p) => [
+            p.id,
+            buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"]),
+          ])
+      ),
     };
   });
 };
 
 export default function ProductManufacturerDetails({
-  loaderData: { manufacturer },
+  loaderData: { manufacturer, optimizedProductImageUrls },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canUpdate =
@@ -140,6 +155,7 @@ export default function ProductManufacturerDetails({
                 }}
                 navigateTo={`/products/all/${product.id}`}
                 displayManufacturer={false}
+                optimizedImageUrl={optimizedProductImageUrls.get(product.id)}
               />
             ))}
           </div>

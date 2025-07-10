@@ -20,6 +20,7 @@ import type { z } from "zod";
 import { api } from "~/.server/api";
 import { catchResponse } from "~/.server/api-utils";
 import { guard } from "~/.server/guard";
+import { buildImageProxyUrl } from "~/.server/images";
 import {
   fetchActiveInspectionRouteContext,
   validateInspectionSession,
@@ -177,6 +178,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     resetSession: action === "reset-session",
   }).then((result) => ({
     tag,
+    processedProductImageUrl:
+      tag.asset?.product.imageUrl &&
+      buildImageProxyUrl(tag.asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
     ...result,
   }));
 };
@@ -203,7 +207,12 @@ const onlyInspectionQuestions = (questions: AssetQuestion[] | undefined) =>
   (questions ?? []).filter((question) => question.type === "INSPECTION");
 
 export default function InspectIndex({
-  loaderData: { tag, activeOrRecentlyExpiredSessions, matchingRoutes },
+  loaderData: {
+    tag,
+    processedProductImageUrl,
+    activeOrRecentlyExpiredSessions,
+    matchingRoutes,
+  },
 }: Route.ComponentProps) {
   if (tag.asset) {
     return (
@@ -212,6 +221,7 @@ export default function InspectIndex({
         asset={tag.asset}
         activeOrRecentlyExpiredSessions={activeOrRecentlyExpiredSessions}
         matchingRoutes={matchingRoutes}
+        processedProductImageUrl={processedProductImageUrl}
       />
     );
   }
@@ -234,11 +244,13 @@ function InspectionPage({
   asset,
   activeOrRecentlyExpiredSessions,
   matchingRoutes,
+  processedProductImageUrl,
 }: {
   tag: Tag;
   asset: NonNullable<Tag["asset"]>;
   activeOrRecentlyExpiredSessions: InspectionSession[] | null | undefined;
   matchingRoutes: InspectionRoute[] | null | undefined;
+  processedProductImageUrl: string | null | undefined;
 }) {
   const questions = useMemo(
     () =>
@@ -371,6 +383,7 @@ function InspectionPage({
             ...asset,
             tag,
           }}
+          processedProductImageUrl={processedProductImageUrl}
         />
         <Card>
           <CardHeader>

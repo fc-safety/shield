@@ -40,6 +40,11 @@ const configSchema = z.object({
 
   // Font Awesome
   FONT_AWESOME_KIT_ID: z.string().default("02452665a9"),
+
+  // Image Processing
+  IMAGE_PROCESSING_CDN_HOST: z.string(),
+  IMAGE_PROCESSING_KEY: z.string(),
+  IMAGE_PROCESSING_SALT: z.string(),
 });
 
 export const config = configSchema.parse(process.env);

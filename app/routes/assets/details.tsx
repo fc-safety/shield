@@ -22,6 +22,7 @@ import {
 import { useMemo, type PropsWithChildren } from "react";
 import { Link, type UIMatch } from "react-router";
 import { ApiFetcher } from "~/.server/api-utils";
+import { buildImageProxyUrl } from "~/.server/images";
 import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
@@ -98,11 +99,14 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return {
     asset,
     defaultTab: getSearchParam(request, "tab") ?? "consumables",
+    processedProductImageUrl:
+      asset.product.imageUrl &&
+      buildImageProxyUrl(asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
   };
 };
 
 export default function AssetDetails({
-  loaderData: { asset, defaultTab },
+  loaderData: { asset, defaultTab, processedProductImageUrl },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canUpdate = can(user, "update", "assets");
@@ -281,7 +285,10 @@ export default function AssetDetails({
             </div>
             <div className="grid gap-4">
               <Label>Product</Label>
-              <ProductCard product={asset.product} />
+              <ProductCard
+                product={asset.product}
+                optimizedImageUrl={processedProductImageUrl}
+              />
             </div>
             <div className="grid gap-4">
               <Label>Tag</Label>
