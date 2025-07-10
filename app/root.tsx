@@ -28,6 +28,7 @@ import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
+import SplashScreen from "./components/splash-screen";
 import { Button } from "./components/ui/button";
 import { Toaster } from "./components/ui/sonner";
 import { AppStateProvider } from "./contexts/app-state-context";
@@ -149,13 +150,15 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData<typeof loader>("root");
+
+  if (!data) {
+    return <SplashScreen />;
+  }
+
   return (
-    <ThemeProvider
-      specifiedTheme={data?.theme ?? null}
-      themeAction="/action/set-theme"
-    >
-      <OptimizedImageProvider optimizedImageUrls={data!.optimizedImageUrls}>
-        <AppStateProvider appState={data?.appState ?? {}}>
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+      <OptimizedImageProvider optimizedImageUrls={data.optimizedImageUrls}>
+        <AppStateProvider appState={data.appState}>
           <QueryContext>
             <BaseLayout>{children}</BaseLayout>
           </QueryContext>
