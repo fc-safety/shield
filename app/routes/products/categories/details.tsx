@@ -11,11 +11,11 @@ import {
   Pencil,
   Shapes,
   ShieldQuestion,
-  SquareStack,
   type LucideIcon,
 } from "lucide-react";
 import { type To, type UIMatch } from "react-router";
 import { ApiFetcher } from "~/.server/api-utils";
+import { buildImageProxyUrl } from "~/.server/images";
 import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
 import GradientScrollArea from "~/components/gradient-scroll-area";
@@ -48,21 +48,42 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  const [productCategory, genericManufacturer] = await Promise.all([
+  const [productCategory] = await Promise.all([
     ApiFetcher.create(request, "/product-categories/:id", {
       id,
     }).get<ProductCategory>(),
-    ApiFetcher.create(request, "/manufacturers/generic").get<Manufacturer>(),
+    // ApiFetcher.create(request, "/manufacturers/generic").get<Manufacturer>(),
   ]);
 
   return {
     productCategory,
-    genericManufacturer,
+    // genericManufacturer,
+    optimizedProductImageUrls: new Map(
+      (productCategory.products ?? [])
+        .filter(
+          (p) => p.type === "PRIMARY" // || p.manufacturerId === genericManufacturer.id
+        )
+        .filter(
+          (
+            p
+          ): p is typeof p & {
+            imageUrl: NonNullable<(typeof p)["imageUrl"]>;
+          } => !!p.imageUrl
+        )
+        .map((p) => [
+          p.id,
+          buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"]),
+        ])
+    ),
   };
 };
 
 export default function ProductCategoryDetails({
-  loaderData: { productCategory, genericManufacturer },
+  loaderData: {
+    productCategory,
+    // genericManufacturer,
+    optimizedProductImageUrls,
+  },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canUpdate =
@@ -182,8 +203,13 @@ export default function ProductCategoryDetails({
           icon={FireExtinguisher}
           productCategory={productCategory}
           navigateTo={(p) => `/products/all/${p.id}`}
+          optimizedProductImageUrls={optimizedProductImageUrls}
         />
-        <ProductsCard
+        {/* TODO: Once we're sure this is no longer needed, remove this card.
+          - Generic supplies were intended for use in the First Aid category, but that
+            has been done away with in favor of supplies specific to each first aid kit.
+        */}
+        {/* <ProductsCard
           products={
             productCategory?.products?.filter(
               (p) =>
@@ -197,7 +223,8 @@ export default function ProductCategoryDetails({
           productCategory={productCategory}
           manufacturer={genericManufacturer}
           consumable
-        />
+          optimizedProductImageUrls={optimizedProductImageUrls}
+        /> */}
       </div>
     </div>
   );
@@ -212,6 +239,7 @@ function ProductsCard({
   description,
   icon: Icon,
   navigateTo,
+  optimizedProductImageUrls,
 }: {
   products: Omit<Product, "productCategory">[];
   productCategory: ProductCategory;
@@ -221,6 +249,7 @@ function ProductsCard({
   description?: string;
   icon: LucideIcon;
   navigateTo?: (product: Omit<Product, "productCategory">) => To;
+  optimizedProductImageUrls: Map<string, string>;
 }) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "products");
@@ -257,6 +286,7 @@ function ProductsCard({
                   productCategoryId: productCategory.id,
                   productCategory: productCategory,
                 }}
+                optimizedImageUrl={optimizedProductImageUrls?.get(product.id)}
                 displayCategory={!!product.ansiCategory}
                 navigateTo={navigateTo?.(product)}
                 renderEditButton={() =>

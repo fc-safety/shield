@@ -19,7 +19,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 
 export function loader({ request, params }: Route.LoaderArgs) {
   const id = validateParam(params, "id");
-  return api.productRequests.get(request, id);
+  return api.productRequests.get(request, id, { context: "admin" });
 }
 
 export default function AdminProductRequestsDetails({

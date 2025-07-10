@@ -1,9 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageOff, Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, type To } from "react-router";
-import { getImageWithBackgroundFillColor } from "~/.client/image-utils";
 import type { Product } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
@@ -12,6 +11,7 @@ import { AnsiCategoryDisplay } from "./ansi-category-combobox";
 
 interface ProductCardProps {
   product: Product | undefined;
+  optimizedImageUrl?: string | null;
   renderEditButton?: () => React.ReactNode;
   displayCategory?: boolean;
   displayManufacturer?: boolean;
@@ -22,6 +22,7 @@ interface ProductCardProps {
 
 export default function ProductCard({
   product,
+  optimizedImageUrl,
   renderEditButton,
   displayCategory = true,
   displayManufacturer = true,
@@ -35,7 +36,7 @@ export default function ProductCard({
         <>
           <ProductImage
             name={product.name}
-            imageUrl={product.imageUrl}
+            imageUrl={optimizedImageUrl ?? product.imageUrl}
             custom={!!product.client}
             navigateTo={navigateTo}
           />
@@ -128,12 +129,6 @@ export function ProductImage({
   custom?: boolean;
   navigateTo?: To;
 }) {
-  const [imageContext, setImageContext] = useState<{
-    dataUrl: string;
-    backgroundColor: string;
-  }>();
-  const [getDataUrlFailed, setGetDataUrlFailed] = useState(false);
-
   const Container = useCallback(
     ({
       children,
@@ -151,27 +146,19 @@ export function ProductImage({
     [navigateTo]
   );
 
-  useEffect(() => {
-    if (imageUrl) {
-      setGetDataUrlFailed(false);
-      getImageWithBackgroundFillColor(imageUrl)
-        .then(({ dataUrl, backgroundColor }) => {
-          setImageContext({ dataUrl, backgroundColor });
-        })
-        .catch(() => setGetDataUrlFailed(true));
-    }
-  }, [imageUrl]);
+  const [error, setError] = useState<Error | null>(null);
 
   return (
     <Container
       className={cn(
-        "rounded-l-xl w-32 sm:w-40 min-h-36 shrink-0 overflow-hidden border-r flex flex-col",
+        "relative rounded-l-xl w-32 sm:w-40 min-h-36 shrink-0 overflow-hidden border-r",
         className
       )}
     >
       {custom && (
         <div
           className={cn(
+            "absolute top-0 left-0 w-full",
             "p-0.5 text-xs text-center",
             "bg-important text-important-foreground"
           )}
@@ -179,26 +166,16 @@ export function ProductImage({
           Custom
         </div>
       )}
-      {imageUrl && !getDataUrlFailed ? (
-        <>
-          {imageContext ? (
-            <div
-              className="flex-1 w-full flex justify-center items-center p-2"
-              style={{
-                backgroundColor: imageContext.backgroundColor,
-              }}
-            >
-              <img
-                src={imageContext.dataUrl}
-                alt={name}
-                className="object-contain max-h-44"
-                loading="lazy"
-              />
-            </div>
-          ) : (
-            <div className="h-full w-full bg-muted animate-pulse" />
-          )}
-        </>
+      {imageUrl && !error ? (
+        <img
+          src={imageUrl}
+          alt={name}
+          className="h-full w-full object-contain bg-white"
+          loading="lazy"
+          onError={(e) =>
+            setError(new Error("Failed to load image", { cause: e }))
+          }
+        />
       ) : (
         <DefaultProductImage />
       )}

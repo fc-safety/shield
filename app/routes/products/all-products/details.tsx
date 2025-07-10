@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Link, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
+import { buildImageProxyUrl } from "~/.server/images";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator from "~/components/active-indicator";
 import ActiveIndicator2 from "~/components/active-indicator-2";
@@ -71,12 +72,15 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     .then((product) => {
       return {
         product,
+        optimizedImageUrl:
+          product.imageUrl &&
+          buildImageProxyUrl(product.imageUrl, ["rs:fit:160:160:1:1"]),
       };
     });
 };
 
 export default function ProductDetails({
-  loaderData: { product },
+  loaderData: { product, optimizedImageUrl },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const globalAdmin = isGlobalAdmin(user);
@@ -159,7 +163,7 @@ export default function ProductDetails({
             <Label>Image</Label>
             <ProductImage
               name={product.name}
-              imageUrl={product.imageUrl}
+              imageUrl={optimizedImageUrl ?? product.imageUrl}
               className="w-full rounded-lg border"
             />
           </div>
@@ -207,7 +211,11 @@ export default function ProductDetails({
             />
           </CardContent>
         </Card>
-        <Card>
+        {/* TODO: Once we're sure this is no longer needed, remove this card.
+          - Generic supplies were intended for use in the First Aid category, but that
+            has been done away with in favor of supplies specific to each first aid kit.
+        */}
+        {/* <Card>
           <CardHeader className="flex flex-row items-start gap-4">
             <div>
               <CardTitle>
@@ -243,7 +251,7 @@ export default function ProductDetails({
               }
             />
           </CardContent>
-        </Card>
+        </Card> */}
         <Card>
           <CardHeader>
             <CardTitle>

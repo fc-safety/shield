@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRevalidator } from "react-router";
 import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
+import { buildImageProxyUrl } from "~/.server/images";
 import { getAppState } from "~/.server/sessions";
 import { requireUserSession } from "~/.server/user-sesssion";
 import Icon from "~/components/icons/icon";
@@ -80,13 +81,32 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     .list(request, query, { context: isGlobalAdmin ? "admin" : "user" })
     .then((r) => ({
       products: r.results,
+      optimizedProductImageUrls: new Map(
+        r.results
+          .filter(
+            (
+              p
+            ): p is typeof p & {
+              imageUrl: NonNullable<(typeof p)["imageUrl"]>;
+            } => !!p.imageUrl
+          )
+          .map((p) => [
+            p.id,
+            buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"]),
+          ])
+      ),
       isGlobalAdmin,
       onlyMyProducts,
     }));
 };
 
 export default function AllProducts({
-  loaderData: { products, isGlobalAdmin, onlyMyProducts },
+  loaderData: {
+    products,
+    optimizedProductImageUrls,
+    isGlobalAdmin,
+    onlyMyProducts,
+  },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "products");
@@ -251,6 +271,9 @@ export default function AllProducts({
                         displayCategory={!grouping.includes("category")}
                         displayManufacturer={!grouping.includes("manufacturer")}
                         navigateTo={product.id}
+                        optimizedImageUrl={optimizedProductImageUrls.get(
+                          product.id
+                        )}
                       />
                     ))}
                   </div>

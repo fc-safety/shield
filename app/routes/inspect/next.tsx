@@ -4,6 +4,7 @@ import { redirect } from "react-router";
 import { Fragment } from "react/jsx-runtime";
 import { toast } from "sonner";
 import { api } from "~/.server/api";
+import { buildImageProxyUrl } from "~/.server/images";
 import { getNextPointFromSession } from "~/.server/inspections";
 import {
   getSession,
@@ -85,12 +86,21 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       nextAsset = await api.assets.get(request, nextPoint.assetId);
     }
 
+    let processedProductImageUrl: string | null | undefined = null;
+    if (nextAsset?.product.imageUrl) {
+      processedProductImageUrl = buildImageProxyUrl(
+        nextAsset.product.imageUrl,
+        ["rs:fit:160:160:1:1"]
+      );
+    }
+
     return {
       session,
       nextPoint,
       nextAsset,
       showSuccessfulInspection,
       inspection,
+      processedProductImageUrl,
     };
   }
 
@@ -100,11 +110,18 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     nextAsset: null,
     showSuccessfulInspection,
     inspection,
+    processedProductImageUrl: null,
   };
 };
 
 export default function InspectNext({
-  loaderData: { nextAsset, showSuccessfulInspection, session, inspection },
+  loaderData: {
+    nextAsset,
+    showSuccessfulInspection,
+    session,
+    inspection,
+    processedProductImageUrl,
+  },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canCreateProductRequests = can(user, "create", "product-requests");
@@ -247,7 +264,10 @@ export default function InspectNext({
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <AssetCard asset={nextAsset} />
+            <AssetCard
+              asset={nextAsset}
+              processedProductImageUrl={processedProductImageUrl}
+            />
           </CardContent>
         </Card>
       ) : session ? (

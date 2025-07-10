@@ -14,11 +14,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Pencil, Search } from "lucide-react";
 import type React from "react";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentProps,
+} from "react";
 import { Await, useFetcher } from "react-router";
 import { useImmer } from "use-immer";
 import { create } from "zustand";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
+import { useProxyImage } from "~/hooks/use-proxy-image";
 import type {
   Manufacturer,
   Product,
@@ -300,7 +308,7 @@ export default function ProductSelector({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {value ? (
-        <ProductCard
+        <ProductCardWithOptimizedImage
           product={defaultProduct}
           renderEditButton={() =>
             readOnly ? null : (
@@ -556,7 +564,7 @@ function StepSelectProduct({
                       htmlFor={product.id}
                       className="font-semibold h-full block overflow-hidden rounded-xl border-2 border-muted peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                     >
-                      <ProductCard
+                      <ProductCardWithOptimizedImage
                         product={product}
                         className="w-full h-full rounded-none border-none hover:opacity-80 transition-opacity"
                       />
@@ -569,6 +577,23 @@ function StepSelectProduct({
       </Suspense>
     </div>
   );
+}
+
+function ProductCardWithOptimizedImage(
+  props: Omit<ComponentProps<typeof ProductCard>, "optimizedImageUrl">
+) {
+  if (!props.product?.imageUrl) {
+    return <ProductCard {...props} />;
+  }
+
+  const { proxyImageUrl: optimizedImageUrl } = useProxyImage(
+    props.product.imageUrl,
+    "square",
+    {
+      size: "160",
+    }
+  );
+  return <ProductCard {...props} optimizedImageUrl={optimizedImageUrl} />;
 }
 
 function StepReview({ product }: { product: Product | undefined }) {

@@ -47,13 +47,28 @@ export const optionalConnectOrCreateSchema = <S extends z.Schema>(
         id: z.string().optional(),
       }),
       create: createSchema,
+      disconnect: z.boolean(),
     })
     .partial()
     .transform(
-      (v): { connect?: { id: string }; create?: z.infer<S> } | undefined => {
+      (
+        v
+      ):
+        | {
+            connect?: { id: string };
+            create?: z.infer<S>;
+            disconnect?: boolean;
+          }
+        | undefined => {
         if (v.create !== undefined) {
           return {
             create: v.create,
+          };
+        }
+
+        if (v.disconnect !== undefined) {
+          return {
+            disconnect: v.disconnect,
           };
         }
 

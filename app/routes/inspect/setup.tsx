@@ -16,6 +16,7 @@ import { RemixFormProvider, useRemixForm } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { guard } from "~/.server/guard";
+import { buildImageProxyUrl } from "~/.server/images";
 import {
   fetchActiveInspectionRouteContext,
   validateInspectionSession,
@@ -66,6 +67,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       (result) => ({
         tag: tag,
         ...result,
+        processedProductImageUrl:
+          tag.asset?.product.imageUrl &&
+          buildImageProxyUrl(tag.asset.product.imageUrl, [
+            "rs:fit:160:160:1:1",
+          ]),
       })
     );
   }
@@ -74,6 +80,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     tag,
     activeSessions: null,
     matchingRoutes: null,
+    processedProductImageUrl: null,
   };
 };
 
@@ -99,7 +106,7 @@ const onlySetupQuestions = (questions: AssetQuestion[] | undefined) =>
   (questions ?? []).filter((question) => question.type === "SETUP");
 
 export default function InspectSetup({
-  loaderData: { tag, matchingRoutes },
+  loaderData: { tag, matchingRoutes, processedProductImageUrl },
 }: Route.ComponentProps) {
   const isSetup = !!tag.asset?.setupOn;
 
@@ -262,6 +269,7 @@ export default function InspectSetup({
               site: tag.asset.site ?? tag.site ?? undefined,
               client: tag.asset.client ?? tag.client ?? undefined,
             }}
+            processedProductImageUrl={processedProductImageUrl}
           />
         )}
         <Card>

@@ -13,16 +13,21 @@ import {
 
 interface AssetCardProps {
   asset: Asset & { product: Product };
+  processedProductImageUrl?: string | null;
   className?: string;
 }
 
-export default function AssetCard({ asset, className }: AssetCardProps) {
+export default function AssetCard({
+  asset,
+  processedProductImageUrl,
+  className,
+}: AssetCardProps) {
   return (
     <Card className={cn("flex", className)}>
       <div className="flex flex-col">
         <ProductImage
           name={asset.product.name}
-          imageUrl={asset.product.imageUrl}
+          imageUrl={processedProductImageUrl ?? asset.product.imageUrl}
           custom={!!asset.product.client}
           className={cn(
             "grow rounded-l-none rounded-tl-xl",
