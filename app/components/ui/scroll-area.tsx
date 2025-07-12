@@ -72,7 +72,6 @@ const ScrollArea = React.forwardRef<
     }, [isScrollMaxedX, onIsScrollMaxedX]);
 
     useEffect(() => {
-      console.debug({ isScrollMaxedY });
       onIsScrollMaxedY?.(isScrollMaxedY);
     }, [isScrollMaxedY, onIsScrollMaxedY]);
 

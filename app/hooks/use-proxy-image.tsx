@@ -41,7 +41,6 @@ export const useProxyImage = (
 
   useEffect(() => {
     if (fetcher.data) {
-      console.log(fetcher.data);
       if (fetcher.data.imageUrl) {
         setProxyImageUrl(fetcher.data.imageUrl);
       }
