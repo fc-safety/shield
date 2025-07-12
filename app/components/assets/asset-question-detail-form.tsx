@@ -644,7 +644,6 @@ function AlertTrigger({
                   <Select value={value} onValueChange={onChange}>
                     <SelectTrigger
                       onBlur={onBlur}
-                      // TODO: Use theme colors instead.
                       className={cn(
                         value === "CRITICAL" &&
                           "bg-critical text-critical-foreground border-critical",

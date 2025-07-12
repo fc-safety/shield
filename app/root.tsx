@@ -22,7 +22,6 @@ import {
 } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
-import { config } from "./.server/config";
 import { buildImageProxyUrl } from "./.server/images";
 import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
@@ -66,7 +65,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   return data({
     theme: getTheme(),
     appState: appStateSession.data,
-    fontAwesomeKitId: config.FONT_AWESOME_KIT_ID,
     optimizedImageUrls,
   });
 }
@@ -120,6 +118,13 @@ export const links: Route.LinksFunction = () => [
     rel: "apple-touch-icon",
     sizes: "180x180",
     href: "/apple_touch_icon-180x180.png",
+  },
+
+  // FONT AWESOME
+  {
+    rel: "stylesheet",
+    href: "https://kit.fontawesome.com/02452665a9.css",
+    crossOrigin: "anonymous",
   },
 ];
 
@@ -180,12 +185,6 @@ function BaseLayout({ children }: PropsWithChildren) {
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
         <Links />
-
-        {/* Font Awesome Kit */}
-        <script
-          src={`https://kit.fontawesome.com/${data?.fontAwesomeKitId ?? ""}.js`}
-          crossOrigin="anonymous"
-        />
       </head>
       <body className="bg-background">
         {children}

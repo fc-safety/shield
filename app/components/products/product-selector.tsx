@@ -586,13 +586,11 @@ function ProductCardWithOptimizedImage(
     return <ProductCard {...props} />;
   }
 
-  const { proxyImageUrl: optimizedImageUrl } = useProxyImage(
-    props.product.imageUrl,
-    "square",
-    {
-      size: "160",
-    }
-  );
+  const { proxyImageUrl: optimizedImageUrl } = useProxyImage({
+    src: props.product.imageUrl,
+    pre: "square",
+    size: "160",
+  });
   return <ProductCard {...props} optimizedImageUrl={optimizedImageUrl} />;
 }
 
