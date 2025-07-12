@@ -98,10 +98,12 @@ export function AnsiCategoryDisplay({
   ansiCategory,
   iconOnly,
   className,
+  size = "md",
 }: {
   ansiCategory: AnsiCategory;
   iconOnly?: boolean;
   className?: string;
+  size?: "sm" | "md";
 }) {
   return (
     <div className={cn(className)}>
@@ -117,14 +119,15 @@ export function AnsiCategoryDisplay({
               } as React.CSSProperties
             }
             className={cn(
-              "text-sm text-[var(--ansi-icon-color)] bg-[var(--ansi-bg)] rounded-sm size-6 flex items-center justify-center"
+              "text-[var(--ansi-icon-color)] bg-[var(--ansi-bg)] rounded-sm flex items-center justify-center",
+              size === "sm" ? "text-xs size-5" : "text-sm size-6"
             )}
           >
             <i className={`fa-solid fa-${ansiCategory.icon}`} />
           </div>
         ) : (
           <div
-            className="size-6 rounded-sm"
+            className={cn("rounded-sm", size === "sm" ? "size-5" : "size-6")}
             style={{ backgroundColor: ansiCategory.color ?? "gray" }}
           />
         )}

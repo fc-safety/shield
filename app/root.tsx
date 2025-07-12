@@ -22,12 +22,12 @@ import {
 } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
-import { config } from "./.server/config";
 import { buildImageProxyUrl } from "./.server/images";
 import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
+import SplashScreen from "./components/splash-screen";
 import { Button } from "./components/ui/button";
 import { Toaster } from "./components/ui/sonner";
 import { AppStateProvider } from "./contexts/app-state-context";
@@ -65,7 +65,6 @@ export async function loader({ request }: Route.LoaderArgs) {
   return data({
     theme: getTheme(),
     appState: appStateSession.data,
-    fontAwesomeKitId: config.FONT_AWESOME_KIT_ID,
     optimizedImageUrls,
   });
 }
@@ -120,6 +119,13 @@ export const links: Route.LinksFunction = () => [
     sizes: "180x180",
     href: "/apple_touch_icon-180x180.png",
   },
+
+  // FONT AWESOME
+  {
+    rel: "stylesheet",
+    href: "https://kit.fontawesome.com/02452665a9.css",
+    crossOrigin: "anonymous",
+  },
 ];
 
 export const meta: Route.MetaFunction = () => {
@@ -149,13 +155,15 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData<typeof loader>("root");
+
+  if (!data) {
+    return <SplashScreen />;
+  }
+
   return (
-    <ThemeProvider
-      specifiedTheme={data?.theme ?? null}
-      themeAction="/action/set-theme"
-    >
-      <OptimizedImageProvider optimizedImageUrls={data!.optimizedImageUrls}>
-        <AppStateProvider appState={data?.appState ?? {}}>
+    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+      <OptimizedImageProvider optimizedImageUrls={data.optimizedImageUrls}>
+        <AppStateProvider appState={data.appState}>
           <QueryContext>
             <BaseLayout>{children}</BaseLayout>
           </QueryContext>
@@ -177,12 +185,6 @@ function BaseLayout({ children }: PropsWithChildren) {
         <Meta />
         <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
         <Links />
-
-        {/* Font Awesome Kit */}
-        <script
-          src={`https://kit.fontawesome.com/${data?.fontAwesomeKitId ?? ""}.js`}
-          crossOrigin="anonymous"
-        />
       </head>
       <body className="bg-background">
         {children}

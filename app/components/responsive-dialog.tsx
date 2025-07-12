@@ -88,7 +88,7 @@ export function ResponsiveDialog({
         >
           <ScrollArea
             classNames={{
-              root: "max-h-[calc(100vh-10rem)]",
+              root: "max-h-[calc(100dvh-10rem)]",
             }}
             disableDisplayTable={disableDisplayTable}
           >
@@ -111,7 +111,7 @@ export function ResponsiveDialog({
       >
         <ScrollArea
           classNames={{
-            root: "h-[calc(100vh-10rem)]",
+            root: "h-[calc(100vh-5rem)]",
           }}
           disableDisplayTable={disableDisplayTable}
         >

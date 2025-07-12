@@ -179,7 +179,7 @@ export default function AssetDetails({
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
         <Card className="h-max">
           <CardHeader>
             <CardTitle>
@@ -373,7 +373,7 @@ export default function AssetDetails({
         </Tabs>
       </div>
       {canReadInspections && (
-        <Card id="inspections">
+        <Card id="inspections" className="w-full overflow-x-auto">
           <CardHeader>
             <CardTitle>
               <SearchCheck /> Inspection History

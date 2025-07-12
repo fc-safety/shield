@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImageOff, Loader2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, type To } from "react-router";
 import type { Product } from "~/lib/models";
 import { cn } from "~/lib/utils";
@@ -147,6 +147,11 @@ export function ProductImage({
   );
 
   const [error, setError] = useState<Error | null>(null);
+
+  // Reset error state when imageUrl changes
+  useEffect(() => {
+    setError(null);
+  }, [imageUrl]);
 
   return (
     <Container
