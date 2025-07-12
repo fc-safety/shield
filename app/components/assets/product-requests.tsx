@@ -307,7 +307,7 @@ function ProductRequestForm({
               onPreviewImage={previewImage.openData}
             />
             {ansiCategories && ansiCategories.length === 0 && (
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-xs col-span-full flex items-center justify-center h-12">
                 No consumables available for this product.
               </p>
             )}
@@ -488,7 +488,9 @@ function ConsumableSelectTabs({
       <Tabs
         value={selectedTab}
         onValueChange={setSelectedTab}
-        className="mt-2 max-w-[calc(100vw-2rem)]"
+        className={cn("mt-2 max-w-[calc(100vw-2rem)] hidden", {
+          block: showTabs,
+        })}
       >
         <TabsList className="w-full min-w-fit gap-x-1.5">
           {(ansiCategories ?? []).map((category) => (
