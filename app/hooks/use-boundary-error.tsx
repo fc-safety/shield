@@ -23,9 +23,13 @@ export default function useBoundaryError({ error }: { error: unknown }) {
   };
 }
 
-const parseErrorMessage = (error: unknown, noJson = false) => {
+const parseErrorMessage = (error: unknown, noJson = false): string => {
   if (isNil(error)) {
     return "Unknown error";
+  }
+
+  if (Array.isArray(error)) {
+    return error.map((e) => parseErrorMessage(e, noJson)).join("\n");
   }
 
   let errObj: Record<string, unknown> = {};
