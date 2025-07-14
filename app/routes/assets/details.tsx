@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
 import { Link, type UIMatch } from "react-router";
+import { toast } from "sonner";
 import { ApiFetcher } from "~/.server/api-utils";
 import { buildImageProxyUrl } from "~/.server/images";
 import ActiveIndicator from "~/components/active-indicator";
@@ -343,6 +344,11 @@ export default function AssetDetails({
                       assetId={asset.id}
                       parentProductId={asset.productId}
                       productCategoryId={asset.product.productCategoryId}
+                      onSuccess={() => {
+                        toast.success(
+                          "Supply request submitted! An FC Safety representative will reach out to you shortly."
+                        );
+                      }}
                     />
                   )}
                 </CardTitle>

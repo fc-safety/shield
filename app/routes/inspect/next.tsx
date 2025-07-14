@@ -246,7 +246,9 @@ export default function InspectNext({
                   parentProductId={inspection.asset.productId}
                   productCategoryId={inspection.asset.product.productCategoryId}
                   onSuccess={() => {
-                    toast.success("Product request submitted.");
+                    toast.success(
+                      "Supply request submitted! An FC Safety representative will reach out to you shortly."
+                    );
                   }}
                 />
               </div>
