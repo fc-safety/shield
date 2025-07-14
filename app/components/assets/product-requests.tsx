@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, formatDistanceToNow } from "date-fns";
 import {
+  CheckCircle,
   CirclePlus,
   ImageOff,
   ListOrdered,
@@ -458,13 +459,9 @@ function ConsumableSelectTabs({
   onPreviewImage: (url: string) => void;
   optimizedImageUrlsMap: Map<string, string>;
 }) {
-  const availableConsumables = useMemo(() => {
-    if (!supplies) return [];
-
-    return supplies.filter(
-      (p) => !productRequestItems.some((i) => i.productId === p.id)
-    );
-  }, [supplies, productRequestItems]);
+  const selectedSupplyIds = useMemo(() => {
+    return new Set(productRequestItems.map((i) => i.productId));
+  }, [productRequestItems]);
 
   const showTabs = ansiCategories && ansiCategories.length > 1;
   const [selectedTab, setSelectedTab] = useState(ansiCategories?.at(0)?.id);
@@ -507,7 +504,6 @@ function ConsumableSelectTabs({
                     category.color ?? "hsl(var(--muted-foreground))",
                 } as React.CSSProperties
               }
-              // className="text-[var(--tab-inactive-color)] data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] grow flex shrink-0 font-bold"
               className="text-[var(--tab-active-color)] data-[state=active]:text-[var(--tab-active-color)] bg-[var(--tab-active-bg)] data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:scale-105 grow flex shrink-0 font-bold"
             >
               {category.icon ? <Icon iconId={category.icon} /> : category.name}
@@ -519,14 +515,17 @@ function ConsumableSelectTabs({
             <AvailableConsumables
               ansiCategory={category}
               consumables={
-                showTabs
-                  ? availableConsumables.filter(
+                !supplies
+                  ? []
+                  : showTabs
+                  ? supplies.filter(
                       (p) =>
                         p.ansiCategory?.id === category.id ||
                         (!p.ansiCategory && category.id === "other")
                     )
-                  : availableConsumables
+                  : supplies
               }
+              selectedConsumableIds={selectedSupplyIds}
               onAdd={(productId) =>
                 append({
                   productId: productId,
@@ -547,6 +546,7 @@ function ConsumableSelectTabs({
 function AvailableConsumables({
   ansiCategory,
   consumables,
+  selectedConsumableIds,
   onAdd,
   onPreviewImage,
   showAnsiCategory = false,
@@ -554,6 +554,7 @@ function AvailableConsumables({
 }: {
   ansiCategory: Pick<AnsiCategory, "color">;
   consumables: Product[];
+  selectedConsumableIds: Set<string>;
   onAdd: (productId: string) => void;
   onPreviewImage: (url: string) => void;
   showAnsiCategory?: boolean;
@@ -593,8 +594,13 @@ function AvailableConsumables({
               variant="default"
               size="iconSm"
               onClick={() => onAdd(product.id)}
+              disabled={selectedConsumableIds.has(product.id)}
             >
-              <CirclePlus />
+              {selectedConsumableIds.has(product.id) ? (
+                <CheckCircle />
+              ) : (
+                <CirclePlus />
+              )}
             </Button>
             <ProductRequestItem
               product={product}
@@ -664,7 +670,17 @@ function ProductRequestItem({
           type="button"
           disabled={!product.imageUrl}
           onClick={() => product.imageUrl && onPreviewImage?.(product.imageUrl)}
-          className="size-16 flex items-center justify-center rounded-md border border-border overflow-hidden p-1 bg-white"
+          style={
+            {
+              "--ansi-color": product.ansiCategory?.color,
+            } as React.CSSProperties
+          }
+          className={cn(
+            "size-16 flex items-center justify-center rounded-md border-2 border-border overflow-hidden p-1 bg-white",
+            {
+              "border-[var(--ansi-color)]": product.ansiCategory?.color,
+            }
+          )}
         >
           {optimizedImageUrl ? (
             <img
