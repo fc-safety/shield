@@ -48,7 +48,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const query = getSearchParams(request);
 
-  const queryParseResult = imageProxyUrlOptionsSchema.safeParse(query);
+  const queryParseResult = imageProxyUrlOptionsSchema.safeParse(
+    Object.fromEntries(query)
+  );
 
   if (queryParseResult.error) {
     throw new Response(queryParseResult.error.message, { status: 400 });
