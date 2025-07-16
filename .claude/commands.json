@@ -1,0 +1,94 @@
+{
+  "commands": {
+    "dev": {
+      "command": "npm run dev",
+      "description": "Start the development server",
+      "category": "development"
+    },
+    "test": {
+      "command": "npm test",
+      "description": "Run all tests",
+      "category": "testing"
+    },
+    "test:watch": {
+      "command": "npm test -- --watch",
+      "description": "Run tests in watch mode",
+      "category": "testing"
+    },
+    "test:coverage": {
+      "command": "npm test -- --coverage",
+      "description": "Run tests with coverage report",
+      "category": "testing"
+    },
+    "lint": {
+      "command": "npm run lint",
+      "description": "Run ESLint on the codebase",
+      "category": "code-quality"
+    },
+    "lint:fix": {
+      "command": "npm run lint -- --fix",
+      "description": "Run ESLint and auto-fix issues",
+      "category": "code-quality"
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "description": "Run TypeScript type checking",
+      "category": "code-quality"
+    },
+    "format": {
+      "command": "npx prettier --write .",
+      "description": "Format all files with Prettier",
+      "category": "code-quality"
+    },
+    "format:check": {
+      "command": "npx prettier --check .",
+      "description": "Check if files are formatted",
+      "category": "code-quality"
+    },
+    "build": {
+      "command": "npm run build",
+      "description": "Build for production",
+      "category": "build"
+    },
+    "preview": {
+      "command": "npm run build && npm start",
+      "description": "Build and preview production build",
+      "category": "build"
+    },
+    "clean": {
+      "command": "rm -rf build .cache node_modules/.cache",
+      "description": "Clean build artifacts and caches",
+      "category": "maintenance"
+    },
+    "clean:install": {
+      "command": "rm -rf node_modules package-lock.json && npm install",
+      "description": "Clean reinstall dependencies",
+      "category": "maintenance"
+    },
+    "deps:check": {
+      "command": "npm outdated",
+      "description": "Check for outdated dependencies",
+      "category": "maintenance"
+    },
+    "deps:audit": {
+      "command": "npm audit",
+      "description": "Check for security vulnerabilities",
+      "category": "maintenance"
+    },
+    "analyze": {
+      "command": "npm run build -- --analyze",
+      "description": "Analyze bundle size",
+      "category": "performance"
+    },
+    "route:new": {
+      "command": "echo 'Create new route file in app/routes/'",
+      "description": "Reminder for creating new routes",
+      "category": "scaffolding"
+    },
+    "component:new": {
+      "command": "echo 'Create new component in app/components/'",
+      "description": "Reminder for creating new components",
+      "category": "scaffolding"
+    }
+  }
+}
