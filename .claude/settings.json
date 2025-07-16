@@ -1,0 +1,123 @@
+{
+  "project": {
+    "name": "Shield - Asset Management Platform",
+    "type": "react-router-v7",
+    "language": "typescript",
+    "framework": "react",
+    "packageManager": "npm"
+  },
+  "development": {
+    "defaultPort": 5173,
+    "hotReload": true,
+    "strictMode": true
+  },
+  "codeStyle": {
+    "indentation": 2,
+    "quotes": "double",
+    "semicolons": true,
+    "trailingComma": "es5",
+    "fileNaming": "kebab-case",
+    "componentNaming": "PascalCase"
+  },
+  "testing": {
+    "framework": "jest",
+    "testMatch": ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
+    "coverage": {
+      "threshold": {
+        "global": {
+          "branches": 60,
+          "functions": 60,
+          "lines": 60,
+          "statements": 60
+        }
+      }
+    }
+  },
+  "linting": {
+    "eslint": {
+      "enabled": true,
+      "autoFix": true,
+      "extensions": [".js", ".jsx", ".ts", ".tsx"]
+    },
+    "prettier": {
+      "enabled": true,
+      "autoFormat": true
+    }
+  },
+  "directories": {
+    "components": "app/components",
+    "routes": "app/routes",
+    "utils": "app/lib",
+    "types": "app/types",
+    "styles": "app/styles",
+    "tests": "tests",
+    "public": "public"
+  },
+  "aliases": {
+    "~": "./app",
+    "@": "./app"
+  },
+  "environment": {
+    "required": [
+      "NODE_ENV"
+    ],
+    "optional": [
+      "VITE_API_URL",
+      "VITE_KEYCLOAK_URL",
+      "VITE_KEYCLOAK_REALM",
+      "VITE_KEYCLOAK_CLIENT_ID"
+    ]
+  },
+  "git": {
+    "commitConvention": "conventional",
+    "branchNaming": "feature/*, fix/*, chore/*",
+    "protectedBranches": ["main", "develop"]
+  },
+  "dependencies": {
+    "core": [
+      "react",
+      "react-dom",
+      "react-router",
+      "@react-router/node",
+      "@react-router/serve"
+    ],
+    "ui": [
+      "@radix-ui/*",
+      "tailwindcss",
+      "lucide-react"
+    ],
+    "state": [
+      "zustand",
+      "@tanstack/react-query"
+    ],
+    "forms": [
+      "react-hook-form",
+      "zod",
+      "@hookform/resolvers"
+    ],
+    "utilities": [
+      "date-fns",
+      "clsx",
+      "tailwind-merge"
+    ]
+  },
+  "recommendations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "prisma.prisma",
+        "formulahendry.auto-rename-tag"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": true
+        },
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "typescript.updateImportsOnFileMove.enabled": "always"
+      }
+    }
+  }
+}

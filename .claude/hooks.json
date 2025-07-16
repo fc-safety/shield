@@ -1,0 +1,64 @@
+{
+  "hooks": {
+    "pre-edit": {
+      "commands": [
+        {
+          "name": "typecheck-before-edit",
+          "command": "npm run typecheck",
+          "description": "Run TypeScript type checking before editing files",
+          "enabled": false,
+          "continueOnError": true
+        }
+      ]
+    },
+    "post-edit": {
+      "commands": [
+        {
+          "name": "format-on-save",
+          "command": "npx prettier --write ${file}",
+          "description": "Format edited files with Prettier",
+          "enabled": true,
+          "continueOnError": true,
+          "filePatterns": ["*.ts", "*.tsx", "*.js", "*.jsx", "*.json"]
+        },
+        {
+          "name": "lint-on-save",
+          "command": "npx eslint --fix ${file}",
+          "description": "Auto-fix linting issues in edited files",
+          "enabled": true,
+          "continueOnError": true,
+          "filePatterns": ["*.ts", "*.tsx", "*.js", "*.jsx"]
+        }
+      ]
+    },
+    "pre-commit": {
+      "commands": [
+        {
+          "name": "pre-commit-checks",
+          "command": "npm run lint && npm run typecheck",
+          "description": "Run linting and type checking before commits",
+          "enabled": true,
+          "continueOnError": false
+        },
+        {
+          "name": "test-affected",
+          "command": "npm test -- --findRelatedTests ${files}",
+          "description": "Run tests for changed files",
+          "enabled": false,
+          "continueOnError": true
+        }
+      ]
+    },
+    "post-install": {
+      "commands": [
+        {
+          "name": "generate-types",
+          "command": "npm run typecheck",
+          "description": "Generate React Router types after installing dependencies",
+          "enabled": true,
+          "continueOnError": true
+        }
+      ]
+    }
+  }
+}
