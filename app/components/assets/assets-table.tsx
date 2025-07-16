@@ -4,10 +4,7 @@ import { useMemo } from "react";
 import { Link, useFetcher, useSearchParams } from "react-router";
 import type { ViewContext } from "~/.server/api-utils";
 import ActiveIndicator2 from "~/components/active-indicator-2";
-import {
-  AlertsStatusBadge,
-  InspectionStatusBadge,
-} from "~/components/assets/asset-status-badge";
+import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { CopyableText } from "~/components/copyable-text";
@@ -24,12 +21,10 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
-import {
-  getAssetAlertsStatus,
-  getAssetInspectionStatus,
-} from "~/lib/model-utils";
+import { getAssetAlertsStatus, getAssetInspectionStatus } from "~/lib/model-utils";
 import type { Asset, ProductCategory } from "~/lib/models";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
@@ -60,6 +55,7 @@ export default function AssetsTable({
   const [deleteAction, setDeleteAction] = useConfirmAction({
     variant: "destructive",
   });
+  const { submitJson: submitDelete } = useModalFetcher();
 
   const columnFilters = useMemo(() => {
     const filters: { id: string; value: string }[] = [];
@@ -88,9 +84,7 @@ export default function AssetsTable({
     (): ColumnDef<Asset>[] => [
       {
         accessorKey: "active",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
       },
       {
@@ -112,45 +106,29 @@ export default function AssetsTable({
             </Link>
           );
         },
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "tag.serialNumber",
         id: "tag",
         header: ({ column, table }) => (
-          <DataTableColumnHeader
-            column={column}
-            table={table}
-            title="Tag Serial No."
-          />
+          <DataTableColumnHeader column={column} table={table} title="Tag Serial No." />
         ),
         cell: ({ getValue }) => {
           const text = getValue() as string;
-          return text ? (
-            <CopyableText text={getValue() as string} hoverOnly />
-          ) : (
-            <>&mdash;</>
-          );
+          return text ? <CopyableText text={getValue() as string} hoverOnly /> : <>&mdash;</>;
         },
       },
       {
         accessorFn: (row) => row.product?.productCategory?.name,
         id: "category",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row }) => {
           const category = row.original.product?.productCategory;
           return (
             <span className="flex items-center gap-2">
               {category?.icon && (
-                <Icon
-                  iconId={category.icon}
-                  color={category.color}
-                  className="text-lg"
-                />
+                <Icon iconId={category.icon} color={category.color} className="text-lg" />
               )}
               {category?.shortName ?? category?.name ?? <>&mdash;</>}
             </span>
@@ -160,42 +138,30 @@ export default function AssetsTable({
           // Access the ID from the original row data
           const id = row.original.product?.productCategoryId;
           // Filter based on the ID
-          return Array.isArray(filterValue)
-            ? filterValue.includes(id)
-            : id === filterValue;
+          return Array.isArray(filterValue) ? filterValue.includes(id) : id === filterValue;
         },
       },
       {
         accessorKey: "product.manufacturer.name",
         id: "manufacturer",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "product.name",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "location",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "placement",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "site.name",
         id: "site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row }) => {
           const site = row.original.site;
           return site ? site.name : <>&mdash;</>;
@@ -204,30 +170,20 @@ export default function AssetsTable({
           // Access the ID from the original row data
           const id = row.original.site?.id;
           // Filter based on the ID
-          return Array.isArray(filterValue)
-            ? filterValue.includes(id)
-            : id === filterValue;
+          return Array.isArray(filterValue) ? filterValue.includes(id) : id === filterValue;
         },
       },
       {
         accessorFn: ({ alerts }) => getAssetAlertsStatus(alerts ?? []),
         id: "alertsStatus",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row, getValue }) => {
-          const children = (
-            <AlertsStatusBadge status={getValue() as AlertsStatus} />
-          );
+          const children = <AlertsStatusBadge status={getValue() as AlertsStatus} />;
 
           if (!toDetailsRoute) {
             return children;
           }
-          return (
-            <Link to={`${toDetailsRoute(row.original)}?tab=alerts`}>
-              {children}
-            </Link>
-          );
+          return <Link to={`${toDetailsRoute(row.original)}?tab=alerts`}>{children}</Link>;
         },
       },
       {
@@ -237,35 +193,22 @@ export default function AssetsTable({
             inspectionCycle ?? client?.defaultInspectionCycle
           ),
         id: "inspectionStatus",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row, getValue }) => {
-          const children = (
-            <InspectionStatusBadge
-              status={getValue() as AssetInspectionsStatus}
-            />
-          );
+          const children = <InspectionStatusBadge status={getValue() as AssetInspectionsStatus} />;
 
           if (!toDetailsRoute) {
             return children;
           }
 
-          return (
-            <Link to={`${toDetailsRoute(row.original)}#inspections`}>
-              {children}
-            </Link>
-          );
+          return <Link to={`${toDetailsRoute(row.original)}#inspections`}>{children}</Link>;
         },
         filterFn: (row, id, filterValue) => {
           const status = getAssetInspectionStatus(
             row.original.inspections ?? [],
-            row.original.inspectionCycle ??
-              row.original.client?.defaultInspectionCycle
+            row.original.inspectionCycle ?? row.original.client?.defaultInspectionCycle
           );
-          return Array.isArray(filterValue)
-            ? filterValue.includes(status)
-            : filterValue === status;
+          return Array.isArray(filterValue) ? filterValue.includes(status) : filterValue === status;
         },
       },
       {
@@ -290,10 +233,7 @@ export default function AssetsTable({
                     </Link>
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem
-                    disabled={!canEdit}
-                    onSelect={() => editAsset.openData(asset)}
-                  >
+                  <DropdownMenuItem disabled={!canEdit} onSelect={() => editAsset.openData(asset)}>
                     <Pencil />
                     Edit
                   </DropdownMenuItem>
@@ -305,16 +245,15 @@ export default function AssetsTable({
                     setDeleteAction((draft) => {
                       draft.open = true;
                       draft.title = "Delete Asset";
-                      draft.message = `Are you sure you want to delete ${
-                        asset.name || asset.id
-                      }?`;
+                      draft.message = `Are you sure you want to delete ${asset.name || asset.id}?`;
                       draft.requiredUserInput = asset.name || asset.id;
                       draft.onConfirm = () => {
-                        fetcher.submit(
+                        submitDelete(
                           {},
                           {
                             method: "delete",
-                            action: `/api/proxy/assets/${asset.id}`,
+                            path: `/api/proxy/assets/${asset.id}`,
+                            viewContext,
                           }
                         );
                       };
@@ -333,12 +272,8 @@ export default function AssetsTable({
     [setDeleteAction, fetcher, canDelete]
   );
 
-  const allCategories = dedupById(
-    assets.map((asset) => asset.product?.productCategory)
-  );
-  const allManufacturers = dedupById(
-    assets.map((asset) => asset.product?.manufacturer)
-  );
+  const allCategories = dedupById(assets.map((asset) => asset.product?.productCategory));
+  const allManufacturers = dedupById(assets.map((asset) => asset.product?.manufacturer));
 
   return (
     <>
@@ -407,27 +342,22 @@ export default function AssetsTable({
               assets
                 .map((asset) => asset.site)
                 .filter((site): site is NonNullable<typeof site> => !!site)
-                .reduce((acc, site) => {
-                  acc[site.id] = {
-                    label: site.name,
-                    value: site.id,
-                  };
-                  return acc;
-                }, {} as Record<string, { label: string; value: string }>)
+                .reduce(
+                  (acc, site) => {
+                    acc[site.id] = {
+                      label: site.name,
+                      value: site.id,
+                    };
+                    return acc;
+                  },
+                  {} as Record<string, { label: string; value: string }>
+                )
             ),
             title: "Site",
           },
         ]}
         actions={
-          canCreate
-            ? [
-                <EditAssetButton
-                  key="add"
-                  clientId={clientId}
-                  context={viewContext}
-                />,
-              ]
-            : []
+          canCreate ? [<EditAssetButton key="add" clientId={clientId} context={viewContext} />] : []
         }
       />
       <ConfirmationDialog {...deleteAction} />
