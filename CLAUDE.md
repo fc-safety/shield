@@ -3,6 +3,7 @@
 ## Quick Start Commands
 
 ### Development
+
 ```bash
 # Start development server
 npm run dev
@@ -12,6 +13,7 @@ NODE_ENV=development npm run dev
 ```
 
 ### Code Quality
+
 ```bash
 # Run linting
 npm run lint
@@ -33,6 +35,7 @@ npm test -- --coverage
 ```
 
 ### Build & Production
+
 ```bash
 # Build for production
 npm run build
@@ -58,23 +61,27 @@ shield/
 ## Common Development Tasks
 
 ### Creating a New Component
+
 1. Create component file in `app/components/` with proper naming (e.g., `user-profile-card.tsx`)
 2. Follow existing component patterns using Radix UI primitives
 3. Use TypeScript interfaces for props
 4. Style with Tailwind CSS v4
 
 ### Adding a New Route
-1. Create route file in `app/routes/` following React Router v7 conventions
+
+1. Routes are added to `app/routes/` directory and configured in `app/routes.ts`
 2. Export default component for the route
 3. Add loader/action functions as needed for data fetching
 4. Use proper error boundaries
 
 ### Working with Forms
+
 - Use React Router's Form component for server-side form handling
 - Implement proper validation using zod schemas
 - Follow existing patterns in components like `update-user-role-form.tsx`
 
 ### API Integration
+
 - API routes are defined in `app/lib/shield-api.ts`
 - Use React Query hooks for data fetching (see `app/lib/api-hooks.ts`)
 - Follow existing patterns for error handling and loading states
@@ -82,22 +89,26 @@ shield/
 ## Key Libraries & Patterns
 
 ### UI Components
+
 - **Radix UI**: For accessible, unstyled components
 - **Tailwind CSS v4**: For styling
 - **lucide-react**: For icons
 - **cn()**: Utility for conditional classes from `app/lib/utils.ts`
 
 ### State Management
+
 - **Zustand**: For client-side state (see `app/lib/stores/`)
 - **React Query**: For server state and caching
 - **React Router**: For route-based state via loaders/actions
 
 ### Form Handling
+
 - **React Hook Form**: For complex forms
 - **Zod**: For schema validation
 - **Server Actions**: Via React Router actions
 
 ### Authentication
+
 - Keycloak SSO integration
 - Role-based access control (RBAC)
 - Protected routes with proper redirects
@@ -120,6 +131,7 @@ shield/
 ## Environment Variables
 
 Key environment variables used in the project:
+
 - `NODE_ENV`: Development/production mode
 - `VITE_*`: Client-side environment variables (see Vite docs)
 - Server-side variables are loaded via React Router's server build
