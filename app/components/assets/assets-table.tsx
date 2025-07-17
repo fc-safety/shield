@@ -1,7 +1,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useFetcher, useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import type { ViewContext } from "~/.server/api-utils";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
@@ -48,7 +48,6 @@ export default function AssetsTable({
   const canEdit = can(user, "update", "assets");
 
   const [searchParams] = useSearchParams();
-  const fetcher = useFetcher();
 
   const editAsset = useOpenData<Asset>();
 
@@ -269,7 +268,7 @@ export default function AssetsTable({
         },
       },
     ],
-    [setDeleteAction, fetcher, canDelete]
+    [setDeleteAction, canEdit, submitDelete, canDelete]
   );
 
   const allCategories = dedupById(assets.map((asset) => asset.product?.productCategory));

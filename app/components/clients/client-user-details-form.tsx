@@ -50,7 +50,6 @@ export default function ClientUserDetailsForm({
       ...FORM_DEFAULTS,
       siteExternalId: siteExternalId ?? "",
     },
-    mode: "onBlur",
   });
 
   const {
@@ -130,9 +129,7 @@ export default function ClientUserDetailsForm({
                 <Input
                   {...field}
                   value={beautifyPhone(value ?? "")}
-                  onChange={(e) =>
-                    onChange(stripPhone(beautifyPhone(e.target.value)))
-                  }
+                  onChange={(e) => onChange(stripPhone(beautifyPhone(e.target.value)))}
                   type="phone"
                 />
               </FormControl>
@@ -178,10 +175,7 @@ export default function ClientUserDetailsForm({
             )}
           />
         )}
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>
