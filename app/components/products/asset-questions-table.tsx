@@ -289,6 +289,7 @@ export default function AssetQuestionsTable({
             actions: !readOnly,
           },
         }}
+        getRowId={(row) => row.id}
         actions={
           readOnly
             ? []
