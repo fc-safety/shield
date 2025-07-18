@@ -16,12 +16,10 @@ import PreviewInspectionImages from "./preview-inspection-images";
 type TValue<T extends AssetQuestionResponseType> = T extends "NUMBER"
   ? number
   : T extends "IMAGE"
-  ? ResponseValueImage
-  : string;
+    ? ResponseValueImage
+    : string;
 
-interface AssetQuestionResponseTypeInputProps<
-  T extends AssetQuestionResponseType
-> {
+interface AssetQuestionResponseTypeInputProps<T extends AssetQuestionResponseType> {
   valueType: T;
   value: TValue<T>;
   onValueChange: (value: TValue<T>) => void;
@@ -30,9 +28,7 @@ interface AssetQuestionResponseTypeInputProps<
   tone?: string;
 }
 
-export default function AssetQuestionResponseTypeInput<
-  T extends AssetQuestionResponseType
->({
+export default function AssetQuestionResponseTypeInput<T extends AssetQuestionResponseType>({
   valueType,
   value,
   onValueChange,
@@ -49,20 +45,14 @@ export default function AssetQuestionResponseTypeInput<
       className="w-full"
       variant="outline"
     >
-      {[
-        "Yes",
-        "No",
-        ...(valueType === "INDETERMINATE_BINARY" ? ["N/A"] : []),
-      ].map((operand) => {
+      {["Yes", "No", ...(valueType === "INDETERMINATE_BINARY" ? ["N/A"] : [])].map((operand) => {
         const isPositiveTone = tone === ASSET_QUESTION_TONES.POSITIVE;
         const isNegativeTone = tone === ASSET_QUESTION_TONES.NEGATIVE;
 
         const showPositive =
-          (isPositiveTone && operand === "Yes") ||
-          (isNegativeTone && operand === "No");
+          (isPositiveTone && operand === "Yes") || (isNegativeTone && operand === "No");
         const showNegative =
-          (isNegativeTone && operand === "Yes") ||
-          (isPositiveTone && operand === "No");
+          (isNegativeTone && operand === "Yes") || (isPositiveTone && operand === "No");
 
         const isSelected = String(value) === operand;
         const hasNoTone = !isPositiveTone && !isNegativeTone;
@@ -78,8 +68,8 @@ export default function AssetQuestionResponseTypeInput<
                 "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
             )}
           >
-            {isSelected && !showNegative && <Check className="h-4 w-4" />}
-            {isSelected && showNegative && <X className="h-4 w-4" />}
+            {(showPositive || (isSelected && hasNoTone)) && <Check />}
+            {showNegative && <X />}
             {operand}
           </ToggleGroupItem>
         );
@@ -127,9 +117,7 @@ function ImageUploadInput({
   disabled?: boolean;
   onBlur?: () => void;
 }) {
-  const [value, setValueInternal] = useState<ResponseValueImage>(
-    valueProp || { urls: [] }
-  );
+  const [value, setValueInternal] = useState<ResponseValueImage>(valueProp || { urls: [] });
 
   useEffect(() => {
     if (valueProp) setValueInternal(valueProp);
@@ -153,10 +141,7 @@ function ImageUploadInput({
 
   return (
     <div className="grid gap-2">
-      <PreviewInspectionImages
-        urls={value?.urls ?? []}
-        onRemove={handleRemoveImage}
-      />
+      <PreviewInspectionImages urls={value?.urls ?? []} onRemove={handleRemoveImage} />
       <Button
         type="button"
         variant="outline"
@@ -165,7 +150,7 @@ function ImageUploadInput({
         disabled={disabled || isUploadingImage}
         asChild
       >
-        <Label htmlFor="image-file-upload" className="w-full flex">
+        <Label htmlFor="image-file-upload" className="flex w-full">
           <Input
             id="image-file-upload"
             accept="image/*"
@@ -190,12 +175,8 @@ const handleVaultUpload = async (file: File | undefined | null) => {
 
   const ext = file.type.split("/").pop();
 
-  const key = `inspection_${format(new Date(), "yyyy-MM-dd")}${
-    ext ? `.${ext}` : ""
-  }`;
-  const getUrlResponse = await fetch(
-    buildPath("/api/image-upload-url", { key })
-  );
+  const key = `inspection_${format(new Date(), "yyyy-MM-dd")}${ext ? `.${ext}` : ""}`;
+  const getUrlResponse = await fetch(buildPath("/api/image-upload-url", { key }));
   if (getUrlResponse.ok) {
     const { getUrl, putUrl } = await getUrlResponse.json();
     const uploadResponse = await fetch(putUrl, {
