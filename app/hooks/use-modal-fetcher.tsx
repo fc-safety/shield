@@ -20,12 +20,15 @@ export function useModalFetcher<T>({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dataCaptured = useRef(false);
 
-  const submit = (...args: Parameters<typeof fetcher.submit>) => {
-    errorReported.current = false;
-    setIsSubmitting(true);
-    dataCaptured.current = false;
-    fetcher.submit(...args);
-  };
+  const submit = useCallback(
+    (...args: Parameters<typeof fetcher.submit>) => {
+      errorReported.current = false;
+      setIsSubmitting(true);
+      dataCaptured.current = false;
+      fetcher.submit(...args);
+    },
+    [fetcher]
+  );
 
   const rawLoad = useCallback(
     (...args: Parameters<typeof fetcher.load>) => {
@@ -48,53 +51,55 @@ export function useModalFetcher<T>({
     [rawLoad]
   );
 
-  const submitJson = (
-    data: Parameters<typeof fetcher.submit>[0],
-    options: {
-      path: string;
-      query?: QueryParams;
-      throw?: boolean;
-      method?: NonNullable<Parameters<typeof fetcher.submit>[1]>["method"];
-      viewContext?: ViewContext;
-    }
-  ) => {
-    const cleanedPath = buildPath(options.path, {
-      _throw: String(!!options.throw),
-      _viewContext: options.viewContext,
-      ...options.query,
-    });
+  const submitJson = useCallback(
+    (
+      data: Parameters<typeof fetcher.submit>[0],
+      options: {
+        path: string;
+        query?: QueryParams;
+        throw?: boolean;
+        method?: NonNullable<Parameters<typeof fetcher.submit>[1]>["method"];
+        viewContext?: ViewContext;
+      }
+    ) => {
+      const cleanedPath = buildPath(options.path, {
+        _throw: String(!!options.throw),
+        _viewContext: options.viewContext,
+        ...options.query,
+      });
 
-    return submit(data, {
-      method: options.method ?? "post",
-      action: cleanedPath,
-      encType: "application/json",
-    });
-  };
+      return submit(data, {
+        method: options.method ?? "post",
+        action: cleanedPath,
+        encType: "application/json",
+      });
+    },
+    [submit]
+  );
 
-  const createOrUpdateJson = (
-    data: Parameters<typeof fetcher.submit>[0],
-    options: Parameters<typeof submitJson>[1] & {
-      id?: string | null;
-    }
-  ) => {
-    let cleanedPath = options.path;
-    if (options.id) {
-      cleanedPath = `${cleanedPath.replace(/\/+$/, "")}/${options.id}`;
-    }
+  const createOrUpdateJson = useCallback(
+    (
+      data: Parameters<typeof fetcher.submit>[0],
+      options: Parameters<typeof submitJson>[1] & {
+        id?: string | null;
+      }
+    ) => {
+      let cleanedPath = options.path;
+      if (options.id) {
+        cleanedPath = `${cleanedPath.replace(/\/+$/, "")}/${options.id}`;
+      }
 
-    return submitJson(data, {
-      ...options,
-      method: options.method ?? (options.id ? "patch" : "post"),
-      path: cleanedPath,
-    });
-  };
+      return submitJson(data, {
+        ...options,
+        method: options.method ?? (options.id ? "patch" : "post"),
+        path: cleanedPath,
+      });
+    },
+    [submitJson]
+  );
 
   useEffect(() => {
-    if (
-      fetcher.data !== undefined &&
-      fetcher.state === "idle" &&
-      !dataCaptured.current
-    ) {
+    if (fetcher.data !== undefined && fetcher.state === "idle" && !dataCaptured.current) {
       dataCaptured.current = true;
       onData?.(fetcher.data as T);
       if (fetcher.data.error) {
@@ -103,8 +108,7 @@ export function useModalFetcher<T>({
           toast.error(
             buildErrorDisplay(fetcher.data.error, {
               defaultErrorMessage:
-                defaultErrorMessage ??
-                asString(cleanErrorMessage(fetcher.data.error)),
+                defaultErrorMessage ?? asString(cleanErrorMessage(fetcher.data.error)),
             }),
             {
               duration: 5000,
