@@ -64,6 +64,9 @@ export default function AssetQuestionResponseTypeInput<
           (isNegativeTone && operand === "Yes") ||
           (isPositiveTone && operand === "No");
 
+        const isSelected = String(value) === operand;
+        const hasNoTone = !isPositiveTone && !isNegativeTone;
+
         return (
           <ToggleGroupItem
             key={operand}
@@ -71,12 +74,12 @@ export default function AssetQuestionResponseTypeInput<
             className={cn(
               showNegative &&
                 "data-[state=on]:bg-destructive data-[state=on]:text-destructive-foreground",
-              showPositive &&
+              (showPositive || hasNoTone) &&
                 "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
             )}
           >
-            {showPositive && <Check />}
-            {showNegative && <X />}
+            {isSelected && !showNegative && <Check className="h-4 w-4" />}
+            {isSelected && showNegative && <X className="h-4 w-4" />}
             {operand}
           </ToggleGroupItem>
         );

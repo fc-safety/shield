@@ -128,14 +128,8 @@ export interface InspectionSession extends BaseModel {
   clientId: string;
 }
 
-export const InspectionSessionStatuses = [
-  "PENDING",
-  "COMPLETE",
-  "EXPIRED",
-  "CANCELLED",
-] as const;
-export type InspectionSessionStatus =
-  (typeof InspectionSessionStatuses)[number];
+export const InspectionSessionStatuses = ["PENDING", "COMPLETE", "EXPIRED", "CANCELLED"] as const;
+export type InspectionSessionStatus = (typeof InspectionSessionStatuses)[number];
 
 export interface CompletedInspectionRoutePoint extends BaseModel {
   inspectionSession?: InspectionSession;
@@ -194,12 +188,7 @@ export interface Address {
   country: string | null;
 }
 
-export const ClientStatuses = [
-  "PENDING",
-  "ACTIVE",
-  "INACTIVE",
-  "LEGACY",
-] as const;
+export const ClientStatuses = ["PENDING", "ACTIVE", "INACTIVE", "LEGACY"] as const;
 
 export interface Client extends BaseModel {
   externalId: string;
@@ -258,8 +247,7 @@ export const AssetQuestionResponseTypes = [
   "NUMBER",
   "IMAGE",
 ] as const;
-export type AssetQuestionResponseType =
-  (typeof AssetQuestionResponseTypes)[number];
+export type AssetQuestionResponseType = (typeof AssetQuestionResponseTypes)[number];
 
 export interface AssetQuestion extends BaseModel {
   legacyQuestionId?: string | null;
@@ -301,13 +289,7 @@ export interface Alert extends BaseModel {
   clientId: string;
 }
 
-export const AlertLevels = [
-  "CRITICAL",
-  "URGENT",
-  "WARNING",
-  "INFO",
-  "AUDIT",
-] as const;
+export const AlertLevels = ["CRITICAL", "URGENT", "WARNING", "INFO", "AUDIT"] as const;
 export type AlertLevel = (typeof AlertLevels)[number];
 
 interface RuleMatch {
@@ -340,6 +322,7 @@ type AssetAlertCriterionRule = BaseAssetAlertCriterionRule & {
 export interface AssetAlertCriterion extends BaseModel {
   alertLevel: AlertLevel;
   rule: AssetAlertCriterionRule;
+  autoResolve: boolean;
 }
 
 export interface ProductCategory extends BaseModel {

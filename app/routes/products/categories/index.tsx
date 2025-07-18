@@ -25,13 +25,7 @@ import CustomTag from "~/components/products/custom-tag";
 import EditAnsiCategoryButton from "~/components/products/edit-ansi-category-button";
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,9 +46,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
 
   const [productCategories, ansiCategories] = await Promise.all([
-    api.productCategories.list(request, { limit: 10000 }),
+    api.productCategories.list(request, { limit: 10000, order: { name: "asc" } }),
     canReadAnsiCategories
-      ? api.ansiCategories.list(request, { limit: 10000 })
+      ? api.ansiCategories.list(request, { limit: 10000, order: { name: "asc" } })
       : Promise.resolve(null),
   ]);
 
@@ -132,9 +126,7 @@ export default function ProductCategories({
           showOwner
         />
       )}
-      {canReadAnsiCategories && (
-        <AnsiCategoriesCard ansiCategories={ansiCategories} />
-      )}
+      {canReadAnsiCategories && <AnsiCategoriesCard ansiCategories={ansiCategories} />}
     </div>
   );
 }
@@ -168,9 +160,7 @@ function ProductCategoriesCard({
     () => [
       {
         accessorKey: "active",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
       },
       {
@@ -183,11 +173,7 @@ function ProductCategoriesCard({
         cell: ({ row, getValue }) => {
           const icon = getValue() as string;
           return icon ? (
-            <Icon
-              iconId={icon}
-              color={row.original.color}
-              className="text-lg"
-            />
+            <Icon iconId={icon} color={row.original.color} className="text-lg" />
           ) : (
             <>&mdash;</>
           );
@@ -200,42 +186,30 @@ function ProductCategoriesCard({
             {getValue() as string}
           </Link>
         ),
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "shortName",
         id: "code",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "description",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
 
         cell: ({ getValue }) => (
-          <span className="line-clamp-2">
-            {(getValue() as string) || <>&mdash;</>}
-          </span>
+          <span className="line-clamp-2">{(getValue() as string) || <>&mdash;</>}</span>
         ),
       },
       {
         accessorKey: "_count.products",
         id: "products",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "client.name",
         id: "owner",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) =>
           getValue() ? <CustomTag text={getValue() as string} /> : <>&mdash;</>,
       },
@@ -313,9 +287,7 @@ function ProductCategoriesCard({
               },
             }}
             searchPlaceholder="Search categories..."
-            actions={
-              canCreate ? [<EditProductCategoryButton key="add" />] : undefined
-            }
+            actions={canCreate ? [<EditProductCategoryButton key="add" />] : undefined}
           />
         </CardContent>
       </Card>
@@ -324,25 +296,12 @@ function ProductCategoriesCard({
   );
 }
 
-function AnsiCategoriesCard({
-  ansiCategories,
-}: {
-  ansiCategories: AnsiCategory[];
-}) {
+function AnsiCategoriesCard({ ansiCategories }: { ansiCategories: AnsiCategory[] }) {
   const { user } = useAuth();
 
-  const canCreate = useMemo(
-    () => can(user, "create", "ansi-categories"),
-    [user]
-  );
-  const canUpdate = useMemo(
-    () => can(user, "update", "ansi-categories"),
-    [user]
-  );
-  const canDelete = useMemo(
-    () => can(user, "delete", "ansi-categories"),
-    [user]
-  );
+  const canCreate = useMemo(() => can(user, "create", "ansi-categories"), [user]);
+  const canUpdate = useMemo(() => can(user, "update", "ansi-categories"), [user]);
+  const canDelete = useMemo(() => can(user, "delete", "ansi-categories"), [user]);
 
   const editAnsiCategory = useOpenData<AnsiCategory>();
 
@@ -361,8 +320,7 @@ function AnsiCategoriesCard({
             <HardHat /> ANSI Categories
           </CardTitle>
           <CardDescription>
-            Special categories for organizing supplies (typically for First Aid)
-            by ANSI standard.
+            Special categories for organizing supplies (typically for First Aid) by ANSI standard.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -373,16 +331,10 @@ function AnsiCategoriesCard({
                 accessorFn: ({ icon }) => icon,
                 enableSorting: false,
                 header: ({ column, table }) => (
-                  <DataTableColumnHeader
-                    column={column}
-                    table={table}
-                    title="Icon"
-                  />
+                  <DataTableColumnHeader column={column} table={table} title="Icon" />
                 ),
                 cell: ({ row, getValue }) => {
-                  return (
-                    <AnsiCategoryDisplay ansiCategory={row.original} iconOnly />
-                  );
+                  return <AnsiCategoryDisplay ansiCategory={row.original} iconOnly />;
                 },
               },
               {
@@ -397,9 +349,7 @@ function AnsiCategoriesCard({
                   <DataTableColumnHeader column={column} table={table} />
                 ),
                 cell: ({ getValue }) => (
-                  <span className="line-clamp-2">
-                    {(getValue() as string) || <>&mdash;</>}
-                  </span>
+                  <span className="line-clamp-2">{(getValue() as string) || <>&mdash;</>}</span>
                 ),
               },
               {
@@ -451,11 +401,7 @@ function AnsiCategoriesCard({
             actions={
               canCreate
                 ? [
-                    <Button
-                      key="add"
-                      size="sm"
-                      onClick={() => editAnsiCategory.openNew()}
-                    >
+                    <Button key="add" size="sm" onClick={() => editAnsiCategory.openNew()}>
                       <Plus />
                       Add ANSI Category
                     </Button>,

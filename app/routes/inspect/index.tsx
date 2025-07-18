@@ -1,11 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter } from "date-fns";
@@ -40,26 +34,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Textarea } from "~/components/ui/textarea";
 import { useAuth } from "~/contexts/auth-context";
 import { ASSET_QUESTION_TONES } from "~/lib/constants";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
-import type {
-  Asset,
-  AssetQuestion,
-  InspectionRoute,
-  InspectionSession,
-  Tag,
-} from "~/lib/models";
+import type { Asset, AssetQuestion, InspectionRoute, InspectionSession, Tag } from "~/lib/models";
 import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
@@ -131,9 +113,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     .then(async (data) =>
       redirect(`next?success&inspectionId=${data.inspection.id}`, {
         headers: {
-          "Set-Cookie": await inspectionSessionStorage.commitSession(
-            inspectionSession
-          ),
+          "Set-Cookie": await inspectionSessionStorage.commitSession(inspectionSession),
         },
       })
     );
@@ -188,11 +168,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export const meta: Route.MetaFunction = ({ data, matches }) => {
   return [
     {
-      title: buildTitle(
-        matches,
-        data?.tag?.asset?.name ?? data?.tag?.serialNumber,
-        "Inspect"
-      ),
+      title: buildTitle(matches, data?.tag?.asset?.name ?? data?.tag?.serialNumber, "Inspect"),
     },
   ];
 };
@@ -207,12 +183,7 @@ const onlyInspectionQuestions = (questions: AssetQuestion[] | undefined) =>
   (questions ?? []).filter((question) => question.type === "INSPECTION");
 
 export default function InspectIndex({
-  loaderData: {
-    tag,
-    processedProductImageUrl,
-    activeOrRecentlyExpiredSessions,
-    matchingRoutes,
-  },
+  loaderData: { tag, processedProductImageUrl, activeOrRecentlyExpiredSessions, matchingRoutes },
 }: Route.ComponentProps) {
   if (tag.asset) {
     return (
@@ -228,12 +199,9 @@ export default function InspectIndex({
 
   return (
     <Alert variant="warning">
-      <AlertTitle>
-        Oops! This tag hasn&apos;t been registered correctly.
-      </AlertTitle>
+      <AlertTitle>Oops! This tag hasn&apos;t been registered correctly.</AlertTitle>
       <AlertDescription>
-        Please contact your administrator to ensure this tag is assigned to an
-        asset.
+        Please contact your administrator to ensure this tag is assigned to an asset.
       </AlertDescription>
     </Alert>
   );
@@ -256,9 +224,7 @@ function InspectionPage({
     () =>
       [
         ...onlyInspectionQuestions(asset.product.assetQuestions),
-        ...onlyInspectionQuestions(
-          asset.product.productCategory.assetQuestions
-        ),
+        ...onlyInspectionQuestions(asset.product.productCategory.assetQuestions),
       ].sort((a, b) => {
         if (!isNil(a.order) && !isNil(b.order) && a.order !== b.order) {
           return a.order - b.order;
@@ -310,9 +276,7 @@ function InspectionPage({
   const [locationAlertOpen, setLocationAlertOpen] = useState(false);
   const locationAlertTimeout = useRef<number | undefined>(undefined);
   const [geolocationPending, setGeolocationPending] = useState(true);
-  const [geolocationPosition, setGeolocationPosition] = useState<
-    GeolocationPosition | undefined
-  >();
+  const [geolocationPosition, setGeolocationPosition] = useState<GeolocationPosition | undefined>();
 
   useEffect(() => {
     if (geolocationPosition === undefined) {
@@ -365,12 +329,11 @@ function InspectionPage({
     return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
-  const [actionQueryParams, setActionQueryParams] =
-    useState<QueryParams | null>(null);
+  const [actionQueryParams, setActionQueryParams] = useState<QueryParams | null>(null);
 
   return (
     <>
-      <div className="grid gap-4 max-w-md self-center">
+      <div className="grid max-w-md gap-4 self-center">
         <InspectionRouteCard
           activeOrRecentlyExpiredSessions={activeOrRecentlyExpiredSessions}
           matchingRoutes={matchingRoutes}
@@ -389,7 +352,7 @@ function InspectionPage({
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Inspecting &quot;{asset.name}&quot;
-              <Nfc className="size-8 text-primary" />
+              <Nfc className="text-primary size-8" />
             </CardTitle>
             <CardDescription>
               Please answer the following questions to complete the inspection.
@@ -401,17 +364,12 @@ function InspectionPage({
                 className="space-y-4"
                 method={"post"}
                 action={
-                  actionQueryParams
-                    ? `?index&${stringifyQuery(actionQueryParams)}`
-                    : undefined
+                  actionQueryParams ? `?index&${stringifyQuery(actionQueryParams)}` : undefined
                 }
                 onSubmit={form.handleSubmit}
               >
-                <Input
-                  type="hidden"
-                  {...form.register("asset.connect.id")}
-                  hidden
-                />
+                <p className="text-muted-foreground mb-4 text-sm">* indicates a required field</p>
+                <Input type="hidden" {...form.register("asset.connect.id")} hidden />
                 {questionFields.map((questionField, index) => {
                   const question = questions[index];
                   return (
@@ -421,16 +379,17 @@ function InspectionPage({
                       name={`responses.createMany.data.${index}.value`}
                       render={({ field: { value, onChange, onBlur } }) => (
                         <FormItem>
-                          <FormLabel>{question?.prompt}</FormLabel>
+                          <FormLabel>
+                            {question?.prompt}
+                            {question?.required && " *"}
+                          </FormLabel>
                           <FormControl>
                             <AssetQuestionResponseTypeInput
                               value={value ?? ""}
                               onValueChange={onChange}
                               onBlur={onBlur}
                               valueType={question?.valueType ?? "BINARY"}
-                              tone={
-                                question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL
-                              }
+                              tone={question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL}
                             />
                           </FormControl>
                           <FormMessage />
@@ -440,9 +399,8 @@ function InspectionPage({
                   );
                 })}
                 {questionFields.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    No questions available for this asset. Please contact your
-                    administrator.
+                  <p className="text-muted-foreground text-center text-sm">
+                    No questions available for this asset. Please contact your administrator.
                     <br />
                     <br />
                     You can still leave comments and submit the inspection.
@@ -461,11 +419,7 @@ function InspectionPage({
                     </FormItem>
                   )}
                 />
-                <Button
-                  type="submit"
-                  disabled={!!isSubmitting || !isValid}
-                  className="w-full"
-                >
+                <Button type="submit" disabled={!!isSubmitting || !isValid} className="w-full">
                   {isSubmitting ? "Sending data..." : "Complete Inspection"}
                 </Button>
               </Form>
@@ -478,18 +432,18 @@ function InspectionPage({
           <AlertDialogHeader>
             <AlertDialogTitle>Location Required</AlertDialogTitle>
           </AlertDialogHeader>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             To continue, your device location must be enabled for this page.
             <br />
             <br />
-            <span className="inline-block font-bold italic mb-2">
+            <span className="mb-2 inline-block font-bold italic">
               What if I don&apos;t see a prompt to enable my location?
             </span>
             <br />
-            <ol className="list-decimal list-inside">
+            <ol className="list-inside list-decimal">
               <li>
-                Ensure that location services are enabled for this browser in
-                your device&apos;s browser or system settings.
+                Ensure that location services are enabled for this browser in your device&apos;s
+                browser or system settings.
               </li>
               <li>
                 <button
@@ -506,7 +460,7 @@ function InspectionPage({
         </AlertDialogContent>
       </AlertDialog>
       <AlertDialog open={geolocationPending}>
-        <AlertDialogContent className="flex items-center justify-center size-32">
+        <AlertDialogContent className="flex size-32 items-center justify-center">
           <AlertDialogHeader>
             <AlertDialogTitle></AlertDialogTitle>
             <Loader2 className="size-8 animate-spin" />
@@ -533,17 +487,13 @@ function InspectionRouteCard({
   const { user } = useAuth();
 
   const activeSessions = useMemo(() => {
-    return activeOrRecentlyExpiredSessions?.filter(
-      (s) => s.status === "PENDING"
-    );
+    return activeOrRecentlyExpiredSessions?.filter((s) => s.status === "PENDING");
   }, [activeOrRecentlyExpiredSessions]);
 
   // Allow user to disable route for this inspection.
   const [routeDisabled, setRouteDisabled] = useState(false);
 
-  const [activeSession, setActiveSession] = useState<
-    InspectionSession | undefined | null
-  >();
+  const [activeSession, setActiveSession] = useState<InspectionSession | undefined | null>();
 
   // Automatically set active session based on user's last session. If the user
   // has multiple sessions, or if another inspector has already started a session,
@@ -565,9 +515,7 @@ function InspectionRouteCard({
     }
   }, [user, activeOrRecentlyExpiredSessions]);
 
-  const [activeRoute, setActiveRoute] = useState<
-    InspectionRoute | undefined | null
-  >();
+  const [activeRoute, setActiveRoute] = useState<InspectionRoute | undefined | null>();
 
   // Similar to the active session, automatically set the active route if there is only
   // one route for the asset. Otherwise, the user must select the route they would like
@@ -609,11 +557,7 @@ function InspectionRouteCard({
       {/* Show confirm session prompt if there are multiple (non-expired) sessions. */}
       {activeSessions && (
         <ConfirmSessionPrompt
-          open={
-            userInteractionReady &&
-            activeSession === undefined &&
-            activeSessions.length > 0
-          }
+          open={userInteractionReady && activeSession === undefined && activeSessions.length > 0}
           activeSessions={activeSessions}
           onContinue={setActiveSession}
           onCancel={() => setActiveSession(null)}
@@ -660,10 +604,9 @@ function ConfirmSessionPrompt({
   onContinue: (session: InspectionSession) => void;
   onCancel: () => void;
 }) {
-  const [selectedSession, setSelectedSession] =
-    useState<InspectionSession | null>(
-      activeSessions.length === 1 ? activeSessions[0] : null
-    );
+  const [selectedSession, setSelectedSession] = useState<InspectionSession | null>(
+    activeSessions.length === 1 ? activeSessions[0] : null
+  );
   return (
     <AlertDialog open={open}>
       <AlertDialogContent>
@@ -683,16 +626,11 @@ function ConfirmSessionPrompt({
           className="grid grid-cols-[auto_auto_auto_1fr]"
           value={selectedSession?.id}
           onValueChange={(sId) =>
-            setSelectedSession(
-              activeSessions?.find((s) => s.id === sId) ?? null
-            )
+            setSelectedSession(activeSessions?.find((s) => s.id === sId) ?? null)
           }
         >
           {activeSessions?.map((session) => (
-            <div
-              key={session.id}
-              className="grid col-span-full grid-cols-subgrid"
-            >
+            <div key={session.id} className="col-span-full grid grid-cols-subgrid">
               <RadioGroupItem
                 value={session.id}
                 className="peer sr-only"
@@ -700,7 +638,7 @@ function ConfirmSessionPrompt({
               />
               <Label
                 htmlFor={"routeSession" + session.id}
-                className="grow h-full grid col-span-full grid-cols-subgrid gap-x-6 rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary col-span-full grid h-full grow grid-cols-subgrid gap-x-6 rounded-md border-2 p-4"
               >
                 {[
                   {
@@ -719,11 +657,8 @@ function ConfirmSessionPrompt({
                   },
                   {
                     key: "Progress",
-                    value: `${
-                      session.completedInspectionRoutePoints?.length ?? 0
-                    }/${
-                      session.inspectionRoute?.inspectionRoutePoints?.length ??
-                      0
+                    value: `${session.completedInspectionRoutePoints?.length ?? 0}/${
+                      session.inspectionRoute?.inspectionRoutePoints?.length ?? 0
                     }`,
                   },
                 ].map(({ key, value }) => (
@@ -769,8 +704,7 @@ function InspectionForAssetCompletedAlert({
         <AlertDialogHeader>
           <AlertDialogTitle>Inspection Already Completed</AlertDialogTitle>
           <AlertDialogDescription>
-            An inspection has already been completed for this asset in the
-            current route session.
+            An inspection has already been completed for this asset in the current route session.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -781,18 +715,14 @@ function InspectionForAssetCompletedAlert({
           >
             Inspect without route
           </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => navigate("next?sessionId=" + activeSession.id)}
-          >
+          <AlertDialogAction onClick={() => navigate("next?sessionId=" + activeSession.id)}>
             Continue to next asset in route
           </AlertDialogAction>
         </AlertDialogFooter>
         <Button
           variant="link"
           onClick={() => {
-            navigate(
-              "/inspect?action=reset-session&sessionId=" + activeSession.id
-            );
+            navigate("/inspect?action=reset-session&sessionId=" + activeSession.id);
           }}
         >
           or cancel current session and restart route
@@ -817,8 +747,7 @@ function SessionExpiredAlert({
         <AlertDialogHeader>
           <AlertDialogTitle>Session Expired</AlertDialogTitle>
           <AlertDialogDescription>
-            This route session has expired. Please start a new session to
-            continue.
+            This route session has expired. Please start a new session to continue.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

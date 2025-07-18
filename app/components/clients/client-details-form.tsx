@@ -10,13 +10,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  format,
-  isAfter,
-  isValid as isValidDate,
-  parseISO,
-  startOfDay,
-} from "date-fns";
+import { format, isAfter, isValid as isValidDate, parseISO, startOfDay } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Form } from "react-router";
@@ -59,10 +53,7 @@ const FORM_DEFAULTS = {
   defaultInspectionCycle: 30,
 } satisfies TForm;
 
-export default function ClientDetailsForm({
-  client,
-  onSubmitted,
-}: ClientDetailsFormProps) {
+export default function ClientDetailsForm({ client, onSubmitted }: ClientDetailsFormProps) {
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
 
@@ -71,9 +62,7 @@ export default function ClientDetailsForm({
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
 
   const form = useForm<TForm>({
-    resolver: zodResolver(
-      (client ? updateClientSchema : createClientSchema) as z.Schema<TForm>
-    ),
+    resolver: zodResolver((client ? updateClientSchema : createClientSchema) as z.ZodType<TForm>),
     values: client
       ? {
           ...client,
@@ -111,13 +100,9 @@ export default function ClientDetailsForm({
         })
         .then((r) => {
           if (r) {
-            setValue(
-              client ? "address.update.city" : "address.create.city",
-              r.city,
-              {
-                shouldValidate: true,
-              }
-            );
+            setValue(client ? "address.update.city" : "address.create.city", r.city, {
+              shouldValidate: true,
+            });
             setValue(
               client ? "address.update.state" : "address.create.state",
               r.state_code ?? r.state_en,
@@ -144,11 +129,7 @@ export default function ClientDetailsForm({
 
   return (
     <FormProvider {...form}>
-      <Form
-        className="space-y-4"
-        method="post"
-        onSubmit={form.handleSubmit(handleSubmit)}
-      >
+      <Form className="space-y-4" method="post" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
         <FormField
           control={form.control}
@@ -157,11 +138,7 @@ export default function ClientDetailsForm({
             <FormItem>
               <FormLabel>Status</FormLabel>
               <FormControl>
-                <RadioGroup
-                  {...field}
-                  onValueChange={onChange}
-                  className="flex gap-4"
-                >
+                <RadioGroup {...field} onValueChange={onChange} className="flex gap-4">
                   {ClientStatuses.map((status, idx) => (
                     <div key={status} className="flex items-center space-x-2">
                       <RadioGroupItem value={status} id={"status" + idx} />
@@ -185,11 +162,7 @@ export default function ClientDetailsForm({
                 <FormLabel>External ID</FormLabel>
                 <FormControl>
                   {isNew ? (
-                    <Input
-                      {...field}
-                      placeholder="Automatically generated"
-                      tabIndex={-1}
-                    />
+                    <Input {...field} placeholder="Automatically generated" tabIndex={-1} />
                   ) : (
                     <CopyableInput {...field} readOnly />
                   )}
@@ -224,9 +197,7 @@ export default function ClientDetailsForm({
           render={({ field: { value, onChange, ...field } }) => (
             <FormItem>
               <FormLabel>
-                {!value || isAfter(value, startOfDay(new Date()))
-                  ? "Starting On"
-                  : "Started On"}
+                {!value || isAfter(value, startOfDay(new Date())) ? "Starting On" : "Started On"}
               </FormLabel>
               <FormControl>
                 <Input
@@ -247,9 +218,7 @@ export default function ClientDetailsForm({
           )}
         />
 
-        {!isNew && (
-          <Input type="hidden" {...form.register("address.update.id")} hidden />
-        )}
+        {!isNew && <Input type="hidden" {...form.register("address.update.id")} hidden />}
         <FormField
           control={form.control}
           name={isNew ? "address.create.street1" : "address.update.street1"}
@@ -298,11 +267,7 @@ export default function ClientDetailsForm({
               <FormItem>
                 <FormLabel>City</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    value={value ?? ""}
-                    disabled={zipPopulatePending}
-                  />
+                  <Input {...field} value={value ?? ""} disabled={zipPopulatePending} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -315,11 +280,7 @@ export default function ClientDetailsForm({
               <FormItem>
                 <FormLabel>State</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    value={value ?? ""}
-                    disabled={zipPopulatePending}
-                  />
+                  <Input {...field} value={value ?? ""} disabled={zipPopulatePending} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -336,9 +297,7 @@ export default function ClientDetailsForm({
                 <Input
                   {...field}
                   value={beautifyPhone(value ?? "")}
-                  onChange={(e) =>
-                    onChange(stripPhone(beautifyPhone(e.target.value)))
-                  }
+                  onChange={(e) => onChange(stripPhone(beautifyPhone(e.target.value)))}
                   type="phone"
                 />
               </FormControl>
@@ -369,22 +328,16 @@ export default function ClientDetailsForm({
             <FormItem>
               <FormLabel>Demo Mode</FormLabel>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
               <FormDescription>
-                When enabled, this client will be enabled to perform special
-                actions not suitable for production environments.
+                When enabled, this client will be enabled to perform special actions not suitable
+                for production environments.
               </FormDescription>
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </Form>

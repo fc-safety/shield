@@ -1,11 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseISO } from "date-fns";
 import { AlertCircle, ArrowRight, Plus } from "lucide-react";
@@ -26,13 +20,7 @@ import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-r
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { useAuth } from "~/contexts/auth-context";
 import { ASSET_QUESTION_TONES } from "~/lib/constants";
@@ -44,9 +32,10 @@ import { buildTitle, cn, isNil } from "~/lib/utils";
 import type { Route } from "./+types/setup";
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow<
-    z.infer<typeof setupAssetSchema>
-  >(request, zodResolver(setupAssetSchema));
+  const { data } = await getValidatedFormDataOrThrow<z.infer<typeof setupAssetSchema>>(
+    request,
+    zodResolver(setupAssetSchema)
+  );
 
   if (data.setupOn) {
     return api.assets.updateSetup(request, data);
@@ -63,17 +52,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const tag = await api.tags.getForAssetSetup(request, tagExternalId);
 
   if (tag.asset?.id) {
-    return fetchActiveInspectionRouteContext(request, tag.asset?.id).then(
-      (result) => ({
-        tag: tag,
-        ...result,
-        processedProductImageUrl:
-          tag.asset?.product.imageUrl &&
-          buildImageProxyUrl(tag.asset.product.imageUrl, [
-            "rs:fit:160:160:1:1",
-          ]),
-      })
-    );
+    return fetchActiveInspectionRouteContext(request, tag.asset?.id).then((result) => ({
+      tag: tag,
+      ...result,
+      processedProductImageUrl:
+        tag.asset?.product.imageUrl &&
+        buildImageProxyUrl(tag.asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
+    }));
   }
 
   return {
@@ -87,11 +72,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export const meta: Route.MetaFunction = ({ data, matches }) => {
   return [
     {
-      title: buildTitle(
-        matches,
-        data?.tag.asset?.name ?? data?.tag.serialNumber,
-        "Setup"
-      ),
+      title: buildTitle(matches, data?.tag.asset?.name ?? data?.tag.serialNumber, "Setup"),
     },
   ];
 };
@@ -114,25 +95,19 @@ export default function InspectSetup({
   const canUpdateInspectionRoutes = can(user, "update", "inspection-routes");
 
   const showRouteCard =
-    (!!matchingRoutes && matchingRoutes.length > 0) ||
-    canUpdateInspectionRoutes;
+    (!!matchingRoutes && matchingRoutes.length > 0) || canUpdateInspectionRoutes;
 
   const questions = useMemo(
     () =>
       [
         ...onlySetupQuestions(tag.asset?.product.assetQuestions),
-        ...onlySetupQuestions(
-          tag.asset?.product.productCategory.assetQuestions
-        ),
+        ...onlySetupQuestions(tag.asset?.product.productCategory.assetQuestions),
       ].sort((a, b) => (a.order ?? 0) - (b.order ?? 1)),
     [tag]
   );
 
   const narrowedSetupAssetSchema = useMemo(() => {
-    return buildSetupAssetSchema(
-      questions,
-      tag.asset?.setupQuestionResponses ?? []
-    );
+    return buildSetupAssetSchema(questions, tag.asset?.setupQuestionResponses ?? []);
   }, [questions, tag]);
 
   const form = useRemixForm<TForm>({
@@ -212,52 +187,44 @@ export default function InspectSetup({
 
   return (
     <>
-      <div className="grid gap-4 max-w-md self-center">
+      <div className="grid max-w-md gap-4 self-center">
         {showRouteCard && (
           <Card>
             <CardHeader>
               <CardTitle>Route Information</CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-2 justify-between items-center">
+            <CardContent className="flex items-center justify-between gap-2">
               {matchingRoutes?.length ? (
                 <div className="text-sm">
                   <div className="mb-2">
-                    This asset is currently part of {matchingRoutes.length}{" "}
-                    route
+                    This asset is currently part of {matchingRoutes.length} route
                     {matchingRoutes.length === 1 ? "" : "s"}:
                   </div>
                   {matchingRoutes.map((route) => (
-                    <div
-                      key={route.id}
-                      className="flex items-center gap-2 font-semibold"
-                    >
-                      <ArrowRight className="size-4 inline-block" />
+                    <div key={route.id} className="flex items-center gap-2 font-semibold">
+                      <ArrowRight className="inline-block size-4" />
                       <div>{route.name}</div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-xs italic text-muted-foreground">
+                <div className="text-muted-foreground text-xs italic">
                   No routes available for this asset.
                 </div>
               )}
-              {canUpdateInspectionRoutes &&
-                tag.asset &&
-                !isNil(matchingRoutes) && (
-                  <EditRoutePointButton
-                    asset={tag.asset}
-                    filterRoute={(r) =>
-                      !matchingRoutes.some((mr) => mr.id === r.id)
-                    }
-                    trigger={
-                      <Button variant="default" size="sm" className="shrink-0">
-                        <Plus />
-                        Add to Route
-                      </Button>
-                    }
-                    linkToRoutes={"/inspect/routes"}
-                  />
-                )}
+              {canUpdateInspectionRoutes && tag.asset && !isNil(matchingRoutes) && (
+                <EditRoutePointButton
+                  asset={tag.asset}
+                  filterRoute={(r) => !matchingRoutes.some((mr) => mr.id === r.id)}
+                  trigger={
+                    <Button variant="default" size="sm" className="shrink-0">
+                      <Plus />
+                      Add to Route
+                    </Button>
+                  }
+                  linkToRoutes={"/inspect/routes"}
+                />
+              )}
             </CardContent>
           </Card>
         )}
@@ -280,27 +247,18 @@ export default function InspectSetup({
             </CardTitle>
             <CardDescription>
               This asset will need to be setup before it can be inspected.{" "}
-              <span className="font-bold">
-                You will only see this setup screen once.
-              </span>
+              <span className="font-bold">You will only see this setup screen once.</span>
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6 sm:gap-8">
             {tag.asset ? (
               <RemixFormProvider {...form}>
-                <Form
-                  className="space-y-4"
-                  method={"post"}
-                  onSubmit={form.handleSubmit}
-                >
+                <Form className="space-y-4" method={"post"} onSubmit={form.handleSubmit}>
+                  <p className="text-muted-foreground mb-4 text-sm">* indicates a required field</p>
                   <Input type="hidden" {...form.register("id")} hidden />
-                  {isSetup && (
-                    <Input type="hidden" {...form.register("setupOn")} hidden />
-                  )}
+                  {isSetup && <Input type="hidden" {...form.register("setupOn")} hidden />}
                   {allQuestionFields.map(({ key, data }, index) => {
-                    const question = questions.find(
-                      (q) => q.id === data.assetQuestionId
-                    );
+                    const question = questions.find((q) => q.id === data.assetQuestionId);
                     return (
                       <FormField
                         key={key}
@@ -315,10 +273,10 @@ export default function InspectSetup({
                             <FormLabel>
                               {question?.prompt ?? (
                                 <span className="italic">
-                                  Prompt for this question has been removed or
-                                  is not available.
+                                  Prompt for this question has been removed or is not available.
                                 </span>
                               )}
+                              {question?.required && " *"}
                             </FormLabel>
                             <FormControl>
                               <AssetQuestionResponseTypeInput
@@ -329,9 +287,7 @@ export default function InspectSetup({
                                 // Disabling for now.
                                 // TODO: Not sure if questions should be able to be updated after setup.
                                 disabled={isSetup || !question}
-                                tone={
-                                  question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL
-                                }
+                                tone={question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL}
                               />
                             </FormControl>
                             <FormMessage />
@@ -341,17 +297,12 @@ export default function InspectSetup({
                     );
                   })}
                   {allQuestionFields.length === 0 && (
-                    <p className="text-muted-foreground text-sm text-center">
-                      <span className="font-bold">
-                        No setup questions found.
-                      </span>{" "}
+                    <p className="text-muted-foreground text-center text-sm">
+                      <span className="font-bold">No setup questions found.</span>{" "}
                       {isSetup ? (
                         <>There is nothing to update.</>
                       ) : (
-                        <>
-                          Go ahead and click complete setup to begin your
-                          inspection.
-                        </>
+                        <>Go ahead and click complete setup to begin your inspection.</>
                       )}
                     </p>
                   )}
@@ -359,43 +310,24 @@ export default function InspectSetup({
                     type="submit"
                     // TODO: Not sure if questions should be able to be updated after setup.
                     // Disabling for now.
-                    disabled={
-                      isSetup ||
-                      isSubmitting ||
-                      (isSetup && !isDirty) ||
-                      !isValid
-                    }
+                    disabled={isSetup || isSubmitting || (isSetup && !isDirty) || !isValid}
                     variant={isSetup ? "secondary" : "default"}
                     className={cn("w-full", isSubmitting && "animate-pulse")}
                   >
-                    {isSubmitting
-                      ? "Processing..."
-                      : isSetup
-                      ? "Setup Complete"
-                      : "Complete Setup"}
+                    {isSubmitting ? "Processing..." : isSetup ? "Setup Complete" : "Complete Setup"}
                   </Button>
                   {isSetup && (
-                    <Button
-                      variant="default"
-                      asChild
-                      type="button"
-                      className="w-full"
-                    >
-                      <Link to={`/inspect/?tagNo=${tag.serialNumber}`}>
-                        Begin Inspection
-                      </Link>
+                    <Button variant="default" asChild type="button" className="w-full">
+                      <Link to={`/inspect/?tagNo=${tag.serialNumber}`}>Begin Inspection</Link>
                     </Button>
                   )}
                 </Form>
               </RemixFormProvider>
             ) : (
               <Alert variant="warning">
-                <AlertTitle>
-                  Oops! This tag hasn&apos;t been registered correctly.
-                </AlertTitle>
+                <AlertTitle>Oops! This tag hasn&apos;t been registered correctly.</AlertTitle>
                 <AlertDescription>
-                  Please contact your administrator to ensure this tag is
-                  assigned to an asset.
+                  Please contact your administrator to ensure this tag is assigned to an asset.
                 </AlertDescription>
               </Alert>
             )}
