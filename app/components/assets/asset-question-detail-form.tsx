@@ -100,6 +100,8 @@ export default function AssetQuestionDetailForm({
               }
             : undefined,
           tone: assetQuestion?.tone ?? ASSET_QUESTION_TONES.NEUTRAL,
+          variants: undefined,
+          conditions: undefined,
         }
       : {
           ...FORM_DEFAULTS,
