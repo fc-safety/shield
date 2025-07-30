@@ -35,6 +35,7 @@ import type { AssetQuestion, ProductCategory } from "~/lib/models";
 import { AssetQuestionTypes } from "~/lib/models";
 import type { createAssetQuestionSchema } from "~/lib/schema";
 import { cn } from "~/lib/utils";
+import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
 import EditAssetQuestionButton from "../assets/edit-asset-question-button";
 import ConfirmationDialog from "../confirmation-dialog";
@@ -114,7 +115,11 @@ export default function AssetQuestionsDataTable({
         cell: ({ getValue, row }) => {
           const question = row.original;
           const isActive = getValue() as boolean;
-          return <ActiveToggle active={isActive} path={getResourcePath(question)} />;
+          return readOnly ? (
+            <ActiveIndicator2 active={isActive} />
+          ) : (
+            <ActiveToggle active={isActive} path={getResourcePath(question)} />
+          );
         },
       },
       {
@@ -125,13 +130,14 @@ export default function AssetQuestionsDataTable({
           const currentType = getValue() as string;
           const typeOptions = AssetQuestionTypes.map((type) => ({
             value: type,
-            label: type.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+            label: type
+              .replace(/_/g, " ")
+              .toLowerCase()
+              .replace(/\b\w/g, (l) => l.toUpperCase()),
           }));
-          
+
           return readOnly ? (
-            <span className="capitalize">
-              {currentType.replace(/_/g, " ").toLowerCase()}
-            </span>
+            <span className="capitalize">{currentType.replace(/_/g, " ").toLowerCase()}</span>
           ) : (
             <SubmittingSelect
               value={currentType}
@@ -149,7 +155,9 @@ export default function AssetQuestionsDataTable({
         cell: ({ getValue, row }) => {
           const question = row.original;
           const isRequired = getValue() as boolean;
-          return (
+          return readOnly ? (
+            <span className="text-muted-foreground text-xs">{isRequired ? "Yes" : "No"}</span>
+          ) : (
             <SubmittingCheckbox
               checked={isRequired}
               path={getResourcePath(question)}
@@ -165,7 +173,7 @@ export default function AssetQuestionsDataTable({
         cell: ({ getValue, row }) => {
           const question = row.original;
           const prompt = getValue() as string;
-          
+
           return readOnly ? (
             <span className="line-clamp-2">{prompt}</span>
           ) : (
@@ -174,9 +182,7 @@ export default function AssetQuestionsDataTable({
               path={getResourcePath(question)}
               valueKey="prompt"
               isEditing={editingPromptId === question.id}
-              onEditingChange={(editing) => 
-                setEditingPromptId(editing ? question.id : null)
-              }
+              onEditingChange={(editing) => setEditingPromptId(editing ? question.id : null)}
               className="w-full"
             />
           );
@@ -331,15 +337,6 @@ export default function AssetQuestionsDataTable({
           );
         },
       },
-      // {
-      //   accessorKey: "_count.conditions",
-      //   id: "conditions",
-      //   header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-      //   cell: ({ getValue }) => {
-      //     const count = getValue() as number;
-      //     return <span className="text-xs">{count ?? 0}</span>;
-      //   },
-      // },
       {
         id: "actions",
         cell: ({ row }) => {
