@@ -235,7 +235,7 @@ export interface Person extends BaseModel {
   clientId: string;
 }
 
-export const AssetQuestionTypes = ["SETUP", "INSPECTION"] as const;
+export const AssetQuestionTypes = ["SETUP", "INSPECTION", "SETUP_AND_INSPECTION"] as const;
 export type AssetQuestionType = (typeof AssetQuestionTypes)[number];
 
 export const AssetQuestionResponseTypes = [
@@ -249,6 +249,23 @@ export const AssetQuestionResponseTypes = [
 ] as const;
 export type AssetQuestionResponseType = (typeof AssetQuestionResponseTypes)[number];
 
+export const AssetQuestionConditionTypes = [
+  "REGION",
+  "MANUFACTURER",
+  "PRODUCT_CATEGORY",
+  "PRODUCT_SUBCATEGORY",
+  "PRODUCT",
+] as const;
+export type AssetQuestionConditionType = (typeof AssetQuestionConditionTypes)[number];
+
+export interface AssetQuestionCondition extends BaseModel {
+  assetQuestion?: AssetQuestion;
+  assetQuestionId: string;
+  conditionType: AssetQuestionConditionType;
+  value: string[];
+  description: string | null;
+}
+
 export interface AssetQuestion extends BaseModel {
   legacyQuestionId?: string | null;
   active: boolean;
@@ -259,12 +276,25 @@ export interface AssetQuestion extends BaseModel {
   valueType: AssetQuestionResponseType;
   tone: string | null;
   assetAlertCriteria?: AssetAlertCriterion[];
+  /** @deprecated */
   productCategory?: ProductCategory | null;
+  /** @deprecated */
   productCategoryId: string | null;
+  /** @deprecated */
   product?: Product | null;
+  /** @deprecated */
   productId: string | null;
   consumableConfig?: ConsumableQuestionConfig | null;
   consumableConfigId: string | null;
+  parentQuestion?: AssetQuestion | null;
+  parentQuestionId: string | null;
+  variants?: AssetQuestion[];
+  conditions?: AssetQuestionCondition[];
+  _count?: {
+    assetAlertCriteria: number;
+    conditions: number;
+    variants: number;
+  };
 }
 
 export interface Alert extends BaseModel {

@@ -15,6 +15,7 @@ import {
   Settings,
   Shapes,
   Shield,
+  ShieldQuestion,
   Terminal,
   Users,
 } from "lucide-react";
@@ -24,11 +25,7 @@ import { requireUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "~/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import { can, isSuperAdmin } from "~/lib/users";
@@ -105,6 +102,12 @@ export default function Layout({
           url: "products/manufacturers",
           icon: Factory,
           hide: !can(user, "read", "manufacturers"),
+        },
+        {
+          title: "Questions",
+          url: "products/questions",
+          icon: ShieldQuestion,
+          hide: !can(user, "read", "asset-questions"),
         },
       ],
     },
@@ -190,7 +193,7 @@ export default function Layout({
                 </>
               }
             />
-            <section className="flex flex-col p-2 sm:p-4 pb-6 sm:pb-12 grow">
+            <section className="flex grow flex-col p-2 pb-6 sm:p-4 sm:pb-12">
               <Outlet />
             </section>
             <Footer />

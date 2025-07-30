@@ -153,16 +153,22 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const sessionId = qp.get("sessionId");
 
   // Load inspection route and session data, if present.
-  return fetchActiveInspectionRouteContext(request, tag.asset.id, {
-    sessionId: sessionId ?? undefined,
-    resetSession: action === "reset-session",
-  }).then((result) => ({
+  const [routeContext, inspectionQuestions] = await Promise.all([
+    fetchActiveInspectionRouteContext(request, tag.asset.id, {
+      sessionId: sessionId ?? undefined,
+      resetSession: action === "reset-session",
+    }),
+    api.assetQuestions.findByAsset(request, tag.asset.id, "INSPECTION"),
+  ]);
+
+  return {
     tag,
     processedProductImageUrl:
       tag.asset?.product.imageUrl &&
       buildImageProxyUrl(tag.asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
-    ...result,
-  }));
+    inspectionQuestions,
+    ...routeContext,
+  };
 };
 
 export const meta: Route.MetaFunction = ({ data, matches }) => {
@@ -179,17 +185,15 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
 type TForm = z.infer<typeof createInspectionSchema>;
 
-const onlyInspectionQuestions = (questions: AssetQuestion[] | undefined) =>
-  (questions ?? []).filter((question) => question.type === "INSPECTION");
-
 export default function InspectIndex({
-  loaderData: { tag, processedProductImageUrl, activeOrRecentlyExpiredSessions, matchingRoutes },
+  loaderData: { tag, processedProductImageUrl, inspectionQuestions, activeOrRecentlyExpiredSessions, matchingRoutes },
 }: Route.ComponentProps) {
   if (tag.asset) {
     return (
       <InspectionPage
         tag={tag}
         asset={tag.asset}
+        inspectionQuestions={inspectionQuestions}
         activeOrRecentlyExpiredSessions={activeOrRecentlyExpiredSessions}
         matchingRoutes={matchingRoutes}
         processedProductImageUrl={processedProductImageUrl}
@@ -210,22 +214,21 @@ export default function InspectIndex({
 function InspectionPage({
   tag,
   asset,
+  inspectionQuestions,
   activeOrRecentlyExpiredSessions,
   matchingRoutes,
   processedProductImageUrl,
 }: {
   tag: Tag;
   asset: NonNullable<Tag["asset"]>;
+  inspectionQuestions: AssetQuestion[];
   activeOrRecentlyExpiredSessions: InspectionSession[] | null | undefined;
   matchingRoutes: InspectionRoute[] | null | undefined;
   processedProductImageUrl: string | null | undefined;
 }) {
   const questions = useMemo(
     () =>
-      [
-        ...onlyInspectionQuestions(asset.product.assetQuestions),
-        ...onlyInspectionQuestions(asset.product.productCategory.assetQuestions),
-      ].sort((a, b) => {
+      inspectionQuestions.sort((a, b) => {
         if (!isNil(a.order) && !isNil(b.order) && a.order !== b.order) {
           return a.order - b.order;
         }
@@ -233,7 +236,7 @@ function InspectionPage({
         if (b.order) return 1;
         return isAfter(a.createdOn, b.createdOn) ? 1 : -1;
       }),
-    [asset]
+    [inspectionQuestions]
   );
 
   const narrowedCreateInspectionSchema = useMemo(() => {
