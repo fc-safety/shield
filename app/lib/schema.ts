@@ -505,7 +505,7 @@ export const createAssetQuestionSchema = baseCreateAssetQuestionSchema.extend({
 
 export const createAssetQuestionSchemaResolver = zodResolver(createAssetQuestionSchema);
 
-export const updateAssetQuestionSchema = createAssetQuestionSchema.partial().extend({
+export const updateAssetQuestionSchema = baseCreateAssetQuestionSchema.partial().extend({
   id: z.string(),
   assetAlertCriteria: z
     .object({
