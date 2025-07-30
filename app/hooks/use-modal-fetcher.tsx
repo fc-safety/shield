@@ -27,7 +27,7 @@ export function useModalFetcher<T>({
       dataCaptured.current = false;
       fetcher.submit(...args);
     },
-    [fetcher]
+    [fetcher.submit]
   );
 
   const rawLoad = useCallback(
@@ -37,7 +37,7 @@ export function useModalFetcher<T>({
       dataCaptured.current = false;
       fetcher.load(...args);
     },
-    [fetcher]
+    [fetcher.state, fetcher.load]
   );
 
   const load = useCallback(

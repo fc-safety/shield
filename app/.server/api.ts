@@ -3,6 +3,7 @@ import {
   type Alert,
   type AnsiCategory,
   type Asset,
+  type AssetQuestion,
   type Client,
   type Inspection,
   type InspectionRoute,
@@ -24,12 +25,7 @@ import {
   resolveAlertSchema,
   type setupAssetSchema,
 } from "~/lib/schema";
-import type {
-  ClientUser,
-  GetReportResult,
-  ListReportsResult,
-  Role,
-} from "~/lib/types";
+import type { ClientUser, GetReportResult, ListReportsResult, Role } from "~/lib/types";
 import type { QueryParams } from "~/lib/urls";
 import { INSPECTION_TOKEN_HEADER } from "~/routes/inspect/constants/headers";
 import { ApiFetcher, CRUD, type FetchBuildOptions } from "./api-utils";
@@ -47,24 +43,14 @@ export const api = {
 
     // Asset setup questions
     setup: (request: Request, input: z.infer<typeof setupAssetSchema>) =>
-      ApiFetcher.create(request, "/assets/:id/setup", { id: input.id })
-        .json(input)
-        .post<Asset>(),
+      ApiFetcher.create(request, "/assets/:id/setup", { id: input.id }).json(input).post<Asset>(),
     updateSetup: (request: Request, input: z.infer<typeof setupAssetSchema>) =>
-      ApiFetcher.create(request, "/assets/:id/setup", { id: input.id })
-        .json(input)
-        .patch<Asset>(),
+      ApiFetcher.create(request, "/assets/:id/setup", { id: input.id }).json(input).patch<Asset>(),
   },
   alerts: {
     ...CRUD.for<Alert>("/alerts"),
-    resolve: (
-      request: Request,
-      id: string,
-      input: z.infer<typeof resolveAlertSchema>
-    ) =>
-      ApiFetcher.create(request, `/alerts/${id}/resolve`, { id })
-        .json(input)
-        .post<Alert>(),
+    resolve: (request: Request, id: string, input: z.infer<typeof resolveAlertSchema>) =>
+      ApiFetcher.create(request, `/alerts/${id}/resolve`, { id }).json(input).post<Alert>(),
   },
   tags: {
     ...CRUD.for<Tag>("/tags").all(),
@@ -98,17 +84,10 @@ export const api = {
       ApiFetcher.create(request, "/inspections/sessions/:id", {
         id,
       }).get<InspectionSession>(),
-    getActiveOrRecentlyExpiredSessionsForAsset: (
-      request: Request,
-      assetId: string
-    ) =>
-      ApiFetcher.create(
-        request,
-        "/inspections/active-sessions/asset/:assetId",
-        {
-          assetId,
-        }
-      ).get<InspectionSession[]>(),
+    getActiveOrRecentlyExpiredSessionsForAsset: (request: Request, assetId: string) =>
+      ApiFetcher.create(request, "/inspections/active-sessions/asset/:assetId", {
+        assetId,
+      }).get<InspectionSession[]>(),
     cancelRouteSession: (request: Request, id: string) =>
       ApiFetcher.create(request, "/inspections/sessions/:id/cancel", {
         id,
@@ -124,10 +103,7 @@ export const api = {
       }>({
         bypassAuth: true,
       }),
-    isValidTagId: (
-      request: Request,
-      { id, extId }: { id?: string; extId?: string }
-    ) =>
+    isValidTagId: (request: Request, { id, extId }: { id?: string; extId?: string }) =>
       ApiFetcher.create(request, "/inspections-public/is-valid-tag-id", {
         id,
         extId,
@@ -168,6 +144,14 @@ export const api = {
   manufacturers: CRUD.for<Manufacturer>("/manufacturers").all(),
   productCategories: CRUD.for<ProductCategory>("/product-categories").all(),
   ansiCategories: CRUD.for<AnsiCategory>("/ansi-categories").all(),
+  assetQuestions: {
+    ...CRUD.for<AssetQuestion>("/asset-questions").all(),
+    findByAsset: (request: Request, assetId: string, type?: "SETUP" | "INSPECTION") =>
+      ApiFetcher.create(request, "/asset-questions/by-asset/:assetId", {
+        assetId,
+        ...(type && { type }),
+      }).get<AssetQuestion[]>(),
+  },
   // CLIENTS & SITES
   clients: {
     ...CRUD.for<Client>("/clients").all(),
@@ -185,21 +169,15 @@ export const api = {
   },
   vaultOwnerships: {
     ...CRUD.for<VaultOwnership>("/vault-ownerships").all(),
-    create: (
-      request: Request,
-      input: z.infer<typeof createVaultOwnershipSchema>
-    ) =>
-      ApiFetcher.create(request, "/vault-ownerships")
-        .json(input)
-        .post<VaultOwnership>(),
+    create: (request: Request, input: z.infer<typeof createVaultOwnershipSchema>) =>
+      ApiFetcher.create(request, "/vault-ownerships").json(input).post<VaultOwnership>(),
     getByKey: (request: Request, key: string) =>
       ApiFetcher.create(request, "/vault-ownerships/key/:key", {
         key,
       }).get<VaultOwnership>(),
   },
   reports: {
-    list: (request: Request) =>
-      ApiFetcher.create(request, "/reports").get<ListReportsResult[]>(),
+    list: (request: Request) => ApiFetcher.create(request, "/reports").get<ListReportsResult[]>(),
     get: (request: Request, id: string, query: QueryParams) =>
       ApiFetcher.create(request, "/reports/:id", {
         id,

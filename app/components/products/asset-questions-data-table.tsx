@@ -23,49 +23,88 @@ import {
   Trash,
   X,
 } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type z from "zod";
-import EditAssetQuestionButton from "~/components/assets/edit-asset-question-button";
+import ConditionPill from "~/components/assets/condition-pill";
+import { useConditionLabels } from "~/hooks/use-condition-labels";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { ASSET_QUESTION_TONES } from "~/lib/constants";
-import type { AssetQuestion } from "~/lib/models";
+import type { AssetQuestion, ProductCategory } from "~/lib/models";
+import { AssetQuestionTypes } from "~/lib/models";
 import type { createAssetQuestionSchema } from "~/lib/schema";
 import { cn } from "~/lib/utils";
 import ActiveToggle from "../active-toggle";
-import AssetQuestionDetailForm from "../assets/asset-question-detail-form";
+import EditAssetQuestionButton from "../assets/edit-asset-question-button";
 import ConfirmationDialog from "../confirmation-dialog";
 import SubmittingCheckbox from "../submitting-checkbox";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import SubmittingSelect from "../submitting-select";
+import SubmittingTextarea from "../submitting-textarea";
 
-interface AssetQuestionsTableProps {
+interface AssetQuestionsDataTableProps {
   questions: AssetQuestion[];
+  categories: ProductCategory[];
   readOnly?: boolean;
-  parentType: "product" | "productCategory";
-  parentId: string;
 }
 
-export default function AssetQuestionsTable({
+export default function AssetQuestionsDataTable({
   questions,
+  categories,
   readOnly = false,
-  parentType,
-  parentId,
-}: AssetQuestionsTableProps) {
+}: AssetQuestionsDataTableProps) {
   const editQuestion = useOpenData<AssetQuestion>();
-
+  const { labels, prefetchLabels, isLoading } = useConditionLabels();
   const { submitJson: submitDelete } = useModalFetcher();
   const { submitJson: submitDuplicateQuestion } = useModalFetcher();
 
   const [deleteAction, setDeleteAction] = useConfirmAction();
+  const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
 
-  const getResourcePath = useCallback(
-    (question?: AssetQuestion) => {
-      const resourceName = parentType === "product" ? "products" : "product-categories";
-      return `/api/proxy/${resourceName}/${parentId}/questions/${question?.id ?? ""}`;
-    },
-    [parentType, parentId]
-  );
+  // Prefetch all labels when questions change
+  useEffect(() => {
+    const conditions = questions.flatMap((q) =>
+      (q.conditions || []).map((c) => ({
+        conditionType: c.conditionType,
+        value: c.value,
+      }))
+    );
+    prefetchLabels(conditions);
+  }, [questions, prefetchLabels]);
+
+  const sortedQuestions = useMemo(() => {
+    return questions.slice().sort((a, b) => {
+      if (a.type !== b.type) {
+        return numerizeType(a.type) - numerizeType(b.type);
+      }
+      if (a.order !== b.order) {
+        return (a.order ?? 0) - (b.order ?? 0);
+      }
+      return isAfter(a.createdOn, b.createdOn) ? 1 : -1;
+    });
+  }, [questions]);
+
+  // Prepare category filter options
+  const categoryFilterOptions = useMemo(() => {
+    return categories
+      .map((category) => ({
+        label: `${category.shortName ? `${category.shortName} - ` : ""}${category.name}`,
+        id: category.id,
+        isGlobal: category.clientId === null,
+      }))
+      .sort((a, b) => {
+        // Sort global categories (no clientId) first
+        if (a.isGlobal && !b.isGlobal) return -1;
+        if (!a.isGlobal && b.isGlobal) return 1;
+
+        // Within each group, sort alphabetically by name
+        return a.label.localeCompare(b.label);
+      })
+      .map(({ label, id }) => ({
+        label,
+        value: id,
+      }));
+  }, [categories]);
 
   const columns = useMemo(
     (): ColumnDef<AssetQuestion>[] => [
@@ -81,9 +120,28 @@ export default function AssetQuestionsTable({
       {
         accessorKey: "type",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ getValue }) => (
-          <span className="capitalize">{(getValue() as string).toLowerCase()}</span>
-        ),
+        cell: ({ getValue, row }) => {
+          const question = row.original;
+          const currentType = getValue() as string;
+          const typeOptions = AssetQuestionTypes.map((type) => ({
+            value: type,
+            label: type.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+          }));
+          
+          return readOnly ? (
+            <span className="capitalize">
+              {currentType.replace(/_/g, " ").toLowerCase()}
+            </span>
+          ) : (
+            <SubmittingSelect
+              value={currentType}
+              path={getResourcePath(question)}
+              valueKey="type"
+              options={typeOptions}
+              className="w-[160px]"
+            />
+          );
+        },
       },
       {
         accessorKey: "required",
@@ -104,7 +162,25 @@ export default function AssetQuestionsTable({
       {
         accessorKey: "prompt",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ getValue }) => <span className="line-clamp-2">{getValue() as string}</span>,
+        cell: ({ getValue, row }) => {
+          const question = row.original;
+          const prompt = getValue() as string;
+          
+          return readOnly ? (
+            <span className="line-clamp-2">{prompt}</span>
+          ) : (
+            <SubmittingTextarea
+              value={prompt}
+              path={getResourcePath(question)}
+              valueKey="prompt"
+              isEditing={editingPromptId === question.id}
+              onEditingChange={(editing) => 
+                setEditingPromptId(editing ? question.id : null)
+              }
+              className="w-full"
+            />
+          );
+        },
       },
       {
         accessorKey: "valueType",
@@ -165,6 +241,106 @@ export default function AssetQuestionsTable({
         },
       },
       {
+        accessorKey: "conditions",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        filterFn: (row, _columnId, filterValue) => {
+          const conditions = row.original.conditions || [];
+          const selectedCategoryIds = filterValue as string[];
+
+          if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+            return true;
+          }
+
+          // Check if any condition has PRODUCT_CATEGORY type with a value matching selected categories
+          return conditions.some(
+            (condition) =>
+              condition.conditionType === "PRODUCT_CATEGORY" &&
+              condition.value.some((value) => selectedCategoryIds.includes(value))
+          );
+        },
+        sortingFn: (rowA, rowB) => {
+          const conditionsA = rowA.original.conditions || [];
+          const conditionsB = rowB.original.conditions || [];
+
+          // Get the first condition for comparison (or empty object if none)
+          const firstConditionA = conditionsA[0] || { conditionType: "", value: [""] };
+          const firstConditionB = conditionsB[0] || { conditionType: "", value: [""] };
+
+          // Sort by condition type first (clean PRODUCT_ prefix for sorting)
+          const cleanTypeA = firstConditionA.conditionType.startsWith("PRODUCT_")
+            ? firstConditionA.conditionType.replace("PRODUCT_", "")
+            : firstConditionA.conditionType;
+          const cleanTypeB = firstConditionB.conditionType.startsWith("PRODUCT_")
+            ? firstConditionB.conditionType.replace("PRODUCT_", "")
+            : firstConditionB.conditionType;
+          const typeComparison = cleanTypeA.localeCompare(cleanTypeB);
+          if (typeComparison !== 0) {
+            return typeComparison;
+          }
+
+          // Then sort by first value label alphabetically
+          const labelA =
+            labels[`${firstConditionA.conditionType}:${firstConditionA.value[0]}`] ||
+            firstConditionA.value[0] ||
+            "";
+          const labelB =
+            labels[`${firstConditionB.conditionType}:${firstConditionB.value[0]}`] ||
+            firstConditionB.value[0] ||
+            "";
+
+          return labelA.localeCompare(labelB);
+        },
+        cell: ({ row }) => {
+          const conditions = row.original.conditions;
+          if (!conditions || conditions.length === 0) {
+            return <span className="text-muted-foreground text-xs">None</span>;
+          }
+          return (
+            <div className="flex flex-wrap gap-1">
+              {conditions.flatMap((condition) =>
+                condition.value.map((value, valueIndex) => {
+                  const label = labels[`${condition.conditionType}:${value}`] || "";
+                  const isValueLoading = isLoading(condition.conditionType, value);
+
+                  return (
+                    <ConditionPill
+                      key={`${condition.id}-${valueIndex}`}
+                      condition={{ ...condition, value: [value] }}
+                      label={label}
+                      isLoading={isValueLoading}
+                    />
+                  );
+                })
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "_count.assetAlertCriteria",
+        id: "alert triggers",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => {
+          const count = getValue() as number;
+          return count > 0 ? (
+            <span className="text-xs text-orange-600 dark:text-orange-400">
+              {count} trigger{count === 1 ? "" : "s"}
+            </span>
+          ) : (
+            <span className="text-muted-foreground text-xs">None</span>
+          );
+        },
+      },
+      // {
+      //   accessorKey: "_count.conditions",
+      //   id: "conditions",
+      //   header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+      //   cell: ({ getValue }) => {
+      //     const count = getValue() as number;
+      //     return <span className="text-xs">{count ?? 0}</span>;
+      //   },
+      // },
+      {
         id: "actions",
         cell: ({ row }) => {
           const question = row.original;
@@ -178,7 +354,6 @@ export default function AssetQuestionsTable({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
                 <DropdownMenuItem onSelect={() => editQuestion.openData(question)}>
                   <Pencil />
                   Edit
@@ -235,13 +410,11 @@ export default function AssetQuestionsTable({
                       draft.title = "Delete Question";
                       draft.message = `Are you sure you want to delete the question "${question.prompt}"?`;
                       draft.onConfirm = () => {
-                        const resourceName =
-                          parentType === "product" ? "products" : "product-categories";
                         submitDelete(
                           {},
                           {
                             method: "delete",
-                            path: `/api/proxy/${resourceName}/${parentId}/questions/${question.id}`,
+                            path: getResourcePath(question),
                           }
                         );
                       };
@@ -257,22 +430,23 @@ export default function AssetQuestionsTable({
         },
       },
     ],
-    [parentType, parentId, readOnly, submitDelete, getResourcePath]
+    [
+      readOnly,
+      submitDelete,
+      editQuestion.openData,
+      submitDuplicateQuestion,
+      labels,
+      isLoading,
+      categoryFilterOptions,
+      editingPromptId,
+      setEditingPromptId,
+    ]
   );
 
   return (
     <>
       <DataTable
-        data={questions.slice().sort((a, b) => {
-          if (a.type !== b.type) {
-            return a.type === "SETUP" ? -1 : 1;
-          }
-          if (a.order !== b.order) {
-            return (a.order ?? 0) - (b.order ?? 0);
-          }
-
-          return isAfter(a.createdOn, b.createdOn) ? 1 : -1;
-        })}
+        data={sortedQuestions}
         columns={columns}
         searchPlaceholder="Search questions..."
         initialState={{
@@ -282,6 +456,14 @@ export default function AssetQuestionsTable({
         }}
         getRowId={(row) => row.id}
         actions={readOnly ? [] : [<EditAssetQuestionButton key="add" />]}
+        filters={({ table }) => [
+          {
+            column: table.getColumn("conditions"),
+            title: "Category",
+            options: categoryFilterOptions,
+            multiple: true,
+          },
+        ]}
       />
       <ConfirmationDialog
         open={deleteAction.open}
@@ -298,17 +480,20 @@ export default function AssetQuestionsTable({
         title={deleteAction.title}
         message={deleteAction.message}
       />
-      <Dialog open={editQuestion.open} onOpenChange={editQuestion.setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Question</DialogTitle>
-          </DialogHeader>
-          <AssetQuestionDetailForm
-            assetQuestion={editQuestion.data ?? undefined}
-            onSubmitted={() => editQuestion.setOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <EditAssetQuestionButton
+        assetQuestion={editQuestion.data ?? undefined}
+        trigger={null}
+        open={editQuestion.open}
+        onOpenChange={editQuestion.setOpen}
+      />
     </>
   );
 }
+
+const getResourcePath = (question?: AssetQuestion) => {
+  return `/api/proxy/asset-questions/${question?.id ?? ""}`;
+};
+
+const numerizeType = (type: AssetQuestion["type"]) => {
+  return type === "SETUP" ? 0 : type === "SETUP_AND_INSPECTION" ? 1 : 2;
+};
