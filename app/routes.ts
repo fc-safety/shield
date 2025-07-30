@@ -99,6 +99,9 @@ export default [
         index("./routes/products/manufacturers/index.tsx"),
         route(":id", "./routes/products/manufacturers/details.tsx"),
       ]),
+      route("questions", "./routes/products/questions/layout.tsx", [
+        index("./routes/products/questions/index.tsx"),
+      ]),
     ]),
 
     // Admin Routes

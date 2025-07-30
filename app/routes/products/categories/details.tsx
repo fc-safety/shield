@@ -1,18 +1,6 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import {
-  FireExtinguisher,
-  Pencil,
-  Shapes,
-  ShieldQuestion,
-  type LucideIcon,
-} from "lucide-react";
+import { FireExtinguisher, Pencil, Shapes, type LucideIcon } from "lucide-react";
 import { type To, type UIMatch } from "react-router";
 import { ApiFetcher } from "~/.server/api-utils";
 import { buildImageProxyUrl } from "~/.server/images";
@@ -20,7 +8,6 @@ import ActiveIndicator from "~/components/active-indicator";
 import DataList from "~/components/data-list";
 import GradientScrollArea from "~/components/gradient-scroll-area";
 import Icon from "~/components/icons/icon";
-import AssetQuestionsTable from "~/components/products/asset-questions-table";
 import CustomTag from "~/components/products/custom-tag";
 import EditProductButton from "~/components/products/edit-product-button";
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
@@ -34,9 +21,7 @@ import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
-  breadcrumb: ({
-    data,
-  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
     label: data?.productCategory.name || "Details",
   }),
 };
@@ -70,10 +55,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
             imageUrl: NonNullable<(typeof p)["imageUrl"]>;
           } => !!p.imageUrl
         )
-        .map((p) => [
-          p.id,
-          buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"]),
-        ])
+        .map((p) => [p.id, buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"])])
     ),
   };
 };
@@ -88,8 +70,7 @@ export default function ProductCategoryDetails({
   const { user } = useAuth();
   const canUpdate =
     can(user, "update", "product-categories") &&
-    (isGlobalAdmin(user) ||
-      productCategory.client?.externalId === user.clientId);
+    (isGlobalAdmin(user) || productCategory.client?.externalId === user.clientId);
 
   return (
     <div className="grid gap-4">
@@ -137,10 +118,7 @@ export default function ProductCategoryDetails({
                   {
                     label: "Icon",
                     value: productCategory.icon && (
-                      <Icon
-                        iconId={productCategory.icon}
-                        color={productCategory.color}
-                      />
+                      <Icon iconId={productCategory.icon} color={productCategory.color} />
                     ),
                   },
                   {
@@ -173,31 +151,10 @@ export default function ProductCategoryDetails({
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <ShieldQuestion /> Questions
-            </CardTitle>
-            <CardDescription>
-              These questions appear during inspections for any product in this
-              category.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AssetQuestionsTable
-              questions={productCategory.assetQuestions ?? []}
-              readOnly={!canUpdate}
-              parentType="productCategory"
-              parentId={productCategory.id}
-            />
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
+        {/* </div>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4"> */}
         <ProductsCard
-          products={
-            productCategory?.products?.filter((p) => p.type === "PRIMARY") ?? []
-          }
+          products={productCategory?.products?.filter((p) => p.type === "PRIMARY") ?? []}
           title="Primary Products"
           description="These products are generally not considered consumable. They can be added as assets and belong to inspection routes."
           icon={FireExtinguisher}
@@ -311,7 +268,7 @@ function ProductsCard({
               />
             ))}
             {!products.length && (
-              <span className="text-sm text-muted-foreground col-span-full text-center">
+              <span className="text-muted-foreground col-span-full text-center text-sm">
                 No {title.toLowerCase()} found.
               </span>
             )}

@@ -25,10 +25,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { useForm, useFormContext } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import {
-  ASSET_QUESTION_TONE_OPTIONS,
-  ASSET_QUESTION_TONES,
-} from "~/lib/constants";
+import { ASSET_QUESTION_TONE_OPTIONS, ASSET_QUESTION_TONES } from "~/lib/constants";
 import {
   AlertLevels,
   AssetQuestionResponseTypes,
@@ -53,17 +50,11 @@ import { Checkbox } from "../ui/checkbox";
 import AssetQuestionResponseTypeInput from "./asset-question-response-input";
 import ConsumableCombobox from "./consumable-combobox";
 
-type TForm = z.infer<
-  typeof updateAssetQuestionSchema | typeof createAssetQuestionSchema
->;
+type TForm = z.infer<typeof updateAssetQuestionSchema | typeof createAssetQuestionSchema>;
 
 export interface AssetQuestionDetailFormProps {
   assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
-  existingSetupQuestionsCount?: number;
-  existingInspectionQuestionsCount?: number;
-  parentType: "product" | "productCategory";
-  parentId: string;
 }
 
 const FORM_DEFAULTS = {
@@ -77,27 +68,17 @@ const FORM_DEFAULTS = {
 export default function AssetQuestionDetailForm({
   assetQuestion,
   onSubmitted,
-  existingSetupQuestionsCount = 0,
-  existingInspectionQuestionsCount = 0,
-  parentType,
-  parentId,
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
 
   const form = useForm<TForm>({
     resolver: zodResolver(
-      (assetQuestion
-        ? updateAssetQuestionSchema
-        : createAssetQuestionSchema) as z.Schema<TForm>
+      (assetQuestion ? updateAssetQuestionSchema : createAssetQuestionSchema) as z.Schema<TForm>
     ),
     values: assetQuestion
       ? {
           ...assetQuestion,
-          order:
-            assetQuestion.order ||
-            (assetQuestion.type === "SETUP"
-              ? existingSetupQuestionsCount
-              : existingInspectionQuestionsCount),
+          order: assetQuestion.order ?? undefined,
           assetAlertCriteria: {
             updateMany: assetQuestion.assetAlertCriteria?.map((c) => ({
               where: { id: c.id },
@@ -107,12 +88,10 @@ export default function AssetQuestionDetailForm({
           consumableConfig: assetQuestion.consumableConfig
             ? {
                 update: {
-                  consumableProduct: assetQuestion.consumableConfig
-                    .consumableProductId
+                  consumableProduct: assetQuestion.consumableConfig.consumableProductId
                     ? {
                         connect: {
-                          id: assetQuestion.consumableConfig
-                            .consumableProductId,
+                          id: assetQuestion.consumableConfig.consumableProductId,
                         },
                       }
                     : undefined,
@@ -124,7 +103,6 @@ export default function AssetQuestionDetailForm({
         }
       : {
           ...FORM_DEFAULTS,
-          order: existingInspectionQuestionsCount,
         },
     mode: "onChange",
   });
@@ -132,30 +110,11 @@ export default function AssetQuestionDetailForm({
   const {
     formState: { isDirty, isValid },
     watch,
-    setValue,
     getFieldState,
   } = form;
 
   const type = watch("type");
-  const order = watch("order");
   const consumableConfig = watch("consumableConfig");
-  useEffect(() => {
-    if (!isNew) return;
-    const defaultOrder =
-      type === "SETUP"
-        ? existingSetupQuestionsCount
-        : existingInspectionQuestionsCount;
-    if (defaultOrder !== order) {
-      setValue("order", defaultOrder, { shouldTouch: false });
-    }
-  }, [
-    isNew,
-    existingInspectionQuestionsCount,
-    existingSetupQuestionsCount,
-    order,
-    setValue,
-    type,
-  ]);
 
   const requiredValueType = useMemo(() => {
     if (consumableConfig) {
@@ -202,10 +161,7 @@ export default function AssetQuestionDetailForm({
       form.setValue("tone", ASSET_QUESTION_TONES.NEUTRAL, {
         shouldDirty: true,
       });
-    } else if (
-      type === "INSPECTION" &&
-      tone !== ASSET_QUESTION_TONES.POSITIVE
-    ) {
+    } else if (type === "INSPECTION" && tone !== ASSET_QUESTION_TONES.POSITIVE) {
       form.setValue("tone", ASSET_QUESTION_TONES.POSITIVE, {
         shouldDirty: true,
       });
@@ -265,11 +221,9 @@ export default function AssetQuestionDetailForm({
       "assetAlertCriteria.updateMany",
       (updateAlertTriggers ?? []).filter(({ data }) => data.id !== id)
     );
-    form.setValue(
-      "assetAlertCriteria.deleteMany",
-      [...(deleteAlertTriggers ?? []), { id }],
-      { shouldDirty: true }
-    );
+    form.setValue("assetAlertCriteria.deleteMany", [...(deleteAlertTriggers ?? []), { id }], {
+      shouldDirty: true,
+    });
   };
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
@@ -277,10 +231,8 @@ export default function AssetQuestionDetailForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    const resourceName =
-      parentType === "product" ? "products" : "product-categories";
     submit(data, {
-      path: `/api/proxy/${resourceName}/${parentId}/questions`,
+      path: `/api/proxy/asset-questions`,
       id: assetQuestion?.id,
     });
   };
@@ -322,20 +274,11 @@ export default function AssetQuestionDetailForm({
             <FormItem>
               <FormLabel>Type</FormLabel>
               <FormControl>
-                <RadioGroup
-                  {...field}
-                  onValueChange={onChange}
-                  className="flex gap-4"
-                >
+                <RadioGroup {...field} onValueChange={onChange} className="flex gap-4">
                   {AssetQuestionTypes.map((type, idx) => (
                     <div key={type} className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value={type}
-                        id={"questionStatus" + idx}
-                      />
-                      <Label htmlFor={"questionStatus" + idx}>
-                        {humanize(type)}
-                      </Label>
+                      <RadioGroupItem value={type} id={"questionStatus" + idx} />
+                      <Label htmlFor={"questionStatus" + idx}>{humanize(type)}</Label>
                     </div>
                   ))}
                 </RadioGroup>
@@ -382,11 +325,7 @@ export default function AssetQuestionDetailForm({
             <FormItem>
               <FormLabel>Answer Type</FormLabel>
               <FormControl>
-                <Select
-                  value={value}
-                  onValueChange={onChange}
-                  disabled={!!requiredValueType}
-                >
+                <Select value={value} onValueChange={onChange} disabled={!!requiredValueType}>
                   <SelectTrigger onBlur={onBlur}>
                     <SelectValue />
                   </SelectTrigger>
@@ -413,13 +352,10 @@ export default function AssetQuestionDetailForm({
                 <FormLabel className="flex items-center gap-1">
                   Tone
                   <HelpPopover classNames={{ content: "space-y-2" }}>
+                    <p>The tone is used to provide visual aids to inspectors.</p>
                     <p>
-                      The tone is used to provide visual aids to inspectors.
-                    </p>
-                    <p>
-                      For example, a "Positive" tone will display a green
-                      checkmark when the answer is "Yes". "Negative" will
-                      display a red X when the answer is "Yes".
+                      For example, a "Positive" tone will display a green checkmark when the answer
+                      is "Yes". "Negative" will display a red X when the answer is "Yes".
                     </p>
                   </HelpPopover>
                 </FormLabel>
@@ -443,24 +379,10 @@ export default function AssetQuestionDetailForm({
           />
         )}
 
-        <FormField
-          control={form.control}
-          name="order"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Order</FormLabel>
-              <FormControl>
-                <Input {...field} type="number" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {type === "SETUP" && parentType === "product" && (
+        {type === "SETUP" && (
           <div>
-            <h3 className="mb-4 text-lg font-medium inline-flex items-center gap-2">
-              Configure Consumable
+            <h3 className="mb-4 inline-flex items-center gap-2 text-lg font-medium">
+              Configure Supply
               {consumableConfig && (
                 <Button
                   size="icon"
@@ -489,7 +411,6 @@ export default function AssetQuestionDetailForm({
                         <FormLabel>Supply</FormLabel>
                         <FormControl>
                           <ConsumableCombobox
-                            parentProductId={parentId}
                             value={field.value}
                             onValueChange={field.onChange}
                             onBlur={field.onBlur}
@@ -511,10 +432,7 @@ export default function AssetQuestionDetailForm({
                       <FormItem>
                         <FormLabel>Mapping Type</FormLabel>
                         <FormControl>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
+                          <Select value={field.value} onValueChange={field.onChange}>
                             <SelectTrigger onBlur={field.onBlur}>
                               <SelectValue />
                             </SelectTrigger>
@@ -558,11 +476,11 @@ export default function AssetQuestionDetailForm({
           </div>
         )}
 
-        {type === "INSPECTION" && (
+        {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && (
           <div>
             {/* TODO: Add help sidebar. */}
             <h3 className="mb-4 text-lg font-medium">Alert Triggers</h3>
-            <div className="divide-y divide-y-border">
+            <div className="divide-y-border divide-y">
               {alertTriggers.map(({ idx, key, action, data }) => (
                 <AlertTrigger
                   key={key}
@@ -574,8 +492,7 @@ export default function AssetQuestionDetailForm({
                       ? () => handleCancelAddAlertTrigger(idx)
                       : () =>
                           handleDeleteAlertTrigger(
-                            (data as z.infer<typeof updateAssetQuestionSchema>)
-                              .id
+                            (data as z.infer<typeof updateAssetQuestionSchema>).id
                           )
                   }
                 />
@@ -592,10 +509,7 @@ export default function AssetQuestionDetailForm({
             </Button>
           </div>
         )}
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>
@@ -620,15 +534,10 @@ function AlertTrigger({
 
   return (
     <div className={cn("flex flex-row items-center gap-4", className)}>
-      <Button
-        size="icon"
-        variant="destructive"
-        type="button"
-        onClick={() => onRemove()}
-      >
+      <Button size="icon" variant="destructive" type="button" onClick={() => onRemove()}>
         <Trash />
       </Button>
-      <div className="grid gap-2 grow">
+      <div className="grid grow gap-2">
         <FormField
           control={control}
           name={
@@ -647,12 +556,10 @@ function AlertTrigger({
                       className={cn(
                         value === "CRITICAL" &&
                           "bg-critical text-critical-foreground border-critical",
-                        value === "URGENT" &&
-                          "bg-urgent text-urgent-foreground border-urgent",
+                        value === "URGENT" && "bg-urgent text-urgent-foreground border-urgent",
                         value === "WARNING" &&
                           "bg-warning text-warning-foreground border-warning-foreground",
-                        value === "INFO" &&
-                          "bg-info text-info-foreground border-info-foreground",
+                        value === "INFO" && "bg-info text-info-foreground border-info-foreground",
                         value === "AUDIT" &&
                           "bg-audit text-audit-foreground border-audit-foreground"
                       )}
@@ -682,9 +589,7 @@ function AlertTrigger({
                     </SelectContent>
                   </Select>
                 </FormControl>
-                <FormLabel className="w-max shrink-0">
-                  level alert when:
-                </FormLabel>
+                <FormLabel className="w-max shrink-0">level alert when:</FormLabel>
               </div>
               <FormMessage />
             </FormItem>
@@ -728,8 +633,7 @@ function AlertTrigger({
                   Resolve automatically?
                   <HelpPopover>
                     <p>
-                      If enabled, the alert will be automatically resolved when
-                      it is triggered.
+                      If enabled, the alert will be automatically resolved when it is triggered.
                     </p>
                   </HelpPopover>
                 </FormLabel>
@@ -750,12 +654,7 @@ interface AlertTriggerInputProps {
   tone?: string;
 }
 
-function AlertTriggerInput({
-  onValueChange,
-  onBlur,
-  value,
-  tone,
-}: AlertTriggerInputProps) {
+function AlertTriggerInput({ onValueChange, onBlur, value, tone }: AlertTriggerInputProps) {
   const form = useFormContext<TForm>();
   const { watch } = form;
 
@@ -766,18 +665,13 @@ function AlertTriggerInput({
     [valueType]
   );
 
-  const [rawOperator, rawOperand] = useMemo((): [
-    RuleOperator,
-    string | number | true
-  ] => {
+  const [rawOperator, rawOperand] = useMemo((): [RuleOperator, string | number | true] => {
     if (value?.value !== undefined) {
       if (typeof value.value === "string") {
         return ["equals", value.value];
       }
 
-      const result = Object.entries(value.value).find(
-        ([, v]) => v !== undefined
-      );
+      const result = Object.entries(value.value).find(([, v]) => v !== undefined);
       if (result) {
         return result as [RuleOperator, string | number | true];
       }
@@ -786,9 +680,7 @@ function AlertTriggerInput({
     return ["equals", ""];
   }, [value]);
 
-  const [operator, operand] = useMemo<
-    [RuleOperator, string | number | true]
-  >(() => {
+  const [operator, operand] = useMemo<[RuleOperator, string | number | true]>(() => {
     if (allowedOperators.includes(rawOperator)) {
       return [rawOperator, rawOperand];
     }
@@ -841,10 +733,10 @@ function AlertTriggerInput({
       {(typeof operand === "string" || typeof operand === "number") && (
         <AssetQuestionResponseTypeInput
           valueType={
-            determineValueTypeFromOperator(
-              operator,
-              valueType ?? "BINARY"
-            ) as Exclude<AssetQuestionResponseType, "IMAGE">
+            determineValueTypeFromOperator(operator, valueType ?? "BINARY") as Exclude<
+              AssetQuestionResponseType,
+              "IMAGE"
+            >
           }
           onValueChange={handleChangeOperand}
           onBlur={onBlur}
@@ -877,22 +769,10 @@ const ruleOperatorLabels: Record<RuleOperator, string> = {
   afterDaysFuture: "is after # days in the future",
 };
 
-const allowedOperatorsForValueType: Record<
-  AssetQuestionResponseType,
-  RuleOperator[]
-> = {
+const allowedOperatorsForValueType: Record<AssetQuestionResponseType, RuleOperator[]> = {
   BINARY: ["equals", "not"],
   INDETERMINATE_BINARY: ["equals", "not"],
-  TEXT: [
-    "empty",
-    "notEmpty",
-    "equals",
-    "not",
-    "contains",
-    "notContains",
-    "startsWith",
-    "endsWith",
-  ],
+  TEXT: ["empty", "notEmpty", "equals", "not", "contains", "notContains", "startsWith", "endsWith"],
   TEXTAREA: [
     "empty",
     "notEmpty",
@@ -921,10 +801,7 @@ const allowedOperatorsForValueType: Record<
   IMAGE: ["empty", "notEmpty"],
 };
 
-const cleanOperand = (
-  opr: string,
-  opd: string | number | true | ResponseValueImage
-) => {
+const cleanOperand = (opr: string, opd: string | number | true | ResponseValueImage) => {
   if (["empty", "notEmpty"].includes(opr)) {
     return true as const;
   }
@@ -941,12 +818,7 @@ const determineValueTypeFromOperator = (
   valueType: AssetQuestionResponseType
 ) => {
   if (
-    [
-      "beforeDaysPast",
-      "afterDaysPast",
-      "beforeDaysFuture",
-      "afterDaysFuture",
-    ].includes(operator)
+    ["beforeDaysPast", "afterDaysPast", "beforeDaysFuture", "afterDaysFuture"].includes(operator)
   ) {
     return "NUMBER";
   }
@@ -961,7 +833,4 @@ const consumableConfigMappingTypeToResponseType: Record<
   EXPIRATION_DATE: "DATE",
 };
 
-const TONE_SUPPORTED_VALUE_TYPES: AssetQuestionResponseType[] = [
-  "BINARY",
-  "INDETERMINATE_BINARY",
-];
+const TONE_SUPPORTED_VALUE_TYPES: AssetQuestionResponseType[] = ["BINARY", "INDETERMINATE_BINARY"];

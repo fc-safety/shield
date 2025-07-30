@@ -52,19 +52,26 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const tag = await api.tags.getForAssetSetup(request, tagExternalId);
 
   if (tag.asset?.id) {
-    return fetchActiveInspectionRouteContext(request, tag.asset?.id).then((result) => ({
+    const [routeContext, setupQuestions] = await Promise.all([
+      fetchActiveInspectionRouteContext(request, tag.asset.id),
+      api.assetQuestions.findByAsset(request, tag.asset.id, "SETUP"),
+    ]);
+
+    return {
       tag: tag,
-      ...result,
+      ...routeContext,
+      setupQuestions,
       processedProductImageUrl:
         tag.asset?.product.imageUrl &&
         buildImageProxyUrl(tag.asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
-    }));
+    };
   }
 
   return {
     tag,
     activeSessions: null,
     matchingRoutes: null,
+    setupQuestions: [],
     processedProductImageUrl: null,
   };
 };
@@ -83,11 +90,8 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
 type TForm = z.infer<typeof setupAssetSchema>;
 
-const onlySetupQuestions = (questions: AssetQuestion[] | undefined) =>
-  (questions ?? []).filter((question) => question.type === "SETUP");
-
 export default function InspectSetup({
-  loaderData: { tag, matchingRoutes, processedProductImageUrl },
+  loaderData: { tag, matchingRoutes, setupQuestions, processedProductImageUrl },
 }: Route.ComponentProps) {
   const isSetup = !!tag.asset?.setupOn;
 
@@ -98,12 +102,8 @@ export default function InspectSetup({
     (!!matchingRoutes && matchingRoutes.length > 0) || canUpdateInspectionRoutes;
 
   const questions = useMemo(
-    () =>
-      [
-        ...onlySetupQuestions(tag.asset?.product.assetQuestions),
-        ...onlySetupQuestions(tag.asset?.product.productCategory.assetQuestions),
-      ].sort((a, b) => (a.order ?? 0) - (b.order ?? 1)),
-    [tag]
+    () => setupQuestions.sort((a, b) => (a.order ?? 0) - (b.order ?? 1)),
+    [setupQuestions]
   );
 
   const narrowedSetupAssetSchema = useMemo(() => {

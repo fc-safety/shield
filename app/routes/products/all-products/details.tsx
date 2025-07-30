@@ -1,20 +1,7 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
-import {
-  FireExtinguisher,
-  MoreHorizontal,
-  Pencil,
-  ShieldQuestion,
-  SquareStack,
-  Trash,
-} from "lucide-react";
-import { Link, type UIMatch } from "react-router";
+import { FireExtinguisher, MoreHorizontal, Pencil, SquareStack, Trash } from "lucide-react";
+import { type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
 import { requireUserSession } from "~/.server/user-sesssion";
@@ -25,7 +12,6 @@ import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
-import AssetQuestionsTable from "~/components/products/asset-questions-table";
 import CustomTag from "~/components/products/custom-tag";
 import EditProductButton from "~/components/products/edit-product-button";
 import { ManufacturerCard } from "~/components/products/manufacturer-selector";
@@ -44,15 +30,13 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
-import type { Product, ProductCategory } from "~/lib/models";
+import type { Product } from "~/lib/models";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
-  breadcrumb: ({
-    data,
-  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
     label: data?.product.name || "Details",
   }),
 };
@@ -73,8 +57,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
       return {
         product,
         optimizedImageUrl:
-          product.imageUrl &&
-          buildImageProxyUrl(product.imageUrl, ["rs:fit:160:160:1:1"]),
+          product.imageUrl && buildImageProxyUrl(product.imageUrl, ["rs:fit:160:160:1:1"]),
       };
     });
 };
@@ -87,10 +70,6 @@ export default function ProductDetails({
   const canUpdate =
     can(user, "update", "products") &&
     (isGlobalAdmin(user) || product.client?.externalId === user.clientId);
-  const getCanUpdateCategory = (productCategory: ProductCategory) =>
-    can(user, "update", "product-categories") &&
-    (isGlobalAdmin(user) ||
-      productCategory.client?.externalId === user.clientId);
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
@@ -133,11 +112,7 @@ export default function ProductDetails({
                 },
                 {
                   label: "Type",
-                  value: (
-                    <span className="capitalize">
-                      {product.type.toLowerCase()}
-                    </span>
-                  ),
+                  value: <span className="capitalize">{product.type.toLowerCase()}</span>,
                 },
                 {
                   label: "SKU",
@@ -149,11 +124,7 @@ export default function ProductDetails({
                 },
                 {
                   label: "Owner",
-                  value: product.client ? (
-                    <CustomTag text={product.client.name} />
-                  ) : (
-                    <>&mdash;</>
-                  ),
+                  value: product.client ? <CustomTag text={product.client.name} /> : <>&mdash;</>,
                 },
               ]}
               defaultValue={<>&mdash;</>}
@@ -193,22 +164,19 @@ export default function ProductDetails({
           </div>
         </CardContent>
       </Card>
-      <div className="h-max grid grid-cols-1 gap-2 sm:gap-4">
+      <div className="grid h-max grid-cols-1 gap-2 sm:gap-4">
         <Card>
           <CardHeader>
             <CardTitle>
               <SquareStack /> Supplies
             </CardTitle>
             <CardDescription>
-              These are generally considered consumables that belong to another
-              product and should be replaced at regular intervals.
+              These are generally considered consumables that belong to this product and should be
+              replaced at regular intervals.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SuppliesTable
-              supplies={product.consumableProducts ?? []}
-              parentProduct={product}
-            />
+            <SuppliesTable supplies={product.consumableProducts ?? []} parentProduct={product} />
           </CardContent>
         </Card>
         {/* TODO: Once we're sure this is no longer needed, remove this card.
@@ -252,59 +220,6 @@ export default function ProductDetails({
             />
           </CardContent>
         </Card> */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <ShieldQuestion /> Questions
-            </CardTitle>
-            <CardDescription>
-              These questions appear during inspections for this particular
-              product.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AssetQuestionsTable
-              questions={product.assetQuestions ?? []}
-              readOnly={!canUpdate}
-              parentType="product"
-              parentId={product.id}
-            />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-start gap-4">
-            <div>
-              <CardTitle>
-                <ShieldQuestion />
-                <span>
-                  {product.productCategory.shortName ??
-                    product.productCategory.name}{" "}
-                  Category Questions
-                </span>
-              </CardTitle>
-              <CardDescription>
-                These questions appear during inspections for any product in
-                this category.
-              </CardDescription>
-            </div>
-            <div className="flex-1"></div>
-            {getCanUpdateCategory(product.productCategory) && (
-              <Button variant="link" asChild>
-                <Link to={`/products/categories/${product.productCategory.id}`}>
-                  Manage Category
-                </Link>
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <AssetQuestionsTable
-              questions={product.productCategory.assetQuestions ?? []}
-              readOnly
-              parentType="productCategory"
-              parentId={product.productCategory.id}
-            />
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
@@ -340,28 +255,18 @@ function SuppliesTable({
         columns={[
           {
             accessorKey: "active",
-            header: ({ column, table }) => (
-              <DataTableColumnHeader column={column} table={table} />
-            ),
-            cell: ({ getValue }) => (
-              <ActiveIndicator2 active={getValue() as boolean} />
-            ),
+            header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+            cell: ({ getValue }) => <ActiveIndicator2 active={getValue() as boolean} />,
           },
           {
             accessorKey: "name",
-            header: ({ column, table }) => (
-              <DataTableColumnHeader column={column} table={table} />
-            ),
+            header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
           },
           {
             accessorKey: "sku",
             id: "SKU",
             header: ({ column, table }) => (
-              <DataTableColumnHeader
-                column={column}
-                table={table}
-                title="SKU"
-              />
+              <DataTableColumnHeader column={column} table={table} title="SKU" />
             ),
             cell: ({ getValue }) => getValue() || <>&mdash;</>,
           },
@@ -369,11 +274,7 @@ function SuppliesTable({
             accessorKey: "ansiCategory.name",
             id: "ansiCategory",
             header: ({ column, table }) => (
-              <DataTableColumnHeader
-                column={column}
-                table={table}
-                title="ANSI"
-              />
+              <DataTableColumnHeader column={column} table={table} title="ANSI" />
             ),
             cell: ({ row }) =>
               row.original.ansiCategory ? (
@@ -443,12 +344,7 @@ function SuppliesTable({
         }}
         actions={
           !readOnly && canCreate
-            ? [
-                <EditProductButton
-                  key="add-supply"
-                  parentProduct={parentProduct}
-                />,
-              ]
+            ? [<EditProductButton key="add-supply" parentProduct={parentProduct} />]
             : undefined
         }
       />

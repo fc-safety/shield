@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { GENERIC_MANUFACTURER_NAME } from "./constants";
 import {
+  AssetQuestionConditionTypes,
   AssetQuestionResponseTypes,
   AssetQuestionTypes,
   ClientStatuses,
@@ -38,9 +39,7 @@ export const optionalConnectSchema = z
   .optional()
   .transform((v) => (v?.connect.id ? v : undefined));
 
-export const optionalConnectOrCreateSchema = <S extends z.Schema>(
-  createSchema: S
-) =>
+export const optionalConnectOrCreateSchema = <S extends z.Schema>(createSchema: S) =>
   z
     .object({
       connect: z.object({
@@ -84,25 +83,19 @@ export const disconnectableSchema = z
     disconnect: z.boolean(),
   })
   .partial()
-  .transform(
-    (v): { connect?: { id: string }; disconnect?: boolean } | undefined => {
-      if (v.disconnect !== undefined) {
-        return {
-          disconnect: v.disconnect,
-        };
-      }
-
-      return v.connect?.id ? { connect: { id: v.connect.id } } : undefined;
+  .transform((v): { connect?: { id: string }; disconnect?: boolean } | undefined => {
+    if (v.disconnect !== undefined) {
+      return {
+        disconnect: v.disconnect,
+      };
     }
-  );
+
+    return v.connect?.id ? { connect: { id: v.connect.id } } : undefined;
+  });
 
 export const fromAddressSchema = z.union([
   z.string().email(),
-  z
-    .string()
-    .regex(
-      /^[A-Za-z0-9\s]+\s<[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}>$/
-    ),
+  z.string().regex(/^[A-Za-z0-9\s]+\s<[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}>$/),
 ]);
 
 export const createClientSchema = z.object({
@@ -118,9 +111,7 @@ export const createClientSchema = z.object({
     create: addressSchema,
   }),
   status: z.enum(ClientStatuses).optional(),
-  phoneNumber: z
-    .string()
-    .regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number."),
+  phoneNumber: z.string().regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number."),
   homeUrl: z
     .nullable(z.string())
     .optional()
@@ -156,9 +147,7 @@ export const baseSiteSchema = z.object({
       update: addressSchema.partial(),
     })
     .partial(),
-  phoneNumber: z
-    .string()
-    .regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number."),
+  phoneNumber: z.string().regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number."),
   client: z.object({
     connect: z.object({
       id: z.string(),
@@ -185,15 +174,11 @@ export const getSiteSchema = ({
   if (isSiteGroup) {
     if (create) {
       schema = schema.extend({
-        subsites: baseSiteSchema.shape.subsites
-          .unwrap()
-          .required({ connect: true }),
+        subsites: baseSiteSchema.shape.subsites.unwrap().required({ connect: true }),
       });
     } else {
       schema = schema.extend({
-        subsites: baseSiteSchema.shape.subsites
-          .unwrap()
-          .required({ set: true }),
+        subsites: baseSiteSchema.shape.subsites.unwrap().required({ set: true }),
       });
     }
   }
@@ -249,16 +234,12 @@ export const createProductCategorySchema = z.object({
   color: z.string().optional(),
   client: optionalConnectSchema,
 });
-export const createProductCategorySchemaResolver = zodResolver(
-  createProductCategorySchema
-);
+export const createProductCategorySchemaResolver = zodResolver(createProductCategorySchema);
 
 export const updateProductCategorySchema = createProductCategorySchema
   .extend({ id: z.string() })
   .partial();
-export const updateProductCategorySchemaResolver = zodResolver(
-  updateProductCategorySchema
-);
+export const updateProductCategorySchemaResolver = zodResolver(updateProductCategorySchema);
 
 export const createManufacturerSchema = z.object({
   id: z.string().optional(),
@@ -267,25 +248,18 @@ export const createManufacturerSchema = z.object({
   name: z
     .string()
     .nonempty()
-    .refine(
-      (name) => name.toLowerCase() !== GENERIC_MANUFACTURER_NAME.toLowerCase(),
-      {
-        message: "Manufacturer name cannot be generic.",
-      }
-    ),
+    .refine((name) => name.toLowerCase() !== GENERIC_MANUFACTURER_NAME.toLowerCase(), {
+      message: "Manufacturer name cannot be generic.",
+    }),
   homeUrl: z.string().optional(),
   client: optionalConnectSchema,
 });
-export const createManufacturerSchemaResolver = zodResolver(
-  createManufacturerSchema
-);
+export const createManufacturerSchemaResolver = zodResolver(createManufacturerSchema);
 
 export const updateManufacturerSchema = createManufacturerSchema
   .extend({ id: z.string() })
   .partial();
-export const updateManufacturerSchemaResolver = zodResolver(
-  updateManufacturerSchema
-);
+export const updateManufacturerSchemaResolver = zodResolver(updateManufacturerSchema);
 
 export const createAnsiCategorySchema = z.object({
   id: z.string().optional(),
@@ -322,15 +296,11 @@ export const createProductSchema = z.object({
   }),
   client: optionalConnectSchema,
   parentProduct: optionalConnectSchema,
-  ansiCategory: optionalConnectOrCreateSchema(
-    createAnsiCategorySchema
-  ).optional(),
+  ansiCategory: optionalConnectOrCreateSchema(createAnsiCategorySchema).optional(),
 });
 export const createProductSchemaResolver = zodResolver(createProductSchema);
 
-export const updateProductSchema = createProductSchema
-  .extend({ id: z.string() })
-  .partial();
+export const updateProductSchema = createProductSchema.extend({ id: z.string() }).partial();
 export const updateProductSchemaResolver = zodResolver(updateProductSchema);
 
 export const createTagSchema = z.object({
@@ -383,9 +353,7 @@ export const createAssetSchema = z.object({
 });
 export const createAssetSchemaResolver = zodResolver(createAssetSchema);
 
-export const updateAssetSchema = createAssetSchema
-  .extend({ id: z.string() })
-  .partial();
+export const updateAssetSchema = createAssetSchema.extend({ id: z.string() }).partial();
 export const updateAssetSchemaResolver = zodResolver(updateAssetSchema);
 
 export const createConsumableSchema = z.object({
@@ -404,16 +372,10 @@ export const createConsumableSchema = z.object({
   expiresOn: z.string().datetime().optional(),
   site: optionalConnectSchema,
 });
-export const createConsumableSchemaResolver = zodResolver(
-  createConsumableSchema
-);
+export const createConsumableSchemaResolver = zodResolver(createConsumableSchema);
 
-export const updateConsumableSchema = createConsumableSchema
-  .extend({ id: z.string() })
-  .partial();
-export const updateConsumableSchemaResolver = zodResolver(
-  updateConsumableSchema
-);
+export const updateConsumableSchema = createConsumableSchema.extend({ id: z.string() }).partial();
+export const updateConsumableSchemaResolver = zodResolver(updateConsumableSchema);
 
 export const createProductRequestItemSchema = z.object({
   productId: z.string(),
@@ -492,7 +454,13 @@ export const createConsumableConfigSchema = z.object({
   mappingType: z.enum(["EXPIRATION_DATE"]),
 });
 
-export const createAssetQuestionSchema = z.object({
+export const createAssetQuestionConditionSchema = z.object({
+  conditionType: z.enum(AssetQuestionConditionTypes),
+  value: z.array(z.string()),
+  description: z.string().optional(),
+});
+
+export const baseCreateAssetQuestionSchema = z.object({
   legacyQuestionId: z.string().nullable().optional(),
   active: z.boolean().default(true),
   type: z.enum(AssetQuestionTypes),
@@ -515,43 +483,77 @@ export const createAssetQuestionSchema = z.object({
     })
     .partial()
     .optional(),
+  conditions: z
+    .object({
+      createMany: z.object({
+        data: z.array(createAssetQuestionConditionSchema),
+      }),
+    })
+    .partial()
+    .optional(),
 });
 
-export const createAssetQuestionSchemaResolver = zodResolver(
-  createAssetQuestionSchema
-);
+export const createAssetQuestionSchema = baseCreateAssetQuestionSchema.extend({
+  variants: z
+    .object({
+      createMany: z.object({
+        data: z.array(baseCreateAssetQuestionSchema),
+      }),
+    })
+    .optional(),
+});
 
-export const updateAssetQuestionSchema = createAssetQuestionSchema
-  .partial()
-  .extend({
-    id: z.string(),
-    assetAlertCriteria: z
-      .object({
-        createMany: z.object({
-          data: z.array(createAssetAlertCriterionSchema),
-        }),
-        updateMany: z.array(
-          z.object({
-            where: z.object({ id: z.string() }),
-            data: updateAssetAlertCriterionSchema,
-          })
-        ),
-        deleteMany: z.array(z.object({ id: z.string() })),
-      })
-      .partial()
-      .optional(),
-    consumableConfig: z
-      .object({
-        create: createConsumableConfigSchema,
-        update: createConsumableConfigSchema.partial(),
-        delete: z.boolean().default(false),
-      })
-      .partial()
-      .optional(),
-  });
-export const updateAssetQuestionSchemaResolver = zodResolver(
-  updateAssetQuestionSchema
-);
+export const createAssetQuestionSchemaResolver = zodResolver(createAssetQuestionSchema);
+
+export const updateAssetQuestionSchema = createAssetQuestionSchema.partial().extend({
+  id: z.string(),
+  assetAlertCriteria: z
+    .object({
+      createMany: z.object({
+        data: z.array(createAssetAlertCriterionSchema),
+      }),
+      updateMany: z.array(
+        z.object({
+          where: z.object({ id: z.string() }),
+          data: updateAssetAlertCriterionSchema,
+        })
+      ),
+      deleteMany: z.array(z.object({ id: z.string() })),
+    })
+    .partial()
+    .optional(),
+  consumableConfig: z
+    .object({
+      create: createConsumableConfigSchema,
+      update: createConsumableConfigSchema.partial(),
+      delete: z.boolean().default(false),
+    })
+    .partial()
+    .optional(),
+  conditions: z
+    .object({
+      createMany: z.object({
+        data: z.array(createAssetQuestionConditionSchema),
+      }),
+    })
+    .partial()
+    .optional(),
+  variants: z
+    .object({
+      createMany: z.object({
+        data: z.array(baseCreateAssetQuestionSchema),
+      }),
+      updateMany: z.array(
+        z.object({
+          where: z.object({ id: z.string() }),
+          data: baseCreateAssetQuestionSchema.partial(),
+        })
+      ),
+      deleteMany: z.array(z.object({ id: z.string() })),
+    })
+    .optional(),
+});
+export const updateAssetQuestionSchemaResolver = zodResolver(updateAssetQuestionSchema);
 
 export const responseValueImageSchema = z.object({
   urls: z.array(z.string()),
@@ -671,10 +673,7 @@ export const buildSetupAssetSchema = (
       createMany: z.object({
         data: z.tuple(
           questions
-            .filter(
-              (q) =>
-                !questionResponses.find((qr) => qr.assetQuestionId === q.id)
-            )
+            .filter((q) => !questionResponses.find((qr) => qr.assetQuestionId === q.id))
             .map((q) =>
               createAssetQuestionResponseSchema.extend({
                 value: buildZodTypeFromQuestion(q),
@@ -684,14 +683,8 @@ export const buildSetupAssetSchema = (
       }),
       updateMany: z.tuple(
         questions
-          .map((q) => [
-            q,
-            questionResponses.find((qr) => qr.assetQuestionId === q.id),
-          ])
-          .filter(
-            (el): el is [AssetQuestion, AssetQuestionResponse] =>
-              el[1] !== undefined
-          )
+          .map((q) => [q, questionResponses.find((qr) => qr.assetQuestionId === q.id)])
+          .filter((el): el is [AssetQuestion, AssetQuestionResponse] => el[1] !== undefined)
           .map(([q, qr]) =>
             z.object({
               where: z.object({ id: z.literal(qr.id) }),
@@ -725,9 +718,7 @@ export const updatePermissionMappingSchema = z.object({
   grant: z.array(permissionToUpdateSchema),
   revoke: z.array(permissionToUpdateSchema),
 });
-export const updatePermissionMappingSchemaResolver = zodResolver(
-  updatePermissionMappingSchema
-);
+export const updatePermissionMappingSchemaResolver = zodResolver(updatePermissionMappingSchema);
 
 export const globalSettingsSchema = z.object({
   systemEmailFromAddress: fromAddressSchema,
