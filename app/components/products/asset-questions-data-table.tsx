@@ -55,7 +55,7 @@ export default function AssetQuestionsDataTable({
   readOnly = false,
 }: AssetQuestionsDataTableProps) {
   const editQuestion = useOpenData<AssetQuestion>();
-  const { labels, prefetchLabels, isLoading } = useConditionLabels();
+  const { labels, prefetchLabels, isLoading, getLabel } = useConditionLabels();
   const { submitJson: submitDelete } = useModalFetcher();
   const { submitJson: submitDuplicateQuestion } = useModalFetcher();
 
@@ -305,7 +305,7 @@ export default function AssetQuestionsDataTable({
             <div className="flex flex-wrap gap-1">
               {conditions.flatMap((condition) =>
                 condition.value.map((value, valueIndex) => {
-                  const label = labels[`${condition.conditionType}:${value}`] || "";
+                  const label = getLabel(condition.conditionType, value, "–");
                   const isValueLoading = isLoading(condition.conditionType, value);
 
                   return (

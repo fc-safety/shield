@@ -50,7 +50,7 @@ export function useConditionLabels() {
         setLoading((prev) => ({ ...prev, [cacheKey]: false }));
         return id;
       }
-      
+
       // Set loading state
       setLoading((prev) => ({ ...prev, [cacheKey]: true }));
 
@@ -115,13 +115,13 @@ export function useConditionLabels() {
   );
 
   const getLabel = useCallback(
-    (type: string, id: string): string => {
+    (type: string, id: string, defaultValue?: string): string => {
       const cacheKey = `${type}:${id}`;
-      return labels[cacheKey] || id;
+      return labels[cacheKey] || (defaultValue ?? id);
     },
     [labels]
   );
-  
+
   const isLoading = useCallback(
     (type: string, id: string): boolean => {
       const cacheKey = `${type}:${id}`;
