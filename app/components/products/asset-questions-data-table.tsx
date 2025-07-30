@@ -388,6 +388,43 @@ export default function AssetQuestionsDataTable({
                             },
                           }
                         : undefined,
+                      conditions: question.conditions
+                        ? {
+                            createMany: {
+                              data: question.conditions.map((c) => ({
+                                conditionType: c.conditionType,
+                                value: c.value,
+                                description: c.description ?? undefined,
+                              })),
+                            },
+                          }
+                        : undefined,
+                      variants: question.variants
+                        ? {
+                            createMany: {
+                              data: question.variants.map((v) => ({
+                                conditions: v.conditions
+                                  ? {
+                                      createMany: {
+                                        data: v.conditions.map((c) => ({
+                                          conditionType: c.conditionType,
+                                          value: c.value,
+                                          description: c.description ?? undefined,
+                                        })),
+                                      },
+                                    }
+                                  : undefined,
+                                prompt: v.prompt,
+                                order: v.order ?? undefined,
+                                valueType: v.valueType,
+                                tone: v.tone ?? undefined,
+                                active: v.active,
+                                type: v.type,
+                                required: v.required,
+                              })),
+                            },
+                          }
+                        : undefined,
                     } satisfies z.infer<typeof createAssetQuestionSchema>;
 
                     submitDuplicateQuestion(payload as any, {
