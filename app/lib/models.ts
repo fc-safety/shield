@@ -32,6 +32,7 @@ export interface Asset extends BaseModel {
   alerts?: Alert[];
   productRequests?: ProductRequest[];
   inspectionRoutePoints?: InspectionRoutePoint[];
+  metadata?: Record<string, string>;
 
   siteId: string;
   site?: Site;
