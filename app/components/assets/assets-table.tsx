@@ -158,19 +158,16 @@ export default function AssetsTable({
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
-        accessorKey: "site.name",
+        accessorFn: ({ site }) => site?.name,
         id: "site",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ row }) => {
-          const site = row.original.site;
-          return site ? site.name : <>&mdash;</>;
-        },
         filterFn: (row, _, filterValue) => {
           // Access the ID from the original row data
           const id = row.original.site?.id;
           // Filter based on the ID
           return Array.isArray(filterValue) ? filterValue.includes(id) : id === filterValue;
         },
+        cell: ({ getValue }) => getValue() ?? <>&mdash;</>,
       },
       {
         accessorFn: ({ alerts }) => getAssetAlertsStatus(alerts ?? []),

@@ -26,17 +26,13 @@ import TagAssistantButton from "./components/tag-assistant/tag-assistant-button"
 import { generateSignedTagUrl } from "./services/tags.service";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  return api.tags
-    .list(request, { limit: 10000 }, { context: "admin" })
-    .then((tags) => ({
-      tags,
-      appHost: config.APP_HOST,
-    }));
+  return api.tags.list(request, { limit: 10000 }, { context: "admin" }).then((tags) => ({
+    tags,
+    appHost: config.APP_HOST,
+  }));
 }
 
-export default function AdminTagsIndex({
-  loaderData: { tags, appHost },
-}: Route.ComponentProps) {
+export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.ComponentProps) {
   const { user } = useAuth();
 
   const canProgram = useMemo(() => can(user, "program", "tags"), [user]);
@@ -55,11 +51,7 @@ export default function AdminTagsIndex({
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { mutate: getGeneratedTagUrl } = useMutation({
     mutationFn: (options: { serialNumber: string; externalId: string }) =>
-      generateSignedTagUrl(
-        fetchOrThrow,
-        options.serialNumber,
-        options.externalId
-      ),
+      generateSignedTagUrl(fetchOrThrow, options.serialNumber, options.externalId),
   });
 
   const copyUrlForTagExternalId = useCallback(
@@ -87,24 +79,18 @@ export default function AdminTagsIndex({
             {getValue() as string}
           </Link>
         ),
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "asset.name",
         id: "assigned asset",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => getValue() ?? <>&mdash;</>,
       },
       {
         accessorKey: "asset.setupOn",
         id: "setup on",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
           const value = getValue() as Date;
           return value ? format(value, "PPpp") : <>&mdash;</>;
@@ -113,34 +99,26 @@ export default function AdminTagsIndex({
       {
         accessorKey: "client.name",
         id: "assigned client",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => getValue() ?? <>&mdash;</>,
       },
       {
-        accessorKey: "site.name",
+        accessorFn: ({ site }) => site?.name,
         id: "assigned site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => getValue() ?? <>&mdash;</>,
       },
       {
         accessorKey: "externalId",
         id: "inspection link",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue, row }) => {
           const tag = row.original;
           return (
             <Button
               variant="secondary"
               size="sm"
-              onClick={() =>
-                copyUrlForTagExternalId(tag.serialNumber, getValue() as string)
-              }
+              onClick={() => copyUrlForTagExternalId(tag.serialNumber, getValue() as string)}
               title={tag.asset ? "Copy inspection link" : "No asset assigned"}
             >
               <Copy />
@@ -169,9 +147,7 @@ export default function AdminTagsIndex({
                   draft.open = true;
                   draft.title = "Delete tag";
                   draft.message = "Are you sure you want to delete this tag?";
-                  draft.requiredUserInput = row.original.asset
-                    ? row.original.serialNumber
-                    : "";
+                  draft.requiredUserInput = row.original.asset ? row.original.serialNumber : "";
                   draft.onConfirm = () => {
                     submitDelete(
                       {},
@@ -191,26 +167,15 @@ export default function AdminTagsIndex({
         ),
       },
     ],
-    [
-      copyUrlForTagExternalId,
-      canUpdate,
-      canDelete,
-      editTag,
-      submitDelete,
-      setDeleteAction,
-    ]
+    [copyUrlForTagExternalId, canUpdate, canDelete, editTag, submitDelete, setDeleteAction]
   );
 
   const allClients = dedupById(
-    tags.results
-      .map((tag) => tag.client)
-      .filter((c): c is NonNullable<typeof c> => !!c)
+    tags.results.map((tag) => tag.client).filter((c): c is NonNullable<typeof c> => !!c)
   );
 
   const allSites = dedupById(
-    tags.results
-      .map((tag) => tag.site)
-      .filter((s): s is NonNullable<typeof s> => !!s)
+    tags.results.map((tag) => tag.site).filter((s): s is NonNullable<typeof s> => !!s)
   );
 
   return (
@@ -226,11 +191,7 @@ export default function AdminTagsIndex({
             columns={columns}
             data={tags.results}
             searchPlaceholder="Search tags..."
-            actions={
-              canProgram
-                ? [<TagAssistantButton key="tag-assistant" />]
-                : undefined
-            }
+            actions={canProgram ? [<TagAssistantButton key="tag-assistant" />] : undefined}
             initialState={{
               columnVisibility: {
                 actions: canUpdate || canDelete,
