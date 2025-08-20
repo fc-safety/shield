@@ -18,11 +18,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import {
-  type Manufacturer,
-  type Product,
-  type ProductCategory,
-} from "~/lib/models";
+import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
 import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
@@ -90,11 +86,9 @@ export default function ProductDetailsForm({
       : undefined,
   } satisfies TForm;
 
-  const form = useForm<TForm>({
-    resolver: zodResolver(
-      (isNew ? createProductSchema : updateProductSchema) as z.Schema<TForm>
-    ),
-    values: product
+  const form = useForm({
+    resolver: zodResolver(isNew ? createProductSchema : updateProductSchema),
+    values: (product
       ? {
           ...product,
           productCategory: {
@@ -111,17 +105,13 @@ export default function ProductDetailsForm({
           sku: product.sku ?? "",
           productUrl: product.productUrl ?? "",
           imageUrl: product.imageUrl ?? "",
-          client: product.client
-            ? { connect: { id: product.client.id } }
-            : undefined,
-          parentProduct: parentProduct
-            ? { connect: { id: parentProduct.id } }
-            : undefined,
+          client: product.client ? { connect: { id: product.client.id } } : undefined,
+          parentProduct: parentProduct ? { connect: { id: parentProduct.id } } : undefined,
           ansiCategory: product.ansiCategory
             ? { connect: { id: product.ansiCategory.id } }
             : undefined,
         }
-      : FORM_DEFAULTS,
+      : FORM_DEFAULTS) as TForm,
     mode: "onBlur",
   });
 
@@ -132,19 +122,17 @@ export default function ProductDetailsForm({
 
   const productType = watch("type");
 
-  const { createOrUpdateJson: submit, isSubmitting: isSubmittingData } =
-    useModalFetcher({
-      onSubmitted,
-    });
+  const { createOrUpdateJson: submit, isSubmitting: isSubmittingData } = useModalFetcher({
+    onSubmitted,
+  });
 
   const [image, setImage] = useState<File | null>(null);
-  const handleImageChange =
-    (onChange: (value: unknown) => void) => (file: File | null) => {
-      if (file) {
-        setImage(file);
-      }
-      onChange(file?.name);
-    };
+  const handleImageChange = (onChange: (value: unknown) => void) => (file: File | null) => {
+    if (file) {
+      setImage(file);
+    }
+    onChange(file?.name);
+  };
 
   const { mutate: uploadImage, isPending: isUploadingImage } = useMutation<
     string,
@@ -159,9 +147,7 @@ export default function ProductDetailsForm({
         parentProduct?.name ? `${slugify(parentProduct.name)}_` : ""
       }${slugify(data.name ?? "unnamed")}${ext ? `.${ext}` : ""}`;
 
-      const getUrlResponse = await fetch(
-        buildPath("/api/image-upload-url", { key, public: "" })
-      );
+      const getUrlResponse = await fetch(buildPath("/api/image-upload-url", { key, public: "" }));
       if (getUrlResponse.ok) {
         const { getUrl, putUrl } = await getUrlResponse.json();
         const uploadResponse = await fetch(putUrl, {
@@ -185,12 +171,15 @@ export default function ProductDetailsForm({
   const isSubmitting = isSubmittingData || isUploadingImage;
 
   const handleSubmit = async (data: TForm) => {
-    const doSubmit = (data: TForm) =>
-      submit(data, {
+    const doSubmit = (data: TForm) => {
+      // Remove undefined values to make it JSON-serializable
+      const cleanedData = JSON.parse(JSON.stringify(data));
+      return submit(cleanedData, {
         path: "/api/proxy/products",
         id: product?.id,
         viewContext: userIsGlobalAdmin ? "admin" : "user",
       });
+    };
 
     if (image) {
       uploadImage(
@@ -319,31 +308,28 @@ export default function ProductDetailsForm({
             </FormItem>
           )}
         />
-        {(parentProduct || productType === "CONSUMABLE") &&
-          canReadAnsiCategories && (
-            <FormField
-              control={form.control}
-              name="ansiCategory"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>ANSI Category</FormLabel>
-                  <FormControl>
-                    <AnsiCategoryCombobox
-                      value={field.value?.connect?.id}
-                      onValueChange={(id) =>
-                        field.onChange(
-                          id ? { connect: { id } } : { disconnect: true }
-                        )
-                      }
-                      onBlur={field.onBlur}
-                      className="flex w-full"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+        {(parentProduct || productType === "CONSUMABLE") && canReadAnsiCategories && (
+          <FormField
+            control={form.control}
+            name="ansiCategory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>ANSI Category</FormLabel>
+                <FormControl>
+                  <AnsiCategoryCombobox
+                    value={field.value?.connect?.id}
+                    onValueChange={(id) =>
+                      field.onChange(id ? { connect: { id } } : { disconnect: true })
+                    }
+                    onBlur={field.onBlur}
+                    className="flex w-full"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         <FormField
           control={form.control}
           name="sku"
@@ -403,21 +389,14 @@ export default function ProductDetailsForm({
               <FormItem>
                 <FormLabel>Owner</FormLabel>
                 <FormControl>
-                  <ClientCombobox
-                    value={value}
-                    onValueChange={onChange}
-                    className="w-full"
-                  />
+                  <ClientCombobox value={value} onValueChange={onChange} className="w-full" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         )}
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

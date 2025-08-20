@@ -22,13 +22,7 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "../ui/form";
+import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../ui/form";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
@@ -45,9 +39,7 @@ export default function ClientDetailsCard({
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const canEditClient = can(user, "update", "clients");
   const canDeleteClient =
-    client &&
-    client.externalId !== user.clientId &&
-    can(user, "delete", "clients");
+    client && client.externalId !== user.clientId && can(user, "delete", "clients");
 
   const navigate = useNavigate();
 
@@ -112,13 +104,9 @@ export default function ClientDetailsCard({
                     {
                       label: "Status",
                       value: (
-                        <div className="capitalize flex items-center gap-2">
+                        <div className="flex items-center gap-2 capitalize">
                           <ActiveIndicator2
-                            active={
-                              client.status.toLowerCase() as Lowercase<
-                                Client["status"]
-                              >
-                            }
+                            active={client.status.toLowerCase() as Lowercase<Client["status"]>}
                           />
                           {client.status.toLowerCase()}
                         </div>
@@ -191,8 +179,8 @@ export default function ClientDetailsCard({
               <AlertTitle>Danger Zone</AlertTitle>
               <AlertDescription className="flex flex-col items-start gap-2">
                 <p>
-                  Deleting this client may not be permitted if it is already in
-                  use and has data associated with it.
+                  Deleting this client may not be permitted if it is already in use and has data
+                  associated with it.
                 </p>
                 <Button
                   variant="destructive"
@@ -249,7 +237,7 @@ function DuplicateDemoClientDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const form = useForm<TDuplicateDemoClientForm>({
+  const form = useForm({
     resolver: zodResolver(duplicateDemoClientSchema),
     defaultValues: {
       name: "(Copy of) " + client.name,
@@ -259,16 +247,17 @@ function DuplicateDemoClientDialog({
 
   const navigate = useNavigate();
 
-  const { submitJson: submitDuplicateDemoClient, isSubmitting } =
-    useModalFetcher<DataOrError<Client>>({
-      defaultErrorMessage: "Error: Failed to duplicate demo client",
-      onData: (data) => {
-        if (data.data?.id) {
-          navigate(`../${data.data.id}`);
-          onOpenChange(false);
-        }
-      },
-    });
+  const { submitJson: submitDuplicateDemoClient, isSubmitting } = useModalFetcher<
+    DataOrError<Client>
+  >({
+    defaultErrorMessage: "Error: Failed to duplicate demo client",
+    onData: (data) => {
+      if (data.data?.id) {
+        navigate(`../${data.data.id}`);
+        onOpenChange(false);
+      }
+    },
+  });
 
   const onSubmit = (data: TDuplicateDemoClientForm) => {
     submitDuplicateDemoClient(data, {
@@ -285,10 +274,7 @@ function DuplicateDemoClientDialog({
       onOpenChange={onOpenChange}
     >
       <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="grid gap-4 pt-4"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 pt-4">
           <FormField
             control={form.control}
             name="name"
@@ -322,9 +308,7 @@ function DuplicateDemoClientDialog({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Password</FormLabel>
-                <FormDescription>
-                  This will be the password for all new users.
-                </FormDescription>
+                <FormDescription>This will be the password for all new users.</FormDescription>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>

@@ -1,3 +1,4 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { CircleSlash } from "lucide-react";
 import { useState } from "react";
@@ -9,18 +10,10 @@ import { catchResponse } from "~/.server/api-utils";
 import { validateInspectionSession } from "~/.server/inspections";
 import AssetCombobox from "~/components/assets/asset-combobox";
 import { Button } from "~/components/ui/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import {
-  registerTagSchemaResolver,
-  type registerTagSchema,
-} from "~/lib/schema";
+import { registerTagSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/register";
@@ -39,12 +32,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   const {
     data: { data: tag },
-  } = await catchResponse(
-    api.tags.checkRegistration(request, inspectionToken),
-    {
-      codes: [404],
-    }
-  );
+  } = await catchResponse(api.tags.checkRegistration(request, inspectionToken), {
+    codes: [404],
+  });
 
   return { tag, inspectionToken };
 };
@@ -60,8 +50,8 @@ export default function InspectRegister({
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [recentlyRegistered, setRecentlyRegistered] = useState(false);
 
-  const form = useForm<TForm>({
-    resolver: registerTagSchemaResolver,
+  const form = useForm({
+    resolver: zodResolver(registerTagSchema),
     defaultValues: {
       asset: {
         connect: {
@@ -75,11 +65,11 @@ export default function InspectRegister({
     formState: { isValid },
   } = form;
 
-  const { submitJson: submitRegisterTag, isSubmitting } = useModalFetcher();
+  const { submitJson: submitRegisterTag, isSubmitting } = useModalFetcher<TForm>();
 
   const handleSubmit = (data: TForm) => {
     setRecentlyRegistered(true);
-    submitRegisterTag(data, {
+    submitRegisterTag(data as any, {
       method: "POST",
       path: "/api/proxy/tags/register-tag",
       query: {
@@ -89,13 +79,12 @@ export default function InspectRegister({
   };
 
   return (
-    <div className="flex flex-col justify-center items-center gap-2 h-full w-full max-w-sm self-center">
+    <div className="flex h-full w-full max-w-sm flex-col items-center justify-center gap-2 self-center">
       {tag?.asset ? (
         <>
           <SuccessCircle />
           <h2 className="text-lg font-semibold">
-            This tag is {recentlyRegistered ? "now" : "already"} registered to
-            an asset.
+            This tag is {recentlyRegistered ? "now" : "already"} registered to an asset.
           </h2>
           <Button asChild>
             <Link to="/inspect">Begin Inspection</Link>
@@ -103,21 +92,16 @@ export default function InspectRegister({
         </>
       ) : (
         <>
-          <CircleSlash className="size-16 text-destructive" />
-          <h2 className="text-lg font-semibold">
-            This tag is not registered to an asset.
-          </h2>
+          <CircleSlash className="text-destructive size-16" />
+          <h2 className="text-lg font-semibold">This tag is not registered to an asset.</h2>
           <FormProvider {...form}>
-            <form
-              onSubmit={form.handleSubmit(handleSubmit)}
-              className="w-full grid gap-4"
-            >
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="grid w-full gap-4">
               {showRegistrationForm && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   transition={{ duration: 0.1 }}
-                  className="overflow-hidden w-full grid gap-4"
+                  className="grid w-full gap-4 overflow-hidden"
                 >
                   <FormField
                     control={form.control}
@@ -144,7 +128,7 @@ export default function InspectRegister({
                 </motion.div>
               )}
               {!canRegister && (
-                <p className="text-center text-sm text-destructive">
+                <p className="text-destructive text-center text-sm">
                   You do not have permission to register tags.
                 </p>
               )}

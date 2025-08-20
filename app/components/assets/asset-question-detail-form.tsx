@@ -36,7 +36,6 @@ import {
   type ConsumableMappingType,
 } from "~/lib/models";
 import {
-  createAssetAlertCriterionSchema,
   createAssetQuestionSchema,
   ruleOperatorsSchema,
   updateAssetQuestionSchema,
@@ -71,10 +70,8 @@ export default function AssetQuestionDetailForm({
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
 
-  const form = useForm<TForm>({
-    resolver: zodResolver(
-      (assetQuestion ? updateAssetQuestionSchema : createAssetQuestionSchema) as z.Schema<TForm>
-    ),
+  const form = useForm({
+    resolver: zodResolver(assetQuestion ? updateAssetQuestionSchema : createAssetQuestionSchema),
     values: assetQuestion
       ? {
           ...assetQuestion,
@@ -170,14 +167,7 @@ export default function AssetQuestionDetailForm({
     }
   }, [valueType, form, tone, type, getFieldState]);
 
-  const alertTriggers: {
-    idx: number;
-    key: string;
-    action: "create" | "update";
-    data:
-      | z.infer<typeof createAssetAlertCriterionSchema>
-      | Partial<z.infer<typeof createAssetAlertCriterionSchema>>;
-  }[] = useMemo(
+  const alertTriggers = useMemo(
     () => [
       ...(updateAlertTriggers?.map((t) => t.data) ?? []).map((t, idx) => ({
         idx,
@@ -233,7 +223,9 @@ export default function AssetQuestionDetailForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: `/api/proxy/asset-questions`,
       id: assetQuestion?.id,
     });

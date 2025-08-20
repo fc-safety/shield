@@ -17,13 +17,7 @@ import { useFetcher } from "react-router";
 import type { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "~/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "~/components/ui/form";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { useProxyImage } from "~/hooks/use-proxy-image";
@@ -42,13 +36,7 @@ import Icon from "../icons/icon";
 import { AnsiCategoryDisplay } from "../products/ansi-category-combobox";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
@@ -60,15 +48,11 @@ interface ProductRequestsProps {
   productRequests: ProductRequest[];
 }
 
-export default function ProductRequests({
-  productRequests,
-}: ProductRequestsProps) {
+export default function ProductRequests({ productRequests }: ProductRequestsProps) {
   return (
     <div className="grid gap-4">
       {productRequests.length === 0 && (
-        <p className="text-muted-foreground text-xs">
-          No active supply requests.
-        </p>
+        <p className="text-muted-foreground text-xs">No active supply requests.</p>
       )}
 
       {productRequests
@@ -81,9 +65,7 @@ export default function ProductRequests({
   );
 }
 
-export function NewSupplyRequestButton({
-  ...props
-}: ComponentProps<typeof ProductRequestForm>) {
+export function NewSupplyRequestButton({ ...props }: ComponentProps<typeof ProductRequestForm>) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -91,12 +73,7 @@ export function NewSupplyRequestButton({
       open={open}
       onOpenChange={setOpen}
       trigger={
-        <Button
-          type="submit"
-          variant="default"
-          size="sm"
-          className="justify-self-end"
-        >
+        <Button type="submit" variant="default" size="sm" className="justify-self-end">
           <NotepadText />
           New Supply Request
         </Button>
@@ -144,10 +121,7 @@ function ProductRequestForm({
   assetId: string;
   parentProductId: string;
   productCategoryId: string;
-  renderSubmitButton?: (options: {
-    isSubmitting: boolean;
-    disabled: boolean;
-  }) => React.ReactNode;
+  renderSubmitButton?: (options: { isSubmitting: boolean; disabled: boolean }) => React.ReactNode;
   onSubmitted?: () => void;
   onSuccess?: (data: ProductRequest) => void;
 }) {
@@ -162,10 +136,8 @@ function ProductRequestForm({
     return new Map((supplies ?? []).map((product) => [product.id, product]));
   }, [supplies]);
 
-  const [orderItemsIsOverflowingY, setOrderItemsIsOverflowingY] =
-    useState(false);
-  const [orderItemsIsScrollMaxedY, setOrderItemsIsScrollMaxedY] =
-    useState(false);
+  const [orderItemsIsOverflowingY, setOrderItemsIsOverflowingY] = useState(false);
+  const [orderItemsIsScrollMaxedY, setOrderItemsIsScrollMaxedY] = useState(false);
 
   useEffect(() => {
     if (fetcher.state === "idle" && !fetcher.data) {
@@ -200,7 +172,7 @@ function ProductRequestForm({
     }
   }, [fetcher.data]);
 
-  const form = useForm<TForm>({
+  const form = useForm({
     resolver,
     defaultValues: {
       productRequestItems: {
@@ -233,12 +205,9 @@ function ProductRequestForm({
   const ansiCategories = useMemo(() => {
     if (!supplies) return null;
 
-    const categories: Pick<AnsiCategory, "id" | "name" | "color" | "icon">[] =
-      dedupById(
-        supplies
-          .map((p) => p.ansiCategory)
-          .filter((c): c is NonNullable<typeof c> => !!c)
-      );
+    const categories: Pick<AnsiCategory, "id" | "name" | "color" | "icon">[] = dedupById(
+      supplies.map((p) => p.ansiCategory).filter((c): c is NonNullable<typeof c> => !!c)
+    );
 
     if (supplies.some((p) => !p.ansiCategory)) {
       categories.push({
@@ -263,24 +232,24 @@ function ProductRequestForm({
   );
 
   const optimizedImageUrlsMap = useMemo(() => {
-    return new Map(
-      optimizedImageUrls?.map((p) => [p.sourceUrl, p.imageUrl]) ?? []
-    );
+    return new Map(optimizedImageUrls?.map((p) => [p.sourceUrl, p.imageUrl]) ?? []);
   }, [optimizedImageUrls]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher<
-    DataOrError<ProductRequest>
-  >({
-    onSubmitted,
-    onData: (data) => {
-      if (data.data) {
-        onSuccess(data.data);
-      }
-    },
-  });
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher<DataOrError<ProductRequest>>(
+    {
+      onSubmitted,
+      onData: (data) => {
+        if (data.data) {
+          onSuccess(data.data);
+        }
+      },
+    }
+  );
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: `/api/proxy/product-requests`,
       id: undefined,
     });
@@ -289,12 +258,9 @@ function ProductRequestForm({
   return (
     <>
       <Form {...form}>
-        <form
-          className="space-y-4 mt-4 w-full"
-          onSubmit={form.handleSubmit(handleSubmit)}
-        >
+        <form className="mt-4 w-full space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
           <div className="w-full">
-            <h3 className="font-medium text-base flex items-center gap-x-2">
+            <h3 className="flex items-center gap-x-2 text-base font-medium">
               <ListPlus className="size-5" />
               Available Supplies
             </h3>
@@ -308,23 +274,23 @@ function ProductRequestForm({
               onPreviewImage={previewImage.openData}
             />
             {ansiCategories && ansiCategories.length === 0 && (
-              <p className="text-muted-foreground text-xs col-span-full flex items-center justify-center h-12">
+              <p className="text-muted-foreground col-span-full flex h-12 items-center justify-center text-xs">
                 No consumables available for this product.
               </p>
             )}
           </div>
 
           <div>
-            <h3 className="font-medium text-base mb-2 flex items-center gap-x-2">
+            <h3 className="mb-2 flex items-center gap-x-2 text-base font-medium">
               <ListOrdered className="size-5" />
               Order Items
             </h3>
             <ScrollArea
-              className="relative min-h-54 h-[25dvh] border-t border-b border-border"
+              className="border-border relative h-[25dvh] min-h-54 border-t border-b"
               onIsOverflowingY={setOrderItemsIsOverflowingY}
               onIsScrollMaxedY={setOrderItemsIsScrollMaxedY}
             >
-              <div className="mt-2 grid grid-cols-[auto_auto_1fr_auto] gap-x-3 divide-y divide-border/50">
+              <div className="divide-border/50 mt-2 grid grid-cols-[auto_auto_1fr_auto] gap-x-3 divide-y">
                 {productRequestItems.map((item, index) => {
                   const product = supplyMap.get(item.productId)!;
                   return (
@@ -332,9 +298,9 @@ function ProductRequestForm({
                       key={item.id}
                       name={`productRequestItems.createMany.data.${index}.quantity`}
                       render={({ field: { onChange, ...field } }) => (
-                        <FormItem className="grid col-span-full grid-cols-subgrid space-y-0 py-2">
+                        <FormItem className="col-span-full grid grid-cols-subgrid space-y-0 py-2">
                           <FormControl>
-                            <div className="grid col-span-full grid-cols-subgrid items-center">
+                            <div className="col-span-full grid grid-cols-subgrid items-center">
                               <Button
                                 type="button"
                                 variant="destructive"
@@ -348,7 +314,7 @@ function ProductRequestForm({
                                   autoFocus={false}
                                   type="text"
                                   {...field}
-                                  className="w-10 h-8 px-1 rounded-none rounded-l-md text-center border-0 border-t-1 border-b-1 border-l-1 focus-visible:border-border"
+                                  className="focus-visible:border-border h-8 w-10 rounded-none rounded-l-md border-0 border-t-1 border-b-1 border-l-1 px-1 text-center"
                                   inputMode="numeric"
                                   pattern="[0-9]*"
                                   onChange={(e) => {
@@ -393,9 +359,7 @@ function ProductRequestForm({
                                 product={product}
                                 optimizedImageUrl={
                                   product.imageUrl
-                                    ? optimizedImageUrlsMap.get(
-                                        product.imageUrl
-                                      )
+                                    ? optimizedImageUrlsMap.get(product.imageUrl)
                                     : undefined
                                 }
                                 onPreviewImage={previewImage.openData}
@@ -412,13 +376,11 @@ function ProductRequestForm({
                 })}
               </div>
               {productRequestItems.length === 0 && (
-                <p className="text-muted-foreground text-xs w-full p-4 sm:p-6 flex items-center justify-center">
+                <p className="text-muted-foreground flex w-full items-center justify-center p-4 text-xs sm:p-6">
                   No order items.
                 </p>
               )}
-              <ScrollHint
-                show={orderItemsIsOverflowingY && !orderItemsIsScrollMaxedY}
-              />
+              <ScrollHint show={orderItemsIsOverflowingY && !orderItemsIsScrollMaxedY} />
             </ScrollArea>
           </div>
           {renderSubmitButton({ isSubmitting, disabled: !isDirty || !isValid })}
@@ -429,11 +391,7 @@ function ProductRequestForm({
           <DialogHeader>
             <DialogTitle>Preview</DialogTitle>
           </DialogHeader>
-          <img
-            src={previewImage.data ?? "#"}
-            alt="Preview"
-            className="w-full rounded-lg"
-          />
+          <img src={previewImage.data ?? "#"} alt="Preview" className="w-full rounded-lg" />
         </DialogContent>
       </Dialog>
     </>
@@ -453,9 +411,7 @@ function ConsumableSelectTabs({
   supplies: Product[] | null;
   suppliesLoading: boolean;
   productRequestItems: TForm["productRequestItems"]["createMany"]["data"];
-  append: (
-    item: TForm["productRequestItems"]["createMany"]["data"][number]
-  ) => void;
+  append: (item: TForm["productRequestItems"]["createMany"]["data"][number]) => void;
   onPreviewImage: (url: string) => void;
   optimizedImageUrlsMap: Map<string, string>;
 }) {
@@ -478,14 +434,14 @@ function ConsumableSelectTabs({
         </div>
       )}
       {showTabs && (
-        <div className="text-xs w-full text-start pb-1 text-muted-foreground">
+        <div className="text-muted-foreground w-full pb-1 text-start text-xs">
           Select a First Aid color to view supplies.
         </div>
       )}
       <Tabs
         value={selectedTab}
         onValueChange={setSelectedTab}
-        className={cn("mt-2 max-w-[calc(100vw-2rem)] hidden", {
+        className={cn("mt-2 hidden max-w-[calc(100vw-2rem)]", {
           block: showTabs,
         })}
       >
@@ -500,11 +456,10 @@ function ConsumableSelectTabs({
                   "--tab-active-color": category.color
                     ? "white" // getContrastTextColor(category.color)
                     : "hsl(var(--foreground))",
-                  "--tab-inactive-color":
-                    category.color ?? "hsl(var(--muted-foreground))",
+                  "--tab-inactive-color": category.color ?? "hsl(var(--muted-foreground))",
                 } as React.CSSProperties
               }
-              className="text-[var(--tab-active-color)] data-[state=active]:text-[var(--tab-active-color)] bg-[var(--tab-active-bg)] data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:scale-105 grow flex shrink-0 font-bold"
+              className="flex shrink-0 grow bg-[var(--tab-active-bg)] font-bold text-[var(--tab-active-color)] data-[state=active]:scale-105 data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)]"
             >
               {category.icon ? <Icon iconId={category.icon} /> : category.name}
             </TabsTrigger>
@@ -518,12 +473,12 @@ function ConsumableSelectTabs({
                 !supplies
                   ? []
                   : showTabs
-                  ? supplies.filter(
-                      (p) =>
-                        p.ansiCategory?.id === category.id ||
-                        (!p.ansiCategory && category.id === "other")
-                    )
-                  : supplies
+                    ? supplies.filter(
+                        (p) =>
+                          p.ansiCategory?.id === category.id ||
+                          (!p.ansiCategory && category.id === "other")
+                      )
+                    : supplies
               }
               selectedConsumableIds={selectedSupplyIds}
               onAdd={(productId) =>
@@ -560,14 +515,10 @@ function AvailableConsumables({
   showAnsiCategory?: boolean;
   optimizedImageUrlsMap: Map<string, string>;
 }) {
-  const [
-    availableConsumablesIsOverflowingY,
-    setAvailableConsumablesIsOverflowingY,
-  ] = useState(false);
-  const [
-    availableConsumablesIsScrollMaxedY,
-    setAvailableConsumablesIsScrollMaxedY,
-  ] = useState(false);
+  const [availableConsumablesIsOverflowingY, setAvailableConsumablesIsOverflowingY] =
+    useState(false);
+  const [availableConsumablesIsScrollMaxedY, setAvailableConsumablesIsScrollMaxedY] =
+    useState(false);
 
   return (
     <ScrollArea
@@ -578,16 +529,16 @@ function AvailableConsumables({
       }
       onIsOverflowingY={setAvailableConsumablesIsOverflowingY}
       onIsScrollMaxedY={setAvailableConsumablesIsScrollMaxedY}
-      className={cn("relative min-h-54 h-[25dvh] border-t-2 border-b-2", {
+      className={cn("relative h-[25dvh] min-h-54 border-t-2 border-b-2", {
         "border-t-[var(--ansi-color)]": ansiCategory.color,
         "border-b-[var(--ansi-color)]": ansiCategory.color,
       })}
     >
-      <div className="w-full mt-2 grid grid-cols-[auto_1fr_auto] gap-x-3 divide-y divide-border/50">
+      <div className="divide-border/50 mt-2 grid w-full grid-cols-[auto_1fr_auto] gap-x-3 divide-y">
         {consumables.map((product) => (
           <div
             key={product.id}
-            className="w-full grid col-span-full grid-cols-subgrid items-center py-2"
+            className="col-span-full grid w-full grid-cols-subgrid items-center py-2"
           >
             <Button
               type="button"
@@ -596,11 +547,7 @@ function AvailableConsumables({
               onClick={() => onAdd(product.id)}
               disabled={selectedConsumableIds.has(product.id)}
             >
-              {selectedConsumableIds.has(product.id) ? (
-                <CheckCircle />
-              ) : (
-                <CirclePlus />
-              )}
+              {selectedConsumableIds.has(product.id) ? <CheckCircle /> : <CirclePlus />}
             </Button>
             <ProductRequestItem
               product={product}
@@ -608,25 +555,20 @@ function AvailableConsumables({
               className="col-span-2 grid-cols-subgrid"
               showAnsiCategory={showAnsiCategory}
               optimizedImageUrl={
-                product.imageUrl
-                  ? optimizedImageUrlsMap.get(product.imageUrl)
-                  : undefined
+                product.imageUrl ? optimizedImageUrlsMap.get(product.imageUrl) : undefined
               }
             />
           </div>
         ))}
         {consumables.length === 0 && (
-          <p className="text-muted-foreground text-xs col-span-full flex items-center justify-center h-12">
+          <p className="text-muted-foreground col-span-full flex h-12 items-center justify-center text-xs">
             No consumables available.
           </p>
         )}
       </div>
 
       <ScrollHint
-        show={
-          availableConsumablesIsOverflowingY &&
-          !availableConsumablesIsScrollMaxedY
-        }
+        show={availableConsumablesIsOverflowingY && !availableConsumablesIsScrollMaxedY}
       />
     </ScrollArea>
   );
@@ -654,18 +596,16 @@ function ProductRequestItem({
               ansiCategory={product.ansiCategory}
               iconOnly
               size="sm"
-              className="inline-block mr-1"
+              className="mr-1 inline-block"
             />
           )}
           {product.name}
         </div>
         {product.description && (
-          <div className="text-muted-foreground text-xs line-clamp-1">
-            {product.description}
-          </div>
+          <div className="text-muted-foreground line-clamp-1 text-xs">{product.description}</div>
         )}
       </div>
-      <div className="flex items-center gap-x-2 justify-end">
+      <div className="flex items-center justify-end gap-x-2">
         <button
           type="button"
           disabled={!product.imageUrl}
@@ -676,7 +616,7 @@ function ProductRequestItem({
             } as React.CSSProperties
           }
           className={cn(
-            "size-16 flex items-center justify-center rounded-md border-2 border-border overflow-hidden p-1 bg-white",
+            "border-border flex size-16 items-center justify-center overflow-hidden rounded-md border-2 bg-white p-1",
             {
               "border-[var(--ansi-color)]": product.ansiCategory?.color,
             }
@@ -686,7 +626,7 @@ function ProductRequestItem({
             <img
               src={optimizedImageUrl ?? "#"}
               alt="Preview"
-              className="w-full h-full object-contain"
+              className="h-full w-full object-contain"
             />
           ) : (
             <ImageOff className="size-6" />
@@ -701,12 +641,10 @@ export function ProductRequestCard({ request }: { request: ProductRequest }) {
   return (
     <Card>
       <CardHeader>
-        <CardDescription className="text-muted-foreground text-xs flex items-center gap-x-4 justify-between">
+        <CardDescription className="text-muted-foreground flex items-center justify-between gap-x-4 text-xs">
           <div className="flex items-center gap-x-2">
             {/* <Badge variant="default">{request.status}</Badge> */}
-            <div className="text-foreground">
-              {formatDistanceToNow(request.createdOn)}
-            </div>
+            <div className="text-foreground">{formatDistanceToNow(request.createdOn)}</div>
             <div>&mdash;</div>
             <div>{format(request.createdOn, "PPpp")}</div>
           </div>
@@ -716,16 +654,13 @@ export function ProductRequestCard({ request }: { request: ProductRequest }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-x-4 text-sm grid-cols-[auto_auto_1fr] divide-y divide-border">
-          <div className="grid col-span-full grid-cols-subgrid items-center py-2 text-muted-foreground text-xs font-medium">
+        <div className="divide-border grid grid-cols-[auto_auto_1fr] gap-x-4 divide-y text-sm">
+          <div className="text-muted-foreground col-span-full grid grid-cols-subgrid items-center py-2 text-xs font-medium">
             <div>Qty</div>
             <div>Consumable</div>
           </div>
           {request.productRequestItems.map((item) => (
-            <div
-              key={item.id}
-              className="grid col-span-full grid-cols-subgrid items-center py-2"
-            >
+            <div key={item.id} className="col-span-full grid grid-cols-subgrid items-center py-2">
               <div className="text-end">{item.quantity}</div>
               <div>{item.product.name}</div>
             </div>
@@ -744,10 +679,7 @@ export function ProductRequestApprovalsDisplay({
   return (
     <div className="flex items-center gap-x-1">
       {approvals.map((approval) => (
-        <ProductRequestApprovalIndicator
-          key={approval.id}
-          approval={approval}
-        />
+        <ProductRequestApprovalIndicator key={approval.id} approval={approval} />
       ))}
       {approvals.length === 0 && (
         <ProductRequestApprovalIndicator key={"no approval"} approval={null} />
@@ -760,7 +692,7 @@ const ScrollHint = ({ show }: { show: boolean }) => {
   return (
     <div
       className={cn(
-        "absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-1 text-xs text-muted-foreground bg-muted/50 backdrop-blur-md border border-border rounded-md transition-opacity duration-300 pointer-events-none",
+        "text-muted-foreground bg-muted/50 border-border pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-md border px-2 py-1 text-xs backdrop-blur-md transition-opacity duration-300",
         show ? "opacity-100" : "opacity-0"
       )}
     >

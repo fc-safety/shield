@@ -10,6 +10,7 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { Check, Image, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -18,17 +19,11 @@ import { useFetcher } from "react-router";
 import { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
 import type { Alert } from "~/lib/models";
-import { resolveAlertSchema, resolveAlertSchemaResolver } from "~/lib/schema";
+import { resolveAlertSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
 import { isNil } from "~/lib/utils";
 import DataList from "../data-list";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Skeleton } from "../ui/skeleton";
 import DisplayInspectionValue from "./display-inspection-value";
 
@@ -62,10 +57,7 @@ export default function AssetInspectionAlert({
     <ResponsiveDialog
       title="Inspection Alert"
       trigger={
-        <div
-          onMouseEnter={handlePreloadAlerts}
-          onTouchStart={handlePreloadAlerts}
-        >
+        <div onMouseEnter={handlePreloadAlerts} onTouchStart={handlePreloadAlerts}>
           {trigger}
         </div>
       }
@@ -82,20 +74,14 @@ export default function AssetInspectionAlert({
 
 type TForm = z.infer<typeof resolveAlertSchema>;
 
-function InspectionAlert({
-  alert,
-  loading = false,
-}: {
-  alert: Alert;
-  loading?: boolean;
-}) {
+function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: boolean }) {
   const { user } = useAuth();
   const canResolve = can(user, "resolve", "alerts");
 
   const fetcher = useFetcher();
 
   const form = useForm<TForm>({
-    resolver: resolveAlertSchemaResolver,
+    resolver: zodResolver(resolveAlertSchema),
     defaultValues: {
       resolutionNote: alert.resolutionNote || "",
     },
@@ -107,7 +93,7 @@ function InspectionAlert({
 
   return (
     <div className="grid gap-8">
-      <div className="flex gap-2 items-center">
+      <div className="flex items-center gap-2">
         {alert.resolved ? (
           <ShieldCheck className="text-primary size-10" />
         ) : alert.alertLevel === "CRITICAL" ? (
@@ -122,9 +108,7 @@ function InspectionAlert({
           <ShieldAlert className="fill-audit text-audit-foreground size-10" />
         )}
         <div>
-          <p className="text-xs text-muted-foreground">
-            {format(alert.createdOn, "PPpp")}
-          </p>
+          <p className="text-muted-foreground text-xs">{format(alert.createdOn, "PPpp")}</p>
           <h3 className="text-base font-semibold uppercase">
             {alert.resolved ? "Resolved" : alert.alertLevel}
           </h3>
@@ -135,11 +119,7 @@ function InspectionAlert({
         details={[
           {
             label: "Level",
-            value: (
-              <span className="capitalize">
-                {alert.alertLevel.toLowerCase()}
-              </span>
-            ),
+            value: <span className="capitalize">{alert.alertLevel.toLowerCase()}</span>,
           },
           {
             label: "Reason",
@@ -152,16 +132,12 @@ function InspectionAlert({
           {
             label: "Answer",
             value: !isNil(alert.assetQuestionResponse?.value) && (
-              <DisplayInspectionValue
-                value={alert.assetQuestionResponse?.value}
-              />
+              <DisplayInspectionValue value={alert.assetQuestionResponse?.value} />
             ),
           },
           {
             label: "Inspection Image",
-            value: alert.inspectionImageUrl && (
-              <InspectionImage url={alert.inspectionImageUrl} />
-            ),
+            value: alert.inspectionImageUrl && <InspectionImage url={alert.inspectionImageUrl} />,
           },
         ]}
         defaultValue={<>&mdash;</>}
@@ -218,15 +194,11 @@ function InspectionAlert({
                     readOnly={alert.resolved}
                     disabled={!canResolve}
                     title={
-                      !canResolve
-                        ? "You do not have permission to resolve this alert."
-                        : undefined
+                      !canResolve ? "You do not have permission to resolve this alert." : undefined
                     }
                   />
                 </FormControl>
-                <FormDescription>
-                  Make note of action taken to resolve this alert.
-                </FormDescription>
+                <FormDescription>Make note of action taken to resolve this alert.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -235,12 +207,7 @@ function InspectionAlert({
             <Button
               type="submit"
               className="w-full"
-              disabled={
-                fetcher.state === "submitting" ||
-                loading ||
-                !isValid ||
-                alert.resolved
-              }
+              disabled={fetcher.state === "submitting" || loading || !isValid || alert.resolved}
             >
               {alert.resolved ? (
                 <>

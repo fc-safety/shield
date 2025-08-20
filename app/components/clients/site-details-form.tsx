@@ -17,7 +17,7 @@ import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { type ResultsPage, type Site } from "~/lib/models";
-import { baseSiteSchema, getSiteSchema } from "~/lib/schema";
+import { getSiteSchema } from "~/lib/schema";
 import { type QueryParams } from "~/lib/urls";
 import { isSuperAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
@@ -27,8 +27,6 @@ import { Checkbox } from "../ui/checkbox";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
 import SiteCombobox from "./site-combobox";
-
-type TForm = z.infer<typeof baseSiteSchema>;
 export interface SiteDetailsFormProps {
   site?: Site;
   clientId: string;
@@ -54,6 +52,9 @@ export default function SiteDetailsForm({
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
   const [subsites, setSubsites] = useState<Site[] | undefined>();
 
+  const siteSchema = getSiteSchema({ create: !site, isSiteGroup });
+  type TForm = z.infer<typeof siteSchema>;
+
   const FORM_DEFAULTS = useMemo(
     () =>
       ({
@@ -62,12 +63,14 @@ export default function SiteDetailsForm({
         address: {
           create: {
             street1: "",
+            street2: undefined,
             city: "",
             state: "",
             zip: "",
             county: null,
             country: null,
           },
+          update: {},
         },
         phoneNumber: "",
         client: {
@@ -82,18 +85,17 @@ export default function SiteDetailsForm({
               },
             }
           : undefined,
-      } satisfies z.infer<typeof baseSiteSchema>),
+      }) satisfies TForm,
     [clientId, parentSiteId]
   );
 
-  const form = useForm<TForm>({
-    resolver: zodResolver(
-      getSiteSchema({ create: !site, isSiteGroup }) as z.Schema<TForm>
-    ),
-    values: site
+  const form = useForm({
+    resolver: zodResolver(siteSchema),
+    values: (site
       ? {
           ...site,
           address: {
+            create: undefined,
             update: {
               ...site.address,
               street2: site.address.street2 || undefined,
@@ -118,7 +120,7 @@ export default function SiteDetailsForm({
                 }
               : undefined,
         }
-      : FORM_DEFAULTS,
+      : FORM_DEFAULTS) as TForm,
   });
 
   const {
@@ -145,13 +147,9 @@ export default function SiteDetailsForm({
         })
         .then((r) => {
           if (r) {
-            setValue(
-              site ? "address.update.city" : "address.create.city",
-              r.city,
-              {
-                shouldValidate: true,
-              }
-            );
+            setValue(site ? "address.update.city" : "address.create.city", r.city, {
+              shouldValidate: true,
+            });
             setValue(
               site ? "address.update.state" : "address.create.state",
               r.state_code ?? r.state_en,
@@ -192,14 +190,7 @@ export default function SiteDetailsForm({
       }
       subsitesLoad({ path: "/api/proxy/sites", query });
     }
-  }, [
-    site,
-    subsitesLoad,
-    viewContext,
-    clientId,
-    subsitesLoading,
-    subsitesData,
-  ]);
+  }, [site, subsitesLoad, viewContext, clientId, subsitesLoading, subsitesData]);
 
   useEffect(() => {
     handleSubsitesLoad();
@@ -215,7 +206,9 @@ export default function SiteDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: "/api/proxy/sites",
       id: site?.id,
     });
@@ -235,14 +228,10 @@ export default function SiteDetailsForm({
                 <FormLabel>Status</FormLabel>
                 <FormControl>
                   <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="primarySite"
-                      checked={field.value}
-                      onCheckedChange={onChange}
-                    />
+                    <Checkbox id="primarySite" checked={field.value} onCheckedChange={onChange} />
                     <Label
                       htmlFor="primarySite"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
                       Primary site
                     </Label>
@@ -262,11 +251,7 @@ export default function SiteDetailsForm({
                 <FormLabel>External ID</FormLabel>
                 <FormControl>
                   {isNew ? (
-                    <Input
-                      {...field}
-                      placeholder="Automatically generated"
-                      tabIndex={-1}
-                    />
+                    <Input {...field} placeholder="Automatically generated" tabIndex={-1} />
                   ) : (
                     <CopyableInput {...field} readOnly />
                   )}
@@ -305,9 +290,7 @@ export default function SiteDetailsForm({
           )}
         />
 
-        {!isNew && (
-          <Input type="hidden" {...form.register("address.update.id")} hidden />
-        )}
+        {!isNew && <Input type="hidden" {...form.register("address.update.id")} hidden />}
         <FormField
           control={form.control}
           name={isNew ? "address.create.street1" : "address.update.street1"}
@@ -396,9 +379,7 @@ export default function SiteDetailsForm({
                 <Input
                   {...field}
                   value={beautifyPhone(value ?? "")}
-                  onChange={(e) =>
-                    onChange(stripPhone(beautifyPhone(e.target.value)))
-                  }
+                  onChange={(e) => onChange(stripPhone(beautifyPhone(e.target.value)))}
                   type="phone"
                 />
               </FormControl>
@@ -416,20 +397,19 @@ export default function SiteDetailsForm({
                 <FormControl>
                   <div className="space-y-4">
                     {subsitesLoading &&
-                      Array.from({ length: site?.subsites?.length ?? 1 }).map(
-                        (_, i) => <Skeleton key={i} className="w-full h-6" />
-                      )}
+                      Array.from({ length: site?.subsites?.length ?? 1 }).map((_, i) => (
+                        <Skeleton key={i} className="h-6 w-full" />
+                      ))}
                     {subsites && subsites.length === 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        No available subsites found. If you are looking to add a
-                        site that belongs to another group, remove the site from
-                        that group first.
+                      <p className="text-muted-foreground text-sm">
+                        No available subsites found. If you are looking to add a site that belongs
+                        to another group, remove the site from that group first.
                       </p>
                     )}
                     {subsites?.map((subsite) => (
                       <FormItem
                         key={subsite.id}
-                        className="flex flex-row items-center space-x-1 space-y-0"
+                        className="flex flex-row items-center space-y-0 space-x-1"
                       >
                         <Checkbox
                           id={`subsite-${subsite.id}`}
@@ -439,14 +419,14 @@ export default function SiteDetailsForm({
                               checked
                                 ? [...(value ?? []), { id: subsite.id }]
                                 : value
-                                ? value.filter((v) => v.id !== subsite.id)
-                                : []
+                                  ? value.filter((v) => v.id !== subsite.id)
+                                  : []
                             )
                           }
                         />
                         <Label
                           htmlFor={`subsite-${subsite.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
                           {subsite.name}
                         </Label>
@@ -480,10 +460,7 @@ export default function SiteDetailsForm({
             )}
           />
         )}
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

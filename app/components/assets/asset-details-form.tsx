@@ -53,10 +53,8 @@ export default function AssetDetailsForm({
 
   const isNew = !asset;
 
-  const form = useForm<TForm>({
-    resolver: zodResolver(
-      (asset ? updateAssetSchema : createAssetSchema) as z.Schema<TForm>
-    ),
+  const form = useForm({
+    resolver: zodResolver(asset ? updateAssetSchema : createAssetSchema),
     values: asset
       ? {
           ...asset,
@@ -112,7 +110,9 @@ export default function AssetDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: "/api/proxy/assets",
       id: asset?.id,
       viewContext: context,
@@ -164,9 +164,7 @@ export default function AssetDetailsForm({
               <FormControl>
                 <ProductSelector
                   value={value?.connect.id ?? ""}
-                  onValueChange={(id) =>
-                    onChange(id ? { connect: { id } } : undefined)
-                  }
+                  onValueChange={(id) => onChange(id ? { connect: { id } } : undefined)}
                   disabled={disabled}
                   readOnly={!!asset?.setupOn}
                   className="flex"
@@ -239,11 +237,7 @@ export default function AssetDetailsForm({
                     className="w-full"
                     showClear={false}
                     clientId={formClientId}
-                    disabled={
-                      isGlobalAdmin(user) &&
-                      context === "admin" &&
-                      !formClientId
-                    }
+                    disabled={isGlobalAdmin(user) && context === "admin" && !formClientId}
                     viewContext={context}
                   />
                 </FormControl>
@@ -286,12 +280,7 @@ export default function AssetDetailsForm({
               <FormLabel>Inspection Cycle</FormLabel>
               <FormControl>
                 <div className="flex items-center gap-2">
-                  <Input
-                    {...field}
-                    value={isEmpty(value) ? "" : value}
-                    type="number"
-                    min={1}
-                  />
+                  <Input {...field} value={isEmpty(value) ? "" : value} type="number" min={1} />
                   <Button
                     variant="ghost"
                     size="sm"

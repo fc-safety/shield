@@ -44,12 +44,12 @@ export default function ClientUserDetailsForm({
 }: ClientUserDetailsFormProps) {
   const isNew = !user;
 
-  const form = useForm<TForm>({
+  const form = useForm({
     resolver: zodResolver(isNew ? createUserSchema : updateUserSchema),
-    defaultValues: user ?? {
+    defaultValues: (user ?? {
       ...FORM_DEFAULTS,
       siteExternalId: siteExternalId ?? "",
-    },
+    }) as TForm,
   });
 
   const {
@@ -61,7 +61,9 @@ export default function ClientUserDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: "/api/proxy/users",
       id: user?.id,
       query: {

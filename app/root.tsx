@@ -10,11 +10,7 @@ import {
 } from "react-router";
 
 import { type PropsWithChildren } from "react";
-import {
-  PreventFlashOnWrongTheme,
-  ThemeProvider,
-  useTheme,
-} from "remix-themes";
+import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
 import {
   appStateSessionStorage,
   setCookieResponseHeaders,
@@ -49,9 +45,7 @@ export const unstable_middleware = [
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
 
-  const appStateSession = await appStateSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const appStateSession = await appStateSessionStorage.getSession(request.headers.get("cookie"));
 
   const optimizedImageUrls: OptimizedImageUrls = {
     bannerLogoLight: {
@@ -134,7 +128,7 @@ export const meta: Route.MetaFunction = () => {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
-    <div className="bg-background w-full h-full min-h-svh flex flex-col">
+    <div className="bg-background flex h-full min-h-svh w-full flex-col">
       <Header
         showBreadcrumb={false}
         rightSlot={

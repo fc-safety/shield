@@ -77,7 +77,9 @@ export default function ProductCategoryDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: "/api/proxy/product-categories",
       id: productCategory?.id,
     });
