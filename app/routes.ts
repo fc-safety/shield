@@ -1,10 +1,4 @@
-import {
-  index,
-  layout,
-  prefix,
-  route,
-  type RouteConfig,
-} from "@react-router/dev/routes";
+import { index, layout, prefix, route, type RouteConfig } from "@react-router/dev/routes";
 
 export default [
   // Health routes
@@ -28,13 +22,14 @@ export default [
     route("next", "./routes/inspect/next.tsx"),
     route("routes", "./routes/inspect/routes.tsx"),
     route("register", "./routes/inspect/register.tsx"),
-    route(
-      "clear-demo-inspections",
-      "./routes/inspect/clear-demo-inspections.tsx"
-    ),
+    route("clear-demo-inspections", "./routes/inspect/clear-demo-inspections.tsx"),
 
     // User routes
     route("account", "./routes/inspect/account.tsx"),
+
+    // Support routes
+    // TODO
+
     route("*", "./routes/inspect/404.tsx"),
   ]),
 
@@ -111,10 +106,7 @@ export default [
         index("./routes/admin/clients/index.tsx"),
         route(":id", "./routes/admin/clients/details/layout.tsx", [
           index("./routes/admin/clients/details/index.tsx"),
-          route(
-            "sites/:siteId",
-            "./routes/admin/clients/details/site-details.tsx"
-          ),
+          route("sites/:siteId", "./routes/admin/clients/details/site-details.tsx"),
         ]),
       ]),
       route("product-requests", "./routes/admin/product-requests/layout.tsx", [
@@ -137,6 +129,7 @@ export default [
     ]),
 
     // Help routes
+    route("contact-us", "./routes/contact-us.tsx"),
     route("faqs", "./routes/faqs.tsx"),
     route("docs", "./routes/docs/layout.tsx", [
       index("./routes/docs/index.tsx"),

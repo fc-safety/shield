@@ -9,6 +9,7 @@ import {
   FileSpreadsheet,
   FireExtinguisher,
   LayoutDashboard,
+  MessageCircleMore,
   Nfc,
   Package,
   Route as RouteIcon,
@@ -159,6 +160,11 @@ export default function Layout({
     {
       groupTitle: "Support",
       items: [
+        {
+          title: "Contact Us",
+          url: "contact-us",
+          icon: MessageCircleMore,
+        },
         {
           title: "FAQs",
           url: "faqs",

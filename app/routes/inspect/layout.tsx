@@ -1,22 +1,20 @@
-import { FileSpreadsheet, Route as RouteIcon } from "lucide-react";
+import {
+  BookOpenText,
+  CircleHelp,
+  FileSpreadsheet,
+  MessageCircleMore,
+  Route as RouteIcon,
+} from "lucide-react";
 import { data, Link, Outlet } from "react-router";
 import { config } from "~/.server/config";
-import {
-  AppSidebar,
-  DEFAULT_USER_ROUTES,
-  type SidebarGroup,
-} from "~/components/app-sidebar";
+import { AppSidebar, DEFAULT_USER_ROUTES, type SidebarGroup } from "~/components/app-sidebar";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "~/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import { can } from "~/lib/users";
@@ -37,7 +35,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
-    <div className="bg-background w-full h-full min-h-svh flex flex-col">
+    <div className="bg-background flex h-full min-h-svh w-full flex-col">
       <Header
         showBreadcrumb={false}
         rightSlot={
@@ -78,6 +76,29 @@ export default function Layout({
         },
       ],
     },
+    {
+      groupTitle: "Support",
+      items: [
+        {
+          title: "Contact Us",
+          url: "/contact-us",
+          icon: MessageCircleMore,
+          external: true,
+        },
+        {
+          title: "FAQs",
+          url: "/faqs",
+          icon: CircleHelp,
+          external: true,
+        },
+        {
+          title: "Docs",
+          url: "/docs",
+          icon: BookOpenText,
+          external: true,
+        },
+      ],
+    },
   ];
 
   return (
@@ -109,7 +130,7 @@ export default function Layout({
                 </>
               }
             />
-            <section className="flex flex-col p-2 sm:p-4 pt-0 pb-6 sm:pb-12 grow w-full max-w-(--breakpoint-lg) self-center">
+            <section className="flex w-full max-w-(--breakpoint-lg) grow flex-col self-center p-2 pt-0 pb-6 sm:p-4 sm:pb-12">
               <Outlet />
             </section>
             <Footer />

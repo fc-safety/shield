@@ -199,7 +199,14 @@ function BaseLayout({ children }: PropsWithChildren) {
           type="text/javascript"
           dangerouslySetInnerHTML={{
             __html: `
-            window.Beacon('init', 'f023be77-9718-4c96-a230-68481b68dfd4')
+            window.Beacon('init', 'f023be77-9718-4c96-a230-68481b68dfd4');
+            window.Beacon('once', 'ready', () => {
+            var beaconContainer = document.querySelector('#beacon-container');
+              if (beaconContainer) {
+                beaconContainer.style.opacity = '0';
+                beaconContainer.style.pointerEvents = 'none';
+              }
+            });
             `,
           }}
         />
