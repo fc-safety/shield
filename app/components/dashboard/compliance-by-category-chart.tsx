@@ -3,7 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight, Shapes, Shield } from "lucide-react";
 import * as React from "react";
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { AssetInspectionsStatus } from "~/lib/enums";
 import type { ProductCategory, ResultsPage } from "~/lib/models";
@@ -21,14 +21,8 @@ import LoadingOverlay from "./components/loading-overlay";
 import MiniStatusProgressBar from "./components/mini-status-progress-bar";
 import { getComplianceHistory } from "./services/stats";
 
-export function ComplianceByCategoryChart({
-  refreshKey,
-}: {
-  refreshKey: number;
-}) {
+export function ComplianceByCategoryChart({ refreshKey }: { refreshKey: number }) {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
-
-  const navigate = useNavigate();
 
   const {
     data: complianceHistory,
@@ -54,27 +48,22 @@ export function ComplianceByCategoryChart({
       return null;
     }
 
-    const newGrouping: Record<
-      string,
-      Record<AssetInspectionsStatus, number>
-    > = {};
+    const newGrouping: Record<string, Record<AssetInspectionsStatus, number>> = {};
 
-    Object.entries(complianceHistory[0].assetsByComplianceStatus).forEach(
-      ([rawStatus, assets]) => {
-        assets.forEach((asset) => {
-          const status = rawStatus as AssetInspectionsStatus;
-          if (!newGrouping[asset.product.productCategory.id]) {
-            newGrouping[asset.product.productCategory.id] = {
-              COMPLIANT_DUE_LATER: 0,
-              COMPLIANT_DUE_SOON: 0,
-              NON_COMPLIANT_INSPECTED: 0,
-              NON_COMPLIANT_NEVER_INSPECTED: 0,
-            };
-          }
-          newGrouping[asset.product.productCategory.id][status] += 1;
-        });
-      }
-    );
+    Object.entries(complianceHistory[0].assetsByComplianceStatus).forEach(([rawStatus, assets]) => {
+      assets.forEach((asset) => {
+        const status = rawStatus as AssetInspectionsStatus;
+        if (!newGrouping[asset.product.productCategory.id]) {
+          newGrouping[asset.product.productCategory.id] = {
+            COMPLIANT_DUE_LATER: 0,
+            COMPLIANT_DUE_SOON: 0,
+            NON_COMPLIANT_INSPECTED: 0,
+            NON_COMPLIANT_NEVER_INSPECTED: 0,
+          };
+        }
+        newGrouping[asset.product.productCategory.id][status] += 1;
+      });
+    });
 
     return productCategories
       .map((category) => {
@@ -84,11 +73,9 @@ export function ComplianceByCategoryChart({
         }
 
         const totalCompliant =
-          assetsByStatus.COMPLIANT_DUE_LATER +
-          assetsByStatus.COMPLIANT_DUE_SOON;
+          assetsByStatus.COMPLIANT_DUE_LATER + assetsByStatus.COMPLIANT_DUE_SOON;
         const totalNonCompliant =
-          assetsByStatus.NON_COMPLIANT_INSPECTED +
-          assetsByStatus.NON_COMPLIANT_NEVER_INSPECTED;
+          assetsByStatus.NON_COMPLIANT_INSPECTED + assetsByStatus.NON_COMPLIANT_NEVER_INSPECTED;
         const total = totalCompliant + totalNonCompliant;
         const score = total ? totalCompliant / total : 0;
 
@@ -105,9 +92,7 @@ export function ComplianceByCategoryChart({
       .filter((c) => c !== null);
   }, [productCategories, complianceHistory]);
 
-  const columns = React.useMemo((): ColumnDef<
-    NonNullable<typeof categoryRows>[number]
-  >[] => {
+  const columns = React.useMemo((): ColumnDef<NonNullable<typeof categoryRows>[number]>[] => {
     return [
       {
         header: "Category",
@@ -140,7 +125,7 @@ export function ComplianceByCategoryChart({
         id: "details",
         cell: ({ row }) => (
           <Link to={`/assets?productCategoryId=${row.original.id}`}>
-            <ChevronRight className="size-4.5 text-primary" />
+            <ChevronRight className="text-primary size-4.5" />
           </Link>
         ),
       },
@@ -158,7 +143,7 @@ export function ComplianceByCategoryChart({
           </Button> */}
         </DashboardCardTitle>
       </DashboardCardHeader>
-      <DashboardCardContent className="min-h-0 flex-1 flex flex-col items-stretch bg-inherit rounded-[inherit]">
+      <DashboardCardContent className="flex min-h-0 flex-1 flex-col items-stretch rounded-[inherit] bg-inherit">
         <DataTable
           columns={columns}
           data={categoryRows ?? []}
@@ -180,9 +165,7 @@ export function ComplianceByCategoryChart({
       ) : error ? (
         <ErrorOverlay>Error occurred while loading assets.</ErrorOverlay>
       ) : categoryRows && categoryRows.length === 0 ? (
-        <EmptyStateOverlay>
-          No categories to display assets for.
-        </EmptyStateOverlay>
+        <EmptyStateOverlay>No categories to display assets for.</EmptyStateOverlay>
       ) : null}
     </DashboardCard>
   );

@@ -9,6 +9,7 @@ import {
   useRouteLoaderData,
 } from "react-router";
 
+import { enableMapSet } from "immer";
 import { type PropsWithChildren } from "react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
 import {
@@ -35,6 +36,8 @@ import QueryContext from "./contexts/query-context";
 import globalStyles from "./global.css?url";
 import { BANNER_LOGO_DARK_URL, BANNER_LOGO_LIGHT_URL } from "./lib/constants";
 import styles from "./tailwind.css?url";
+
+enableMapSet();
 
 export const unstable_middleware = [
   requestContext.create,

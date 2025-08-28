@@ -8,24 +8,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
-import {
-  useEffect,
-  useState,
-  type ComponentProps,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { cn } from "~/lib/utils";
 
-interface ResponsiveComboboxProps
-  extends Omit<SelectOptionsProps, "setOpen" | "onSelected"> {
+interface ResponsiveComboboxProps extends Omit<SelectOptionsProps, "setOpen" | "onSelected"> {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   value?: string | undefined;
@@ -38,6 +28,7 @@ interface ResponsiveComboboxProps
   className?: string;
   showClear?: boolean;
   disabled?: boolean;
+  compactClearButton?: boolean;
 }
 
 export function ResponsiveCombobox({
@@ -53,6 +44,7 @@ export function ResponsiveCombobox({
   className,
   showClear = false,
   disabled,
+  compactClearButton = false,
   ...selectOptionsProps
 }: ResponsiveComboboxProps) {
   const [internalOpen, setInternalOpen] = useState(openProp ?? false);
@@ -77,22 +69,28 @@ export function ResponsiveCombobox({
     setInternalValue(valueProp);
   }, [valueProp]);
 
-  const renderInput = ({
-    renderTrigger,
-  }: {
-    renderTrigger: (trigger: ReactNode) => ReactNode;
-  }) => (
-    <div className="flex items-center gap-2">
+  const renderInput = ({ renderTrigger }: { renderTrigger: (trigger: ReactNode) => ReactNode }) => (
+    <div
+      className={cn(
+        "flex items-center gap-2",
+        compactClearButton && "flex-col items-start gap-0.5",
+        className
+      )}
+    >
       {renderTrigger(
         <Button
           type="button"
           variant="outline"
-          className={cn("w-[150px] justify-between text-start", className)}
+          className={cn(
+            "flex-1 justify-between text-start",
+            compactClearButton && "w-full",
+            className
+          )}
           onMouseOver={onMouseOver}
           onTouchStart={onTouchStart}
           disabled={disabled}
         >
-          <div className="text-ellipsis overflow-hidden whitespace-nowrap flex-1">
+          <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
             {value ? (
               <>{displayValue ? displayValue(value) : value}</>
             ) : (
@@ -108,6 +106,7 @@ export function ResponsiveCombobox({
           variant="ghost"
           size="sm"
           onClick={() => setValue(undefined)}
+          className={cn(compactClearButton && "h-5 self-end px-1 py-0.5 text-xs")}
         >
           Clear
         </Button>
@@ -116,11 +115,7 @@ export function ResponsiveCombobox({
   );
 
   const renderContent = () => (
-    <SelectOptions
-      setOpen={setOpen}
-      onSelected={setValue}
-      {...selectOptionsProps}
-    />
+    <SelectOptions setOpen={setOpen} onSelected={setValue} {...selectOptionsProps} />
   );
 
   if (isDesktop) {
@@ -147,24 +142,15 @@ export function ResponsiveCombobox({
 interface BoxTypeProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  renderInput: (opts: {
-    renderTrigger: (trigger: ReactNode) => ReactNode;
-  }) => ReactNode;
+  renderInput: (opts: { renderTrigger: (trigger: ReactNode) => ReactNode }) => ReactNode;
   renderContent: () => ReactNode;
 }
 
-function AsPopover({
-  open,
-  setOpen,
-  renderInput,
-  renderContent,
-}: BoxTypeProps) {
+function AsPopover({ open, setOpen, renderInput, renderContent }: BoxTypeProps) {
   return (
     <Popover open={open} onOpenChange={setOpen} modal>
       {renderInput({
-        renderTrigger: (trigger) => (
-          <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-        ),
+        renderTrigger: (trigger) => <PopoverTrigger asChild>{trigger}</PopoverTrigger>,
       })}
       <PopoverContent className="w-[300px] p-0" align="start">
         {renderContent()}
@@ -177,24 +163,30 @@ function AsDrawer({ open, setOpen, renderInput, renderContent }: BoxTypeProps) {
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       {renderInput({
-        renderTrigger: (trigger) => (
-          <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-        ),
+        renderTrigger: (trigger) => <DrawerTrigger asChild>{trigger}</DrawerTrigger>,
       })}
       <DrawerContent>
-        <div className="mt-4 pb-4 border-t">{renderContent()}</div>
+        <div className="mt-4 border-t pb-4">{renderContent()}</div>
       </DrawerContent>
     </Drawer>
   );
 }
 
+interface ComboboxOption {
+  value: string;
+  label: ReactNode;
+}
+
+interface ComboboxOptionGroup {
+  key: string;
+  groupLabel: ReactNode;
+  options: ComboboxOption[];
+}
+
 interface SelectOptionsProps {
   setOpen: (open: boolean) => void;
   onSelected: (status: string) => void;
-  options: {
-    value: string;
-    label: ReactNode;
-  }[];
+  options: ComboboxOption[] | ComboboxOptionGroup[];
   searchPlaceholder?: string;
   noResultsText?: string;
   searchValue?: string;
@@ -208,7 +200,7 @@ interface SelectOptionsProps {
 function SelectOptions({
   setOpen,
   onSelected: onSelected,
-  options,
+  options: optionsOrOptionGroups,
   searchPlaceholder = "Filter...",
   noResultsText = "No results found.",
   searchValue = "",
@@ -218,6 +210,24 @@ function SelectOptions({
   errorMessage,
   onCreate,
 }: SelectOptionsProps) {
+  const options = useMemo(() => {
+    const firstEl = optionsOrOptionGroups.at(0);
+    if (firstEl === undefined) return [] as ComboboxOption[];
+    if ("groupLabel" in firstEl) {
+      return null;
+    }
+    return optionsOrOptionGroups as ComboboxOption[];
+  }, [optionsOrOptionGroups]);
+
+  const optionGroups = useMemo(() => {
+    const firstEl = optionsOrOptionGroups.at(0);
+    if (firstEl === undefined) return null;
+    if ("groupLabel" in firstEl) {
+      return optionsOrOptionGroups as ComboboxOptionGroup[];
+    }
+    return null;
+  }, [optionsOrOptionGroups]);
+
   return (
     <Command shouldFilter={shouldFilter}>
       <CommandInput
@@ -227,23 +237,46 @@ function SelectOptions({
       />
       <CommandList>
         <CommandEmpty>{noResultsText}</CommandEmpty>
-        <CommandGroup>
-          {onCreate && (
-            <CommandItem onSelect={onCreate}>
-              <Plus />
-              Create New
-            </CommandItem>
-          )}
-          {loading ? (
-            <CommandItem disabled>
-              <Loader2 className="animate-spin" />
-            </CommandItem>
-          ) : options.length === 0 && errorMessage ? (
-            <CommandItem disabled className="text-xs italic">
-              {errorMessage}
-            </CommandItem>
-          ) : (
-            options.map((option) => (
+        {(onCreate || loading || (options && options.length === 0 && errorMessage)) && (
+          <CommandGroup>
+            {onCreate && (
+              <CommandItem onSelect={onCreate}>
+                <Plus />
+                Create New
+              </CommandItem>
+            )}
+            {loading ? (
+              <CommandItem disabled>
+                <Loader2 className="animate-spin" />
+              </CommandItem>
+            ) : options && options.length === 0 && errorMessage ? (
+              <CommandItem disabled className="text-xs italic">
+                {errorMessage}
+              </CommandItem>
+            ) : null}
+          </CommandGroup>
+        )}
+
+        {optionGroups ? (
+          optionGroups.map((group) => (
+            <CommandGroup key={group.key} heading={group.groupLabel}>
+              {group.options.map((option) => (
+                <CommandItem
+                  key={option.value}
+                  value={option.value}
+                  onSelect={(value) => {
+                    onSelected(value);
+                    setOpen(false);
+                  }}
+                >
+                  {option.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ))
+        ) : options ? (
+          <CommandGroup>
+            {options.map((option) => (
               <CommandItem
                 key={option.value}
                 value={option.value}
@@ -254,9 +287,9 @@ function SelectOptions({
               >
                 {option.label}
               </CommandItem>
-            ))
-          )}
-        </CommandGroup>
+            ))}
+          </CommandGroup>
+        ) : null}
       </CommandList>
     </Command>
   );

@@ -4,20 +4,16 @@ type ExtractPathParams<TPath extends string> =
   TPath extends `${string}:${infer Param}/${infer Rest}`
     ? Param | ExtractPathParams<`/${Rest}`>
     : TPath extends `${string}:${infer Param}`
-    ? Param
-    : never;
+      ? Param
+      : never;
 
 export type PathParams<TPath extends string> = {
   [Key in ExtractPathParams<TPath>]: string | number;
 };
 
-type BaseQueryParamValue = string | number | null | undefined;
+type BaseQueryParamValue = string | number | boolean | null | undefined;
 export interface QueryParams {
-  [key: string]:
-    | BaseQueryParamValue
-    | BaseQueryParamValue[]
-    | QueryParams
-    | QueryParams[];
+  [key: string]: BaseQueryParamValue | BaseQueryParamValue[] | QueryParams | QueryParams[];
 }
 
 export const isAbsoluteUrl = (url: string) => {
@@ -39,9 +35,7 @@ export const buildPath = <TPath extends string>(
     paramsMap.delete(key);
     return String(value) ?? key;
   });
-  const searchString = paramsMap.size
-    ? `?${qs.stringify(Object.fromEntries(paramsMap))}`
-    : "";
+  const searchString = paramsMap.size ? `?${qs.stringify(Object.fromEntries(paramsMap))}` : "";
 
   return `${cleanedBasePath}/${cleanedPath}${searchString}`;
 };

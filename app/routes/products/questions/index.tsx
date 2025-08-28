@@ -31,7 +31,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const [questionsResponse, categoriesResponse] = await Promise.all([
     api.assetQuestions.list(
       request,
-      { limit: 10000 },
+      {
+        limit: 10000,
+        order: {
+          createdOn: "desc",
+        },
+      },
       { context: isGlobalAdmin ? "admin" : "user" }
     ),
     api.productCategories.list(request, { limit: 10000, order: { name: "asc" } }),
@@ -61,10 +66,10 @@ export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <AssetQuestionsDataTable 
-          questions={loaderData.questions} 
+        <AssetQuestionsDataTable
+          questions={loaderData.questions}
           categories={loaderData.categories}
-          readOnly={!canManageQuestions} 
+          readOnly={!canManageQuestions}
         />
       </CardContent>
     </Card>

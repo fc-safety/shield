@@ -1,9 +1,10 @@
 import { cva } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
+import { useMemo, type ComponentProps } from "react";
 import type { AssetQuestionCondition } from "~/lib/models";
 import { cn } from "~/lib/utils";
 
-const conditionTypeVariants = cva("", {
+export const conditionTypeVariants = cva("", {
   variants: {
     type: {
       REGION: "bg-blue-500 text-white dark:bg-blue-400 dark:text-blue-950",
@@ -11,17 +12,24 @@ const conditionTypeVariants = cva("", {
       PRODUCT_CATEGORY: "bg-green-500 text-white dark:bg-green-400 dark:text-green-950",
       PRODUCT_SUBCATEGORY: "bg-teal-500 text-white dark:bg-teal-400 dark:text-teal-950",
       PRODUCT: "bg-orange-500 text-white dark:bg-orange-400 dark:text-orange-950",
+      METADATA: "bg-gray-500 text-white dark:bg-gray-400 dark:text-gray-950",
     },
   },
 });
 
-interface ConditionPillProps {
-  condition: AssetQuestionCondition;
+interface ConditionPillProps extends ComponentProps<"span"> {
+  condition: Pick<AssetQuestionCondition, "conditionType" | "value">;
   label?: string;
   isLoading?: boolean;
 }
 
-export default function ConditionPill({ condition, label, isLoading = false }: ConditionPillProps) {
+export default function ConditionPill({
+  condition,
+  label,
+  isLoading = false,
+  className,
+  ...props
+}: ConditionPillProps) {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case "REGION":
@@ -34,17 +42,32 @@ export default function ConditionPill({ condition, label, isLoading = false }: C
         return "Subcategory";
       case "PRODUCT":
         return "Product";
+      case "METADATA":
+        return "Metadata";
       default:
         return type;
     }
   };
 
+  const conditionValueDisplay = useMemo(() => {
+    let values = label ? [label] : condition.value;
+    if (condition.conditionType === "METADATA") {
+      values = values.map((v) => {
+        const [key, value] = v.split(":");
+        return `${key} = ${value || `""`}`;
+      });
+    }
+    return values.join(", ");
+  }, [label, condition.conditionType, condition.value]);
+
   return (
     <span
       className={cn(
         "inline-flex items-stretch rounded-full text-xs font-medium",
-        "max-w-full overflow-hidden"
+        "max-w-full overflow-hidden",
+        className
       )}
+      {...props}
     >
       <span
         className={cn(
@@ -61,8 +84,8 @@ export default function ConditionPill({ condition, label, isLoading = false }: C
             <span className="opacity-50">Loading...</span>
           </>
         ) : (
-          <span className="line-clamp-1 min-w-0" title={label || condition.value.join(", ")}>
-            {label || condition.value.join(", ")}
+          <span className="line-clamp-1 min-w-0" title={conditionValueDisplay}>
+            {conditionValueDisplay}
           </span>
         )}
       </span>

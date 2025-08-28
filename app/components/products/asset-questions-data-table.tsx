@@ -37,7 +37,7 @@ import type { createAssetQuestionSchema } from "~/lib/schema";
 import { cn } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
-import EditAssetQuestionButton from "../assets/edit-asset-question-button";
+import EditAssetQuestionButton from "../assets/asset-question-details-form/edit-asset-question-button";
 import ConfirmationDialog from "../confirmation-dialog";
 import SubmittingCheckbox from "../submitting-checkbox";
 import SubmittingSelect from "../submitting-select";
@@ -331,6 +331,21 @@ export default function AssetQuestionsDataTable({
           return count > 0 ? (
             <span className="text-xs text-orange-600 dark:text-orange-400">
               {count} trigger{count === 1 ? "" : "s"}
+            </span>
+          ) : (
+            <span className="text-muted-foreground text-xs">None</span>
+          );
+        },
+      },
+      {
+        accessorKey: "_count.files",
+        id: "files",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => {
+          const count = getValue() as number;
+          return count > 0 ? (
+            <span className="text-xs text-blue-600 dark:text-blue-400">
+              {count} file{count === 1 ? "" : "s"}
             </span>
           ) : (
             <span className="text-muted-foreground text-xs">None</span>

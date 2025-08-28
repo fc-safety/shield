@@ -16,6 +16,7 @@ import {
   validateInspectionSession,
 } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
+import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-display";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
@@ -266,14 +267,17 @@ export default function InspectSetup({
                         }
                         render={({ field: { value, onChange, onBlur } }) => (
                           <FormItem>
-                            <FormLabel>
-                              {question?.prompt ?? (
-                                <span className="italic">
-                                  Prompt for this question has been removed or is not available.
-                                </span>
-                              )}
-                              {question?.required && " *"}
-                            </FormLabel>
+                            <div>
+                              <FormLabel>
+                                {question?.prompt ?? (
+                                  <span className="italic">
+                                    Prompt for this question has been removed or is not available.
+                                  </span>
+                                )}
+                                {question?.required && " *"}
+                              </FormLabel>
+                              <AssetQuestionFilesDisplay files={question?.files} />
+                            </div>
                             <FormControl>
                               <AssetQuestionResponseTypeInput
                                 value={value}

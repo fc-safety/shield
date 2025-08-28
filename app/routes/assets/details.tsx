@@ -27,16 +27,11 @@ import { buildImageProxyUrl } from "~/.server/images";
 import ActiveIndicator from "~/components/active-indicator";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import AssetInspections from "~/components/assets/asset-inspections";
-import {
-  AlertsStatusBadge,
-  InspectionStatusBadge,
-} from "~/components/assets/asset-status-badge";
+import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
 import DisplayInspectionValue from "~/components/assets/display-inspection-value";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import EditConsumableButton from "~/components/assets/edit-consumable-button";
-import ProductRequests, {
-  NewSupplyRequestButton,
-} from "~/components/assets/product-requests";
+import ProductRequests, { NewSupplyRequestButton } from "~/components/assets/product-requests";
 import { TagCard } from "~/components/assets/tag-selector";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
@@ -46,13 +41,7 @@ import EditRoutePointButton from "~/components/inspections/edit-route-point-butt
 import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
 import ProductCard from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,24 +55,14 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
-import {
-  getAssetAlertsStatus,
-  getAssetInspectionStatus,
-} from "~/lib/model-utils";
+import { getAssetAlertsStatus, getAssetInspectionStatus } from "~/lib/model-utils";
 import type { Alert, Asset, Consumable } from "~/lib/models";
 import { can } from "~/lib/users";
-import {
-  buildTitleFromBreadcrumb,
-  dateSort,
-  getSearchParam,
-  validateParam,
-} from "~/lib/utils";
+import { buildTitleFromBreadcrumb, dateSort, getSearchParam, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
-  breadcrumb: ({
-    data,
-  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
     label: data?.asset.name || "Details",
   }),
 };
@@ -101,8 +80,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
     asset,
     defaultTab: getSearchParam(request, "tab") ?? "consumables",
     processedProductImageUrl:
-      asset.product.imageUrl &&
-      buildImageProxyUrl(asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
+      asset.product.imageUrl && buildImageProxyUrl(asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
   };
 };
 
@@ -116,8 +94,8 @@ export default function AssetDetails({
   const canCreateProductRequests = can(user, "create", "product-requests");
 
   return (
-    <div className="grid gap-y-4 gap-x-2 sm:gap-x-4">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
+    <div className="grid gap-x-2 gap-y-4 sm:gap-x-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-x-2 gap-y-4 sm:gap-x-4">
         <StatusCard asset={asset} />
         <Card>
           <CardHeader>
@@ -129,9 +107,7 @@ export default function AssetDetails({
                 <EditRoutePointButton
                   asset={asset}
                   filterRoute={(r) =>
-                    !asset.inspectionRoutePoints?.some(
-                      (p) => p.inspectionRouteId === r.id
-                    )
+                    !asset.inspectionRoutePoints?.some((p) => p.inspectionRouteId === r.id)
                   }
                   trigger={
                     <Button variant="default" size="sm" className="shrink-0">
@@ -144,24 +120,21 @@ export default function AssetDetails({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {asset.inspectionRoutePoints &&
-              asset.inspectionRoutePoints.length > 1 && (
-                <p className="text-muted-foreground text-xs flex items-center gap-1 italic">
-                  <CircleAlert className="size-4" />
-                  This asset belongs to multiple routes.
-                </p>
-              )}
+            {asset.inspectionRoutePoints && asset.inspectionRoutePoints.length > 1 && (
+              <p className="text-muted-foreground flex items-center gap-1 text-xs italic">
+                <CircleAlert className="size-4" />
+                This asset belongs to multiple routes.
+              </p>
+            )}
             {asset.inspectionRoutePoints?.length ? (
-              <div className="grid divide-y divide-border">
+              <div className="divide-border grid divide-y">
                 {asset.inspectionRoutePoints.map((point) => (
-                  <div key={point.id} className="flex gap-3 items-center py-2">
-                    <div className="text-xs font-semibold rounded-full size-7 shrink-0 flex items-center justify-center bg-primary text-primary-foreground">
+                  <div key={point.id} className="flex items-center gap-3 py-2">
+                    <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
                       {point.order + 1}
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-xs font-semibold text-muted-foreground">
-                        Name
-                      </span>
+                      <span className="text-muted-foreground text-xs font-semibold">Name</span>
                       <Link
                         to={`/inspection-routes/#route-id-${point.inspectionRouteId}`}
                         className="text-sm hover:underline"
@@ -180,7 +153,7 @@ export default function AssetDetails({
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-y-4 gap-x-2 sm:gap-x-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-x-2 gap-y-4 sm:gap-x-4">
         <Card className="h-max">
           <CardHeader>
             <CardTitle>
@@ -210,7 +183,7 @@ export default function AssetDetails({
               <DataList
                 details={[
                   {
-                    label: "Name",
+                    label: "Friendly Name",
                     value: asset.name,
                   },
                   {
@@ -218,12 +191,33 @@ export default function AssetDetails({
                     value: asset.serialNumber,
                   },
                   {
+                    label: "Metadata",
+                    value:
+                      asset.metadata && Object.keys(asset.metadata).length > 0 ? (
+                        <div className="flex flex-col flex-wrap gap-2">
+                          {Object.entries(asset.metadata ?? {}).map(([key, value]) => (
+                            <div
+                              key={key}
+                              className="flex w-max overflow-hidden rounded-full border border-gray-500 text-xs dark:border-gray-400"
+                            >
+                              <div className="bg-gray-500 px-2 py-1 font-medium text-white dark:bg-gray-400 dark:text-gray-900">
+                                {key}
+                              </div>
+                              <div className="px-2 py-1">{value}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">No metadata.</span>
+                      ),
+                  },
+                  {
                     label: "Inspection Cycle",
                     value: asset.inspectionCycle
                       ? `${asset.inspectionCycle} days`
                       : asset.client?.defaultInspectionCycle
-                      ? `${asset.client?.defaultInspectionCycle} days (client default)`
-                      : null,
+                        ? `${asset.client?.defaultInspectionCycle} days (client default)`
+                        : null,
                   },
                   {
                     label: "Setup Completed",
@@ -243,7 +237,7 @@ export default function AssetDetails({
                     value: asset.site?.name,
                   },
                   {
-                    label: "Location",
+                    label: "Room / Area",
                     value: asset.location,
                   },
                   {
@@ -263,8 +257,7 @@ export default function AssetDetails({
                       asset.setupQuestionResponses?.map((r) => ({
                         label: r.assetQuestion?.prompt ?? (
                           <span className="italic">
-                            Prompt for this question has been removed or is not
-                            available.
+                            Prompt for this question has been removed or is not available.
                           </span>
                         ),
                         value: <DisplayInspectionValue value={r.value} />,
@@ -273,30 +266,27 @@ export default function AssetDetails({
                     variant="thirds"
                   />
                 ) : (
-                  <span className="text-sm text-muted-foreground">
-                    The setup process is complete for this asset, but there are
-                    no setup questions to display.
+                  <span className="text-muted-foreground text-sm">
+                    The setup process is complete for this asset, but there are no setup questions
+                    to display.
                   </span>
                 )
               ) : (
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   The setup process has not been completed yet for this asset.
                 </span>
               )}
             </div>
             <div className="grid gap-4">
               <Label>Product</Label>
-              <ProductCard
-                product={asset.product}
-                optimizedImageUrl={processedProductImageUrl}
-              />
+              <ProductCard product={asset.product} optimizedImageUrl={processedProductImageUrl} />
             </div>
             <div className="grid gap-4">
               <Label>Tag</Label>
               {asset.tag ? (
                 <TagCard tag={asset.tag} />
               ) : (
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   No tag has been assigned to this asset.
                 </span>
               )}
@@ -325,7 +315,7 @@ export default function AssetDetails({
             <TabsTrigger value="alerts">
               Alerts
               {!!asset.alerts?.filter((a) => !a.resolved).length && (
-                <span className="ml-2 bg-urgent text-xs text-urgent-foreground rounded-full flex items-center justify-center size-5">
+                <span className="bg-urgent text-urgent-foreground ml-2 flex size-5 items-center justify-center rounded-full text-xs">
                   {asset.alerts?.filter((a) => !a.resolved).length}
                 </span>
               )}
@@ -355,20 +345,11 @@ export default function AssetDetails({
                 <CardDescription>Last 30 days</CardDescription>
               </CardHeader>
               <CardContent>
-                <ProductRequests
-                  productRequests={asset.productRequests ?? []}
-                />
+                <ProductRequests productRequests={asset.productRequests ?? []} />
               </CardContent>
             </Card>
-            <BasicCard
-              title="Supplies"
-              className="rounded-t-none"
-              icon={SquareStack}
-            >
-              <ConsumablesTable
-                consumables={asset.consumables ?? []}
-                asset={asset}
-              />
+            <BasicCard title="Supplies" className="rounded-t-none" icon={SquareStack}>
+              <ConsumablesTable consumables={asset.consumables ?? []} asset={asset} />
             </BasicCard>
           </TabsContent>
           <TabsContent value="alerts">
@@ -386,10 +367,7 @@ export default function AssetDetails({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <AssetInspections
-              asset={asset}
-              inspections={asset.inspections ?? []}
-            />
+            <AssetInspections asset={asset} inspections={asset.inspections ?? []} />
           </CardContent>
         </Card>
       )}
@@ -428,7 +406,7 @@ function StatusCard({ asset }: { asset: Asset }) {
       <div className="grid gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <ClipboardCheck className="h-5 w-5 text-muted-foreground" />
+            <ClipboardCheck className="text-muted-foreground h-5 w-5" />
             <span className="text-sm font-medium">Inspection Status</span>
           </div>
           <InspectionStatusBadge
@@ -443,25 +421,17 @@ function StatusCard({ asset }: { asset: Asset }) {
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <ShieldAlert className="h-5 w-5 text-muted-foreground" />
+            <ShieldAlert className="text-muted-foreground h-5 w-5" />
             <span className="text-sm font-medium">Alerts</span>
           </div>
-          <AlertsStatusBadge
-            status={getAssetAlertsStatus(asset.alerts ?? [])}
-          />
+          <AlertsStatusBadge status={getAssetAlertsStatus(asset.alerts ?? [])} />
         </div>
       </div>
     </BasicCard>
   );
 }
 
-function ConsumablesTable({
-  consumables,
-  asset,
-}: {
-  consumables: Consumable[];
-  asset: Asset;
-}) {
+function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; asset: Asset }) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "consumables");
   const canUpdate = can(user, "update", "consumables");
@@ -481,16 +451,12 @@ function ConsumablesTable({
     () => [
       {
         accessorKey: "product.name",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "expiresOn",
         id: "expires",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
           const value = getValue() as string;
           return value && isValid(parseISO(value)) ? (
@@ -507,9 +473,7 @@ function ConsumablesTable({
       },
       {
         accessorKey: "quantity",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "product.ansiCategory.name",
@@ -519,9 +483,7 @@ function ConsumablesTable({
         ),
         cell: ({ row }) =>
           row.original.product.ansiCategory ? (
-            <AnsiCategoryDisplay
-              ansiCategory={row.original.product.ansiCategory}
-            />
+            <AnsiCategoryDisplay ansiCategory={row.original.product.ansiCategory} />
           ) : (
             <>&mdash;</>
           ),
@@ -623,9 +585,7 @@ function AlertsTable({ alerts }: { alerts: Alert[] }) {
       {
         accessorKey: "createdOn",
         id: "date",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
           const value = getValue() as string;
           return (
@@ -640,21 +600,17 @@ function AlertsTable({ alerts }: { alerts: Alert[] }) {
       },
       {
         accessorKey: "alertLevel",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "resolved",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
           const value = getValue() as boolean;
           return value ? (
-            <Check className="text-green-500 size-5" />
+            <Check className="size-5 text-green-500" />
           ) : (
-            <X className="text-red-500 size-5" />
+            <X className="size-5 text-red-500" />
           );
         },
       },

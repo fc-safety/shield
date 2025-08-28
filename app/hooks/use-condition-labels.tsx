@@ -23,17 +23,24 @@ export function useConditionLabels() {
   const pendingFetches = useRef<PendingFetch>({});
   const { fetchOrThrow } = useAuthenticatedFetch();
 
+  const setLabel = (type: string, id: string, label?: string) => {
+    const cacheKey = `${type}:${id}`;
+    setLabels((prev) => ({ ...prev, [cacheKey]: label ?? id }));
+    setLoading((prev) => ({ ...prev, [cacheKey]: false }));
+    return label ?? id;
+  };
+
   const fetchLabel = useCallback(
     async (type: string, id: string): Promise<string> => {
+      if (!id) return setLabel(type, "");
+
       const cacheKey = `${type}:${id}`;
 
       // Check in-memory cache first
       const cached = globalCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
         // Update local state with cached value
-        setLabels((prev) => ({ ...prev, [cacheKey]: cached.label }));
-        setLoading((prev) => ({ ...prev, [cacheKey]: false }));
-        return cached.label;
+        return setLabel(type, id, cached.label);
       }
 
       // Check if we're already fetching this
@@ -46,9 +53,7 @@ export function useConditionLabels() {
         type === "REGION" ||
         !["PRODUCT", "MANUFACTURER", "PRODUCT_CATEGORY", "PRODUCT_SUBCATEGORY"].includes(type)
       ) {
-        setLabels((prev) => ({ ...prev, [cacheKey]: id }));
-        setLoading((prev) => ({ ...prev, [cacheKey]: false }));
-        return id;
+        return setLabel(type, id);
       }
 
       // Set loading state
@@ -90,16 +95,11 @@ export function useConditionLabels() {
           });
 
           // Update local state
-          setLabels((prev) => ({ ...prev, [cacheKey]: label }));
-          setLoading((prev) => ({ ...prev, [cacheKey]: false }));
-
-          return label;
+          return setLabel(type, id, label);
         } catch (error) {
           console.error(`Error fetching label for ${type} ${id}:`, error);
           // Set ID as fallback on error
-          setLabels((prev) => ({ ...prev, [cacheKey]: id }));
-          setLoading((prev) => ({ ...prev, [cacheKey]: false }));
-          return id;
+          return setLabel(type, id);
         } finally {
           // Clean up pending fetch
           delete pendingFetches.current[cacheKey];

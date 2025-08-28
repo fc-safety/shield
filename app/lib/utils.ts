@@ -194,13 +194,19 @@ export const validateParams = <TKey extends string>(
   return validated;
 };
 
-export const humanize = <T extends string | null | undefined>(str: T) => {
+export const humanize = <T extends string | null | undefined>(
+  str: T,
+  options: { lowercase?: boolean } = {}
+) => {
   if (!str) return str;
 
-  return str
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  let result = str.replace(/_/g, " ").toLowerCase();
+
+  if (!options.lowercase) {
+    result = result.replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  return result;
 };
 
 export const slugify = (str: string) => {

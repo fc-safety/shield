@@ -94,9 +94,18 @@ export const disconnectableSchema = z
   });
 
 export const fromAddressSchema = z.union([
-  z.string().email(),
+  z.email(),
   z.string().regex(/^[A-Za-z0-9\s]+\s<[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}>$/),
 ]);
+
+export const createFileSchema = z.object({
+  name: z.string().nonempty(),
+  url: z.string().nonempty(),
+});
+
+export const updateFileSchema = createFileSchema.partial().extend({
+  id: z.string(),
+});
 
 export const createClientSchema = z.object({
   legacyClientId: z.string().nullable().optional(),
@@ -307,7 +316,7 @@ export const registerTagSchema = z.object({
 export const createAssetSchema = z.object({
   legacyAssetId: z.string().nullable().optional(),
   active: z.boolean(),
-  name: z.string().nonempty(),
+  name: z.string().default(""),
   location: z.string().nonempty(),
   placement: z.string().nonempty(),
   serialNumber: z.string().nonempty(),
@@ -317,6 +326,7 @@ export const createAssetSchema = z.object({
       id: z.string(),
     }),
   }),
+  metadata: z.record(z.string().nonempty(), z.string().nonempty()).optional(),
   site: optionalConnectSchema,
   client: optionalConnectSchema,
 });
@@ -425,6 +435,10 @@ export const createAssetQuestionConditionSchema = z.object({
   description: z.string().optional(),
 });
 
+export const updateAssetQuestionConditionSchema = createAssetQuestionConditionSchema.extend({
+  id: z.string(),
+});
+
 export const baseCreateAssetQuestionSchema = z.object({
   legacyQuestionId: z.string().nullable().optional(),
   active: z.boolean().default(true),
@@ -455,6 +469,13 @@ export const baseCreateAssetQuestionSchema = z.object({
       }),
     })
     .partial()
+    .optional(),
+  files: z
+    .object({
+      createMany: z.object({
+        data: z.array(createFileSchema),
+      }),
+    })
     .optional(),
 });
 
@@ -498,6 +519,13 @@ export const updateAssetQuestionSchema = baseCreateAssetQuestionSchema.partial()
       createMany: z.object({
         data: z.array(createAssetQuestionConditionSchema),
       }),
+      updateMany: z.array(
+        z.object({
+          where: z.object({ id: z.string() }),
+          data: updateAssetQuestionConditionSchema,
+        })
+      ),
+      deleteMany: z.array(z.object({ id: z.string() })),
     })
     .partial()
     .optional(),
@@ -514,6 +542,18 @@ export const updateAssetQuestionSchema = baseCreateAssetQuestionSchema.partial()
       ),
       deleteMany: z.array(z.object({ id: z.string() })),
     })
+    .optional(),
+  files: z
+    .object({
+      createMany: z.object({
+        data: z.array(createFileSchema),
+      }),
+      updateMany: z.array(
+        z.object({ where: z.object({ id: z.string() }), data: updateFileSchema })
+      ),
+      deleteMany: z.array(z.object({ id: z.string() })),
+    })
+    .partial()
     .optional(),
 });
 
@@ -538,8 +578,8 @@ export const createInspectionSchema = z.object({
     }),
   }),
   status: z.enum(InspectionStatuses),
-  latitude: z.number().int().gte(-90).lte(90),
-  longitude: z.number().int().gte(-180).lte(180),
+  latitude: z.number().gte(-90).lte(90),
+  longitude: z.number().gte(-180).lte(180),
   locationAccuracy: z.number().optional(),
   comments: z.string().optional(),
   responses: z.object({

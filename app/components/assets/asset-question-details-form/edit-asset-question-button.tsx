@@ -1,10 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
-import { ResponsiveDialog } from "../responsive-dialog";
-import AssetQuestionDetailForm, {
-  type AssetQuestionDetailFormProps,
-} from "./asset-question-detail-form";
+import { ResponsiveDialog } from "../../responsive-dialog";
+import type { AssetQuestionDetailFormProps } from "./asset-question-detail-form.component";
+import AssetQuestionDetailForm from "./asset-question-detail-form.component";
 
 interface NewAssetQuestionButtonProps extends AssetQuestionDetailFormProps {
   trigger?: React.ReactNode;
@@ -28,7 +27,10 @@ export default function EditAssetQuestionButton({
       open={open}
       onOpenChange={setOpen}
       title={passthroughProps.assetQuestion ? "Edit Question" : "Add New Question"}
-      dialogClassName="sm:max-w-3xl"
+      dialogClassName="sm:max-w-5xl p-0"
+      classNames={{
+        header: "px-4 pt-4",
+      }}
       trigger={
         trigger !== undefined ? (
           trigger

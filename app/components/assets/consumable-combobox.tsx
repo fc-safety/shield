@@ -1,12 +1,12 @@
 import Fuse from "fuse.js";
+import { ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import { ResponsiveCombobox } from "~/components/responsive-combobox";
 import type { Product, ResultsPage } from "~/lib/models";
-import { cn } from "~/lib/utils";
+import { buildPath } from "~/lib/urls";
 
-const consumableSelectFuse = new Fuse([] as Product[], { keys: ["name"] });
-const productSelectFuse = new Fuse([] as Product[], { keys: ["name"] });
+const productSelectFuse = new Fuse([] as Product[], { keys: ["name", "consumableProducts.name"] });
 export default function ConsumableCombobox({
   parentProductId,
   value,
@@ -14,6 +14,7 @@ export default function ConsumableCombobox({
   onBlur,
   className,
   disabled,
+  compactClearButton,
 }: {
   parentProductId?: string;
   value?: string | undefined;
@@ -21,42 +22,38 @@ export default function ConsumableCombobox({
   onBlur?: () => void;
   className?: string;
   disabled?: boolean;
+  compactClearButton?: boolean;
 }) {
   const consumableFetcher = useFetcher<ResultsPage<Product>>();
-  const productFetcher = useFetcher<ResultsPage<Product>>();
 
-  const [selectedProductId, setSelectedProductId] = useState<string | undefined>(undefined);
   const [consumableProducts, setConsumableProducts] = useState<Product[]>([]);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
-  const [consumableSearch, setConsumableSearch] = useState("");
   const [productSearch, setProductSearch] = useState("");
 
-  // Get the effective parent product ID (either from props or selected)
-  const effectiveParentProductId = parentProductId || selectedProductId;
-
   const preloadConsumableProducts = useCallback(
-    (parentId: string) => {
-      if (consumableFetcher.state === "idle") {
-        consumableFetcher.load(`/api/proxy/products?parentProduct[id]=${parentId}`);
+    (parentId?: string) => {
+      if (consumableFetcher.state === "idle" && !consumableFetcher.data) {
+        consumableFetcher.load(
+          buildPath("/api/proxy/products", {
+            limit: 1000,
+            type: "CONSUMABLE",
+            include: {
+              parentProduct: true,
+            },
+            parentProductId: parentId
+              ? parentId
+              : {
+                  not: "_NULL",
+                },
+          })
+        );
       }
     },
-    [consumableFetcher.state, consumableFetcher.load]
+    [consumableFetcher]
   );
 
-  const preloadAllProducts = useCallback(() => {
-    if (!parentProductId && productFetcher.state === "idle" && !productFetcher.data) {
-      productFetcher.load("/api/proxy/products?type=PRIMARY&limit=10000");
-    }
-  }, [productFetcher, parentProductId]);
-
   useEffect(() => {
-    if (value && effectiveParentProductId && !consumableFetcher.data)
-      preloadConsumableProducts(effectiveParentProductId);
-  }, [value, effectiveParentProductId, preloadConsumableProducts, consumableFetcher.data]);
-
-  useEffect(() => {
-    if (!parentProductId) preloadAllProducts();
-  }, [parentProductId, preloadAllProducts]);
+    if (value) preloadConsumableProducts();
+  }, [parentProductId, preloadConsumableProducts]);
 
   useEffect(() => {
     if (consumableFetcher.data) {
@@ -64,92 +61,70 @@ export default function ConsumableCombobox({
     }
   }, [consumableFetcher.data]);
 
-  useEffect(() => {
-    if (productFetcher.data) {
-      setAllProducts(productFetcher.data.results);
-    }
-  }, [productFetcher.data]);
-
-  const consumableOptions = useMemo(() => {
+  const productOptionGroups = useMemo(() => {
     let filteredProducts = consumableProducts;
-    if (consumableSearch) {
-      consumableSelectFuse.setCollection(consumableProducts);
-      filteredProducts = consumableSelectFuse.search(consumableSearch).map((result) => result.item);
-    }
-    return filteredProducts.map((p) => ({
-      label: p.name,
-      value: p.id,
-    }));
-  }, [consumableProducts, consumableSearch]);
-
-  const productOptions = useMemo(() => {
-    let filteredProducts = allProducts;
     if (productSearch) {
-      productSelectFuse.setCollection(allProducts);
+      productSelectFuse.setCollection(consumableProducts);
       filteredProducts = productSelectFuse.search(productSearch).map((result) => result.item);
     }
-    return filteredProducts.map((p) => ({
-      label: p.name,
-      value: p.id,
-    }));
-  }, [allProducts, productSearch]);
 
-  // If we have a selected product but no parentProductId, show both selectors
+    const groupedConsumableProducts = filteredProducts
+      .sort((a, b) => {
+        if (a.parentProduct && b.parentProduct && a.parentProduct.name !== b.parentProduct.name) {
+          return a.parentProduct.name.localeCompare(b.parentProduct.name);
+        }
+        return a.name.localeCompare(b.name);
+      })
+      .reduce((acc, p) => {
+        if (!p.parentProduct) return acc;
+        if (acc.has(p.parentProduct.id)) {
+          acc.get(p.parentProduct.id)?.consumableProducts.push(p);
+        } else {
+          acc.set(p.parentProduct.id, { parentProduct: p.parentProduct, consumableProducts: [p] });
+        }
+        return acc;
+      }, new Map<string, { parentProduct: Product; consumableProducts: Product[] }>());
+
+    return Array.from(groupedConsumableProducts.values()).map((group) => ({
+      key: group.parentProduct.id,
+      groupLabel: group.parentProduct.name,
+      options: group.consumableProducts.map((cp) => ({
+        label: cp.name,
+        value: cp.id,
+      })),
+    }));
+  }, [consumableProducts, productSearch]);
+
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
-      {!parentProductId && (
-        <div className="flex items-center gap-1">
-          <div className="text-muted-foreground text-sm">First, select a product:</div>
-          <ResponsiveCombobox
-            value={selectedProductId}
-            onValueChange={(value) => {
-              // Clear consumable selection when product changes
-              if (value !== selectedProductId) {
-                onValueChange?.(undefined);
-              }
-              setSelectedProductId(value);
-              if (value) preloadConsumableProducts(value);
-            }}
-            onBlur={onBlur}
-            displayValue={(value) => allProducts.find((p) => p.id === value)?.name ?? <>&mdash;</>}
-            loading={productFetcher.state === "loading"}
-            options={productOptions}
-            disabled={disabled}
-            onMouseOver={() => !disabled && preloadAllProducts()}
-            onTouchStart={() => !disabled && preloadAllProducts()}
-            searchValue={productSearch}
-            onSearchValueChange={setProductSearch}
-            placeholder="Select a product..."
-            shouldFilter={false}
-            showClear
-          />
-        </div>
-      )}
-      {effectiveParentProductId && (
-        <div className="flex items-center gap-1">
-          {!parentProductId && (
-            <div className="text-muted-foreground mb-1 text-sm">Then, select a supply:</div>
-          )}
-          <ResponsiveCombobox
-            value={value}
-            onValueChange={onValueChange}
-            onBlur={onBlur}
-            displayValue={(value) =>
-              consumableProducts.find((p) => p.id === value)?.name ?? <>&mdash;</>
-            }
-            loading={consumableFetcher.state === "loading"}
-            options={consumableOptions}
-            disabled={disabled}
-            onMouseOver={() => !disabled && preloadConsumableProducts(effectiveParentProductId)}
-            onTouchStart={() => !disabled && preloadConsumableProducts(effectiveParentProductId)}
-            searchValue={consumableSearch}
-            onSearchValueChange={setConsumableSearch}
-            placeholder="Select a supply..."
-            shouldFilter={false}
-            showClear
-          />
-        </div>
-      )}
-    </div>
+    <>
+      <ResponsiveCombobox
+        value={value}
+        onValueChange={onValueChange}
+        onBlur={onBlur}
+        displayValue={(value) => {
+          const p = consumableProducts.find((p) => p.id === value);
+          if (!p) return <>&mdash;</>;
+          return (
+            <div className="flex items-center gap-1">
+              {p.parentProduct?.name}
+              <ChevronRight className="size-3" />
+              {p.name}
+            </div>
+          );
+        }}
+        loading={consumableFetcher.state === "loading"}
+        options={productOptionGroups}
+        disabled={disabled}
+        onMouseOver={() => !disabled && preloadConsumableProducts(parentProductId)}
+        onTouchStart={() => !disabled && preloadConsumableProducts(parentProductId)}
+        searchValue={productSearch}
+        onSearchValueChange={setProductSearch}
+        placeholder="Select a supply..."
+        shouldFilter={false}
+        showClear
+        className={className}
+        compactClearButton={compactClearButton}
+      />
+    </>
   );
 }

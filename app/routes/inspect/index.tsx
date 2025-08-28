@@ -20,6 +20,7 @@ import {
 } from "~/.server/inspections";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
+import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-display";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -388,10 +389,13 @@ function InspectionPage({
                       name={`responses.createMany.data.${index}.value`}
                       render={({ field: { value, onChange, onBlur } }) => (
                         <FormItem>
-                          <FormLabel>
-                            {question?.prompt}
-                            {question?.required && " *"}
-                          </FormLabel>
+                          <div>
+                            <FormLabel>
+                              {question?.prompt}
+                              {question?.required && " *"}
+                            </FormLabel>
+                            <AssetQuestionFilesDisplay files={question?.files} />
+                          </div>
                           <FormControl>
                             <AssetQuestionResponseTypeInput
                               value={value ?? ""}
