@@ -41,12 +41,14 @@ const FORM_DEFAULTS = {
   address: {
     create: {
       street1: "",
+      street2: undefined,
       city: "",
       state: "",
       zip: "",
       county: null,
       country: null,
     },
+    update: {},
   },
   status: "PENDING",
   phoneNumber: "",
@@ -61,9 +63,9 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
   const currentlyPopulatedZip = useRef<string | null>(null);
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
 
-  const form = useForm<TForm>({
-    resolver: zodResolver((client ? updateClientSchema : createClientSchema) as z.ZodType<TForm>),
-    values: client
+  const form = useForm({
+    resolver: zodResolver(client ? updateClientSchema : createClientSchema),
+    values: (client
       ? {
           ...client,
           address: {
@@ -73,7 +75,7 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
             },
           },
         }
-      : FORM_DEFAULTS,
+      : FORM_DEFAULTS) as TForm,
   });
 
   const {
@@ -121,7 +123,9 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: "/api/proxy/clients",
       id: client?.id,
     });

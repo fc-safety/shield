@@ -3,30 +3,14 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { AnsiCategory } from "~/lib/models";
-import {
-  createAnsiCategorySchema,
-  updateAnsiCategorySchema,
-} from "~/lib/schema";
+import { createAnsiCategorySchema, updateAnsiCategorySchema } from "~/lib/schema";
 import IconSelector from "../icons/icon-selector";
 import { Button } from "../ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 
-type TForm = z.infer<
-  typeof createAnsiCategorySchema | typeof updateAnsiCategorySchema
->;
-
-const createAnsiCategorySchemaResolver = zodResolver(createAnsiCategorySchema);
-const updateAnsiCategorySchemaResolver = zodResolver(updateAnsiCategorySchema);
-
+type TForm = z.infer<typeof createAnsiCategorySchema | typeof updateAnsiCategorySchema>;
 interface AnsiCategoryDetailsFormProps {
   ansiCategory?: AnsiCategory;
   onSubmitted?: () => void;
@@ -44,17 +28,15 @@ export default function AnsiCategoryDetailsForm({
 }: AnsiCategoryDetailsFormProps) {
   const isNew = !ansiCategory;
 
-  const form = useForm<TForm>({
-    resolver: isNew
-      ? createAnsiCategorySchemaResolver
-      : updateAnsiCategorySchemaResolver,
-    values: ansiCategory
+  const form = useForm({
+    resolver: zodResolver(isNew ? createAnsiCategorySchema : updateAnsiCategorySchema),
+    values: (ansiCategory
       ? {
           ...ansiCategory,
           description: ansiCategory.description ?? "",
           color: ansiCategory.color ?? "",
         }
-      : FORM_DEFAULTS,
+      : FORM_DEFAULTS) as TForm,
   });
 
   const {
@@ -69,7 +51,9 @@ export default function AnsiCategoryDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: "/api/proxy/ansi-categories",
       id: ansiCategory?.id,
     });

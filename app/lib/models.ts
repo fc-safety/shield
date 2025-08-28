@@ -32,6 +32,7 @@ export interface Asset extends BaseModel {
   alerts?: Alert[];
   productRequests?: ProductRequest[];
   inspectionRoutePoints?: InspectionRoutePoint[];
+  metadata?: Record<string, string>;
 
   siteId: string;
   site?: Site;
@@ -255,6 +256,7 @@ export const AssetQuestionConditionTypes = [
   "PRODUCT_CATEGORY",
   "PRODUCT_SUBCATEGORY",
   "PRODUCT",
+  "METADATA",
 ] as const;
 export type AssetQuestionConditionType = (typeof AssetQuestionConditionTypes)[number];
 
@@ -264,6 +266,13 @@ export interface AssetQuestionCondition extends BaseModel {
   conditionType: AssetQuestionConditionType;
   value: string[];
   description: string | null;
+}
+
+export interface File extends BaseModel {
+  name: string;
+  url: string;
+  assetQuestion?: AssetQuestion;
+  assetQuestionId: string;
 }
 
 export interface AssetQuestion extends BaseModel {
@@ -290,6 +299,7 @@ export interface AssetQuestion extends BaseModel {
   parentQuestionId: string | null;
   variants?: AssetQuestion[];
   conditions?: AssetQuestionCondition[];
+  files?: File[];
   _count?: {
     assetAlertCriteria: number;
     conditions: number;
@@ -404,6 +414,7 @@ export interface Product extends BaseModel {
   imageUrl?: string | null;
   productCategory: ProductCategory;
   productCategoryId: string;
+  parentProductId: string | null;
   parentProduct?: Product | null;
   assetQuestions?: AssetQuestion[];
   client?: Client | null;

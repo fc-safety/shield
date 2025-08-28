@@ -25,13 +25,11 @@ import { ScrollArea } from "./ui/scroll-area";
 
 interface ResponsiveDialogProps
   extends React.PropsWithChildren,
-    Pick<
-      React.ComponentPropsWithoutRef<typeof ScrollArea>,
-      "disableDisplayTable"
-    > {
+    Pick<React.ComponentPropsWithoutRef<typeof ScrollArea>, "disableDisplayTable"> {
   className?: string;
   classNames?: {
     trigger?: string;
+    header?: string;
   };
   dialogClassName?: string;
   drawerClassName?: string;
@@ -79,20 +77,14 @@ export function ResponsiveDialog({
         <DialogTrigger asChild={!!trigger} className={classNames?.trigger}>
           {trigger}
         </DialogTrigger>
-        <DialogContent
-          className={cn(
-            "sm:max-w-[425px] rounded-lg",
-            className,
-            dialogClassName
-          )}
-        >
+        <DialogContent className={cn("rounded-lg sm:max-w-[425px]", className, dialogClassName)}>
           <ScrollArea
             classNames={{
               root: "max-h-[calc(100dvh-10rem)]",
             }}
             disableDisplayTable={disableDisplayTable}
           >
-            <DialogHeader className="text-left">
+            <DialogHeader className={cn("text-left", classNames?.header)}>
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
@@ -106,9 +98,7 @@ export function ResponsiveDialog({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerTrigger asChild={!!trigger}>{trigger}</DrawerTrigger>
-      <DrawerContent
-        className={cn("max-w-[100vw]", className, drawerClassName)}
-      >
+      <DrawerContent className={cn("max-w-[100vw]", className, drawerClassName)}>
         <ScrollArea
           classNames={{
             root: "h-[calc(100vh-5rem)]",
@@ -119,7 +109,7 @@ export function ResponsiveDialog({
             <DrawerTitle>{title}</DrawerTitle>
             <DrawerDescription>{description}</DrawerDescription>
           </DrawerHeader>
-          <div className="px-4 w-full">
+          <div className="w-full px-4">
             {render ? render({ isDesktop, open, onOpenChange }) : children}
           </div>
           <DrawerFooter className="pt-2">

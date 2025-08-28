@@ -7,6 +7,7 @@ import {
   FormMessage,
   Form as FormProvider,
 } from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -14,10 +15,7 @@ import type { ViewContext } from "~/.server/api-utils";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { VISIBILITY } from "~/lib/permissions";
-import {
-  assignUserRoleSchemaResolver,
-  type assignUserRoleSchema,
-} from "~/lib/schema";
+import { assignUserRoleSchema } from "~/lib/schema";
 import type { ClientUser, Role } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
 import ConfirmationDialog from "../confirmation-dialog";
@@ -43,7 +41,7 @@ export default function UpdateUserRoleForm({
   viewContext,
 }: UpdateUserRoleFormProps) {
   const form = useForm<TForm>({
-    resolver: assignUserRoleSchemaResolver,
+    resolver: zodResolver(assignUserRoleSchema),
     defaultValues: FORM_DEFAULTS,
     mode: "onBlur",
   });
@@ -57,8 +55,7 @@ export default function UpdateUserRoleForm({
   });
 
   const [selectedRole, setSelectedRole] = useState<Role | undefined>(undefined);
-  const [assignGlobalAdminAction, setAssignGlobalAdminAction] =
-    useConfirmAction({});
+  const [assignGlobalAdminAction, setAssignGlobalAdminAction] = useConfirmAction({});
 
   const handleSubmit = (data: TForm) => {
     const doSubmit = () =>
@@ -76,9 +73,7 @@ export default function UpdateUserRoleForm({
     if (
       selectedRole &&
       selectedRole.id === data.roleId &&
-      selectedRole.permissions.some(
-        (p) => p === VISIBILITY.GLOBAL || p === VISIBILITY.SUPER_ADMIN
-      )
+      selectedRole.permissions.some((p) => p === VISIBILITY.GLOBAL || p === VISIBILITY.SUPER_ADMIN)
     ) {
       if (selectedRole.permissions.some((p) => p === VISIBILITY.GLOBAL)) {
         setAssignGlobalAdminAction((draft) => {
@@ -91,9 +86,7 @@ export default function UpdateUserRoleForm({
             doSubmit();
           };
         });
-      } else if (
-        selectedRole.permissions.some((p) => p === VISIBILITY.SUPER_ADMIN)
-      ) {
+      } else if (selectedRole.permissions.some((p) => p === VISIBILITY.SUPER_ADMIN)) {
         setAssignGlobalAdminAction((draft) => {
           draft.open = true;
           draft.title = "Assign Super Admin Role";
@@ -113,11 +106,7 @@ export default function UpdateUserRoleForm({
   return (
     <>
       <FormProvider {...form}>
-        <form
-          className="space-y-8"
-          method="post"
-          onSubmit={form.handleSubmit(handleSubmit)}
-        >
+        <form className="space-y-8" method="post" onSubmit={form.handleSubmit(handleSubmit)}>
           <FormField
             control={form.control}
             name="roleId"
@@ -139,11 +128,7 @@ export default function UpdateUserRoleForm({
             )}
           />
           <Button type="submit" disabled={!isDirty || !isValid || isSubmitting}>
-            {isSubmitting
-              ? "Processing..."
-              : user.roleName
-              ? "Reassign"
-              : "Assign"}
+            {isSubmitting ? "Processing..." : user.roleName ? "Reassign" : "Assign"}
           </Button>
         </form>
       </FormProvider>

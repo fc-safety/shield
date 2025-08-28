@@ -28,16 +28,11 @@ const FORM_DEFAULTS = {
   description: "",
 } satisfies TForm;
 
-export default function RoleDetailsForm({
-  role,
-  onSubmitted,
-}: RoleDetailsFormProps) {
+export default function RoleDetailsForm({ role, onSubmitted }: RoleDetailsFormProps) {
   const isNew = !role;
 
   const form = useForm<TForm>({
-    resolver: zodResolver(
-      (isNew ? createRoleSchema : updateRoleSchema) as z.Schema<TForm>
-    ),
+    resolver: zodResolver(isNew ? createRoleSchema : updateRoleSchema),
     defaultValues: role ?? FORM_DEFAULTS,
     mode: "onBlur",
   });
@@ -51,7 +46,9 @@ export default function RoleDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: `/api/proxy/roles`,
       id: role?.id,
     });
@@ -93,20 +90,13 @@ export default function RoleDetailsForm({
             <FormItem>
               <FormLabel>Assignable by clients</FormLabel>
               <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                  className="block"
-                />
+                <Switch checked={field.value} onCheckedChange={field.onChange} className="block" />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

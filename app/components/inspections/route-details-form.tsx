@@ -4,38 +4,22 @@ import type { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { InspectionRoute } from "~/lib/models";
-import {
-  createInspectionRouteSchema,
-  updateInspectionRouteSchema,
-} from "~/lib/schema";
+import { createInspectionRouteSchema, updateInspectionRouteSchema } from "~/lib/schema";
 import { hasMultiSiteVisibility } from "~/lib/users";
 import SiteCombobox from "../clients/site-combobox";
 import { Button } from "../ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 
-type TForm = z.infer<
-  typeof updateInspectionRouteSchema | typeof createInspectionRouteSchema
->;
+type TForm = z.infer<typeof updateInspectionRouteSchema | typeof createInspectionRouteSchema>;
 interface RouteDetailsFormProps {
   route?: InspectionRoute;
   onSubmitted?: () => void;
 }
 
-const createInspectionRouteSchemaResolver = zodResolver(
-  createInspectionRouteSchema
-);
-const updateInspectionRouteSchemaResolver = zodResolver(
-  updateInspectionRouteSchema
-);
+const createInspectionRouteSchemaResolver = zodResolver(createInspectionRouteSchema);
+const updateInspectionRouteSchemaResolver = zodResolver(updateInspectionRouteSchema);
 
 const FORM_DEFAULTS = {
   name: "",
@@ -43,27 +27,20 @@ const FORM_DEFAULTS = {
   inspectionRoutePoints: [],
 } satisfies TForm;
 
-export default function RouteDetailsForm({
-  route,
-  onSubmitted,
-}: RouteDetailsFormProps) {
+export default function RouteDetailsForm({ route, onSubmitted }: RouteDetailsFormProps) {
   const { user } = useAuth();
 
   const isNew = !route;
 
-  const form = useForm<TForm>({
-    resolver: zodResolver(
-      (isNew
-        ? createInspectionRouteSchema
-        : updateInspectionRouteSchema) as z.Schema<TForm>
-    ),
-    values: isNew
+  const form = useForm({
+    resolver: zodResolver(isNew ? createInspectionRouteSchema : updateInspectionRouteSchema),
+    values: (isNew
       ? FORM_DEFAULTS
       : {
           ...route,
           description: route.description ?? undefined,
           inspectionRoutePoints: undefined,
-        },
+        }) as TForm,
     mode: "onBlur",
   });
 
@@ -76,7 +53,9 @@ export default function RouteDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: "/api/proxy/inspection-routes",
       id: route?.id,
     });
@@ -137,10 +116,7 @@ export default function RouteDetailsForm({
           />
         )}
 
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

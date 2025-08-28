@@ -5,39 +5,17 @@ import { useForm } from "react-hook-form";
 import { Link, useFetcher, type To } from "react-router";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import type {
-  Asset,
-  InspectionRoute,
-  InspectionRoutePoint,
-  ResultsPage,
-} from "~/lib/models";
-import {
-  createInspectionRoutePointSchema,
-  updateInspectionRoutePointSchema,
-} from "~/lib/schema";
+import type { Asset, InspectionRoute, InspectionRoutePoint, ResultsPage } from "~/lib/models";
+import { createInspectionRoutePointSchema, updateInspectionRoutePointSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
 import AssetCombobox from "../assets/asset-combobox";
 import { Button } from "../ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 type TForm = z.infer<
-  | typeof updateInspectionRoutePointSchema
-  | typeof createInspectionRoutePointSchema
+  typeof updateInspectionRoutePointSchema | typeof createInspectionRoutePointSchema
 > & {
   routeId?: string;
 };
@@ -49,13 +27,6 @@ export interface RoutePointDetailsFormProps {
   filterRoute?: (route: InspectionRoute) => boolean;
   linkToRoutes?: To;
 }
-
-const createInspectionRouteSchemaResolver = zodResolver(
-  createInspectionRoutePointSchema as z.Schema<TForm>
-);
-const updateInspectionRouteSchemaResolver = zodResolver(
-  updateInspectionRoutePointSchema as z.Schema<TForm>
-);
 
 const FORM_DEFAULTS = {
   order: 0,
@@ -107,9 +78,9 @@ export default function RoutePointDetailsForm({
   }, [fetcher.data, filterRoute]);
 
   const form = useForm<TForm>({
-    resolver: isNew
-      ? createInspectionRouteSchemaResolver
-      : updateInspectionRouteSchemaResolver,
+    resolver: zodResolver(
+      isNew ? createInspectionRoutePointSchema : updateInspectionRoutePointSchema
+    ),
     values: isNew
       ? {
           ...FORM_DEFAULTS,
@@ -136,8 +107,7 @@ export default function RoutePointDetailsForm({
   useEffect(() => {
     if (!route?.inspectionRoutePoints) return;
     const proposedOrderNumber =
-      (route.inspectionRoutePoints.sort((a, b) => a.order - b.order).at(-1)
-        ?.order ?? -1) + 1;
+      (route.inspectionRoutePoints.sort((a, b) => a.order - b.order).at(-1)?.order ?? -1) + 1;
     form.setValue("order", proposedOrderNumber);
   }, [route?.inspectionRoutePoints, form]);
 
@@ -151,7 +121,9 @@ export default function RoutePointDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: `/api/proxy/inspection-routes/${routeId}/points`,
       id: routePoint?.id,
     });
@@ -165,7 +137,7 @@ export default function RoutePointDetailsForm({
 
         {!routeProp &&
           (routesLoading ? (
-            <Loader2 className="animate-spin mx-auto" />
+            <Loader2 className="mx-auto animate-spin" />
           ) : routes.length > 0 ? (
             <FormField
               control={form.control}
@@ -176,10 +148,7 @@ export default function RoutePointDetailsForm({
                   <FormControl>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
-                        <SelectValue
-                          placeholder="Select a route"
-                          onBlur={field.onBlur}
-                        />
+                        <SelectValue placeholder="Select a route" onBlur={field.onBlur} />
                       </SelectTrigger>
                       <SelectContent>
                         {routes.map((route) => (
@@ -205,7 +174,7 @@ export default function RoutePointDetailsForm({
               )}
             />
           ) : (
-            <div className="flex flex-col items-center text-sm text-muted-foreground my-4">
+            <div className="text-muted-foreground my-4 flex flex-col items-center text-sm">
               <div>No new routes available for this asset.</div>
               <Button
                 type="button"
@@ -254,9 +223,7 @@ export default function RoutePointDetailsForm({
 
         <Button
           type="submit"
-          disabled={
-            !routeId || isSubmitting || (!isNew && !isDirty) || !isValid
-          }
+          disabled={!routeId || isSubmitting || (!isNew && !isDirty) || !isValid}
         >
           {isSubmitting ? "Saving..." : "Save"}
         </Button>

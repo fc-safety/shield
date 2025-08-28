@@ -1,9 +1,5 @@
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { ChevronRight, ChevronUp, LogOut, User2, UserCog } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronRight, ChevronUp, ExternalLink, LogOut, User2, UserCog } from "lucide-react";
 import { Link, NavLink, useMatches } from "react-router";
 import {
   DropdownMenu,
@@ -43,6 +39,7 @@ export interface SidebarMenuItem {
   defaultOpen?: boolean;
   hide?: boolean;
   exact?: boolean;
+  external?: boolean;
 }
 
 export interface SidebarMenuSubItem {
@@ -135,9 +132,7 @@ export function AppSidebar({
                             item.defaultOpen ||
                             matches.some((m) =>
                               item.children?.some(
-                                (r) =>
-                                  m.pathname === r.url ||
-                                  m.pathname === `/${r.url}`
+                                (r) => m.pathname === r.url || m.pathname === `/${r.url}`
                               )
                             )
                           }
@@ -170,10 +165,8 @@ export function AppSidebar({
                                               (!subItem.exact &&
                                                 matches.some(
                                                   (m) =>
-                                                    m.pathname ===
-                                                      subItem.url ||
-                                                    m.pathname ===
-                                                      `/${subItem.url}`
+                                                    m.pathname === subItem.url ||
+                                                    m.pathname === `/${subItem.url}`
                                                 ))
                                             }
                                           >
@@ -191,6 +184,7 @@ export function AppSidebar({
                         <SidebarMenuItem key={item.title}>
                           <NavLink
                             to={item.url}
+                            target={item.external ? "_blank" : undefined}
                             end={item.exact}
                             onClick={() => setOpenMobile(undefined)}
                           >
@@ -202,14 +196,14 @@ export function AppSidebar({
                                   (!item.exact &&
                                     matches.some(
                                       (m) =>
-                                        m.pathname === item.url ||
-                                        m.pathname === `/${item.url}`
+                                        m.pathname === item.url || m.pathname === `/${item.url}`
                                     ))
                                 }
                               >
                                 <span>
                                   {item.icon && <item.icon />}
                                   <span>{item.title}</span>
+                                  {item.external && <ExternalLink />}
                                 </span>
                               </SidebarMenuButton>
                             )}
@@ -234,10 +228,7 @@ export function AppSidebar({
                   <ChevronUp className="ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                className="w-(--radix-popper-anchor-width)"
-              >
+              <DropdownMenuContent side="top" className="w-(--radix-popper-anchor-width)">
                 {userRoutes.map((route) => (
                   <DropdownMenuItem asChild key={route.title}>
                     <Link to={route.url}>
@@ -246,11 +237,7 @@ export function AppSidebar({
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuItem asChild>
-                  <Link
-                    to={`/logout${
-                      logoutReturnTo ? `?returnTo=${logoutReturnTo}` : ""
-                    }`}
-                  >
+                  <Link to={`/logout${logoutReturnTo ? `?returnTo=${logoutReturnTo}` : ""}`}>
                     <LogOut />
                     <span>Sign out</span>
                   </Link>

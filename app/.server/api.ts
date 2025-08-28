@@ -32,8 +32,8 @@ import { ApiFetcher, CRUD, type FetchBuildOptions } from "./api-utils";
 
 const backendCreateInspectionSchema = createInspectionSchema.extend({
   useragent: z.string(),
-  ipv4: z.string().ip({ version: "v4" }).optional(),
-  ipv6: z.string().ip({ version: "v6" }).optional(),
+  ipv4: z.ipv4().optional(),
+  ipv6: z.ipv6().optional(),
 });
 
 export const api = {

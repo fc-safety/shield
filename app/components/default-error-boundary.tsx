@@ -1,5 +1,6 @@
 import { Link, type To } from "react-router";
 import useBoundaryError from "~/hooks/use-boundary-error";
+import { openChat } from "~/lib/contact/utils";
 import { Button } from "./ui/button";
 
 export default function DefaultErrorBoundary({
@@ -13,38 +14,33 @@ export default function DefaultErrorBoundary({
 
   return (
     <div className="text-center">
-      <p className="text-base font-semibold text-muted-foreground">Error</p>
-      <h1 className="mt-4 text-6xl font-bold tracking-tight text-primary sm:text-8xl">
+      <p className="text-muted-foreground text-base font-semibold">Error</p>
+      <h1 className="text-primary mt-4 text-6xl font-bold tracking-tight sm:text-8xl">
         {errorDisplay.title}
       </h1>
       {errorDisplay.subtitle && (
-        <p className="mt-2 text-base leading-7 text-secondary-foreground">
+        <p className="text-secondary-foreground mt-2 text-base leading-7">
           {errorDisplay.subtitle}
         </p>
       )}
       {errorDisplay.message && (
-        <p className="mt-6 text-sm text-muted-foreground">
-          Message: {errorDisplay.message}
-        </p>
+        <p className="text-muted-foreground mt-6 text-sm">Message: {errorDisplay.message}</p>
       )}
       <p className="mt-10 text-sm">
         Try{" "}
-        <button
-          className="underline text-primary"
-          onClick={() => window.location.reload()}
-        >
+        <button className="text-primary underline" onClick={() => window.location.reload()}>
           refreshing the page
         </button>
         , or
       </p>
-      <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
         <Button asChild>
           <Link to={homeTo}>Go back home</Link>
         </Button>
         <Button
           variant="ghost"
           onClick={() => {
-            (window as any).Beacon("open");
+            openChat();
           }}
         >
           Contact support <span aria-hidden="true">&rarr;</span>

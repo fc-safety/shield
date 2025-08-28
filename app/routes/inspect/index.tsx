@@ -9,7 +9,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray } from "react-hook-form";
 import { Form, redirect, useNavigate } from "react-router";
 import { RemixFormProvider, useRemixForm } from "remix-hook-form";
-import { getClientIPAddress } from "remix-utils/get-client-ip-address";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { catchResponse } from "~/.server/api-utils";
@@ -21,6 +20,7 @@ import {
 } from "~/.server/inspections";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
+import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-display";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -46,6 +46,7 @@ import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
 import { buildTitle, getSearchParams, isNil } from "~/lib/utils";
+import { getClientIPAddress } from "~/lib/utils/get-client-ip-address";
 import RouteProgressCard from "~/routes/inspect/components/route-progress-card";
 import type { Route } from "./+types/index";
 import { getUserOrHandleInspectLoginRedirect } from "./.server/inspect-auth";
@@ -186,7 +187,13 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 type TForm = z.infer<typeof createInspectionSchema>;
 
 export default function InspectIndex({
-  loaderData: { tag, processedProductImageUrl, inspectionQuestions, activeOrRecentlyExpiredSessions, matchingRoutes },
+  loaderData: {
+    tag,
+    processedProductImageUrl,
+    inspectionQuestions,
+    activeOrRecentlyExpiredSessions,
+    matchingRoutes,
+  },
 }: Route.ComponentProps) {
   if (tag.asset) {
     return (
@@ -243,8 +250,8 @@ function InspectionPage({
     return buildInspectionSchema(questions);
   }, [questions]);
 
-  const form = useRemixForm<TForm>({
-    resolver: zodResolver(narrowedCreateInspectionSchema as z.Schema<TForm>),
+  const form = useRemixForm({
+    resolver: zodResolver(narrowedCreateInspectionSchema),
     values: {
       asset: {
         connect: {
@@ -382,10 +389,13 @@ function InspectionPage({
                       name={`responses.createMany.data.${index}.value`}
                       render={({ field: { value, onChange, onBlur } }) => (
                         <FormItem>
-                          <FormLabel>
-                            {question?.prompt}
-                            {question?.required && " *"}
-                          </FormLabel>
+                          <div>
+                            <FormLabel>
+                              {question?.prompt}
+                              {question?.required && " *"}
+                            </FormLabel>
+                            <AssetQuestionFilesDisplay files={question?.files} />
+                          </div>
                           <FormControl>
                             <AssetQuestionResponseTypeInput
                               value={value ?? ""}

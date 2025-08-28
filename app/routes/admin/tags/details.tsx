@@ -12,9 +12,7 @@ import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
-  breadcrumb: ({
-    data,
-  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
     label: data?.serialNumber || "Details",
   }),
 };
@@ -25,12 +23,10 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
-  return api.tags.get(request, id);
+  return api.tags.get(request, id, { context: "admin" });
 };
 
-export default function ProductDetails({
-  loaderData: tag,
-}: Route.ComponentProps) {
+export default function ProductDetails({ loaderData: tag }: Route.ComponentProps) {
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
       <Card className="h-max">
@@ -76,8 +72,7 @@ export default function ProductDetails({
                 },
                 {
                   label: "Setup On",
-                  value:
-                    tag.asset?.setupOn && format(tag.asset.setupOn, "PPpp"),
+                  value: tag.asset?.setupOn && format(tag.asset.setupOn, "PPpp"),
                 },
                 {
                   label: "Assigned Client",

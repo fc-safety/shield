@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { endOfDay, format, isAfter, isValid, parse, parseISO } from "date-fns";
 import type { LoaderFunctionArgs, MetaDescriptor } from "react-router";
 import { twMerge } from "tailwind-merge";
-import { z } from "zod";
+import * as z3 from "zod/v3";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -17,10 +17,7 @@ export const isEmpty = (value: unknown): value is null | undefined | "" =>
 export const asArray = <T>(value: T | T[]): T[] =>
   isNil(value) ? [] : Array.isArray(value) ? value : [value];
 
-export const countBy = <
-  TKey extends string | number | symbol,
-  T extends Record<TKey, unknown>
->(
+export const countBy = <TKey extends string | number | symbol, T extends Record<TKey, unknown>>(
   objs: T[],
   key: TKey
 ) =>
@@ -38,7 +35,7 @@ export const countBy = <
         [key]: value,
         count: countedObjs.length,
         items: countedObjs,
-      } as Record<TKey, T[TKey]> & { count: number; items: T[] })
+      }) as Record<TKey, T[TKey]> & { count: number; items: T[] }
   );
 
 export const dedupById = <T extends { id: string }>(items: T[]) => [
@@ -50,26 +47,24 @@ export const dedupById = <T extends { id: string }>(items: T[]) => [
     .values(),
 ];
 
-export const breadcrumbHandlerSchema = z.object({
-  handle: z.object({
-    breadcrumb: z
+export const breadcrumbHandlerSchema = z3.object({
+  handle: z3.object({
+    breadcrumb: z3
       .function()
       .args(
-        z
+        z3
           .object({
-            handle: z.any().optional(),
+            handle: z3.any().optional(),
           })
           .optional()
       )
-      .returns(z.object({ label: z.string() })),
+      .returns(z3.object({ label: z3.string() })),
   }),
 });
 
-type BreadcrumbHandler = z.infer<typeof breadcrumbHandlerSchema>;
+type BreadcrumbHandler = z3.infer<typeof breadcrumbHandlerSchema>;
 
-export function validateBreadcrumb<M>(
-  match: M
-): match is M & BreadcrumbHandler {
+export function validateBreadcrumb<M>(match: M): match is M & BreadcrumbHandler {
   return breadcrumbHandlerSchema.safeParse(match).success;
 }
 
@@ -78,9 +73,7 @@ export function buildTitle(
   ...titleSegments: (string | undefined)[]
 ) {
   const title = titleSegments.filter((s) => !!s).join(" | ");
-  const rootTitle = matches
-    .at(0)
-    ?.meta.find((m): m is { title: string } => "title" in m)?.title;
+  const rootTitle = matches.at(0)?.meta.find((m): m is { title: string } => "title" in m)?.title;
 
   if (rootTitle) {
     return title ? `${title} | ${rootTitle}` : rootTitle;
@@ -93,9 +86,7 @@ export function buildTitle(
   return "Shield | FC Safety";
 }
 
-export function buildTitleFromBreadcrumb(
-  matches: ({ meta: MetaDescriptor[] } | undefined)[]
-) {
+export function buildTitleFromBreadcrumb(matches: ({ meta: MetaDescriptor[] } | undefined)[]) {
   const breadcrumbLabels = matches
     .filter(validateBreadcrumb)
     .map((m) => m.handle.breadcrumb(m).label)
@@ -158,13 +149,8 @@ export const stripPhone = (phoneNumber: string) => {
 
 export const getSearchParams = (request: Request) =>
   URL.parse(request.url)?.searchParams ?? new URLSearchParams();
-export const getSearchParam = (request: Request, key: string) =>
-  getSearchParams(request).get(key);
-export const validateSearchParam = (
-  request: Request,
-  key: string,
-  message?: string
-) => {
+export const getSearchParam = (request: Request, key: string) => getSearchParams(request).get(key);
+export const validateSearchParam = (request: Request, key: string, message?: string) => {
   const value = getSearchParams(request).get(key);
   if (!value) {
     throw new Response(message ?? `Query parameter '${key}' is required`, {
@@ -208,13 +194,19 @@ export const validateParams = <TKey extends string>(
   return validated;
 };
 
-export const humanize = <T extends string | null | undefined>(str: T) => {
+export const humanize = <T extends string | null | undefined>(
+  str: T,
+  options: { lowercase?: boolean } = {}
+) => {
   if (!str) return str;
 
-  return str
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  let result = str.replace(/_/g, " ").toLowerCase();
+
+  if (!options.lowercase) {
+    result = result.replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  return result;
 };
 
 export const slugify = (str: string) => {
@@ -232,8 +224,7 @@ export const objectsEqual = (a: unknown, b: unknown) => {
   const keysB = Object.keys(b);
   if (keysA.length !== keysB.length) return false;
   for (const key of keysA) {
-    if (!objectsEqual(a[key as keyof typeof a], b[key as keyof typeof b]))
-      return false;
+    if (!objectsEqual(a[key as keyof typeof a], b[key as keyof typeof b])) return false;
   }
   return true;
 };
@@ -242,10 +233,10 @@ export function capitalize(active: string) {
   return active.charAt(0).toUpperCase() + active.slice(1);
 }
 
-export function dateSort<
-  T extends Record<K, string | number | Date>,
-  K extends keyof T
->(key: K, desc = true) {
+export function dateSort<T extends Record<K, string | number | Date>, K extends keyof T>(
+  key: K,
+  desc = true
+) {
   return (a: T, b: T) => {
     return isAfter(a[key], b[key]) ? (desc ? -1 : 1) : desc ? 1 : -1;
   };
@@ -256,14 +247,12 @@ export function formatTimestampAsDate(rawTimestamp: string) {
   return isValid(parseISO(timestamp))
     ? format(parseISO(timestamp), "yyyy-MM-dd")
     : isValid(parse(timestamp, "yyyy-MM-dd", new Date()))
-    ? timestamp
-    : undefined;
+      ? timestamp
+      : undefined;
 }
 
 export function formatDateAsTimestamp(rawDate: string, atEndOfDay = false) {
   const date = String(rawDate);
   const parsedDate = parseISO(date);
-  return atEndOfDay
-    ? endOfDay(parsedDate).toISOString()
-    : parsedDate.toISOString();
+  return atEndOfDay ? endOfDay(parsedDate).toISOString() : parsedDate.toISOString();
 }

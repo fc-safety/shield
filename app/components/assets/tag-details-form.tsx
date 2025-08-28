@@ -37,22 +37,16 @@ const FORM_DEFAULTS = {
   serialNumber: "",
 } satisfies TForm;
 
-export default function TagDetailsForm({
-  tag,
-  onClose,
-  viewContext,
-}: TagDetailsFormProps) {
+export default function TagDetailsForm({ tag, onClose, viewContext }: TagDetailsFormProps) {
   const { appHost } = useAuth();
 
   const isNew = !tag;
 
   const [isAddingSequentialTag, setIsAddingSequentialTag] = useState(false);
 
-  const form = useForm<TForm>({
-    resolver: zodResolver(
-      (tag ? updateTagSchema : createTagSchema) as z.Schema<TForm>
-    ),
-    values: tag
+  const form = useForm({
+    resolver: zodResolver(tag ? updateTagSchema : createTagSchema),
+    values: (tag
       ? {
           ...tag,
           asset: tag.asset?.id
@@ -77,7 +71,7 @@ export default function TagDetailsForm({
               }
             : undefined,
         }
-      : FORM_DEFAULTS,
+      : FORM_DEFAULTS) as TForm,
     mode: "onChange",
   });
 
@@ -123,16 +117,15 @@ export default function TagDetailsForm({
     }
   }, [isAddingSequentialTag, onClose, serialNumber, form]);
 
-  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher<
-    DataOrError<Tag>
-  >({
+  const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher<DataOrError<Tag>>({
     onSubmitted: handleOnSubmitted,
-    onData: ({ data }) =>
-      isAddingSequentialTag && setRecentlySavedTag(data ?? null),
+    onData: ({ data }) => isAddingSequentialTag && setRecentlySavedTag(data ?? null),
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: "/api/proxy/tags",
       id: tag?.id,
     });
@@ -206,11 +199,7 @@ export default function TagDetailsForm({
                   value={field.value?.connect?.id}
                   onValueChange={(id) =>
                     field.onChange(
-                      id
-                        ? { connect: { id } }
-                        : isNew
-                        ? undefined
-                        : { disconnect: true }
+                      id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
                     )
                   }
                   onBlur={field.onBlur}
@@ -227,19 +216,13 @@ export default function TagDetailsForm({
           name="site"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                {field.value?.connect?.id ? "Assigned site" : "Assign site"}
-              </FormLabel>
+              <FormLabel>{field.value?.connect?.id ? "Assigned site" : "Assign site"}</FormLabel>
               <FormControl>
                 <SiteCombobox
                   value={field.value?.connect?.id}
                   onValueChange={(id) =>
                     field.onChange(
-                      id
-                        ? { connect: { id } }
-                        : isNew
-                        ? undefined
-                        : { disconnect: true }
+                      id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
                     )
                   }
                   onBlur={field.onBlur}
@@ -258,27 +241,18 @@ export default function TagDetailsForm({
           name="asset"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>
-                {field.value?.connect?.id ? "Assigned asset" : "Assign asset"}
-              </FormLabel>
+              <FormLabel>{field.value?.connect?.id ? "Assigned asset" : "Assign asset"}</FormLabel>
               <FormControl>
                 <AssetCombobox
                   value={field.value?.connect?.id}
                   onValueChange={(id) =>
                     field.onChange(
-                      id
-                        ? { connect: { id } }
-                        : isNew
-                        ? undefined
-                        : { disconnect: true }
+                      id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
                     )
                   }
                   onBlur={field.onBlur}
                   className="w-full"
-                  optionQueryFilter={getAssetOptionQueryFilter(
-                    siteId,
-                    field.value?.connect?.id
-                  )}
+                  optionQueryFilter={getAssetOptionQueryFilter(siteId, field.value?.connect?.id)}
                   disabled={!siteId}
                   viewContext={viewContext}
                   clientId={clientId}
@@ -290,10 +264,7 @@ export default function TagDetailsForm({
           )}
         />
         <div className="flex gap-2">
-          <Button
-            type="submit"
-            disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-          >
+          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
             {isSubmitting ? "Saving..." : "Save"}
           </Button>
           <div className="flex-1"></div>
@@ -325,10 +296,7 @@ const incrementTagSerialNumber = (serialNumber: string) => {
   // Serial numbers will typically be all numbers, but may be padded with leading zeroes.
   // Try to preserve the padding when incrementing.
   let padSize: number | null = null;
-  if (
-    trailingNumberMatch[0].length === serialNumber.length &&
-    serialNumber.startsWith("0")
-  ) {
+  if (trailingNumberMatch[0].length === serialNumber.length && serialNumber.startsWith("0")) {
     padSize = serialNumber.length;
   }
 
@@ -341,10 +309,7 @@ const incrementTagSerialNumber = (serialNumber: string) => {
   }
 };
 
-const getAssetOptionQueryFilter = (
-  siteId: string | undefined,
-  assetId: string | undefined
-) => {
+const getAssetOptionQueryFilter = (siteId: string | undefined, assetId: string | undefined) => {
   if (!siteId) {
     return {};
   }

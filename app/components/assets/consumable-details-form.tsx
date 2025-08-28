@@ -7,20 +7,11 @@ import type { Consumable } from "~/lib/models";
 import { createConsumableSchema, updateConsumableSchema } from "~/lib/schema";
 import LegacyIdField from "../legacy-id-field";
 import { Button } from "../ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import ConsumableCombobox from "./consumable-combobox";
 
-type TForm = z.infer<
-  typeof updateConsumableSchema | typeof createConsumableSchema
->;
+type TForm = z.infer<typeof updateConsumableSchema | typeof createConsumableSchema>;
 
 interface ConsumableDetailsFormProps {
   consumable?: Consumable;
@@ -47,12 +38,8 @@ export default function ConsumableDetailsForm({
     },
   } satisfies TForm;
 
-  const form = useForm<TForm>({
-    resolver: zodResolver(
-      (isNew
-        ? createConsumableSchema
-        : updateConsumableSchema) as z.Schema<TForm>
-    ),
+  const form = useForm({
+    resolver: zodResolver(isNew ? createConsumableSchema : updateConsumableSchema),
     values: consumable
       ? {
           ...consumable,
@@ -86,7 +73,9 @@ export default function ConsumableDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    submit(data, {
+    // Remove undefined values to make it JSON-serializable
+    const cleanedData = JSON.parse(JSON.stringify(data));
+    submit(cleanedData, {
       path: `/api/proxy/consumables`,
       id: consumable?.id,
     });
@@ -163,10 +152,7 @@ export default function ConsumableDetailsForm({
           )}
         />
 
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

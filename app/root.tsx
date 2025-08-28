@@ -9,12 +9,9 @@ import {
   useRouteLoaderData,
 } from "react-router";
 
+import { enableMapSet } from "immer";
 import { type PropsWithChildren } from "react";
-import {
-  PreventFlashOnWrongTheme,
-  ThemeProvider,
-  useTheme,
-} from "remix-themes";
+import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
 import {
   appStateSessionStorage,
   setCookieResponseHeaders,
@@ -40,6 +37,8 @@ import globalStyles from "./global.css?url";
 import { BANNER_LOGO_DARK_URL, BANNER_LOGO_LIGHT_URL } from "./lib/constants";
 import styles from "./tailwind.css?url";
 
+enableMapSet();
+
 export const unstable_middleware = [
   requestContext.create,
   // `setCookieResponseHeaders` requires `requestContext.create` to be run first.
@@ -49,9 +48,7 @@ export const unstable_middleware = [
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
 
-  const appStateSession = await appStateSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const appStateSession = await appStateSessionStorage.getSession(request.headers.get("cookie"));
 
   const optimizedImageUrls: OptimizedImageUrls = {
     bannerLogoLight: {
@@ -134,7 +131,7 @@ export const meta: Route.MetaFunction = () => {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
-    <div className="bg-background w-full h-full min-h-svh flex flex-col">
+    <div className="bg-background flex h-full min-h-svh w-full flex-col">
       <Header
         showBreadcrumb={false}
         rightSlot={
@@ -205,7 +202,14 @@ function BaseLayout({ children }: PropsWithChildren) {
           type="text/javascript"
           dangerouslySetInnerHTML={{
             __html: `
-            window.Beacon('init', 'f023be77-9718-4c96-a230-68481b68dfd4')
+            window.Beacon('init', 'f023be77-9718-4c96-a230-68481b68dfd4');
+            window.Beacon('once', 'ready', () => {
+            var beaconContainer = document.querySelector('#beacon-container');
+              if (beaconContainer) {
+                beaconContainer.style.opacity = '0';
+                beaconContainer.style.pointerEvents = 'none';
+              }
+            });
             `,
           }}
         />

@@ -4,10 +4,7 @@ import { BookOpenText, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
+import { CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Input } from "~/components/ui/input";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/faqs";
@@ -65,8 +62,7 @@ const faqs: FaqCategory[] = [
           "Simply scan the NFC tag on the asset with your mobile device. This will open the inspection page where you can answer specific questions about the asset’s condition.",
       },
       {
-        question:
-          "What happens if I answer 'No' to a question like 'Is the green light working?'",
+        question: "What happens if I answer 'No' to a question like 'Is the green light working?'",
         answer:
           "If certain critical questions are answered negatively, an alert is automatically generated. Coordinators can then take the necessary steps to address the issue.",
       },
@@ -96,8 +92,7 @@ const faqs: FaqCategory[] = [
     category: "For Site Group Coordinators",
     questions: [
       {
-        question:
-          "What additional functionality do I have compared to site coordinators?",
+        question: "What additional functionality do I have compared to site coordinators?",
         answer:
           "As a site group coordinator, you can manage multiple sites. This includes viewing all assets, inspections, and alerts across your assigned sites, making it easier to ensure organization-wide compliance.",
       },
@@ -255,32 +250,21 @@ export default function Faqs({ loaderData: { faqs } }: Route.ComponentProps) {
           onChange={(e) => setSearch(e.target.value)}
         />
         {filteredFaqs.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            No results found for &quot;{search}&quot;
-          </p>
+          <p className="text-muted-foreground text-sm">No results found for &quot;{search}&quot;</p>
         )}
         {filteredFaqs.map(({ category, open }) => {
           return (
-            <div
-              key={`${category.category}--open-${open}`}
-              className="grid gap-2"
-            >
-              <h3 className="text-base font-semibold text-primary">
-                {category.category}
-              </h3>
+            <div key={`${category.category}--open-${open}`} className="grid gap-2">
+              <h3 className="text-primary text-base font-semibold">{category.category}</h3>
               {category.questions.map((faq) => (
-                <Collapsible
-                  key={faq.question}
-                  defaultOpen={open}
-                  className="group/collapsible"
-                >
+                <Collapsible key={faq.question} defaultOpen={open} className="group/collapsible">
                   <CollapsibleTrigger asChild>
                     <Button variant="secondary" className="w-full">
                       {faq.question}
                       <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </Button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="px-4 my-4 text-sm font-light">
+                  <CollapsibleContent className="my-4 px-4 text-sm font-light">
                     {faq.answer}
                   </CollapsibleContent>
                 </Collapsible>

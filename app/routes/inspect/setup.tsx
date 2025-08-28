@@ -16,6 +16,7 @@ import {
   validateInspectionSession,
 } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
+import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-display";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
@@ -25,22 +26,18 @@ import { Input } from "~/components/ui/input";
 import { useAuth } from "~/contexts/auth-context";
 import { ASSET_QUESTION_TONES } from "~/lib/constants";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
-import type { AssetQuestion } from "~/lib/models";
 import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
 import { buildTitle, cn, isNil } from "~/lib/utils";
 import type { Route } from "./+types/setup";
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow<z.infer<typeof setupAssetSchema>>(
-    request,
-    zodResolver(setupAssetSchema)
-  );
+  const { data } = await getValidatedFormDataOrThrow(request, zodResolver(setupAssetSchema));
 
   if (data.setupOn) {
-    return api.assets.updateSetup(request, data);
+    return api.assets.updateSetup(request, data as z.infer<typeof setupAssetSchema>);
   } else {
-    return api.assets.setup(request, data);
+    return api.assets.setup(request, data as z.infer<typeof setupAssetSchema>);
   }
 };
 
@@ -110,8 +107,8 @@ export default function InspectSetup({
     return buildSetupAssetSchema(questions, tag.asset?.setupQuestionResponses ?? []);
   }, [questions, tag]);
 
-  const form = useRemixForm<TForm>({
-    resolver: zodResolver(narrowedSetupAssetSchema as z.Schema<TForm>),
+  const form = useRemixForm({
+    resolver: zodResolver(narrowedSetupAssetSchema),
     values: {
       id: tag.asset?.id ?? "",
       setupOn: tag.asset?.setupOn ? parseISO(tag.asset.setupOn) : undefined,
@@ -270,14 +267,17 @@ export default function InspectSetup({
                         }
                         render={({ field: { value, onChange, onBlur } }) => (
                           <FormItem>
-                            <FormLabel>
-                              {question?.prompt ?? (
-                                <span className="italic">
-                                  Prompt for this question has been removed or is not available.
-                                </span>
-                              )}
-                              {question?.required && " *"}
-                            </FormLabel>
+                            <div>
+                              <FormLabel>
+                                {question?.prompt ?? (
+                                  <span className="italic">
+                                    Prompt for this question has been removed or is not available.
+                                  </span>
+                                )}
+                                {question?.required && " *"}
+                              </FormLabel>
+                              <AssetQuestionFilesDisplay files={question?.files} />
+                            </div>
                             <FormControl>
                               <AssetQuestionResponseTypeInput
                                 value={value}

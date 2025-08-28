@@ -24,13 +24,7 @@ import ConfirmationDialog from "../confirmation-dialog";
 import DataList from "../data-list";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "../ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 
 interface ResetPasswordFormProps {
@@ -39,11 +33,7 @@ interface ResetPasswordFormProps {
   onSubmitted: () => void;
 }
 
-export default function ResetPasswordForm({
-  user,
-  clientId,
-  onSubmitted,
-}: ResetPasswordFormProps) {
+export default function ResetPasswordForm({ user, clientId, onSubmitted }: ResetPasswordFormProps) {
   const { clientId: appClientId, user: currentUser } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
 
@@ -91,14 +81,9 @@ export default function ResetPasswordForm({
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    mutate: generatePasswordMutation,
-    isPending: generatePasswordLoading,
-  } = useMutation({
+  const { mutate: generatePasswordMutation, isPending: generatePasswordLoading } = useMutation({
     mutationFn: async () => {
-      const response = await fetchOrThrow(
-        buildPath(`/users/generate-password`, { length: 16 })
-      );
+      const response = await fetchOrThrow(buildPath(`/users/generate-password`, { length: 16 }));
       return response.json() as Promise<{ password: string }>;
     },
     onSuccess: (data) => {
@@ -154,7 +139,7 @@ export default function ResetPasswordForm({
 
   return (
     <>
-      <div className="flex flex-col gap-8 mt-4">
+      <div className="mt-4 flex flex-col gap-8">
         <DataList
           title="User Details"
           details={[
@@ -180,16 +165,15 @@ export default function ResetPasswordForm({
         <div className="flex flex-col gap-4">
           <div>
             <h3 className="text-base font-semibold">
-              Send Email To{" "}
-              <span className="font-bold underline">{user.email}</span>
+              Send Email To <span className="font-bold underline">{user.email}</span>
             </h3>
-            <p className="text-xs text-muted-foreground">
-              This will send a password reset email to the user. The user will
-              be able to reset their password using the link in the email.
+            <p className="text-muted-foreground text-xs">
+              This will send a password reset email to the user. The user will be able to reset
+              their password using the link in the email.
             </p>
           </div>
           {!canSendResetPasswordEmail && (
-            <p className="text-xs text-destructive italic text-center">
+            <p className="text-destructive text-center text-xs italic">
               You do not have permission to send password reset emails.
             </p>
           )}
@@ -213,18 +197,13 @@ export default function ResetPasswordForm({
           </Button>
         </div>
         <FormProvider {...form}>
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={form.handleSubmit(handleSubmit)}
-          >
+          <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
             <div>
-              <h3 className="text-base font-semibold">
-                Manually Reset Password
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Manually reset the password for the user. This will overwrite
-                any password the user has set. You can optionally choose to send
-                the new password to the user&apos;s email.
+              <h3 className="text-base font-semibold">Manually Reset Password</h3>
+              <p className="text-muted-foreground text-xs">
+                Manually reset the password for the user. This will overwrite any password the user
+                has set. You can optionally choose to send the new password to the user&apos;s
+                email.
               </p>
             </div>
 
@@ -236,9 +215,7 @@ export default function ResetPasswordForm({
                 onClick={() => generatePasswordMutation()}
                 disabled={generatePasswordLoading}
               >
-                <RotateCcwKey
-                  className={cn(generatePasswordLoading && "animate-spin")}
-                />
+                <RotateCcwKey className={cn(generatePasswordLoading && "animate-spin")} />
                 Generate Secure Password
               </Button>
 
@@ -283,17 +260,11 @@ export default function ResetPasswordForm({
                   render={({ field: { onChange, value, ...field } }) => (
                     <FormItem className="flex flex-row items-center gap-2 space-y-0">
                       <FormControl>
-                        <Checkbox
-                          {...field}
-                          checked={value}
-                          onCheckedChange={onChange}
-                        />
+                        <Checkbox {...field} checked={value} onCheckedChange={onChange} />
                       </FormControl>
                       <FormLabel className="font-normal">
                         Send email with new password to{" "}
-                        <span className="font-bold underline">
-                          {user.email}
-                        </span>
+                        <span className="font-bold underline">{user.email}</span>
                       </FormLabel>
                       <FormMessage />
                     </FormItem>
@@ -304,9 +275,7 @@ export default function ResetPasswordForm({
 
             <Button
               type="submit"
-              disabled={
-                resetPasswordLoading || resetPasswordSuccess || !isValid
-              }
+              disabled={resetPasswordLoading || resetPasswordSuccess || !isValid}
             >
               {resetPasswordLoading ? (
                 <Loader2 className="animate-spin" />
@@ -343,7 +312,7 @@ const PasswordInput = forwardRef<
       <Button
         type="button"
         variant="ghost"
-        className="absolute right-0 top-0"
+        className="absolute top-0 right-0"
         size="icon"
         onClick={() => onShowPassword(!showPassword)}
         tabIndex={-1}
