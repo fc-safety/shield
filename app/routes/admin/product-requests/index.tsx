@@ -77,31 +77,21 @@ export default function AdminProductRequestsIndex({
       {
         accessorKey: "createdOn",
         id: "orderedOn",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ getValue }) => (
-          <DisplayRelativeDate date={getValue() as string} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => <DisplayRelativeDate date={getValue() as string} />,
       },
       {
         accessorKey: "status",
         id: "status",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => (
-          <ProductRequestStatusBadge
-            status={getValue() as ProductRequestStatus}
-          />
+          <ProductRequestStatusBadge status={getValue() as ProductRequestStatus} />
         ),
       },
       {
         accessorKey: "asset.product.name",
         id: "asset",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "productRequestItems",
@@ -128,26 +118,19 @@ export default function AdminProductRequestsIndex({
         },
       },
       {
-        accessorFn: (request) =>
-          `${request.requestor.firstName} ${request.requestor.lastName}`,
+        accessorFn: (request) => `${request.requestor.firstName} ${request.requestor.lastName}`,
         id: "requestor",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "client.name",
         id: "client",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "site.name",
         id: "site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         id: "actions",
@@ -216,10 +199,7 @@ export default function AdminProductRequestsIndex({
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={
-                      !table.getIsSomeRowsSelected() &&
-                      !table.getIsAllRowsSelected()
-                    }
+                    disabled={!table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected()}
                   >
                     Actions ({table.getSelectedRowModel().rows.length})
                     <ChevronDown className="h-4 w-4" />
@@ -229,9 +209,7 @@ export default function AdminProductRequestsIndex({
                   <DropdownMenuItem
                     onSelect={() =>
                       updateStatus.openData(
-                        table
-                          .getSelectedRowModel()
-                          .rows.map((row) => row.original)
+                        table.getSelectedRowModel().rows.map((row) => row.original)
                       )
                     }
                   >
@@ -310,7 +288,7 @@ function UpdateStatusForm({
     ["COMPLETE", "CANCELLED"].includes(r.status)
   );
 
-  const { submit, isSubmitting } = useModalFetcher({
+  const { submitJson, isSubmitting } = useModalFetcher({
     onSubmitted,
   });
 
@@ -321,19 +299,16 @@ function UpdateStatusForm({
   );
 
   const handleSubmit = (data: TUpdateStatusesForm) => {
-    submit(data, {
+    submitJson(data, {
       method: "patch",
-      action: "/api/proxy/product-requests/statuses?_throw=false",
-      encType: "application/json",
+      path: "/api/proxy/product-requests/statuses?_throw=false",
+      viewContext: "admin",
     });
   };
 
   return (
     <Form {...form}>
-      <form
-        className="flex flex-col gap-y-4 mt-4"
-        onSubmit={form.handleSubmit(handleSubmit)}
-      >
+      <form className="mt-4 flex flex-col gap-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         {nonupdatableRequests.length > 0 && (
           <Alert variant="default">
             <AlertCircle className="size-4" />
@@ -375,8 +350,4 @@ function UpdateStatusForm({
   );
 }
 
-const ValidUpdateStatuses: ProductRequestStatus[] = [
-  "PROCESSING",
-  "FULFILLED",
-  "COMPLETE",
-];
+const ValidUpdateStatuses: ProductRequestStatus[] = ["PROCESSING", "FULFILLED", "COMPLETE"];

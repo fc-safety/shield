@@ -5,15 +5,12 @@ import type { Client } from "~/lib/models";
 import { ResponsiveDialog } from "../responsive-dialog";
 import ClientDetailsForm from "./client-details-form";
 
-interface EditClientButtonProps {
+interface EditClientButtonProps extends React.ComponentProps<typeof ClientDetailsForm> {
   client?: Client;
   trigger?: React.ReactElement;
 }
 
-export default function EditClientButton({
-  client,
-  trigger,
-}: EditClientButtonProps) {
+export default function EditClientButton({ client, trigger, ...props }: EditClientButtonProps) {
   const [open, setOpen] = useState(false);
   return (
     <ResponsiveDialog
@@ -32,7 +29,7 @@ export default function EditClientButton({
         )
       }
     >
-      <ClientDetailsForm onSubmitted={() => setOpen(false)} client={client} />
+      <ClientDetailsForm onSubmitted={() => setOpen(false)} client={client} {...props} />
     </ResponsiveDialog>
   );
 }

@@ -4,7 +4,7 @@ import { Building2, CopyPlus, Loader2, Pencil } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
-import type { DataOrError } from "~/.server/api-utils";
+import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -31,9 +31,11 @@ import EditClientButton from "./edit-client-button";
 export default function ClientDetailsCard({
   title = "Client Details",
   client,
+  viewContext,
 }: {
   title?: string;
   client: Client | undefined;
+  viewContext?: ViewContext;
 }) {
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
@@ -43,7 +45,7 @@ export default function ClientDetailsCard({
 
   const navigate = useNavigate();
 
-  const { submit: submitDelete } = useModalFetcher({
+  const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete client",
     onSubmitted: () => {
       navigate(`../`);
@@ -77,6 +79,7 @@ export default function ClientDetailsCard({
                         <Pencil />
                       </Button>
                     }
+                    viewContext={viewContext}
                   />
                 )}
                 {userIsGlobalAdmin && client?.demoMode && (
@@ -196,7 +199,8 @@ export default function ClientDetailsCard({
                           {},
                           {
                             method: "delete",
-                            action: `/api/proxy/clients/${client.id}`,
+                            path: `/api/proxy/clients/${client.id}`,
+                            viewContext,
                           }
                         );
                       };
@@ -263,6 +267,7 @@ function DuplicateDemoClientDialog({
     submitDuplicateDemoClient(data, {
       method: "post",
       path: `/api/proxy/clients/${client.id}/duplicate-demo`,
+      viewContext: "admin",
     });
   };
 

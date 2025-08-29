@@ -41,7 +41,7 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
 
   const editTag = useOpenData<Tag>();
 
-  const { submit: submitDelete } = useModalFetcher({
+  const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete tag",
   });
   const [deleteAction, setDeleteAction] = useConfirmAction({
@@ -153,7 +153,8 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
                       {},
                       {
                         method: "delete",
-                        action: `/api/proxy/tags/${row.original.id}`,
+                        path: `/api/proxy/tags/${row.original.id}`,
+                        viewContext: "admin",
                       }
                     );
                   };

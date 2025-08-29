@@ -128,6 +128,7 @@ export default function TagDetailsForm({ tag, onClose, viewContext }: TagDetails
     submit(cleanedData, {
       path: "/api/proxy/tags",
       id: tag?.id,
+      viewContext,
     });
   };
 

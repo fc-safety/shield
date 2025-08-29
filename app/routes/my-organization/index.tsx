@@ -53,7 +53,7 @@ export default function ClientDetails({
   return (
     <div className="grid gap-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
-        <ClientDetailsCard title="My Organization" client={client} />
+        <ClientDetailsCard title="My Organization" client={client} viewContext="user" />
         {sites && (
           <div className="grid gap-4">
             <ClientSiteGroupCard
@@ -71,9 +71,7 @@ export default function ClientDetails({
         <ClientUsersCard
           users={users}
           getSiteByExternalId={
-            sites
-              ? (externalId) => sites.find((s) => s.externalId === externalId)
-              : undefined
+            sites ? (externalId) => sites.find((s) => s.externalId === externalId) : undefined
           }
           clientId={client.id}
         />
