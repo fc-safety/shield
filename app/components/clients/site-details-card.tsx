@@ -5,11 +5,12 @@ import { CardContent, CardHeader, CardTitle } from "../ui/card";
 import { format } from "date-fns";
 import { Boxes, Pencil, Warehouse } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Site } from "~/lib/models";
-import { can, isGlobalAdmin } from "~/lib/users";
+import { can, isSuperAdmin } from "~/lib/users";
 import ConfirmationDialog from "../confirmation-dialog";
 import { CopyableText } from "../copyable-text";
 import DisplayAddress from "../display-address";
@@ -22,19 +23,20 @@ import EditSiteButton from "./edit-site-button";
 export default function SiteDetailsCard({
   isSiteGroup,
   site,
+  viewContext,
 }: {
   isSiteGroup: boolean;
   site: Site;
+  viewContext?: ViewContext;
 }) {
   const { user } = useAuth();
-  const userIsGlobalAdmin = isGlobalAdmin(user);
+  const userIsSuperAdmin = isSuperAdmin(user);
   const canUpdateSite = can(user, "update", "sites");
-  const canDeleteSite =
-    site.externalId !== user.siteId && can(user, "delete", "sites");
+  const canDeleteSite = site.externalId !== user.siteId && can(user, "delete", "sites");
 
   const navigate = useNavigate();
 
-  const { submit: submitDelete } = useModalFetcher({
+  const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete site",
     onSubmitted: () => {
       navigate(`../`);
@@ -86,7 +88,7 @@ export default function SiteDetailsCard({
                 {
                   label: "External ID",
                   value: <CopyableText text={site.externalId} />,
-                  hidden: !userIsGlobalAdmin,
+                  hidden: !userIsSuperAdmin,
                 },
                 {
                   label: "Is Primary Site",
@@ -96,10 +98,8 @@ export default function SiteDetailsCard({
                 {
                   label: "Parent Site",
                   value: (
-                    <Button variant="link" className="p-0 px-0 py-0 h-auto">
-                      <Link to={`../sites/${site.parentSiteId}`}>
-                        {site.parentSite?.name}
-                      </Link>
+                    <Button variant="link" className="h-auto p-0 px-0 py-0">
+                      <Link to={`../sites/${site.parentSiteId}`}>{site.parentSite?.name}</Link>
                     </Button>
                   ),
                   hidden: !site.parentSite,
@@ -147,8 +147,8 @@ export default function SiteDetailsCard({
               <AlertTitle>Danger Zone</AlertTitle>
               <AlertDescription className="flex flex-col items-start gap-2">
                 <p>
-                  Deleting this site may not be permitted if it is already in
-                  use and has data associated with it.
+                  Deleting this site may not be permitted if it is already in use and has data
+                  associated with it.
                 </p>
                 <Button
                   variant="destructive"
@@ -164,7 +164,8 @@ export default function SiteDetailsCard({
                           {},
                           {
                             method: "delete",
-                            action: `/api/proxy/sites/${site.id}`,
+                            path: `/api/proxy/sites/${site.id}`,
+                            viewContext,
                           }
                         );
                       };

@@ -1,13 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  Building2,
-  CornerDownRight,
-  MoreHorizontal,
-  PhoneCall,
-  Trash,
-} from "lucide-react";
+import { Building2, CornerDownRight, MoreHorizontal, PhoneCall, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useRevalidator } from "react-router";
 import { api } from "~/.server/api";
@@ -24,11 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "~/components/ui/hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/hover-card";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client } from "~/lib/models";
@@ -40,11 +30,9 @@ export function loader({ request }: Route.LoaderArgs) {
   return api.clients.list(request, { limit: 10000 }, { context: "admin" });
 }
 
-export default function ClientsIndex({
-  loaderData: clients,
-}: Route.ComponentProps) {
+export default function ClientsIndex({ loaderData: clients }: Route.ComponentProps) {
   const { revalidate } = useRevalidator();
-  const { submit: submitDelete } = useModalFetcher({
+  const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete client",
   });
 
@@ -56,15 +44,11 @@ export default function ClientsIndex({
     () => [
       {
         accessorKey: "status",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
-          const status = (getValue() as string).toLowerCase() as Lowercase<
-            Client["status"]
-          >;
+          const status = (getValue() as string).toLowerCase() as Lowercase<Client["status"]>;
           return (
-            <div className="capitalize flex items-center gap-2">
+            <div className="flex items-center gap-2 capitalize">
               <ActiveIndicator2 active={status} />
               {status}
             </div>
@@ -73,15 +57,10 @@ export default function ClientsIndex({
       },
       {
         accessorKey: "name",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
 
         cell: ({ row, getValue }) => (
-          <Link
-            to={row.original.id}
-            className="hover:underline flex items-center gap-2"
-          >
+          <Link to={row.original.id} className="flex items-center gap-2 hover:underline">
             {getValue() as string}
             {row.original.demoMode && <Badge variant="default">Demo</Badge>}
           </Link>
@@ -90,23 +69,17 @@ export default function ClientsIndex({
       {
         accessorKey: "_count.sites",
         id: "sites",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorFn: (data) => `${data.address.city}, ${data.address.state}`,
         id: "city",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorFn: (data) => beautifyPhone(data.phoneNumber),
         id: "phone",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
 
         cell: ({ row, getValue }) => (
           <HoverCard>
@@ -158,7 +131,8 @@ export default function ClientsIndex({
                           {},
                           {
                             method: "delete",
-                            action: `/api/proxy/clients/${client.id}?_throw=false`,
+                            path: `/api/proxy/clients/${client.id}`,
+                            viewContext: "admin",
                           }
                         );
                       };
@@ -191,11 +165,8 @@ export default function ClientsIndex({
             data={clients.results}
             searchPlaceholder="Search clients..."
             actions={[
-              <EditClientButton key="add" />,
-              <MigrationAssistantButton
-                key="migration"
-                onComplete={() => revalidate()}
-              />,
+              <EditClientButton key="add" viewContext="admin" />,
+              <MigrationAssistantButton key="migration" onComplete={() => revalidate()} />,
             ]}
           />
         </CardContent>

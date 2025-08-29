@@ -17,9 +17,7 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 };
 
 export const handle = {
-  breadcrumb: ({
-    data,
-  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
     label: data?.site.name || "Site Details",
   }),
 };
@@ -54,7 +52,7 @@ export default function MyOrganizationSiteDetails({
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
-      <SiteDetailsCard isSiteGroup={isSiteGroup} site={site} />
+      <SiteDetailsCard isSiteGroup={isSiteGroup} site={site} viewContext="user" />
       <div className="grid gap-4">
         {site.subsites && site.subsites.length > 0 && (
           <ClientSitesCard
@@ -67,11 +65,7 @@ export default function MyOrganizationSiteDetails({
         )}
       </div>
       {users && (
-        <ClientUsersCard
-          users={users}
-          clientId={site.clientId}
-          siteExternalId={site.externalId}
-        />
+        <ClientUsersCard users={users} clientId={site.clientId} siteExternalId={site.externalId} />
       )}
     </div>
   );

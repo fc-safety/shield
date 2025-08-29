@@ -1,8 +1,5 @@
 import { Shield } from "lucide-react";
-import {
-  useRouteLoaderData,
-  type ShouldRevalidateFunctionArgs,
-} from "react-router";
+import { useRouteLoaderData, type ShouldRevalidateFunctionArgs } from "react-router";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/user-sesssion";
 import AssetsTable from "~/components/assets/assets-table";
@@ -30,19 +27,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
 
   const getAssets = async () =>
-    api.assets.list(
-      request,
-      { limit: 10000, clientId: id },
-      { context: "admin" }
-    );
+    api.assets.list(request, { limit: 10000, clientId: id }, { context: "admin" });
 
   if (can(user, "read", "users")) {
     const [users, assets] = await Promise.all([
-      api.users.list(
-        request,
-        { limit: 10000, clientId: id },
-        { context: "admin" }
-      ),
+      api.users.list(request, { limit: 10000, clientId: id }, { context: "admin" }),
       getAssets(),
     ]);
 
@@ -52,16 +41,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   return { users: null, assets: await getAssets() };
 };
 
-export default function ClientDetails({
-  loaderData: { users, assets },
-}: Route.ComponentProps) {
-  const client = useRouteLoaderData<Client>(
-    "routes/admin/clients/details/layout"
-  );
+export default function ClientDetails({ loaderData: { users, assets } }: Route.ComponentProps) {
+  const client = useRouteLoaderData<Client>("routes/admin/clients/details/layout");
   return (
     <div className="grid gap-4">
       <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
-        <ClientDetailsCard client={client} />
+        <ClientDetailsCard client={client} viewContext="admin" />
         <div className="grid gap-4">
           <ClientSiteGroupCard
             siteGroups={client?.sites?.filter((s) => s._count?.subsites) ?? []}
@@ -89,11 +74,7 @@ export default function ClientDetails({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <AssetsTable
-            assets={assets.results}
-            clientId={client?.id}
-            viewContext="admin"
-          />
+          <AssetsTable assets={assets.results} clientId={client?.id} viewContext="admin" />
         </CardContent>
       </Card>
     </div>

@@ -17,9 +17,7 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 };
 
 export const handle = {
-  breadcrumb: ({
-    data,
-  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
     label: data?.site.name || "Site Details",
   }),
 };
@@ -51,14 +49,12 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   };
 };
 
-export default function SiteDetails({
-  loaderData: { site, users },
-}: Route.ComponentProps) {
+export default function SiteDetails({ loaderData: { site, users } }: Route.ComponentProps) {
   const isSiteGroup = !!site?.subsites && site.subsites.length > 0;
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
-      <SiteDetailsCard isSiteGroup={isSiteGroup} site={site} />
+      <SiteDetailsCard isSiteGroup={isSiteGroup} site={site} viewContext="admin" />
       <div className="grid gap-4">
         {site.subsites && site.subsites.length > 0 && (
           <ClientSitesCard
@@ -71,11 +67,7 @@ export default function SiteDetails({
         )}
       </div>
       {users && (
-        <ClientUsersCard
-          users={users}
-          clientId={site.clientId}
-          siteExternalId={site.externalId}
-        />
+        <ClientUsersCard users={users} clientId={site.clientId} siteExternalId={site.externalId} />
       )}
     </div>
   );
