@@ -1,18 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
-import type { Manufacturer } from "~/lib/models";
 import { ResponsiveDialog } from "../responsive-dialog";
 import ManufacturerDetailsForm from "./manufacturer-details-form";
 
-interface EditManufacturerButtonProps {
-  manufacturer?: Manufacturer;
+interface EditManufacturerButtonProps extends React.ComponentProps<typeof ManufacturerDetailsForm> {
   trigger?: React.ReactNode;
 }
 
 export default function EditManufacturerButton({
   manufacturer,
   trigger,
+  ...passThroughProps
 }: EditManufacturerButtonProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -35,6 +34,7 @@ export default function EditManufacturerButton({
       <ManufacturerDetailsForm
         onSubmitted={() => setOpen(false)}
         manufacturer={manufacturer}
+        {...passThroughProps}
       />
     </ResponsiveDialog>
   );

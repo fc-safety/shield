@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { Checkbox } from "./ui/checkbox";
 
@@ -8,6 +9,7 @@ interface SubmittingCheckboxProps {
   path: string;
   checkedKey: string | ((checked: boolean) => any);
   className?: string;
+  viewContext?: ViewContext;
 }
 
 export default function SubmittingCheckbox({
@@ -16,6 +18,7 @@ export default function SubmittingCheckbox({
   path,
   checkedKey,
   className,
+  viewContext,
 }: SubmittingCheckboxProps) {
   const [isChecked, setIsChecked] = useState(() => checked);
   const { submitJson: toggle, isLoading } = useModalFetcher();
@@ -30,6 +33,7 @@ export default function SubmittingCheckbox({
         toggle(typeof checkedKey === "function" ? checkedKey(checked) : { [checkedKey]: checked }, {
           method: "patch",
           path,
+          viewContext,
         });
       }}
       disabled={isLoading}

@@ -8,24 +8,21 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
-import {
-  createManufacturerSchema,
-  updateManufacturerSchema,
-} from "~/lib/schema";
+import { createManufacturerSchema, updateManufacturerSchema } from "~/lib/schema";
+import ActiveToggleFormInput from "../active-toggle-form-input";
 import LegacyIdField from "../legacy-id-field";
 
-type TForm = z.infer<
-  typeof createManufacturerSchema | typeof updateManufacturerSchema
->;
+type TForm = z.infer<typeof createManufacturerSchema | typeof updateManufacturerSchema>;
 interface ManufacturerDetailsFormProps {
   manufacturer?: Manufacturer;
   onSubmitted?: () => void;
+  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -38,20 +35,17 @@ const FORM_DEFAULTS = {
 export default function ManufacturerDetailsForm({
   manufacturer,
   onSubmitted,
+  viewContext,
 }: ManufacturerDetailsFormProps) {
   const isNew = !manufacturer;
 
   const form = useForm<TForm>({
-    resolver: zodResolver(
-      isNew ? createManufacturerSchema : updateManufacturerSchema
-    ),
+    resolver: zodResolver(isNew ? createManufacturerSchema : updateManufacturerSchema),
     values: manufacturer
       ? {
           ...manufacturer,
           homeUrl: manufacturer.homeUrl ?? "",
-          client: manufacturer.client
-            ? { connect: { id: manufacturer.client.id } }
-            : undefined,
+          client: manufacturer.client ? { connect: { id: manufacturer.client.id } } : undefined,
         }
       : FORM_DEFAULTS,
     mode: "onBlur",
@@ -71,6 +65,7 @@ export default function ManufacturerDetailsForm({
     submit(cleanedData, {
       path: "/api/proxy/manufacturers",
       id: manufacturer?.id,
+      viewContext,
     });
   };
 
@@ -78,24 +73,7 @@ export default function ManufacturerDetailsForm({
     <FormProvider {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
-        <FormField
-          control={form.control}
-          name="active"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem className="flex flex-row items-center gap-2 space-y-0">
-              <FormControl>
-                <Switch
-                  checked={value}
-                  onCheckedChange={onChange}
-                  className="pt-0"
-                  onBlur={onBlur}
-                />
-              </FormControl>
-              <FormLabel>Active</FormLabel>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <ActiveToggleFormInput />
         <LegacyIdField
           form={form}
           fieldName="legacyManufacturerId"
@@ -128,10 +106,7 @@ export default function ManufacturerDetailsForm({
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

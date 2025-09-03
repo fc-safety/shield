@@ -72,7 +72,7 @@ export default function FileConfigurator() {
       </div>
     </div>
   ) : (
-    <Loader2 className="size-4 animate-spin" />
+    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
   );
 }
 

@@ -1,8 +1,9 @@
-import { Eraser, Pencil, Plus } from "lucide-react";
+import { Columns3Cog, Eraser, Pencil, Plus } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import type z from "zod";
 import ConditionPill from "~/components/assets/condition-pill";
+import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
@@ -96,10 +97,16 @@ export default function ConditionsInput() {
       name="conditions"
       render={() => {
         return (
-          <FormItem>
-            {/* TODO: Add help sidebar. */}
-            <FormLabel className="mb-2 inline-flex items-center gap-2 text-base font-medium">
+          <FormItem className="gap-0">
+            <FormLabel className="inline-flex items-center gap-2 text-base font-medium">
+              <Columns3Cog className="size-4" />
               Conditions
+              <HelpPopover>
+                <p>
+                  These conditions are used to determine if or when this question will be presented
+                  to the inspector.
+                </p>
+              </HelpPopover>
               <Button size="sm" variant="outline" type="button" onClick={handleAddCondition}>
                 <Plus /> Add Condition
               </Button>

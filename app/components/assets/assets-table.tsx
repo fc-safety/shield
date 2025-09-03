@@ -90,7 +90,7 @@ export default function AssetsTable({
         accessorKey: "name",
         cell: ({ row, getValue }) => {
           const nameValue =
-            (getValue() as string) ??
+            (getValue() as string) ||
             `${row.original.location} - ${
               row.original.product?.productCategory?.shortName ??
               row.original.product?.productCategory?.name
@@ -108,7 +108,7 @@ export default function AssetsTable({
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
-        accessorKey: "tag.serialNumber",
+        accessorFn: (row) => row.tag?.serialNumber,
         id: "tag",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} title="Tag Serial No." />

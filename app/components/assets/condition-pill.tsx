@@ -10,7 +10,6 @@ export const conditionTypeVariants = cva("", {
       REGION: "bg-blue-500 text-white dark:bg-blue-400 dark:text-blue-950",
       MANUFACTURER: "bg-purple-500 text-white dark:bg-purple-400 dark:text-purple-950",
       PRODUCT_CATEGORY: "bg-green-500 text-white dark:bg-green-400 dark:text-green-950",
-      PRODUCT_SUBCATEGORY: "bg-teal-500 text-white dark:bg-teal-400 dark:text-teal-950",
       PRODUCT: "bg-orange-500 text-white dark:bg-orange-400 dark:text-orange-950",
       METADATA: "bg-gray-500 text-white dark:bg-gray-400 dark:text-gray-950",
     },
@@ -38,8 +37,6 @@ export default function ConditionPill({
         return "Manufacturer";
       case "PRODUCT_CATEGORY":
         return "Category";
-      case "PRODUCT_SUBCATEGORY":
-        return "Subcategory";
       case "PRODUCT":
         return "Product";
       case "METADATA":

@@ -1,9 +1,10 @@
-import { BadgeCheck, Eraser, Pencil, Plus } from "lucide-react";
+import { BadgeCheck, BellRing, Eraser, Pencil, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import type z from "zod";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { cn } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
@@ -18,7 +19,7 @@ type TForm = Pick<z.infer<typeof updateAssetQuestionSchema>, "assetAlertCriteria
 export default function AlertTriggersInput() {
   const { setData, openSidepanel } = useAssetQuestionDetailFormContext();
 
-  const { watch, setValue } = useFormContext<TForm>();
+  const { watch, setValue, control } = useFormContext<TForm>();
 
   const createAlertTriggers = watch("assetAlertCriteria.createMany.data");
   const updateAlertTriggers = watch("assetAlertCriteria.updateMany");
@@ -81,31 +82,44 @@ export default function AlertTriggersInput() {
   };
 
   return (
-    <div>
-      {/* TODO: Add help sidebar. */}
-      <h3 className="inline-flex items-center gap-2 text-base font-medium">
-        Alert Triggers
-        <Button size="sm" variant="outline" type="button" onClick={handleAddAlertTrigger}>
-          <Plus /> Add Trigger
-        </Button>
-      </h3>
-      <div className="divide-y-border divide-y">
-        {alertTriggers.map(({ idx, key, action, data }) => (
-          <AlertTrigger
-            key={key}
-            idx={idx}
-            action={action}
-            className="py-1"
-            onRemove={
-              action === "create"
-                ? () => handleCancelAddAlertTrigger(idx)
-                : () =>
-                    handleDeleteAlertTrigger((data as z.infer<typeof updateAssetQuestionSchema>).id)
-            }
-          />
-        ))}
-      </div>
-    </div>
+    <FormField
+      control={control}
+      name="assetAlertCriteria"
+      render={() => {
+        return (
+          <FormItem className="gap-0">
+            <FormLabel className="inline-flex items-center gap-2 text-base font-medium">
+              <BellRing className="size-4" />
+              Alert Triggers
+              <Button size="sm" variant="outline" type="button" onClick={handleAddAlertTrigger}>
+                <Plus /> Add Trigger
+              </Button>
+            </FormLabel>
+            <FormMessage />
+            <FormControl>
+              <div className="divide-y-border divide-y">
+                {alertTriggers.map(({ idx, key, action, data }) => (
+                  <AlertTrigger
+                    key={key}
+                    idx={idx}
+                    action={action}
+                    className="py-1"
+                    onRemove={
+                      action === "create"
+                        ? () => handleCancelAddAlertTrigger(idx)
+                        : () =>
+                            handleDeleteAlertTrigger(
+                              (data as z.infer<typeof updateAssetQuestionSchema>).id
+                            )
+                    }
+                  />
+                ))}
+              </div>
+            </FormControl>
+          </FormItem>
+        );
+      }}
+    />
   );
 }
 

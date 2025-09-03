@@ -1,9 +1,11 @@
-import { Eraser, ExternalLink, Pencil, Plus } from "lucide-react";
+import { Eraser, ExternalLink, FolderCog, Pencil, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { Link } from "react-router";
 import type z from "zod";
+import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
 import FileConfigurator from "../sidepanel-inserts/file-configurator";
@@ -12,7 +14,7 @@ type TForm = Pick<z.infer<typeof updateAssetQuestionSchema>, "files">;
 
 export default function FilesInput() {
   const { setData, openSidepanel } = useAssetQuestionDetailFormContext();
-  const { watch, setValue } = useFormContext<TForm>();
+  const { watch, setValue, control } = useFormContext<TForm>();
 
   const createFiles = watch("files.createMany.data");
   const updateFiles = watch("files.updateMany");
@@ -74,48 +76,66 @@ export default function FilesInput() {
   };
 
   return (
-    <div>
-      <h3 className="mb-2 inline-flex items-center gap-2 text-base font-medium">
-        Files
-        <Button size="sm" variant="outline" type="button" onClick={handleAddFile}>
-          <Plus /> Add File
-        </Button>
-      </h3>
-      <div className="divide-y-border divide-y">
-        {files.map(({ idx, key, action, data }) => (
-          <div className="flex flex-row items-center gap-2 py-1" key={key}>
-            <Button
-              size="iconSm"
-              variant="outline"
-              type="button"
-              onClick={
-                action === "create"
-                  ? () => handleCancelAddFile(idx)
-                  : () => handleDeleteFile((data as z.infer<typeof updateAssetQuestionSchema>).id)
-              }
-            >
-              <Eraser className="text-destructive" />
-            </Button>
-            <Button
-              size="iconSm"
-              variant="outline"
-              type="button"
-              onClick={() => {
-                setConfiguratorData(idx, action);
-                openSidepanel(FileConfigurator.Id);
-              }}
-            >
-              <Pencil />
-            </Button>
-            <Button variant="link" asChild disabled={!data.url}>
-              <Link to={data.url ?? "#"} target="_blank">
-                {data.name || "Untitled"}
-                <ExternalLink />
-              </Link>
-            </Button>
-          </div>
-        ))}
-      </div>
-    </div>
+    <FormField
+      control={control}
+      name="files"
+      render={() => {
+        return (
+          <FormItem className="gap-0">
+            <FormLabel className="inline-flex items-center gap-2 text-base font-medium">
+              <FolderCog className="size-4" />
+              Files
+              <HelpPopover>
+                <p>Files can be added here and shown to inspectors, usually for reference.</p>
+              </HelpPopover>
+              <Button size="sm" variant="outline" type="button" onClick={handleAddFile}>
+                <Plus /> Add File
+              </Button>
+            </FormLabel>
+            <FormMessage />
+            <FormControl>
+              <div className="divide-y-border divide-y">
+                {files.map(({ idx, key, action, data }) => (
+                  <div className="flex flex-row items-center gap-2 py-1" key={key}>
+                    <Button
+                      size="iconSm"
+                      variant="outline"
+                      type="button"
+                      onClick={
+                        action === "create"
+                          ? () => handleCancelAddFile(idx)
+                          : () =>
+                              handleDeleteFile(
+                                (data as z.infer<typeof updateAssetQuestionSchema>).id
+                              )
+                      }
+                    >
+                      <Eraser className="text-destructive" />
+                    </Button>
+                    <Button
+                      size="iconSm"
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        setConfiguratorData(idx, action);
+                        openSidepanel(FileConfigurator.Id);
+                      }}
+                    >
+                      <Pencil />
+                    </Button>
+                    <Button variant="link" asChild disabled={!data.url}>
+                      <Link to={data.url ?? "#"} target="_blank">
+                        {data.name || "Untitled"}
+                        <ExternalLink />
+                      </Link>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </FormControl>
+          </FormItem>
+        );
+      }}
+    />
   );
 }

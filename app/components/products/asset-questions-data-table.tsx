@@ -8,33 +8,28 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { isAfter } from "date-fns";
-import {
-  Calendar,
-  Check,
-  Copy,
-  Hash,
-  Image,
-  MoreHorizontal,
-  Pencil,
-  Text,
-  TextCursorInput,
-  Trash,
-  X,
-} from "lucide-react";
+import { Copy, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type z from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import ConditionPill from "~/components/assets/condition-pill";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
-import { ASSET_QUESTION_TONES } from "~/lib/constants";
-import type { AssetQuestion, ProductCategory } from "~/lib/models";
+import type {
+  AssetQuestion,
+  AssetQuestionResponseType,
+  ProductCategory,
+  ResultsPage,
+} from "~/lib/models";
 import { AssetQuestionTypes } from "~/lib/models";
 import type { createAssetQuestionSchema } from "~/lib/schema";
-import { cn } from "~/lib/utils";
+import { buildPath } from "~/lib/urls";
 import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
 import EditAssetQuestionButton from "../assets/asset-question-details-form/edit-asset-question-button";
@@ -42,20 +37,22 @@ import ConfirmationDialog from "../confirmation-dialog";
 import SubmittingCheckbox from "../submitting-checkbox";
 import SubmittingSelect from "../submitting-select";
 import SubmittingTextarea from "../submitting-textarea";
+import QuestionResponseTypeDisplay from "./question-response-type-display";
 
 interface AssetQuestionsDataTableProps {
   questions: AssetQuestion[];
-  categories: ProductCategory[];
   readOnly?: boolean;
+  viewContext?: ViewContext;
 }
 
 export default function AssetQuestionsDataTable({
   questions,
-  categories,
   readOnly = false,
+  viewContext,
 }: AssetQuestionsDataTableProps) {
   const editQuestion = useOpenData<AssetQuestion>();
   const { labels, prefetchLabels, isLoading, getLabel } = useConditionLabels();
+  const { fetchOrThrow } = useAuthenticatedFetch();
   const { submitJson: submitDelete } = useModalFetcher();
   const { submitJson: submitDuplicateQuestion } = useModalFetcher();
 
@@ -85,9 +82,22 @@ export default function AssetQuestionsDataTable({
     });
   }, [questions]);
 
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
+    queryKey: ["product-categories"],
+    queryFn: () =>
+      fetchOrThrow(
+        buildPath("/product-categories", {
+          limit: 10000,
+          order: { name: "asc" },
+        })
+      )
+        .then((r) => r.json() as Promise<ResultsPage<ProductCategory>>)
+        .then((r) => r.results),
+  });
+
   // Prepare category filter options
   const categoryFilterOptions = useMemo(() => {
-    return categories
+    return (categories ?? [])
       .map((category) => ({
         label: `${category.shortName ? `${category.shortName} - ` : ""}${category.name}`,
         id: category.id,
@@ -103,7 +113,7 @@ export default function AssetQuestionsDataTable({
       })
       .map(({ label, id }) => ({
         label,
-        value: id,
+        value: `{category}:${id}`,
       }));
   }, [categories]);
 
@@ -145,6 +155,7 @@ export default function AssetQuestionsDataTable({
               valueKey="type"
               options={typeOptions}
               className="w-[160px]"
+              viewContext={viewContext}
             />
           );
         },
@@ -163,6 +174,7 @@ export default function AssetQuestionsDataTable({
               path={getResourcePath(question)}
               checkedKey="required"
               className="block"
+              viewContext={viewContext}
             />
           );
         },
@@ -184,6 +196,7 @@ export default function AssetQuestionsDataTable({
               isEditing={editingPromptId === question.id}
               onEditingChange={(editing) => setEditingPromptId(editing ? question.id : null)}
               className="w-full"
+              viewContext={viewContext}
             />
           );
         },
@@ -193,57 +206,9 @@ export default function AssetQuestionsDataTable({
         id: "answer type",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue, row }) => {
-          const valueType = getValue() as string;
+          const valueType = getValue() as AssetQuestionResponseType;
           const tone = row.original.tone;
-          const isNegativeTone = tone === ASSET_QUESTION_TONES.NEGATIVE;
-          const isPositiveTone = tone === ASSET_QUESTION_TONES.POSITIVE;
-
-          return valueType === "BINARY" || valueType === "INDETERMINATE_BINARY" ? (
-            <span className="flex items-center gap-1 text-xs">
-              <span
-                className={cn("inline-flex items-end gap-0.5", {
-                  "text-primary": isPositiveTone,
-                  "text-destructive": isNegativeTone,
-                })}
-              >
-                {isPositiveTone && <Check className="inline-block size-3.5" />}
-                {isNegativeTone && <X className="inline-block size-3.5" />}
-                Yes
-              </span>
-              <span className="text-muted-foreground">/</span>
-              <span
-                className={cn("inline-flex items-end gap-0.5", {
-                  "text-primary": isNegativeTone,
-                  "text-destructive": isPositiveTone,
-                })}
-              >
-                {isNegativeTone && <Check className="inline-block size-3.5" />}
-                {isPositiveTone && <X className="inline-block size-3.5" />}
-                No
-              </span>
-              {valueType === "INDETERMINATE_BINARY" && (
-                <>
-                  <span className="text-muted-foreground">/</span>
-                  <span className="text-muted-foreground shrink-0">N/A</span>
-                </>
-              )}
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 text-xs">
-              {valueType === "DATE" ? (
-                <Calendar className="inline-block size-3.5" />
-              ) : valueType === "TEXT" ? (
-                <TextCursorInput className="inline-block size-3.5" />
-              ) : valueType === "TEXTAREA" ? (
-                <Text className="inline-block size-3.5" />
-              ) : valueType === "NUMBER" ? (
-                <Hash className="inline-block size-3.5" />
-              ) : valueType === "IMAGE" ? (
-                <Image className="inline-block size-3.5" />
-              ) : null}
-              <span className="capitalize">{valueType.replace("_", " ").toLowerCase()}</span>
-            </span>
-          );
+          return <QuestionResponseTypeDisplay valueType={valueType} tone={tone} />;
         },
       },
       {
@@ -251,17 +216,28 @@ export default function AssetQuestionsDataTable({
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         filterFn: (row, _columnId, filterValue) => {
           const conditions = row.original.conditions || [];
-          const selectedCategoryIds = filterValue as string[];
+          const filterValuesWithKey = (filterValue as string[]).map((valueAndKey) => {
+            const colonIdx = valueAndKey.indexOf(":");
+            return {
+              key: valueAndKey.slice(1, colonIdx - 1),
+              value: valueAndKey.slice(colonIdx + 1),
+            };
+          });
 
-          if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+          if (!filterValuesWithKey || filterValuesWithKey.length === 0) {
             return true;
           }
 
           // Check if any condition has PRODUCT_CATEGORY type with a value matching selected categories
-          return conditions.some(
-            (condition) =>
-              condition.conditionType === "PRODUCT_CATEGORY" &&
-              condition.value.some((value) => selectedCategoryIds.includes(value))
+          return conditions.some((condition) =>
+            condition.value.some((value) =>
+              filterValuesWithKey.some(({ key, value: filterValue }) => {
+                const matchesTypeKey =
+                  (condition.conditionType === "PRODUCT_CATEGORY" && key === "category") ||
+                  (condition.conditionType === "METADATA" && key === "metadata");
+                return matchesTypeKey && value === filterValue;
+              })
+            )
           );
         },
         sortingFn: (rowA, rowB) => {
@@ -445,6 +421,7 @@ export default function AssetQuestionsDataTable({
                     submitDuplicateQuestion(payload as any, {
                       method: "post",
                       path: getResourcePath(),
+                      viewContext,
                     });
                   }}
                 >
@@ -464,6 +441,7 @@ export default function AssetQuestionsDataTable({
                           {
                             method: "delete",
                             path: getResourcePath(question),
+                            viewContext,
                           }
                         );
                       };
@@ -504,13 +482,50 @@ export default function AssetQuestionsDataTable({
           },
         }}
         getRowId={(row) => row.id}
-        actions={readOnly ? [] : [<EditAssetQuestionButton key="add" />]}
+        actions={readOnly ? [] : [<EditAssetQuestionButton key="add" viewContext={viewContext} />]}
         filters={({ table }) => [
           {
             column: table.getColumn("conditions"),
             title: "Category",
             options: categoryFilterOptions,
             multiple: true,
+            loading: categoriesLoading,
+            key: "category",
+          },
+          {
+            column: table.getColumn("type"),
+            title: "Type",
+            options: [
+              {
+                value: "SETUP",
+                label: "Setup",
+              },
+              {
+                value: "SETUP_AND_INSPECTION",
+                label: "Setup and Inspection",
+              },
+              {
+                value: "INSPECTION",
+                label: "Inspection",
+              },
+            ],
+          },
+          {
+            column: table.getColumn("conditions"),
+            title: "Metadata",
+            options: sortedQuestions
+              .flatMap(
+                (q) =>
+                  q.conditions
+                    ?.filter((c) => c.conditionType === "METADATA")
+                    .flatMap((c) => c.value) ?? []
+              )
+              .map((value) => ({
+                value: `{metadata}:${value}`,
+                label: value.split(":").join(" = "),
+              })),
+            multiple: true,
+            key: "metadata",
           },
         ]}
       />
@@ -534,6 +549,7 @@ export default function AssetQuestionsDataTable({
         trigger={null}
         open={editQuestion.open}
         onOpenChange={editQuestion.setOpen}
+        viewContext={viewContext}
       />
     </>
   );

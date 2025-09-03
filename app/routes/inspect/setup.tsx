@@ -288,6 +288,7 @@ export default function InspectSetup({
                                 // TODO: Not sure if questions should be able to be updated after setup.
                                 disabled={isSetup || !question}
                                 tone={question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL}
+                                options={question?.selectOptions ?? undefined}
                               />
                             </FormControl>
                             <FormMessage />

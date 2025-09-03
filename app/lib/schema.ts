@@ -30,6 +30,14 @@ export const addressSchema = z.object({
   country: z.nullable(z.string().nonempty()),
 });
 
+export const createRegulatoryCodeSchema = z.object({
+  active: z.boolean().default(true),
+  codeIdentifier: z.string(),
+  title: z.string(),
+  section: z.string().optional(),
+  governingBody: z.string(),
+});
+
 export const optionalConnectSchema = z
   .object({
     connect: z.object({
@@ -423,7 +431,7 @@ export const updateAssetAlertCriterionSchema = createAssetAlertCriterionSchema
 export const createConsumableConfigSchema = z.object({
   consumableProduct: z.object({
     connect: z.object({
-      id: z.string(),
+      id: z.string().nonempty(),
     }),
   }),
   mappingType: z.enum(["EXPIRATION_DATE"]),
@@ -439,45 +447,86 @@ export const updateAssetQuestionConditionSchema = createAssetQuestionConditionSc
   id: z.string(),
 });
 
-export const baseCreateAssetQuestionSchema = z.object({
-  legacyQuestionId: z.string().nullable().optional(),
-  active: z.boolean().default(true),
-  type: z.enum(AssetQuestionTypes),
-  required: z.boolean().default(false),
-  order: z.coerce.number<number>().optional(),
-  prompt: z.string().nonempty(),
-  valueType: z.enum(AssetQuestionResponseTypes),
-  tone: z.string().optional(),
-  assetAlertCriteria: z
-    .object({
-      createMany: z.object({
-        data: z.array(createAssetAlertCriterionSchema),
-      }),
-    })
-    .partial()
-    .optional(),
-  consumableConfig: z
-    .object({
-      create: createConsumableConfigSchema,
-    })
-    .partial()
-    .optional(),
-  conditions: z
-    .object({
-      createMany: z.object({
-        data: z.array(createAssetQuestionConditionSchema),
-      }),
-    })
-    .partial()
-    .optional(),
-  files: z
-    .object({
-      createMany: z.object({
-        data: z.array(createFileSchema),
-      }),
-    })
-    .optional(),
+export const createSetAssetMetadataConfigSchema = z.object({
+  metadata: z.array(
+    z
+      .object({
+        key: z.string().nonempty(),
+        type: z.enum(["DYNAMIC", "STATIC"]),
+        value: z.string().optional(),
+      })
+      .refine((data) => (data.type === "STATIC" ? !!data.value && data.value !== "" : true), {
+        message: "Value is required for setting static metadata",
+      })
+  ),
 });
+
+export const baseCreateAssetQuestionSchema = z
+  .object({
+    legacyQuestionId: z.string().nullable().optional(),
+    active: z.boolean().default(true),
+    type: z.enum(AssetQuestionTypes),
+    required: z.boolean().default(false),
+    order: z.coerce.number<number>().optional(),
+    prompt: z.string().nonempty(),
+    valueType: z.enum(AssetQuestionResponseTypes),
+    selectOptions: z
+      .array(
+        z.object({
+          value: z.string(),
+          order: z.number().optional(),
+          label: z.string().optional(),
+        })
+      )
+      .optional(),
+    tone: z.string().optional(),
+    assetAlertCriteria: z
+      .object({
+        createMany: z.object({
+          data: z.array(createAssetAlertCriterionSchema),
+        }),
+      })
+      .partial()
+      .optional(),
+    consumableConfig: z
+      .object({
+        create: createConsumableConfigSchema,
+      })
+      .partial()
+      .optional(),
+    conditions: z
+      .object({
+        createMany: z.object({
+          data: z.array(createAssetQuestionConditionSchema),
+        }),
+      })
+      .partial()
+      .optional(),
+    files: z
+      .object({
+        createMany: z.object({
+          data: z.array(createFileSchema),
+        }),
+      })
+      .optional(),
+    setAssetMetadataConfig: z
+      .object({
+        create: createSetAssetMetadataConfigSchema,
+      })
+      .optional(),
+    regulatoryCodes: z
+      .object({
+        create: z.array(createRegulatoryCodeSchema),
+      })
+      .optional(),
+  })
+  .refine(
+    (data) =>
+      data.valueType === "SELECT" ? !!data.selectOptions && data.selectOptions.length > 0 : true,
+    {
+      message: "Select options are required for select questions",
+    }
+  );
 
 export const createAssetQuestionSchema = baseCreateAssetQuestionSchema.extend({
   variants: z
@@ -552,6 +601,26 @@ export const updateAssetQuestionSchema = baseCreateAssetQuestionSchema.partial()
         z.object({ where: z.object({ id: z.string() }), data: updateFileSchema })
       ),
       deleteMany: z.array(z.object({ id: z.string() })),
+    })
+    .partial()
+    .optional(),
+  regulatoryCodes: z
+    .object({
+      create: z.array(createRegulatoryCodeSchema),
+      update: z.array(
+        z.object({
+          where: z.object({ id: z.string() }),
+          data: createRegulatoryCodeSchema.partial(),
+        })
+      ),
+      delete: z.array(z.object({ id: z.string() })),
+    })
+    .optional(),
+  setAssetMetadataConfig: z
+    .object({
+      create: createSetAssetMetadataConfigSchema,
+      update: createSetAssetMetadataConfigSchema.partial(),
+      delete: z.boolean().default(false),
     })
     .partial()
     .optional(),

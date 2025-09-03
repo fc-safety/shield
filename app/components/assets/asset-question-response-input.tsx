@@ -10,6 +10,7 @@ import { buildPath } from "~/lib/urls";
 import { cn, formatDateAsTimestamp, formatTimestampAsDate } from "~/lib/utils";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import PreviewInspectionImages from "./preview-inspection-images";
 
@@ -26,6 +27,7 @@ interface AssetQuestionResponseTypeInputProps<T extends AssetQuestionResponseTyp
   onBlur: () => void;
   disabled?: boolean;
   tone?: string;
+  options?: { value: string; label?: string }[];
 }
 
 export default function AssetQuestionResponseTypeInput<T extends AssetQuestionResponseType>({
@@ -35,6 +37,7 @@ export default function AssetQuestionResponseTypeInput<T extends AssetQuestionRe
   onBlur,
   disabled = false,
   tone,
+  options,
 }: AssetQuestionResponseTypeInputProps<T>) {
   return valueType === "BINARY" || valueType === "INDETERMINATE_BINARY" ? (
     <ToggleGroup
@@ -92,6 +95,23 @@ export default function AssetQuestionResponseTypeInput<T extends AssetQuestionRe
       onValueChange={(v) => onValueChange(v as TValue<T>)}
       disabled={disabled}
     />
+  ) : valueType === "SELECT" ? (
+    <Select
+      value={value as string}
+      onValueChange={(v) => onValueChange(v as TValue<T>)}
+      disabled={disabled}
+    >
+      <SelectTrigger onBlur={onBlur}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options?.map((option) => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label || option.value}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   ) : (
     <Input
       value={value as string | number}

@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2 } from "lucide-react";
+import { Loader2, PanelRightClose } from "lucide-react";
+import { useMemo } from "react";
 import { useMediaQuery } from "usehooks-ts";
+import { Button } from "~/components/ui/button";
 import { Drawer, DrawerContent } from "~/components/ui/drawer";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { cn } from "~/lib/utils";
@@ -15,22 +17,35 @@ export default function FormSidepanel({ minWidth = "768px" }: { minWidth?: strin
 
   const { sidepanelId, closeSidepanel } = useAssetQuestionDetailFormContext();
 
+  const sidePanel = useMemo(() => {
+    return <FormSidepanelContent sidepanelId={sidepanelId} />;
+  }, [sidepanelId]);
+
   if (isDesktop) {
     return (
       <AnimatePresence>
         {sidepanelId && (
           <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: "22rem" }}
-            exit={{ width: 0 }}
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: "auto", opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
             transition={{
               duration: 0.3,
               ease: "easeInOut",
               type: "tween",
             }}
-            className="border-border shrink-0 overflow-hidden border-l p-4"
+            className="border-border relative shrink-0 border-l"
           >
-            <FormSidepanelContent />
+            <Button
+              variant="ghost"
+              size="iconSm"
+              type="button"
+              className="absolute top-0 -left-10"
+              onClick={closeSidepanel}
+            >
+              <PanelRightClose />
+            </Button>
+            <div className="h-full w-[22rem] px-4 pb-4">{sidePanel}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -45,18 +60,14 @@ export default function FormSidepanel({ minWidth = "768px" }: { minWidth?: strin
             root: "h-[calc(100vh-5rem)]",
           }}
         >
-          <div className="w-full px-4">
-            <FormSidepanelContent />
-          </div>
+          <div className="w-full px-4">{sidePanel}</div>
         </ScrollArea>
       </DrawerContent>
     </Drawer>
   );
 }
 
-function FormSidepanelContent() {
-  const { sidepanelId } = useAssetQuestionDetailFormContext();
-
+function FormSidepanelContent({ sidepanelId }: { sidepanelId: string | null }) {
   switch (sidepanelId) {
     case AutoSetupSupplyConfigurator.Id:
       return <AutoSetupSupplyConfigurator />;

@@ -403,6 +403,7 @@ function InspectionPage({
                               onBlur={onBlur}
                               valueType={question?.valueType ?? "BINARY"}
                               tone={question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL}
+                              options={question?.selectOptions ?? undefined}
                             />
                           </FormControl>
                           <FormMessage />

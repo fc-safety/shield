@@ -4,7 +4,7 @@ import { requireUserSession } from "~/.server/user-sesssion";
 import AssetQuestionsDataTable from "~/components/products/asset-questions-data-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { can, isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
+import { can, isGlobalAdmin, isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -28,8 +28,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }
 
   // Fetch all products and product categories to get their questions
-  const [questionsResponse, categoriesResponse] = await Promise.all([
-    api.assetQuestions.list(
+  const allQuestions = await api.assetQuestions
+    .list(
       request,
       {
         limit: 10000,
@@ -38,21 +38,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         },
       },
       { context: isGlobalAdmin ? "admin" : "user" }
-    ),
-    api.productCategories.list(request, { limit: 10000, order: { name: "asc" } }),
-  ]);
-
-  const allQuestions = questionsResponse.results;
+    )
+    .then((r) => r.results);
 
   return {
     questions: allQuestions,
-    categories: categoriesResponse.results,
   };
 };
 
 export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
   const { user } = useAuth();
+
   const canManageQuestions = can(user, "manage", "asset-questions");
+  const userIsGlobalAdmin = isGlobalAdmin(user);
+  const viewContext = userIsGlobalAdmin ? "admin" : "user";
 
   return (
     <Card>
@@ -68,8 +67,8 @@ export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
       <CardContent>
         <AssetQuestionsDataTable
           questions={loaderData.questions}
-          categories={loaderData.categories}
           readOnly={!canManageQuestions}
+          viewContext={viewContext}
         />
       </CardContent>
     </Card>
