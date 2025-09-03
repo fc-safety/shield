@@ -8,26 +8,23 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ProductCategory } from "~/lib/models";
-import {
-  createProductCategorySchema,
-  updateProductCategorySchema,
-} from "~/lib/schema";
+import { createProductCategorySchema, updateProductCategorySchema } from "~/lib/schema";
+import ActiveToggleFormInput from "../active-toggle-form-input";
 import IconSelector from "../icons/icon-selector";
 import LegacyIdField from "../legacy-id-field";
 
-type TForm = z.infer<
-  typeof createProductCategorySchema | typeof updateProductCategorySchema
->;
+type TForm = z.infer<typeof createProductCategorySchema | typeof updateProductCategorySchema>;
 interface ProductCategoryDetailsFormProps {
   productCategory?: ProductCategory;
   onSubmitted?: () => void;
+  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -43,13 +40,12 @@ const FORM_DEFAULTS = {
 export default function ProductCategoryDetailsForm({
   productCategory,
   onSubmitted,
+  viewContext,
 }: ProductCategoryDetailsFormProps) {
   const isNew = !productCategory;
 
   const form = useForm<TForm>({
-    resolver: zodResolver(
-      isNew ? createProductCategorySchema : updateProductCategorySchema
-    ),
+    resolver: zodResolver(isNew ? createProductCategorySchema : updateProductCategorySchema),
     values: productCategory
       ? {
           ...productCategory,
@@ -82,35 +78,15 @@ export default function ProductCategoryDetailsForm({
     submit(cleanedData, {
       path: "/api/proxy/product-categories",
       id: productCategory?.id,
+      viewContext,
     });
   };
 
   return (
     <FormProvider {...form}>
-      <form
-        className="space-y-4"
-        method="post"
-        onSubmit={form.handleSubmit(handleSubmit)}
-      >
+      <form className="space-y-4" method="post" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
-        <FormField
-          control={form.control}
-          name="active"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem className="flex flex-row items-center gap-2 space-y-0">
-              <FormControl>
-                <Switch
-                  checked={value}
-                  onCheckedChange={onChange}
-                  className="pt-0"
-                  onBlur={onBlur}
-                />
-              </FormControl>
-              <FormLabel>Active</FormLabel>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <ActiveToggleFormInput />
         <LegacyIdField
           form={form}
           fieldName="legacyCategoryId"
@@ -188,10 +164,7 @@ export default function ProductCategoryDetailsForm({
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

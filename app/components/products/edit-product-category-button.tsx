@@ -1,18 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
-import type { ProductCategory } from "~/lib/models";
 import { ResponsiveDialog } from "../responsive-dialog";
 import ProductCategoryDetailsForm from "./product-category-details-form";
 
-interface EditProductCategoryButtonProps {
-  productCategory?: ProductCategory;
+interface EditProductCategoryButtonProps
+  extends React.ComponentProps<typeof ProductCategoryDetailsForm> {
   trigger?: React.ReactNode;
 }
 
 export default function EditProductCategoryButton({
   productCategory,
   trigger,
+  ...passThroughProps
 }: EditProductCategoryButtonProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -35,6 +35,7 @@ export default function EditProductCategoryButton({
       <ProductCategoryDetailsForm
         onSubmitted={() => setOpen(false)}
         productCategory={productCategory}
+        {...passThroughProps}
       />
     </ResponsiveDialog>
   );

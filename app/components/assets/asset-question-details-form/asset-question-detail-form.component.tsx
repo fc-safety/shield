@@ -20,15 +20,16 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, Eraser, Loader2, Pencil, Wrench } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
+import ActiveToggleFormInput from "~/components/active-toggle-form-input";
 import HelpPopover from "~/components/help-popover";
 import LegacyIdField from "~/components/legacy-id-field";
-import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import QuestionResponseTypeDisplay from "~/components/products/question-response-type-display";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { RESPONSE_TYPE_LABELS } from "~/lib/asset-questions/constants";
 import { ASSET_QUESTION_TONE_OPTIONS, ASSET_QUESTION_TONES } from "~/lib/constants";
 import {
   AssetQuestionResponseTypes,
@@ -36,26 +37,28 @@ import {
   type AssetQuestion,
   type AssetQuestionResponseType,
   type ConsumableMappingType,
-  type Product,
-  type ResultsPage,
 } from "~/lib/models";
 import { createAssetQuestionSchema, updateAssetQuestionSchema } from "~/lib/schema";
-import { humanize } from "~/lib/utils";
+import { humanize, nullValuesToUndefined } from "~/lib/utils";
 import {
   AssetQuestionDetailFormProvider,
   useAssetQuestionDetailFormContext,
 } from "./asset-question-detail-form.context";
 import FormSidepanel from "./components/form-sidepanel";
 import AlertTriggersInput from "./components/inputs/alert-triggers-input";
+import AutomaticSupplySetupInput from "./components/inputs/automatic-supply-setup-input";
 import ConditionsInput from "./components/inputs/conditions-input";
 import FilesInput from "./components/inputs/files-input";
-import { AutoSetupSupplyConfigurator } from "./components/sidepanel-inserts/auto-setup-supply-configurator";
+import RegulatoryCodesInput from "./components/inputs/regulatory-codes-input";
+import SelectOptionsInput from "./components/inputs/select-options-input";
+import SetMetadataInput from "./components/inputs/set-metadata-input";
 
 type TForm = z.infer<typeof updateAssetQuestionSchema | typeof createAssetQuestionSchema>;
 
 export interface AssetQuestionDetailFormProps {
   assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
+  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -67,12 +70,12 @@ const FORM_DEFAULTS = {
 } satisfies TForm;
 
 export default function AssetQuestionDetailForm({
-  assetQuestion,
-  onSubmitted,
+  ...passthroughProps
 }: AssetQuestionDetailFormProps) {
+  const { assetQuestion } = passthroughProps;
   return (
     <AssetQuestionDetailFormProvider action={assetQuestion ? "update" : "create"}>
-      <AssetQuestionDetailsFormContent assetQuestion={assetQuestion} onSubmitted={onSubmitted} />
+      <AssetQuestionDetailsFormContent {...passthroughProps} />
     </AssetQuestionDetailFormProvider>
   );
 }
@@ -80,10 +83,10 @@ export default function AssetQuestionDetailForm({
 function AssetQuestionDetailsFormContent({
   assetQuestion,
   onSubmitted,
+  viewContext,
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
-  const { openSidepanel, closeSidepanel } = useAssetQuestionDetailFormContext();
-  const { fetchOrThrow } = useAuthenticatedFetch();
+  const { closeSidepanel } = useAssetQuestionDetailFormContext();
 
   const form = useForm({
     resolver: zodResolver(assetQuestion ? updateAssetQuestionSchema : createAssetQuestionSchema),
@@ -91,6 +94,7 @@ function AssetQuestionDetailsFormContent({
       ? {
           ...assetQuestion,
           order: assetQuestion.order ?? undefined,
+          selectOptions: assetQuestion.selectOptions ?? undefined,
           assetAlertCriteria: {
             updateMany: assetQuestion.assetAlertCriteria?.map((c) => ({
               where: { id: c.id },
@@ -125,6 +129,19 @@ function AssetQuestionDetailsFormContent({
               data: { ...f },
             })),
           },
+          regulatoryCodes: assetQuestion.regulatoryCodes
+            ? {
+                update: assetQuestion.regulatoryCodes.map((rc) => ({
+                  where: { id: rc.id },
+                  data: { ...nullValuesToUndefined(rc) },
+                })),
+              }
+            : undefined,
+          setAssetMetadataConfig: assetQuestion.setAssetMetadataConfig
+            ? {
+                update: assetQuestion.setAssetMetadataConfig,
+              }
+            : undefined,
         }
       : {
           ...FORM_DEFAULTS,
@@ -159,17 +176,6 @@ function AssetQuestionDetailsFormContent({
   const requiredValueType =
     autoSetupSupplyConfig?.mappingType &&
     consumableConfigMappingTypeToResponseType[autoSetupSupplyConfig.mappingType];
-
-  const autoSetupSupplyProductId = autoSetupSupplyConfig?.consumableProduct?.connect?.id;
-
-  const { data: autoSetupSupply, isLoading: isLoadingAutoSetupSupply } = useQuery({
-    queryKey: ["products", autoSetupSupplyProductId],
-    queryFn: ({ queryKey }) =>
-      fetchOrThrow(`/products/?id=${queryKey[1]}&include[parentProduct]=true`, { method: "GET" })
-        .then((r) => r.json() as Promise<ResultsPage<Product>>)
-        .then((products) => products.results.at(0)),
-    enabled: !!autoSetupSupplyProductId,
-  });
 
   useEffect(() => {
     if (requiredValueType) {
@@ -236,34 +242,21 @@ function AssetQuestionDetailsFormContent({
     submit(cleanedData, {
       path: `/api/proxy/asset-questions`,
       id: assetQuestion?.id,
+      viewContext,
     });
   };
 
   return (
     <FormProvider {...form}>
-      <form className="flex" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className="flex"
+        onSubmit={form.handleSubmit(handleSubmit, (e) => {
+          console.error("Form is invalid:", e);
+        })}
+      >
         <div className="flex-1 space-y-4 p-4">
           <Input type="hidden" {...form.register("id")} hidden />
-          <FormField
-            control={form.control}
-            name="active"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <FormItem>
-                <div className="flex flex-row items-center gap-2 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={value}
-                      onCheckedChange={onChange}
-                      className="pt-0"
-                      onBlur={onBlur}
-                    />
-                  </FormControl>
-                  <FormLabel>Active</FormLabel>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <ActiveToggleFormInput />
           <LegacyIdField
             form={form}
             fieldName="legacyQuestionId"
@@ -295,15 +288,25 @@ function AssetQuestionDetailsFormContent({
             name="required"
             render={({ field: { onChange, onBlur, value } }) => (
               <FormItem>
-                <FormLabel>Required</FormLabel>
-                <FormControl>
-                  <Switch
-                    checked={value}
-                    onCheckedChange={onChange}
-                    className="flex"
-                    onBlur={onBlur}
-                  />
-                </FormControl>
+                <div className="flex flex-row items-center gap-2 space-y-0">
+                  <FormControl>
+                    <Switch
+                      checked={value}
+                      onCheckedChange={onChange}
+                      className="pt-0"
+                      onBlur={onBlur}
+                    />
+                  </FormControl>
+                  <FormLabel>
+                    {value ? (
+                      <span>
+                        <span className="text-urgent font-bold">*</span> (Required)
+                      </span>
+                    ) : (
+                      "(Optional)"
+                    )}
+                  </FormLabel>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -335,7 +338,7 @@ function AssetQuestionDetailsFormContent({
                     <SelectContent side="top">
                       {AssetQuestionResponseTypes.map((type) => (
                         <SelectItem key={type} value={type}>
-                          {humanize(type)}
+                          <QuestionResponseTypeDisplay valueType={type} tone={tone} />
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -345,6 +348,22 @@ function AssetQuestionDetailsFormContent({
               </FormItem>
             )}
           />
+
+          {valueType && SELECT_SUPPORTED_VALUE_TYPES.includes(valueType) && (
+            <FormField
+              control={form.control}
+              name="selectOptions"
+              render={() => (
+                <FormItem>
+                  <FormLabel>{RESPONSE_TYPE_LABELS[valueType]} Options</FormLabel>
+                  <FormControl>
+                    <SelectOptionsInput />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           {valueType && TONE_SUPPORTED_VALUE_TYPES.includes(valueType) && (
             <FormField
@@ -382,124 +401,18 @@ function AssetQuestionDetailsFormContent({
             />
           )}
 
-          <FilesInput />
+          {type === "SETUP" && <AutomaticSupplySetupInput />}
+
+          {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && <AlertTriggersInput />}
 
           <ConditionsInput />
 
-          {type === "SETUP" && (
-            <div>
-              <h3 className="mb-2 inline-flex items-center gap-2 text-base font-medium">
-                Automatic Supply Setup
-                {autoSetupSupplyConfig && (
-                  <>
-                    <Button
-                      size="iconSm"
-                      variant="outline"
-                      type="button"
-                      onClick={() => openSidepanel(AutoSetupSupplyConfigurator.Id)}
-                    >
-                      <Pencil />
-                    </Button>
-                    <Button
-                      size="iconSm"
-                      variant="outline"
-                      type="button"
-                      onClick={() => {
-                        if (!autoSetupSupplyConfigInput) return;
-                        if (!assetQuestion?.consumableConfig) {
-                          form.setValue("consumableConfig", undefined, {
-                            shouldDirty: true,
-                          });
-                        } else {
-                          form.setValue(
-                            "consumableConfig",
-                            {
-                              delete: true,
-                            },
-                            {
-                              shouldDirty: true,
-                            }
-                          );
-                        }
-                        closeSidepanel();
-                      }}
-                    >
-                      <Eraser className="text-destructive" />
-                    </Button>
-                  </>
-                )}
-              </h3>
-              <div className="space-y-4">
-                {autoSetupSupplyConfig ? (
-                  <div className="text-sm">
-                    A{" "}
-                    <div className="border-border inline-block rounded-sm border px-1 py-0.5">
-                      {isLoadingAutoSetupSupply ? (
-                        <Loader2 className="size-3 animate-spin" />
-                      ) : autoSetupSupply ? (
-                        <div className="flex items-center gap-1">
-                          {autoSetupSupply.parentProduct?.name}
-                          <ChevronRight className="size-3" />
-                          {autoSetupSupply.name}
-                        </div>
-                      ) : (
-                        "unknown supply"
-                      )}
-                    </div>{" "}
-                    will be setup under the asset with the question response as the{" "}
-                    <div className="border-border inline-block rounded-sm border px-1 py-0.5">
-                      {autoSetupSupplyConfig.mappingType === "EXPIRATION_DATE"
-                        ? "expiration date"
-                        : "unknown"}
-                    </div>
-                    .
-                  </div>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    type="button"
-                    className="w-full"
-                    onClick={() => {
-                      form.setValue(
-                        "consumableConfig",
-                        assetQuestion?.consumableConfig
-                          ? {
-                              update: {
-                                consumableProduct: {
-                                  connect: {
-                                    id: assetQuestion.consumableConfig.consumableProductId,
-                                  },
-                                },
-                                mappingType: assetQuestion.consumableConfig.mappingType,
-                              },
-                            }
-                          : {
-                              create: {
-                                consumableProduct: {
-                                  connect: {
-                                    id: "",
-                                  },
-                                },
-                                mappingType: "EXPIRATION_DATE",
-                              },
-                            },
-                        {
-                          shouldDirty: true,
-                        }
-                      );
-                      openSidepanel(AutoSetupSupplyConfigurator.Id);
-                    }}
-                  >
-                    <Wrench />
-                    Configure
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
+          <FilesInput />
 
-          {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && <AlertTriggersInput />}
+          <RegulatoryCodesInput />
+
+          <SetMetadataInput />
+
           <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
             {isSubmitting ? "Saving..." : "Save"}
           </Button>
@@ -518,3 +431,5 @@ const consumableConfigMappingTypeToResponseType: Record<
 };
 
 const TONE_SUPPORTED_VALUE_TYPES: AssetQuestionResponseType[] = ["BINARY", "INDETERMINATE_BINARY"];
+
+const SELECT_SUPPORTED_VALUE_TYPES: AssetQuestionResponseType[] = ["SELECT"];

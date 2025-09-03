@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
-import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
+import { ChevronsUpDown, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { useImmer } from "use-immer";
 import type z from "zod";
 import { conditionTypeVariants } from "~/components/assets/condition-pill";
+import MetadataKeyCombobox from "~/components/metadata-key-combobox";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -40,7 +40,10 @@ import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-f
 
 type TForm = Pick<z.infer<typeof updateAssetQuestionSchema>, "conditions">;
 
-const fuse = new Fuse([] as { label: string; value: string }[], { keys: ["label"] });
+const fuse = new Fuse([] as { label: string; value: string }[], {
+  keys: ["searchString"],
+  threshold: 0.4,
+});
 
 export const ConditionConfigurator = () => {
   const { data: contextData } = useAssetQuestionDetailFormContext();
@@ -179,7 +182,7 @@ export const ConditionConfigurator = () => {
       </div>
     </div>
   ) : (
-    <Loader2 className="size-4 animate-spin" />
+    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
   );
 };
 
@@ -207,14 +210,15 @@ function MatchingValueInput({
     enabled: !!conditionType,
   });
 
-  const [newOrCustomValueOptions, setNewOrCustomValueOptions] = useImmer(
-    new Map<string, ValueOption>()
-  );
-
   const valueOptionGroups = useMemo(() => {
     let options = valueOptionsRaw ? [...valueOptionsRaw] : [];
 
-    options.unshift(...newOrCustomValueOptions.values());
+    options = options.sort((a, b) => {
+      if (a.groupLabel && b.groupLabel && a.groupLabel !== b.groupLabel) {
+        return a.groupLabel.localeCompare(b.groupLabel);
+      }
+      return a.label.localeCompare(b.label);
+    });
 
     if (options.length > 0 && optionsSearchQuery) {
       fuse.setCollection(options);
@@ -222,55 +226,31 @@ function MatchingValueInput({
     }
 
     return Object.values(
-      options
-        .sort((a, b) => {
-          if (a.groupLabel && b.groupLabel && a.groupLabel !== b.groupLabel) {
-            return a.groupLabel.localeCompare(b.groupLabel);
+      options.reduce(
+        (acc, o) => {
+          const groupLabel = o.groupLabel ?? "";
+          if (!acc[groupLabel]) {
+            acc[groupLabel] = {
+              label: groupLabel,
+              options: [],
+            };
           }
-          return a.label.localeCompare(b.label);
-        })
-        .reduce(
-          (acc, o) => {
-            const groupLabel = o.groupLabel ?? "";
-            if (!acc[groupLabel]) {
-              acc[groupLabel] = {
-                label: groupLabel,
-                options: [],
-              };
-            }
-            acc[groupLabel].options.push(o);
-            return acc;
-          },
-          {} as Record<string, ValueOptionGroup>
-        )
+          acc[groupLabel].options.push(o);
+          return acc;
+        },
+        {} as Record<string, ValueOptionGroup>
+      )
     );
-  }, [valueOptionsRaw, optionsSearchQuery, newOrCustomValueOptions]);
+  }, [valueOptionsRaw, optionsSearchQuery]);
 
   const selectedOptionLabel = useMemo(() => {
     if (!valueOptionsRaw) return undefined;
     return valueOptionsRaw.find((o) => o.value === value)?.label;
   }, [valueOptionsRaw, value]);
 
-  const addOption = useMemo<{ fn: () => void; label: React.ReactNode } | undefined>(() => {
-    if (conditionType === "METADATA" && optionsSearchQuery.length > 1) {
-      const fn = () => {
-        setNewOrCustomValueOptions((draft) => {
-          draft.set(optionsSearchQuery, { label: optionsSearchQuery, value: optionsSearchQuery });
-        });
-        onValueChange(optionsSearchQuery);
-        setOptionsSearchQuery("");
-        setIsOpen(false);
-      };
-      return {
-        fn,
-        label: (
-          <div>
-            Add <span className="font-semibold italic">{optionsSearchQuery}</span>
-          </div>
-        ),
-      };
-    }
-  }, [conditionType, optionsSearchQuery]);
+  if (conditionType === "METADATA") {
+    return <MetadataKeyCombobox value={value} onValueChange={onValueChange} onBlur={onBlur} />;
+  }
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen} modal>
@@ -298,14 +278,8 @@ function MatchingValueInput({
           />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
-            {(isLoading || addOption) && (
+            {isLoading && (
               <CommandGroup>
-                {addOption && (
-                  <CommandItem key="add-option" onSelect={addOption.fn} disabled={isLoading}>
-                    <Plus className="size-4" />
-                    {addOption.label}
-                  </CommandItem>
-                )}
                 {isLoading && (
                   <CommandItem key="loading" disabled>
                     <Loader2 className="size-4 animate-spin" />
@@ -340,6 +314,7 @@ function MatchingValueInput({
 interface ValueOption {
   label: string;
   value: string;
+  searchString?: string;
   groupLabel?: string;
 }
 
@@ -356,16 +331,15 @@ const getValueOptionsForType = async (
 
   switch (conditionType) {
     case "REGION":
-      options = [
-        {
-          label: "Nevada",
-          value: "NV",
-        },
-        {
-          label: "California",
-          value: "CA",
-        },
-      ];
+      options = await fetcher(`/asset-questions/region-options/states`)
+        .then((r) => r.json() as Promise<{ code: string; name: string }[]>)
+        .then((r) =>
+          r.map((s) => ({
+            label: s.name,
+            value: s.code,
+            searchString: `${s.name} ${s.code}`,
+          }))
+        );
       break;
     case "MANUFACTURER":
       options = await fetcher(`/manufacturers?limit=1000`)
@@ -374,6 +348,7 @@ const getValueOptionsForType = async (
           r.results.map((m) => ({
             label: m.name,
             value: m.id,
+            searchString: m.name,
           }))
         );
       break;
@@ -384,17 +359,7 @@ const getValueOptionsForType = async (
           r.results.map((pc) => ({
             label: pc.name,
             value: pc.id,
-          }))
-        );
-      break;
-    case "PRODUCT_SUBCATEGORY":
-      options = await fetcher(`/product-subcategories?limit=1000`)
-        .then((r) => r.json() as Promise<ResultsPage<any>>)
-        .then((r) =>
-          r.results.map((psc) => ({
-            label: psc.name,
-            value: psc.id,
-            groupLabel: psc.productCategory?.name ?? "Other",
+            searchString: [pc.name, pc.shortName].filter(Boolean).join(" "),
           }))
         );
       break;
@@ -405,6 +370,9 @@ const getValueOptionsForType = async (
           r.results.map((p) => ({
             label: p.name,
             value: p.id,
+            searchString: [p.name, p.productCategory?.name, p.productCategory?.shortName]
+              .filter(Boolean)
+              .join(" "),
             groupLabel: p.productCategory?.name ?? "Other",
           }))
         );
@@ -416,6 +384,7 @@ const getValueOptionsForType = async (
           r.map((key) => ({
             label: key,
             value: key,
+            searchString: key,
           }))
         );
       break;

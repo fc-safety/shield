@@ -1,5 +1,6 @@
 import { Pencil } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { cn } from "~/lib/utils";
 import { Textarea } from "./ui/textarea";
@@ -14,6 +15,7 @@ interface SubmittingTextareaProps {
   isEditing: boolean;
   onEditingChange: (editing: boolean) => void;
   displayClassName?: string;
+  viewContext?: ViewContext;
 }
 
 export default function SubmittingTextarea({
@@ -26,6 +28,7 @@ export default function SubmittingTextarea({
   isEditing,
   onEditingChange,
   displayClassName,
+  viewContext,
 }: SubmittingTextareaProps) {
   const [currentValue, setCurrentValue] = useState(() => value);
   const { submitJson: updateValue, isLoading } = useModalFetcher();
@@ -35,11 +38,11 @@ export default function SubmittingTextarea({
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       const textarea = textareaRef.current;
-      
+
       // Set height based on scroll height
       textarea.style.height = "auto";
       textarea.style.height = textarea.scrollHeight + "px";
-      
+
       // Focus and position cursor at the end
       textarea.focus();
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
@@ -54,6 +57,7 @@ export default function SubmittingTextarea({
         {
           method: "patch",
           path,
+          viewContext,
         }
       );
     }

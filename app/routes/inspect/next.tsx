@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { AlertCircle, Plus, RefreshCw } from "lucide-react";
 import { redirect } from "react-router";
@@ -6,24 +7,19 @@ import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
 import { getNextPointFromSession } from "~/.server/inspections";
-import {
-  getSession,
-  getSessionValue,
-  inspectionSessionStorage,
-} from "~/.server/sessions";
+import { getSession, getSessionValue, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
 import DisplayInspectionValue from "~/components/assets/display-inspection-value";
-import { NewSupplyRequestButton } from "~/components/assets/product-requests";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+  getSuppliesForProductQuery,
+  NewSupplyRequestButton,
+} from "~/components/assets/product-requests";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Skeleton } from "~/components/ui/skeleton";
 import VaultUploadInput from "~/components/vault-upload-input";
 import { useAuth } from "~/contexts/auth-context";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, Inspection } from "~/lib/models";
 import { can } from "~/lib/users";
@@ -45,28 +41,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const success = getSearchParam(request, "success");
   const showSuccessfulInspection = success !== null;
 
-  let activeSessionId: string | null | undefined = getSearchParam(
-    request,
-    "sessionId"
-  );
+  let activeSessionId: string | null | undefined = getSearchParam(request, "sessionId");
   const inspectionSession = await getSession(request, inspectionSessionStorage);
 
   if (activeSessionId) {
     inspectionSession.set("activeSession", activeSessionId);
     throw redirect(".", {
       headers: {
-        "Set-Cookie": await inspectionSessionStorage.commitSession(
-          inspectionSession
-        ),
+        "Set-Cookie": await inspectionSessionStorage.commitSession(inspectionSession),
       },
     });
   }
 
-  activeSessionId = await getSessionValue(
-    request,
-    inspectionSessionStorage,
-    "activeSession"
-  );
+  activeSessionId = await getSessionValue(request, inspectionSessionStorage, "activeSession");
 
   let inspection: Inspection | null = null;
   if (inspectionId) {
@@ -88,10 +75,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
     let processedProductImageUrl: string | null | undefined = null;
     if (nextAsset?.product.imageUrl) {
-      processedProductImageUrl = buildImageProxyUrl(
-        nextAsset.product.imageUrl,
-        ["rs:fit:160:160:1:1"]
-      );
+      processedProductImageUrl = buildImageProxyUrl(nextAsset.product.imageUrl, [
+        "rs:fit:160:160:1:1",
+      ]);
     }
 
     return {
@@ -125,6 +111,16 @@ export default function InspectNext({
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canCreateProductRequests = can(user, "create", "product-requests");
+  const { fetchOrThrow } = useAuthenticatedFetch();
+
+  const { queryKey: suppliesCountQueryKey, queryFn: suppliesCountQueryFn } =
+    getSuppliesForProductQuery(fetchOrThrow, inspection?.asset?.productId ?? "");
+  const { data: orderableSupplies, isLoading: suppliesCountLoading } = useQuery({
+    queryKey: suppliesCountQueryKey,
+    queryFn: suppliesCountQueryFn,
+    enabled: !!inspection?.asset?.productId,
+  });
+  const suppliesCount = orderableSupplies?.length ?? 0;
 
   const { submitJson } = useModalFetcher({
     onSubmitted: () => {
@@ -132,10 +128,7 @@ export default function InspectNext({
     },
   });
 
-  const handleAttachInspectionImage = (
-    alertId: string,
-    inspectionImageUrl: string
-  ) => {
+  const handleAttachInspectionImage = (alertId: string, inspectionImageUrl: string) => {
     submitJson(
       { inspectionImageUrl },
       {
@@ -145,13 +138,8 @@ export default function InspectNext({
   };
 
   return (
-    <div className="grid gap-4 w-full max-w-md self-center">
-      {session && (
-        <RouteProgressCard
-          activeSession={session}
-          asset={nextAsset ?? undefined}
-        />
-      )}
+    <div className="grid w-full max-w-md gap-4 self-center">
+      {session && <RouteProgressCard activeSession={session} asset={nextAsset ?? undefined} />}
       {showSuccessfulInspection && (
         <Card className="text-center">
           <CardHeader>
@@ -160,35 +148,31 @@ export default function InspectNext({
               Inspection successfully submitted!
             </div>
           </CardHeader>
-          <CardContent className="grid gap-4 place-items-center">
+          <CardContent className="grid place-items-center gap-4">
             {!!inspection?.alerts?.length && (
-              <div className="grid gap-4 place-items-center text-start max-w-md">
+              <div className="grid max-w-md place-items-center gap-4 text-start">
                 <Alert variant="warning">
                   <AlertCircle className="size-4" />
                   <AlertTitle>Alerts Triggered</AlertTitle>
                   <AlertDescription>
-                    Your inspection has triggered alerts that indicate that this
-                    asset may need attention.
+                    Your inspection has triggered alerts that indicate that this asset may need
+                    attention.
                   </AlertDescription>
                 </Alert>
-                <p className="text-xs text-center">
-                  To help in resolving these alerts, please upload a photo, when
-                  applicable, for each alert.
+                <p className="text-center text-xs">
+                  To help in resolving these alerts, please upload a photo, when applicable, for
+                  each alert.
                 </p>
-                <div className="grid gap-2 w-full">
+                <div className="grid w-full gap-2">
                   <h3 className="text-sm font-semibold">Alerts</h3>
                   {inspection.alerts.map((a) => (
-                    <div
-                      key={a.id}
-                      className="grid gap-2 text-xs border rounded-lg p-2"
-                    >
-                      <dl className="grid gap-y-1 gap-x-4 sm:gap-x-8 grid-cols-[auto_1fr]">
+                    <div key={a.id} className="grid gap-2 rounded-lg border p-2 text-xs">
+                      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 sm:gap-x-8">
                         {[
                           {
                             label: "Question:",
                             value:
-                              a.assetQuestionResponse?.assetQuestion?.prompt ??
-                              "Unknown Question",
+                              a.assetQuestionResponse?.assetQuestion?.prompt ?? "Unknown Question",
                           },
                           {
                             label: "Response:",
@@ -204,9 +188,7 @@ export default function InspectNext({
                           },
                         ].map(({ label, value }) => (
                           <Fragment key={String(label)}>
-                            <dt className="font-semibold text-muted-foreground text-xs">
-                              {label}
-                            </dt>
+                            <dt className="text-muted-foreground text-xs font-semibold">{label}</dt>
                             <dd className="text-xs">{value || <>&mdash;</>}</dd>
                           </Fragment>
                         ))}
@@ -218,12 +200,8 @@ export default function InspectNext({
                             "yyyy-MM-dd"
                           )}${ext ? `.${ext}` : ""}`
                         }
-                        renderAddButtonText={
-                          a.inspectionImageUrl ? "Replace Photo" : "Add Photo"
-                        }
-                        renderAddButtonIcon={
-                          a.inspectionImageUrl ? RefreshCw : Plus
-                        }
+                        renderAddButtonText={a.inspectionImageUrl ? "Replace Photo" : "Add Photo"}
+                        renderAddButtonIcon={a.inspectionImageUrl ? RefreshCw : Plus}
                         accept="image/*"
                         value={a.inspectionImageUrl ?? undefined}
                         onValueChange={(value) => {
@@ -233,26 +211,30 @@ export default function InspectNext({
                     </div>
                   ))}
                 </div>
-                <hr className="w-full mt-4" />
+                <hr className="mt-4 w-full" />
               </div>
             )}
-            {inspection?.asset && canCreateProductRequests && (
-              <div className="flex flex-col gap-2 items-center">
-                <p className="text-sm text-muted-foreground">
-                  Do you need to reorder supplies for this asset?
-                </p>
-                <NewSupplyRequestButton
-                  assetId={inspection.asset.id}
-                  parentProductId={inspection.asset.productId}
-                  productCategoryId={inspection.asset.product.productCategoryId}
-                  onSuccess={() => {
-                    toast.success(
-                      "Supply request submitted! An FC Safety representative will reach out to you shortly."
-                    );
-                  }}
-                />
-              </div>
-            )}
+            {inspection?.asset &&
+              canCreateProductRequests &&
+              (suppliesCountLoading ? (
+                <Skeleton className="h-8 w-full" />
+              ) : suppliesCount > 0 ? (
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-muted-foreground text-sm">
+                    Do you need to reorder supplies for this asset?
+                  </p>
+                  <NewSupplyRequestButton
+                    assetId={inspection.asset.id}
+                    parentProductId={inspection.asset.productId}
+                    productCategoryId={inspection.asset.product.productCategoryId}
+                    onSuccess={() => {
+                      toast.success(
+                        "Supply request submitted! An FC Safety representative will reach out to you shortly."
+                      );
+                    }}
+                  />
+                </div>
+              ) : null)}
           </CardContent>
         </Card>
       )}
@@ -261,15 +243,11 @@ export default function InspectNext({
           <CardHeader>
             <CardTitle>Go to Next Asset in Route</CardTitle>
             <CardDescription>
-              When you get to the next asset in the route, tap the NFC tag to
-              inspect.
+              When you get to the next asset in the route, tap the NFC tag to inspect.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <AssetCard
-              asset={nextAsset}
-              processedProductImageUrl={processedProductImageUrl}
-            />
+            <AssetCard asset={nextAsset} processedProductImageUrl={processedProductImageUrl} />
           </CardContent>
         </Card>
       ) : session ? (
@@ -279,22 +257,21 @@ export default function InspectNext({
               {session.status === "COMPLETE"
                 ? "Inspection Route Completed"
                 : session.status === "EXPIRED"
-                ? "Inspection Session Expired"
-                : session.status === "CANCELLED"
-                ? "Inspection Session Cancelled"
-                : "Something unexpected happened 🙊"}
+                  ? "Inspection Session Expired"
+                  : session.status === "CANCELLED"
+                    ? "Inspection Session Cancelled"
+                    : "Something unexpected happened 🙊"}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm grid gap-4">
+          <CardContent className="grid gap-4 text-sm">
             {session?.status === "COMPLETE" && (
               <p>
-                You have completed inspecting all assets in the route. Thank you
-                for your inspections!
+                You have completed inspecting all assets in the route. Thank you for your
+                inspections!
               </p>
             )}
-            <p className="text-xs text-muted-foreground">
-              To continue inspecting and/or begin a new route, please scan an
-              asset&apos;s NFC tag.
+            <p className="text-muted-foreground text-xs">
+              To continue inspecting and/or begin a new route, please scan an asset&apos;s NFC tag.
             </p>
           </CardContent>
         </Card>

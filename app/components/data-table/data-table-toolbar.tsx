@@ -10,17 +10,17 @@ import {
 } from "./data-table-faceted-filter";
 import { DataTableViewOptions } from "./data-table-view-options";
 
+type DataTableFilters<TData> = Array<
+  DataTableFacetedFilterProps<TData, unknown> & {
+    key?: string;
+  }
+>;
+
 export interface DataTableToolbarProps<TData> {
   table: Table<TData>;
-  filters?:
-    | DataTableFacetedFilterProps<TData, unknown>[]
-    | ((props: {
-        table: Table<TData>;
-      }) => DataTableFacetedFilterProps<TData, unknown>[]);
+  filters?: DataTableFilters<TData> | ((props: { table: Table<TData> }) => DataTableFilters<TData>);
   externalFilters?: React.ReactNode[];
-  actions?:
-    | React.ReactNode[]
-    | ((props: { table: Table<TData> }) => React.ReactNode[]);
+  actions?: React.ReactNode[] | ((props: { table: Table<TData> }) => React.ReactNode[]);
   searchPlaceholder?: string;
 }
 
@@ -34,21 +34,18 @@ export function DataTableToolbar<TData>({
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
-    <div className="flex items-center justify-between gap-x-4 gap-y-1 flex-wrap">
-      <div className="flex flex-1 items-center gap-2 flex-wrap">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      <div className="flex flex-1 flex-wrap items-center gap-2">
         <Input
           placeholder={searchPlaceholder}
           value={(table.getState().globalFilter as string) ?? ""}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
-          className="text-sm sm:text-base h-8 min-w-[100px] max-w-[150px] lg:min-w-[175px] lg:max-w-[250px] flex-1"
+          className="h-8 max-w-[150px] min-w-[100px] flex-1 text-sm sm:text-base lg:max-w-[250px] lg:min-w-[175px]"
         />
         {(typeof filters === "function" ? filters({ table }) : filters)
           .filter(({ column }) => !!column)
-          .map((filter, idx) => (
-            <DataTableFacetedFilter
-              key={filter.column?.id ?? idx}
-              {...filter}
-            />
+          .map(({ key, ...filter }, idx) => (
+            <DataTableFacetedFilter key={key ?? filter.column?.id ?? idx} {...filter} />
           ))}
         {isFiltered && (
           <Button

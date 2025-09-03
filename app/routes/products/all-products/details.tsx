@@ -69,7 +69,7 @@ export default function ProductDetails({
   const globalAdmin = isGlobalAdmin(user);
   const canUpdate =
     can(user, "update", "products") &&
-    (isGlobalAdmin(user) || product.client?.externalId === user.clientId);
+    (globalAdmin || product.client?.externalId === user.clientId);
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
@@ -89,6 +89,7 @@ export default function ProductDetails({
                       </Button>
                     }
                     canAssignOwnership={globalAdmin}
+                    viewContext={globalAdmin ? "admin" : "user"}
                   />
                 )}
               </div>
@@ -235,6 +236,7 @@ function SuppliesTable({
   readOnly?: boolean;
 }) {
   const { user } = useAuth();
+  const globalAdmin = isGlobalAdmin(user);
   const canCreate = can(user, "create", "products");
   const canUpdate = can(user, "update", "products");
   const canDelete = can(user, "delete", "products");
@@ -355,6 +357,7 @@ function SuppliesTable({
           product={editSupply.data}
           parentProduct={parentProduct}
           trigger={null}
+          viewContext={globalAdmin ? "admin" : "user"}
         />
       )}
       <ConfirmationDialog {...deleteAction} />

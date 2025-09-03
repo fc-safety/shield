@@ -19,9 +19,7 @@ import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
-  breadcrumb: ({
-    data,
-  }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
+  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
     label: data?.manufacturer.name || "Details",
   }),
 };
@@ -38,9 +36,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return api.manufacturers.get(request, id).then((manufacturer) => {
     return {
       manufacturer,
-      canEdit:
-        isGlobalAdmin(user) ||
-        manufacturer.client?.externalId === user.clientId,
+      canEdit: isGlobalAdmin(user) || manufacturer.client?.externalId === user.clientId,
       optimizedProductImageUrls: new Map(
         (manufacturer.products ?? [])
           .filter(
@@ -50,10 +46,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
               imageUrl: NonNullable<(typeof p)["imageUrl"]>;
             } => !!p.imageUrl
           )
-          .map((p) => [
-            p.id,
-            buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"]),
-          ])
+          .map((p) => [p.id, buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"])])
       ),
     };
   });
@@ -63,9 +56,10 @@ export default function ProductManufacturerDetails({
   loaderData: { manufacturer, optimizedProductImageUrls },
 }: Route.ComponentProps) {
   const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
   const canUpdate =
     can(user, "update", "manufacturers") &&
-    (isGlobalAdmin(user) || manufacturer.client?.externalId === user.clientId);
+    (userIsGlobalAdmin || manufacturer.client?.externalId === user.clientId);
 
   return (
     <div className="grid gap-4">
@@ -79,6 +73,7 @@ export default function ProductManufacturerDetails({
                 {canUpdate && (
                   <EditManufacturerButton
                     manufacturer={manufacturer}
+                    viewContext={userIsGlobalAdmin ? "admin" : "user"}
                     trigger={
                       <Button variant="secondary" size="icon" type="button">
                         <Pencil />
@@ -103,9 +98,7 @@ export default function ProductManufacturerDetails({
                 },
                 {
                   label: "Home URL",
-                  value: manufacturer.homeUrl && (
-                    <LinkPreview url={manufacturer.homeUrl} />
-                  ),
+                  value: manufacturer.homeUrl && <LinkPreview url={manufacturer.homeUrl} />,
                 },
                 {
                   label: "Owner",

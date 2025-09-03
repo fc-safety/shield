@@ -72,7 +72,7 @@ export default function FileConfigurator() {
       </div>
     </div>
   ) : (
-    <Loader2 className="size-4 animate-spin" />
+    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
   );
 }
 
@@ -126,7 +126,7 @@ function FileInput({
       </label>
       {value && (
         <Button type="button" variant="link" asChild>
-          <Link to={value} target="_blank">
+          <Link to={value} target="_blank" rel="noopener noreferrer">
             Preview
             <ExternalLink />
           </Link>

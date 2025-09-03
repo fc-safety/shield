@@ -9,13 +9,7 @@ import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can } from "~/lib/users";
 import { objectsEqual } from "~/lib/utils";
 import { ResponsiveCombobox } from "../responsive-combobox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import EditAssetButton from "./edit-asset-button";
 
 interface AssetComboboxProps {
@@ -55,10 +49,7 @@ export default function AssetCombobox({
   const createNew = useOpenData();
 
   const preloadAssets = useCallback(() => {
-    const queryFilterChanged = !objectsEqual(
-      optionQueryFilter ?? null,
-      prevQueryFilter.current
-    );
+    const queryFilterChanged = !objectsEqual(optionQueryFilter ?? null, prevQueryFilter.current);
     if (fetcher.state === "idle" && (queryFilterChanged || !fetcher.data)) {
       if (optionQueryFilter) {
         prevQueryFilter.current = optionQueryFilter;
@@ -104,9 +95,13 @@ export default function AssetCombobox({
         value={value}
         onValueChange={onValueChange}
         onBlur={onBlur}
-        displayValue={(value) =>
-          assets.find((asset) => asset.id === value)?.name ?? <>&mdash;</>
-        }
+        displayValue={(value) => {
+          const asset = assets.find((asset) => asset.id === value);
+          if (asset) {
+            return asset.name || asset.product?.name || <>&mdash;</>;
+          }
+          return <>&mdash;</>;
+        }}
         loading={fetcher.state === "loading"}
         options={options}
         onMouseOver={() => !disabled && preloadAssets()}
@@ -136,8 +131,7 @@ export default function AssetCombobox({
               <DialogTitle>Permission Required</DialogTitle>
             </DialogHeader>
             <DialogDescription>
-              You do not have permission to create assets. Please contact your
-              administrator.
+              You do not have permission to create assets. Please contact your administrator.
             </DialogDescription>
           </DialogContent>
         </Dialog>

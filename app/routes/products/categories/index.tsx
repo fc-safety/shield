@@ -14,8 +14,10 @@ import {
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { api } from "~/.server/api";
+import type { ViewContext } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator2 from "~/components/active-indicator-2";
+import ActiveToggle from "~/components/active-toggle";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -66,16 +68,9 @@ export default function ProductCategories({
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const hasCreatePermission = can(user, "create", "product-categories");
   const hasDeletePermission = can(user, "delete", "product-categories");
+  const hasUpdatePermission = can(user, "update", "product-categories");
 
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
-
-  // useCallback(
-  //   (productCategory: ProductCategory) =>
-  //     can(user, "delete", "product-categories") &&
-  //     (isGlobalAdmin(user) ||
-  //       productCategory.client?.externalId === user.clientId),
-  //   [user]
-  // )
 
   const [globalCategories, clientCategories, myCategories] = useMemo(() => {
     const globalCategories: ProductCategory[] = [];
@@ -106,6 +101,8 @@ export default function ProductCategories({
         productCategories={myCategories}
         canCreate={hasCreatePermission}
         canDelete={hasDeletePermission}
+        canUpdate={hasUpdatePermission}
+        viewContext="user"
       />
       <ProductCategoriesCard
         title="Global Product Categories"
@@ -114,6 +111,8 @@ export default function ProductCategories({
         productCategories={globalCategories}
         canCreate={hasCreatePermission && userIsGlobalAdmin}
         canDelete={hasDeletePermission && userIsGlobalAdmin}
+        canUpdate={hasUpdatePermission && userIsGlobalAdmin}
+        viewContext={userIsGlobalAdmin ? "admin" : "user"}
       />
       {isGlobalAdmin(user) && (
         <ProductCategoriesCard
@@ -123,6 +122,8 @@ export default function ProductCategories({
           productCategories={clientCategories}
           canCreate={false}
           canDelete={userIsGlobalAdmin}
+          canUpdate={hasUpdatePermission && userIsGlobalAdmin}
+          viewContext={userIsGlobalAdmin ? "admin" : "user"}
           showOwner
         />
       )}
@@ -137,16 +138,20 @@ function ProductCategoriesCard({
   description,
   canCreate,
   canDelete,
+  canUpdate,
   TitleIcon = Shapes,
   showOwner = false,
+  viewContext = "user",
 }: {
   productCategories: ProductCategory[];
   title: string;
   description?: string;
   canCreate: boolean;
   canDelete: boolean;
+  canUpdate: boolean;
   TitleIcon?: LucideIcon;
   showOwner?: boolean;
+  viewContext?: ViewContext;
 }) {
   const { submit: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete product category",
@@ -161,7 +166,19 @@ function ProductCategoriesCard({
       {
         accessorKey: "active",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
+        cell: ({ getValue, row }) => {
+          const category = row.original;
+          const isActive = getValue() as boolean;
+          return canUpdate ? (
+            <ActiveToggle
+              active={isActive}
+              path={getResourcePath(category)}
+              viewContext={viewContext}
+            />
+          ) : (
+            <ActiveIndicator2 active={isActive} />
+          );
+        },
       },
       {
         id: "icon",
@@ -287,7 +304,11 @@ function ProductCategoriesCard({
               },
             }}
             searchPlaceholder="Search categories..."
-            actions={canCreate ? [<EditProductCategoryButton key="add" />] : undefined}
+            actions={
+              canCreate
+                ? [<EditProductCategoryButton key="add" viewContext={viewContext} />]
+                : undefined
+            }
           />
         </CardContent>
       </Card>
@@ -421,3 +442,7 @@ function AnsiCategoriesCard({ ansiCategories }: { ansiCategories: AnsiCategory[]
     </>
   );
 }
+
+const getResourcePath = (category?: ProductCategory) => {
+  return `/api/proxy/product-categories/${category?.id ?? ""}`;
+};

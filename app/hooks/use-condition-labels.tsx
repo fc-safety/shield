@@ -49,10 +49,7 @@ export function useConditionLabels() {
       }
 
       // Return ID immediately for regions or unknown types
-      if (
-        type === "REGION" ||
-        !["PRODUCT", "MANUFACTURER", "PRODUCT_CATEGORY", "PRODUCT_SUBCATEGORY"].includes(type)
-      ) {
+      if (type === "REGION" || !["PRODUCT", "MANUFACTURER", "PRODUCT_CATEGORY"].includes(type)) {
         return setLabel(type, id);
       }
 
@@ -72,7 +69,6 @@ export function useConditionLabels() {
               path = `/manufacturers/${id}`;
               break;
             case "PRODUCT_CATEGORY":
-            case "PRODUCT_SUBCATEGORY":
               path = `/product-categories/${id}`;
               break;
             default:

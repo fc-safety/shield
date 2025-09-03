@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import type z from "zod";
 import ConsumableCombobox from "~/components/assets/consumable-combobox";
@@ -94,7 +93,7 @@ export const AutoSetupSupplyConfigurator = () => {
       />
     </div>
   ) : (
-    <Loader2 className="size-4 animate-spin" />
+    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
   );
 };
 

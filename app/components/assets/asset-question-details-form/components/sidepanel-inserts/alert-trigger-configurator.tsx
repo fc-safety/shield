@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, OctagonAlert } from "lucide-react";
+import { OctagonAlert } from "lucide-react";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import type z from "zod";
@@ -27,7 +27,7 @@ import { alertTriggerVariants } from "../../utils/styles";
 
 type TForm = Pick<
   z.infer<typeof updateAssetQuestionSchema>,
-  "assetAlertCriteria" | "tone" | "valueType"
+  "assetAlertCriteria" | "tone" | "valueType" | "selectOptions"
 >;
 
 export const AlertTriggerConfigurator = () => {
@@ -154,7 +154,7 @@ export const AlertTriggerConfigurator = () => {
       </div>
     </div>
   ) : (
-    <Loader2 className="size-4 animate-spin" />
+    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
   );
 };
 
@@ -172,6 +172,7 @@ function AlertTriggerInput({ onValueChange, onBlur, value, tone }: AlertTriggerI
   const { watch } = form;
 
   const valueType = watch("valueType");
+  const selectOptions = watch("selectOptions");
 
   const allowedOperators = useMemo(
     () => allowedOperatorsForValueType[valueType ?? "TEXT"],
@@ -255,6 +256,7 @@ function AlertTriggerInput({ onValueChange, onBlur, value, tone }: AlertTriggerI
           onBlur={onBlur}
           value={operand}
           tone={tone}
+          options={selectOptions}
         />
       )}
     </div>
@@ -312,6 +314,16 @@ const allowedOperatorsForValueType: Record<AssetQuestionResponseType, RuleOperat
   ],
   NUMBER: ["empty", "notEmpty", "equals", "not", "gt", "gte", "lt", "lte"],
   IMAGE: ["empty", "notEmpty"],
+  SELECT: [
+    "empty",
+    "notEmpty",
+    "equals",
+    "not",
+    "contains",
+    "notContains",
+    "startsWith",
+    "endsWith",
+  ],
 };
 
 const cleanOperand = (opr: string, opd: string | number | true | ResponseValueImage) => {

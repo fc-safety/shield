@@ -16,6 +16,7 @@ export default function AssetQuestionFilesDisplay({
           <Link
             to={f.url}
             target="_blank"
+            rel="noopener noreferrer"
             className="text-primary flex cursor-pointer items-center gap-1 text-sm font-light hover:underline"
           >
             {f.name}

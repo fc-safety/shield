@@ -68,9 +68,10 @@ export default function ProductCategoryDetails({
   },
 }: Route.ComponentProps) {
   const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
   const canUpdate =
     can(user, "update", "product-categories") &&
-    (isGlobalAdmin(user) || productCategory.client?.externalId === user.clientId);
+    (userIsGlobalAdmin || productCategory.client?.externalId === user.clientId);
 
   return (
     <div className="grid gap-4">
@@ -85,6 +86,7 @@ export default function ProductCategoryDetails({
                   {canUpdate && (
                     <EditProductCategoryButton
                       productCategory={productCategory}
+                      viewContext={userIsGlobalAdmin ? "admin" : "user"}
                       trigger={
                         <Button variant="secondary" size="icon" type="button">
                           <Pencil />
@@ -210,9 +212,10 @@ function ProductsCard({
 }) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "products");
+  const userIsGlobalAdmin = isGlobalAdmin(user);
   const getCanUpdate = (product: Omit<Product, "productCategory">) =>
     can(user, "update", "products") &&
-    (isGlobalAdmin(user) || product.client?.externalId === user.clientId);
+    (userIsGlobalAdmin || product.client?.externalId === user.clientId);
 
   return (
     <Card>
@@ -229,6 +232,7 @@ function ProductsCard({
             productCategory={productCategory}
             manufacturer={manufacturer}
             consumable={consumable}
+            viewContext={userIsGlobalAdmin ? "admin" : "user"}
           />
         )}
       </CardHeader>
@@ -262,6 +266,7 @@ function ProductsCard({
                           <Pencil />
                         </Button>
                       }
+                      viewContext={userIsGlobalAdmin ? "admin" : "user"}
                     />
                   ) : null
                 }

@@ -8,7 +8,6 @@ import {
   Form as FormProvider,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -16,13 +15,15 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
 import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
-import { can, isGlobalAdmin } from "~/lib/users";
+import { can } from "~/lib/users";
 import { slugify } from "~/lib/utils";
+import ActiveToggleFormInput from "../active-toggle-form-input";
 import ClientCombobox from "../clients/client-combobox";
 import { ImageUploadInput } from "../image-upload-input";
 import LegacyIdField from "../legacy-id-field";
@@ -41,6 +42,7 @@ export interface ProductDetailsFormProps {
   productCategory?: ProductCategory;
   manufacturer?: Manufacturer;
   consumable?: boolean;
+  viewContext?: ViewContext;
 }
 
 export default function ProductDetailsForm({
@@ -51,10 +53,10 @@ export default function ProductDetailsForm({
   productCategory,
   manufacturer,
   consumable = false,
+  viewContext,
 }: ProductDetailsFormProps) {
   const { user } = useAuth();
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
-  const userIsGlobalAdmin = isGlobalAdmin(user);
 
   const isNew = !product;
   const requireConsumable = Boolean(consumable || parentProduct);
@@ -177,7 +179,7 @@ export default function ProductDetailsForm({
       return submit(cleanedData, {
         path: "/api/proxy/products",
         id: product?.id,
-        viewContext: userIsGlobalAdmin ? "admin" : "user",
+        viewContext,
       });
     };
 
@@ -205,24 +207,7 @@ export default function ProductDetailsForm({
     <FormProvider {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
-        <FormField
-          control={form.control}
-          name="active"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem className="flex flex-row items-center gap-2 space-y-0">
-              <FormControl>
-                <Switch
-                  checked={value}
-                  onCheckedChange={onChange}
-                  className="pt-0"
-                  onBlur={onBlur}
-                />
-              </FormControl>
-              <FormLabel>Active</FormLabel>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <ActiveToggleFormInput />
         {productType === "PRIMARY" ? (
           <LegacyIdField
             form={form}

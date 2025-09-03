@@ -6,13 +6,13 @@ import { useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
-import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset } from "~/lib/models";
 import { createAssetSchema, updateAssetSchema } from "~/lib/schema";
 import { hasMultiSiteVisibility, isGlobalAdmin } from "~/lib/users";
 import { isEmpty } from "~/lib/utils";
+import ActiveToggleFormInput from "../active-toggle-form-input";
 import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
 import LegacyIdField from "../legacy-id-field";
@@ -133,26 +133,7 @@ export default function AssetDetailsForm({
         }}
       >
         <Input type="hidden" {...form.register("id")} hidden />
-        <FormField
-          control={form.control}
-          name="active"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <div className="flex flex-row items-center gap-2 space-y-0">
-                <FormControl>
-                  <Switch
-                    checked={value}
-                    onCheckedChange={onChange}
-                    className="pt-0"
-                    onBlur={onBlur}
-                  />
-                </FormControl>
-                <FormLabel>Active</FormLabel>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <ActiveToggleFormInput />
         <FormField
           control={form.control}
           name="product"

@@ -244,6 +244,7 @@ export const AssetQuestionResponseTypes = [
   "INDETERMINATE_BINARY",
   "TEXT",
   "TEXTAREA",
+  "SELECT",
   "DATE",
   "NUMBER",
   "IMAGE",
@@ -254,7 +255,6 @@ export const AssetQuestionConditionTypes = [
   "REGION",
   "MANUFACTURER",
   "PRODUCT_CATEGORY",
-  "PRODUCT_SUBCATEGORY",
   "PRODUCT",
   "METADATA",
 ] as const;
@@ -275,6 +275,18 @@ export interface File extends BaseModel {
   assetQuestionId: string;
 }
 
+export interface RegulatoryCode extends BaseModel {
+  active: boolean;
+  codeIdentifier: string;
+  title: string;
+  section?: string | null;
+  governingBody: string;
+  sourceUrl?: string | null;
+  documentVersion?: string | null;
+  assetQuestion?: AssetQuestion;
+  assetQuestionId: string;
+}
+
 export interface AssetQuestion extends BaseModel {
   legacyQuestionId?: string | null;
   active: boolean;
@@ -283,6 +295,13 @@ export interface AssetQuestion extends BaseModel {
   order?: number | null;
   prompt: string;
   valueType: AssetQuestionResponseType;
+  selectOptions?:
+    | {
+        value: string;
+        order?: number;
+        label?: string;
+      }[]
+    | null;
   tone: string | null;
   assetAlertCriteria?: AssetAlertCriterion[];
   /** @deprecated */
@@ -300,11 +319,23 @@ export interface AssetQuestion extends BaseModel {
   variants?: AssetQuestion[];
   conditions?: AssetQuestionCondition[];
   files?: File[];
+  regulatoryCodes?: RegulatoryCode[];
+  setAssetMetadataConfig?: SetAssetMetadataConfig | null;
   _count?: {
     assetAlertCriteria: number;
     conditions: number;
     variants: number;
   };
+}
+
+export interface SetAssetMetadataConfig extends BaseModel {
+  assetQuestion?: AssetQuestion;
+  assetQuestionId: string;
+  metadata: {
+    key: string;
+    type: "DYNAMIC" | "STATIC";
+    value: string | null;
+  }[];
 }
 
 export interface Alert extends BaseModel {

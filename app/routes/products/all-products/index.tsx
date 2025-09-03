@@ -24,11 +24,7 @@ import ProductCard from "~/components/products/product-card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
@@ -90,10 +86,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
               imageUrl: NonNullable<(typeof p)["imageUrl"]>;
             } => !!p.imageUrl
           )
-          .map((p) => [
-            p.id,
-            buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"]),
-          ])
+          .map((p) => [p.id, buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"])])
       ),
       isGlobalAdmin,
       onlyMyProducts,
@@ -101,12 +94,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 };
 
 export default function AllProducts({
-  loaderData: {
-    products,
-    optimizedProductImageUrls,
-    isGlobalAdmin,
-    onlyMyProducts,
-  },
+  loaderData: { products, optimizedProductImageUrls, isGlobalAdmin, onlyMyProducts },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "products");
@@ -114,12 +102,8 @@ export default function AllProducts({
   const { appState, setAppState } = useAppState();
   const { revalidate } = useRevalidator();
 
-  const [grouping, setGrouping] = useState<GroupingState>(
-    appState.products_grp ?? ["category"]
-  );
-  const handleSetGrouping = (
-    value: GroupingState | ((prev: GroupingState) => GroupingState)
-  ) => {
+  const [grouping, setGrouping] = useState<GroupingState>(appState.products_grp ?? ["category"]);
+  const handleSetGrouping = (value: GroupingState | ((prev: GroupingState) => GroupingState)) => {
     const newValue = typeof value === "function" ? value(grouping) : value;
     setGrouping(newValue);
     setAppState({
@@ -197,23 +181,18 @@ export default function AllProducts({
                 placeholder="Search products..."
                 value={(table.getState().globalFilter as string) ?? ""}
                 onChange={(event) => table.setGlobalFilter(event.target.value)}
-                className="pl-8 h-9 w-[150px] lg:w-[250px]"
+                className="h-9 w-[150px] pl-8 lg:w-[250px]"
               />
-              <Search className="absolute size-4 left-2 top-1/2 -translate-y-1/2" />
+              <Search className="absolute top-1/2 left-2 size-4 -translate-y-1/2" />
             </div>
-            <Select
-              value={grouping.at(0)}
-              onValueChange={(value) => table.setGrouping([value])}
-            >
+            <Select value={grouping.at(0)} onValueChange={(value) => table.setGrouping([value])}>
               <SelectTrigger className="w-[220px]">
                 <SelectValue placeholder="Select grouping" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value="category">Group by category</SelectItem>
-                  <SelectItem value="manufacturer">
-                    Group by manufacturer
-                  </SelectItem>
+                  <SelectItem value="manufacturer">Group by manufacturer</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -228,7 +207,10 @@ export default function AllProducts({
           </div>
           <div className="flex items-center space-x-2">
             {canCreate && (
-              <EditProductButton canAssignOwnership={isGlobalAdmin} />
+              <EditProductButton
+                canAssignOwnership={isGlobalAdmin}
+                viewContext={isGlobalAdmin ? "admin" : "user"}
+              />
             )}
           </div>
         </CardContent>
@@ -241,15 +223,11 @@ export default function AllProducts({
             return (
               <Collapsible
                 key={id}
-                className="group/collapsible grid col-span-full grid-cols-subgrid gap-2 sm:gap-4"
+                className="group/collapsible col-span-full grid grid-cols-subgrid gap-2 sm:gap-4"
                 defaultOpen
               >
                 <CollapsibleTrigger asChild>
-                  <Button
-                    className="text-xl col-span-full px-2"
-                    variant="ghost"
-                    size="lg"
-                  >
+                  <Button className="col-span-full px-2 text-xl" variant="ghost" size="lg">
                     {groupingColumnId === "category" ? (
                       <CategoryLabel category={original.productCategory} />
                     ) : groupingColumnId === "manufacturer" ? (
@@ -263,7 +241,7 @@ export default function AllProducts({
                   </Button>
                 </CollapsibleTrigger>
                 <CollapsibleContent asChild>
-                  <div className="grid col-span-full grid-cols-subgrid gap-2 sm:gap-4">
+                  <div className="col-span-full grid grid-cols-subgrid gap-2 sm:gap-4">
                     {subRows.map(({ original: product }) => (
                       <ProductCard
                         key={product.id}
@@ -271,9 +249,7 @@ export default function AllProducts({
                         displayCategory={!grouping.includes("category")}
                         displayManufacturer={!grouping.includes("manufacturer")}
                         navigateTo={product.id}
-                        optimizedImageUrl={optimizedProductImageUrls.get(
-                          product.id
-                        )}
+                        optimizedImageUrl={optimizedProductImageUrls.get(product.id)}
                       />
                     ))}
                   </div>
@@ -281,22 +257,15 @@ export default function AllProducts({
               </Collapsible>
             );
           })}
-        {table.getRowModel().rows.filter((row) => row.getIsGrouped()).length ===
-          0 && (
-          <div className="py-6 flex flex-col items-center gap-4">
+        {table.getRowModel().rows.filter((row) => row.getIsGrouped()).length === 0 && (
+          <div className="flex flex-col items-center gap-4 py-6">
             No products found.
             {table.getState().globalFilter ? (
-              <Button
-                variant="outline"
-                onClick={() => table.setGlobalFilter("")}
-              >
+              <Button variant="outline" onClick={() => table.setGlobalFilter("")}>
                 Clear Search
               </Button>
             ) : onlyMyProducts ? (
-              <Button
-                variant="outline"
-                onClick={() => handleSetOnlyMyProducts(false)}
-              >
+              <Button variant="outline" onClick={() => handleSetOnlyMyProducts(false)}>
                 Show All Products
               </Button>
             ) : (
@@ -315,7 +284,7 @@ function CategoryLabel({ category }: { category: ProductCategory }) {
       {category.icon && <Icon iconId={category.icon} color={category.color} />}
       {category.name}
       {category.shortName && (
-        <Badge className="text-sm uppercase w-max" variant="secondary">
+        <Badge className="w-max text-sm uppercase" variant="secondary">
           {category.shortName}
         </Badge>
       )}
