@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   CheckCircle,
@@ -13,11 +14,11 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { useFetcher } from "react-router";
 import type { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "~/components/ui/form";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { useProxyImage } from "~/hooks/use-proxy-image";
@@ -127,50 +128,23 @@ function ProductRequestForm({
 }) {
   const previewImage = useOpenData<string>();
 
-  const fetcher = useFetcher<ResultsPage<Product>>();
-  const suppliesLoading =
-    fetcher.state === "loading" || (fetcher.state === "idle" && !fetcher.data);
-
-  const [supplies, setSupplies] = useState<Product[] | null>(null);
-  const supplyMap = useMemo(() => {
-    return new Map((supplies ?? []).map((product) => [product.id, product]));
-  }, [supplies]);
+  const { fetchOrThrow } = useAuthenticatedFetch();
 
   const [orderItemsIsOverflowingY, setOrderItemsIsOverflowingY] = useState(false);
   const [orderItemsIsScrollMaxedY, setOrderItemsIsScrollMaxedY] = useState(false);
 
-  useEffect(() => {
-    if (fetcher.state === "idle" && !fetcher.data) {
-      fetcher.load(
-        buildPath(
-          "/api/proxy/products/",
-          // OR: [
-          {
-            parentProduct: {
-              id: parentProductId,
-            },
-            limit: 1000,
-          }
-          // {
-          //   manufacturer: {
-          //     name: GENERIC_MANUFACTURER_NAME,
-          //     parentProductId: "_NULL",
-          //   },
-          //   productCategory: {
-          //     id: productCategoryId,
-          //   },
-          // },
-          // ],
-        )
-      );
-    }
-  }, [fetcher.state, fetcher.data, parentProductId, productCategoryId]);
+  const { queryKey: suppliesQueryKey, queryFn: suppliesQueryFn } = getSuppliesForProductQuery(
+    fetchOrThrow,
+    parentProductId
+  );
+  const { data: supplies, isLoading: suppliesLoading } = useQuery({
+    queryKey: suppliesQueryKey,
+    queryFn: suppliesQueryFn,
+  });
 
-  useEffect(() => {
-    if (fetcher.data) {
-      setSupplies(fetcher.data.results);
-    }
-  }, [fetcher.data]);
+  const supplyMap = useMemo(() => {
+    return new Map((supplies ?? []).map((product) => [product.id, product]));
+  }, [supplies]);
 
   const form = useForm({
     resolver,
@@ -408,7 +382,7 @@ function ConsumableSelectTabs({
   optimizedImageUrlsMap,
 }: {
   ansiCategories: Pick<AnsiCategory, "id" | "name" | "color" | "icon">[] | null;
-  supplies: Product[] | null;
+  supplies: Product[] | null | undefined;
   suppliesLoading: boolean;
   productRequestItems: TForm["productRequestItems"]["createMany"]["data"];
   append: (item: TForm["productRequestItems"]["createMany"]["data"][number]) => void;
@@ -699,4 +673,37 @@ const ScrollHint = ({ show }: { show: boolean }) => {
       Scroll &darr;
     </div>
   );
+};
+
+export const getSuppliesForProductQuery = (fetcher: typeof fetch, parentProductId: string) => {
+  const queryFn = () =>
+    fetcher(
+      buildPath(
+        "/products/",
+        // OR: [
+        {
+          parentProduct: {
+            id: parentProductId,
+          },
+          limit: 1000,
+        }
+        // {
+        //   manufacturer: {
+        //     name: GENERIC_MANUFACTURER_NAME,
+        //     parentProductId: "_NULL",
+        //   },
+        //   productCategory: {
+        //     id: productCategoryId,
+        //   },
+        // },
+        // ],
+      )
+    )
+      .then((r) => r.json() as Promise<ResultsPage<Product>>)
+      .then((r) => r.results);
+
+  return {
+    queryKey: ["supplies", parentProductId],
+    queryFn,
+  };
 };
