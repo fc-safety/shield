@@ -2,7 +2,6 @@ import { useFormContext } from "react-hook-form";
 import type z from "zod";
 import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
@@ -34,24 +33,6 @@ export default function RegulatoryCodeConfigurator() {
         </p>
       </div>
       <div className="space-y-6">
-        <FormField
-          control={control}
-          name={
-            regulatoryCodeAction === "create"
-              ? `regulatoryCodes.create.${idx}.active`
-              : `regulatoryCodes.update.${idx}.data.active`
-          }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <div className="flex flex-row items-center gap-2 space-y-0">
-                <FormControl>
-                  <Switch checked={value} onCheckedChange={onChange} onBlur={onBlur} />
-                </FormControl>
-                <FormLabel>Active</FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
         <FormField
           control={control}
           name={

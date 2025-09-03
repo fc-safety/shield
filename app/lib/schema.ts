@@ -32,10 +32,10 @@ export const addressSchema = z.object({
 
 export const createRegulatoryCodeSchema = z.object({
   active: z.boolean().default(true),
-  codeIdentifier: z.string(),
-  title: z.string(),
+  codeIdentifier: z.string().nonempty(),
+  title: z.string().nonempty(),
   section: z.string().optional(),
-  governingBody: z.string(),
+  governingBody: z.string().nonempty(),
   sourceUrl: z.string().optional(),
   documentVersion: z.string().optional(),
 });
