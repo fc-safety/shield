@@ -17,6 +17,7 @@ import {
 } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-display";
+import AssetQuestionRegulatoryCodesDisplay from "~/components/assets/asset-question-regulatory-codes-display";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
@@ -251,7 +252,11 @@ export default function InspectSetup({
             {tag.asset ? (
               <RemixFormProvider {...form}>
                 <Form className="space-y-4" method={"post"} onSubmit={form.handleSubmit}>
-                  <p className="text-muted-foreground mb-4 text-sm">* indicates a required field</p>
+                  {questions.filter((q) => q.required).length > 0 && (
+                    <p className="text-muted-foreground mb-4 text-sm">
+                      * indicates a required field
+                    </p>
+                  )}
                   <Input type="hidden" {...form.register("id")} hidden />
                   {isSetup && <Input type="hidden" {...form.register("setupOn")} hidden />}
                   {allQuestionFields.map(({ key, data }, index) => {
@@ -276,6 +281,9 @@ export default function InspectSetup({
                                 )}
                                 {question?.required && " *"}
                               </FormLabel>
+                              <AssetQuestionRegulatoryCodesDisplay
+                                regulatoryCodes={question?.regulatoryCodes}
+                              />
                               <AssetQuestionFilesDisplay files={question?.files} />
                             </div>
                             <FormControl>
@@ -298,7 +306,7 @@ export default function InspectSetup({
                     );
                   })}
                   {allQuestionFields.length === 0 && (
-                    <p className="text-muted-foreground text-center text-sm">
+                    <p className="text-center text-xs font-bold">
                       <span className="font-bold">No setup questions found.</span>{" "}
                       {isSetup ? (
                         <>There is nothing to update.</>

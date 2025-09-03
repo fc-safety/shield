@@ -256,3 +256,9 @@ export function formatDateAsTimestamp(rawDate: string, atEndOfDay = false) {
   const parsedDate = parseISO(date);
   return atEndOfDay ? endOfDay(parsedDate).toISOString() : parsedDate.toISOString();
 }
+
+export function nullValuesToUndefined<T extends object>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [key, value === null ? undefined : value])
+  ) as T;
+}

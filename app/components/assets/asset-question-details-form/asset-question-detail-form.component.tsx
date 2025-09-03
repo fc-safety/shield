@@ -39,7 +39,7 @@ import {
   type ConsumableMappingType,
 } from "~/lib/models";
 import { createAssetQuestionSchema, updateAssetQuestionSchema } from "~/lib/schema";
-import { humanize } from "~/lib/utils";
+import { humanize, nullValuesToUndefined } from "~/lib/utils";
 import {
   AssetQuestionDetailFormProvider,
   useAssetQuestionDetailFormContext,
@@ -49,6 +49,7 @@ import AlertTriggersInput from "./components/inputs/alert-triggers-input";
 import AutomaticSupplySetupInput from "./components/inputs/automatic-supply-setup-input";
 import ConditionsInput from "./components/inputs/conditions-input";
 import FilesInput from "./components/inputs/files-input";
+import RegulatoryCodesInput from "./components/inputs/regulatory-codes-input";
 import SelectOptionsInput from "./components/inputs/select-options-input";
 import SetMetadataInput from "./components/inputs/set-metadata-input";
 
@@ -128,6 +129,14 @@ function AssetQuestionDetailsFormContent({
               data: { ...f },
             })),
           },
+          regulatoryCodes: assetQuestion.regulatoryCodes
+            ? {
+                update: assetQuestion.regulatoryCodes.map((rc) => ({
+                  where: { id: rc.id },
+                  data: { ...nullValuesToUndefined(rc) },
+                })),
+              }
+            : undefined,
           setAssetMetadataConfig: assetQuestion.setAssetMetadataConfig
             ? {
                 update: assetQuestion.setAssetMetadataConfig,
@@ -392,13 +401,15 @@ function AssetQuestionDetailsFormContent({
             />
           )}
 
+          {type === "SETUP" && <AutomaticSupplySetupInput />}
+
           {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && <AlertTriggersInput />}
 
           <ConditionsInput />
 
           <FilesInput />
 
-          {type === "SETUP" && <AutomaticSupplySetupInput />}
+          <RegulatoryCodesInput />
 
           <SetMetadataInput />
 

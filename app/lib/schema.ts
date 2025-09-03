@@ -36,6 +36,12 @@ export const createRegulatoryCodeSchema = z.object({
   title: z.string(),
   section: z.string().optional(),
   governingBody: z.string(),
+  sourceUrl: z.string().optional(),
+  documentVersion: z.string().optional(),
+});
+
+export const updateRegulatoryCodeSchema = createRegulatoryCodeSchema.partial().extend({
+  id: z.string(),
 });
 
 export const optionalConnectSchema = z
@@ -610,11 +616,12 @@ export const updateAssetQuestionSchema = baseCreateAssetQuestionSchema.partial()
       update: z.array(
         z.object({
           where: z.object({ id: z.string() }),
-          data: createRegulatoryCodeSchema.partial(),
+          data: updateRegulatoryCodeSchema,
         })
       ),
       delete: z.array(z.object({ id: z.string() })),
     })
+    .partial()
     .optional(),
   setAssetMetadataConfig: z
     .object({

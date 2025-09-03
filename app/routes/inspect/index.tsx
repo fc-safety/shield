@@ -21,6 +21,7 @@ import {
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-display";
+import AssetQuestionRegulatoryCodesDisplay from "~/components/assets/asset-question-regulatory-codes-display";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -361,7 +362,7 @@ function InspectionPage({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              Inspecting &quot;{asset.name}&quot;
+              Inspecting &quot;{asset.name || tag.serialNumber}&quot;
               <Nfc className="text-primary size-8" />
             </CardTitle>
             <CardDescription>
@@ -378,7 +379,9 @@ function InspectionPage({
                 }
                 onSubmit={form.handleSubmit}
               >
-                <p className="text-muted-foreground mb-4 text-sm">* indicates a required field</p>
+                {questions.filter((q) => q.required).length > 0 && (
+                  <p className="text-muted-foreground mb-4 text-sm">* indicates a required field</p>
+                )}
                 <Input type="hidden" {...form.register("asset.connect.id")} hidden />
                 {questionFields.map((questionField, index) => {
                   const question = questions[index];
@@ -394,6 +397,9 @@ function InspectionPage({
                               {question?.prompt}
                               {question?.required && " *"}
                             </FormLabel>
+                            <AssetQuestionRegulatoryCodesDisplay
+                              regulatoryCodes={question?.regulatoryCodes}
+                            />
                             <AssetQuestionFilesDisplay files={question?.files} />
                           </div>
                           <FormControl>
@@ -413,7 +419,7 @@ function InspectionPage({
                   );
                 })}
                 {questionFields.length === 0 && (
-                  <p className="text-muted-foreground text-center text-sm">
+                  <p className="mb-6 text-center text-xs font-bold">
                     No questions available for this asset. Please contact your administrator.
                     <br />
                     <br />

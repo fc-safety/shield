@@ -90,7 +90,7 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
         cell: ({ getValue }) => getValue() || <>&mdash;</>,
       },
       {
-        accessorKey: "asset.setupOn",
+        accessorFn: ({ asset }) => asset?.setupOn,
         id: "setup on",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
@@ -99,7 +99,7 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
         },
       },
       {
-        accessorKey: "client.name",
+        accessorFn: ({ client }) => client?.name,
         id: "assigned client",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => getValue() ?? <>&mdash;</>,

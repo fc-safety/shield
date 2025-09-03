@@ -275,6 +275,18 @@ export interface File extends BaseModel {
   assetQuestionId: string;
 }
 
+export interface RegulatoryCode extends BaseModel {
+  active: boolean;
+  codeIdentifier: string;
+  title: string;
+  section?: string | null;
+  governingBody: string;
+  sourceUrl?: string | null;
+  documentVersion?: string | null;
+  assetQuestion?: AssetQuestion;
+  assetQuestionId: string;
+}
+
 export interface AssetQuestion extends BaseModel {
   legacyQuestionId?: string | null;
   active: boolean;
@@ -307,6 +319,7 @@ export interface AssetQuestion extends BaseModel {
   variants?: AssetQuestion[];
   conditions?: AssetQuestionCondition[];
   files?: File[];
+  regulatoryCodes?: RegulatoryCode[];
   setAssetMetadataConfig?: SetAssetMetadataConfig | null;
   _count?: {
     assetAlertCriteria: number;

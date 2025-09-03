@@ -11,6 +11,7 @@ import { AlertTriggerConfigurator } from "./sidepanel-inserts/alert-trigger-conf
 import { AutoSetupSupplyConfigurator } from "./sidepanel-inserts/auto-setup-supply-configurator";
 import { ConditionConfigurator } from "./sidepanel-inserts/condition-configurator";
 import FileConfigurator from "./sidepanel-inserts/file-configurator";
+import RegulatoryCodeConfigurator from "./sidepanel-inserts/regulatory-code-configurator";
 
 export default function FormSidepanel({ minWidth = "768px" }: { minWidth?: string }) {
   const isDesktop = useMediaQuery(`(min-width: ${minWidth})`);
@@ -77,6 +78,8 @@ function FormSidepanelContent({ sidepanelId }: { sidepanelId: string | null }) {
       return <ConditionConfigurator />;
     case FileConfigurator.Id:
       return <FileConfigurator />;
+    case RegulatoryCodeConfigurator.Id:
+      return <RegulatoryCodeConfigurator />;
     default:
       return <Loader2 className="size-4 animate-spin" />;
   }
