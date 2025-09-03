@@ -36,7 +36,7 @@ export const createRegulatoryCodeSchema = z.object({
   title: z.string().nonempty(),
   section: z.string().optional(),
   governingBody: z.string().nonempty(),
-  sourceUrl: z.string().optional(),
+  sourceUrl: z.url().optional(),
   documentVersion: z.string().optional(),
 });
 
@@ -114,7 +114,7 @@ export const fromAddressSchema = z.union([
 
 export const createFileSchema = z.object({
   name: z.string().nonempty(),
-  url: z.string().nonempty(),
+  url: z.url().nonempty(),
 });
 
 export const updateFileSchema = createFileSchema.partial().extend({

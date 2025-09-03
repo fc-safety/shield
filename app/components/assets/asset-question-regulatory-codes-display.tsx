@@ -13,7 +13,12 @@ export default function AssetQuestionRegulatoryCodesDisplay({
       {regulatoryCodes.map((rc, idx) => (
         <div key={rc.id} title={rc.title}>
           {rc.sourceUrl ? (
-            <Link to={rc.sourceUrl} target="_blank" className="hover:underline">
+            <Link
+              to={rc.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
               {rc.codeIdentifier}
             </Link>
           ) : (

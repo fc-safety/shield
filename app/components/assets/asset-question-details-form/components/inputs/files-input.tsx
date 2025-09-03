@@ -124,7 +124,7 @@ export default function FilesInput() {
                       <Pencil />
                     </Button>
                     <Button variant="link" asChild disabled={!data.url}>
-                      <Link to={data.url ?? "#"} target="_blank">
+                      <Link to={data.url ?? "#"} target="_blank" rel="noopener noreferrer">
                         {data.name || "Untitled"}
                         <ExternalLink />
                       </Link>

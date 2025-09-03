@@ -126,7 +126,7 @@ function FileInput({
       </label>
       {value && (
         <Button type="button" variant="link" asChild>
-          <Link to={value} target="_blank">
+          <Link to={value} target="_blank" rel="noopener noreferrer">
             Preview
             <ExternalLink />
           </Link>
