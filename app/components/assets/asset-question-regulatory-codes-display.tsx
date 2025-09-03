@@ -11,7 +11,7 @@ export default function AssetQuestionRegulatoryCodesDisplay({
     <div className="text-muted-foreground flex items-center gap-1.5 py-1 text-xs">
       <ScrollText className="size-4" />
       {regulatoryCodes.map((rc, idx) => (
-        <div key={rc.id}>
+        <div key={rc.id} title={rc.title}>
           {rc.sourceUrl ? (
             <Link to={rc.sourceUrl} target="_blank" className="hover:underline">
               {rc.codeIdentifier}
