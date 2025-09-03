@@ -293,7 +293,7 @@ function AssetQuestionDetailsFormContent({
                     <Switch
                       checked={value}
                       onCheckedChange={onChange}
-                      className="flex"
+                      className="pt-0"
                       onBlur={onBlur}
                     />
                   </FormControl>
