@@ -7,12 +7,7 @@ import AssetCombobox from "~/components/assets/asset-combobox";
 import ClientCombobox from "~/components/clients/client-combobox";
 import SiteCombobox from "~/components/clients/site-combobox";
 import { Button } from "~/components/ui/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createTagSchema } from "~/lib/schema";
 import SuccessCircle from "~/routes/inspect/components/success-circle";
@@ -75,15 +70,13 @@ export default function StepSingleRegister({
     (data: TForm) => {
       createOrUpdateJson(data, {
         path: "/api/proxy/tags",
+        viewContext: "admin",
       });
     },
     [createOrUpdateJson]
   );
 
-  const { serialNumber, externalId } = useMemo(
-    () => parseTagUrl(tagUrl),
-    [tagUrl]
-  );
+  const { serialNumber, externalId } = useMemo(() => parseTagUrl(tagUrl), [tagUrl]);
 
   const form = useForm<TForm>({
     resolver: zodResolver(registerTagSchema),
@@ -139,7 +132,7 @@ export default function StepSingleRegister({
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="w-full max-w-sm self-center space-y-4 pb-8"
+            className="w-full max-w-sm space-y-4 self-center pb-8"
           >
             <FormField
               control={form.control}
@@ -151,9 +144,7 @@ export default function StepSingleRegister({
                     <ClientCombobox
                       value={field.value?.connect?.id}
                       onValueChange={(id) =>
-                        field.onChange(
-                          id ? { connect: { id } } : { disconnect: true }
-                        )
+                        field.onChange(id ? { connect: { id } } : { disconnect: true })
                       }
                       onBlur={field.onBlur}
                       className="w-full"
@@ -174,9 +165,7 @@ export default function StepSingleRegister({
                     <SiteCombobox
                       value={field.value?.connect?.id}
                       onValueChange={(id) =>
-                        field.onChange(
-                          id ? { connect: { id } } : { disconnect: true }
-                        )
+                        field.onChange(id ? { connect: { id } } : { disconnect: true })
                       }
                       onBlur={field.onBlur}
                       className="w-full"
@@ -194,16 +183,12 @@ export default function StepSingleRegister({
               name="asset"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    Which asset will this tag be registered to?
-                  </FormLabel>
+                  <FormLabel>Which asset will this tag be registered to?</FormLabel>
                   <FormControl>
                     <AssetCombobox
                       value={field.value?.connect?.id}
                       onValueChange={(id) =>
-                        field.onChange(
-                          id ? { connect: { id } } : { disconnect: true }
-                        )
+                        field.onChange(id ? { connect: { id } } : { disconnect: true })
                       }
                       className="w-full"
                       optionQueryFilter={getAssetOptionQueryFilter(
@@ -219,16 +204,8 @@ export default function StepSingleRegister({
                 </FormItem>
               )}
             />
-            <Button
-              type="submit"
-              disabled={!isValid || isSubmitting}
-              className="w-full"
-            >
-              {isSubmitting ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <PackagePlus />
-              )}
+            <Button type="submit" disabled={!isValid || isSubmitting} className="w-full">
+              {isSubmitting ? <Loader2 className="animate-spin" /> : <PackagePlus />}
               Register tag
             </Button>
           </form>
