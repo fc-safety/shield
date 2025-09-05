@@ -58,10 +58,7 @@ export class FetchOptions {
   };
   private singleResourceKey: string | undefined = undefined;
 
-  constructor(
-    url: NativeFetchParameters[0],
-    options: NativeFetchParameters[1] = {}
-  ) {
+  constructor(url: NativeFetchParameters[0], options: NativeFetchParameters[1] = {}) {
     this.url = url;
     this.options = {
       method: "GET",
@@ -77,17 +74,11 @@ export class FetchOptions {
     ])
   ) as Record<ResourceKey, () => FetchOptions>;
 
-  public static create(
-    url: NativeFetchParameters[0],
-    options?: NativeFetchParameters[1]
-  ) {
+  public static create(url: NativeFetchParameters[0], options?: NativeFetchParameters[1]) {
     return new FetchOptions(url, options);
   }
 
-  public static url<TPath extends string>(
-    path: TPath,
-    params?: QueryParams & PathParams<TPath>
-  ) {
+  public static url<TPath extends string>(path: TPath, params?: QueryParams & PathParams<TPath>) {
     return new FetchOptions(buildUrl(path, config.API_BASE_URL, params));
   }
 
@@ -278,10 +269,7 @@ export const fetchAuthenticated = async (
   fetchOptions: Parameters<typeof fetch>[1] = {},
   authOptions: LoginRedirectOptions = {}
 ) => {
-  const { user, session, getSessionToken } = await requireUserSession(
-    request,
-    authOptions
-  );
+  const { user, session, getSessionToken } = await requireUserSession(request, authOptions);
 
   const getResponse = (accessToken: string) => {
     fetchOptions.headers = new Headers(fetchOptions?.headers);
@@ -313,9 +301,7 @@ export const fetchAuthenticated = async (
   return response;
 };
 
-export const defaultDataGetter = async <T = unknown>(
-  response: Promise<Response>
-) => {
+export const defaultDataGetter = async <T = unknown>(response: Promise<Response>) => {
   return response.then(async (r) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { body, isJson } = await tryJson<T>(r);
@@ -332,11 +318,13 @@ export const defaultDataGetter = async <T = unknown>(
       "Request failed with code: " + r.status
     );
 
+    const status = r.status >= 500 ? 500 : r.status;
+
     if (isJson) {
-      throw Response.json(body, { status: r.status });
+      throw Response.json(body, { status });
     }
 
-    throw new Response((body as string) ?? r.statusText, { status: r.status });
+    throw new Response((body as string) ?? r.statusText, { status });
   });
 };
 
@@ -351,12 +339,7 @@ export const getAuthenticatedData = async <T>(
     getData?: (response: Promise<Response>) => Promise<T>;
   } = {}
 ) => {
-  const awaitableResponse = fetchAuthenticated(
-    request,
-    url,
-    fetchOptions,
-    passThroughOptions
-  );
+  const awaitableResponse = fetchAuthenticated(request, url, fetchOptions, passThroughOptions);
   return await getData(awaitableResponse);
 };
 
@@ -374,10 +357,7 @@ export class ApiFetcher {
     this.fetchOptionsBuilder = fetchOptionsBuilder;
   }
 
-  public static create(
-    request: Request,
-    url: Parameters<typeof fetch>[0]
-  ): ApiFetcher;
+  public static create(request: Request, url: Parameters<typeof fetch>[0]): ApiFetcher;
   public static create<TPath extends string>(
     request: Request,
     path: TPath,
@@ -395,8 +375,7 @@ export class ApiFetcher {
   }
 
   public fetch<T>(options: ApiFetcherOptions<T> = {}) {
-    const { url, options: fetchOptions } =
-      this.fetchOptionsBuilder.build(options);
+    const { url, options: fetchOptions } = this.fetchOptionsBuilder.build(options);
     if (options.bypassAuth) {
       const getData = options.getData ?? defaultDataGetter;
       return getData(fetch(url, fetchOptions));
@@ -466,11 +445,7 @@ interface AllCrudActions<T> {
     query?: QueryParams,
     options?: FetchBuildOptions
   ) => Promise<ResultsPage<T>>;
-  get: (
-    request: Request,
-    id: string,
-    options?: FetchBuildOptions
-  ) => Promise<T>;
+  get: (request: Request, id: string, options?: FetchBuildOptions) => Promise<T>;
 }
 
 type CrudActionName = keyof AllCrudActions<unknown>;
@@ -494,11 +469,7 @@ function buildCrud<T>(path: string): AllCrudActions<T> {
           }).get<ResultsPage<T>>(options);
         break;
       case "get":
-        acc[action] = (
-          request: Request,
-          id: string,
-          options: FetchBuildOptions = {}
-        ) =>
+        acc[action] = (request: Request, id: string, options: FetchBuildOptions = {}) =>
           ApiFetcher.create(request, `${path}/:id`, {
             id,
           }).get<T>(options);
@@ -524,17 +495,13 @@ export class CRUD<T> {
 
   public only<TActions extends CrudActionName[]>(actions: TActions) {
     return Object.fromEntries(
-      Object.entries(this.all()).filter(([action]) =>
-        actions.includes(action as CrudActionName)
-      )
+      Object.entries(this.all()).filter(([action]) => actions.includes(action as CrudActionName))
     ) as Pick<AllCrudActions<T>, TActions[number]>;
   }
 
   public except<TActions extends CrudActionName[]>(actions: TActions) {
     return Object.fromEntries(
-      Object.entries(this.all()).filter(
-        ([action]) => !actions.includes(action as CrudActionName)
-      )
+      Object.entries(this.all()).filter(([action]) => !actions.includes(action as CrudActionName))
     ) as Omit<AllCrudActions<T>, TActions[number]>;
   }
 }
