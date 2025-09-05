@@ -25,6 +25,7 @@ interface ResponsiveComboboxProps extends Omit<SelectOptionsProps, "setOpen" | "
   placeholder?: string;
   onMouseOver?: ComponentProps<"button">["onMouseOver"];
   onTouchStart?: ComponentProps<"button">["onTouchStart"];
+  onKeyDown?: ComponentProps<"button">["onKeyDown"];
   className?: string;
   showClear?: boolean;
   disabled?: boolean;
@@ -40,6 +41,7 @@ export function ResponsiveCombobox({
   placeholder,
   onMouseOver,
   onTouchStart,
+  onKeyDown,
   onBlur,
   className,
   showClear = false,
@@ -88,6 +90,7 @@ export function ResponsiveCombobox({
           )}
           onMouseOver={onMouseOver}
           onTouchStart={onTouchStart}
+          onKeyDown={onKeyDown}
           disabled={disabled}
         >
           <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">

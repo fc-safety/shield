@@ -106,6 +106,11 @@ export default function AssetCombobox({
         options={options}
         onMouseOver={() => !disabled && preloadAssets()}
         onTouchStart={() => !disabled && preloadAssets()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !disabled) {
+            preloadAssets();
+          }
+        }}
         searchValue={search}
         onSearchValueChange={setSearch}
         className={className}

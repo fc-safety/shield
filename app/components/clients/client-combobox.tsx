@@ -76,14 +76,17 @@ export default function ClientCombobox({
       value={value}
       onValueChange={onValueChange}
       onBlur={onBlur}
-      displayValue={(value) =>
-        clients.find((c) => c.id === value)?.name ?? <>&mdash;</>
-      }
+      displayValue={(value) => clients.find((c) => c.id === value)?.name ?? <>&mdash;</>}
       loading={fetcher.state === "loading"}
       options={options}
       disabled={disabled}
       onMouseOver={() => !disabled && preloadClients()}
       onTouchStart={() => !disabled && preloadClients()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !disabled) {
+          preloadClients();
+        }
+      }}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

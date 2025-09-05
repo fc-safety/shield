@@ -14,22 +14,19 @@ export default function StepSingleProgram({
   onRestart,
   onStepBackward,
   onRegisterTag,
+  registerToAssetMode,
 }: {
   serialNumber: string;
   onRestart: () => void;
   onStepBackward: () => void;
   onRegisterTag: (tagUrl: string) => void;
+  registerToAssetMode: boolean;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
-  const { mutate: getGeneratedTagUrl, isPending: isGeneratingTagUrl } =
-    useMutation({
-      mutationFn: (options: { serialNumber: string; externalId?: string }) =>
-        generateSignedTagUrl(
-          fetchOrThrow,
-          options.serialNumber,
-          options.externalId
-        ),
-    });
+  const { mutate: getGeneratedTagUrl, isPending: isGeneratingTagUrl } = useMutation({
+    mutationFn: (options: { serialNumber: string; externalId?: string }) =>
+      generateSignedTagUrl(fetchOrThrow, options.serialNumber, options.externalId),
+  });
 
   const [writeData, setWriteData] = useState<string | null>(null);
   useEffect(() => {
@@ -45,46 +42,49 @@ export default function StepSingleProgram({
     );
   }, [serialNumber]);
 
+  const title = registerToAssetMode
+    ? "Great! Next, we need to program the tag."
+    : "Almost done! Time to program the tag.";
+
   return (
     <Step
-      title="Almost done! Time to program the tag."
-      subtitle="Follow the steps to finish programming."
+      title={title}
+      subtitle="Use your NFC device to program this unique URL to the tag."
       onStepBackward={onStepBackward}
       footerSlotEnd={
-        <Button onClick={onRestart} variant="secondary">
-          <RotateCcw /> Write another tag
-        </Button>
+        registerToAssetMode ? undefined : (
+          <Button onClick={onRestart} variant="secondary">
+            <RotateCcw /> Write another tag
+          </Button>
+        )
       }
       onContinue={() => onRegisterTag(writeData ?? "")}
-      continueButtonText="(Optional) Register tag"
+      continueButtonText={registerToAssetMode ? "Register tag" : "(Optional) Register tag"}
     >
       <SubStep idx={0} title="Copy the following URL to your clipboard.">
-        <div className="h-16 flex flex-col gap-2 items-center justify-center rounded-md bg-background text-foreground px-4 py-2 ring ring-accent">
+        <div className="bg-background text-foreground ring-accent flex h-16 flex-col items-center justify-center gap-2 rounded-md px-4 py-2 ring">
           {isGeneratingTagUrl || writeData === null ? (
-            <div className="flex flex-col gap-1 items-center justify-center">
+            <div className="flex flex-col items-center justify-center gap-1">
               <Loader2 className="size-4 animate-spin" />
-              <p className="text-xs">
-                Preparing your tag data for programming...
-              </p>
+              <p className="text-xs">Preparing your tag data for programming...</p>
             </div>
           ) : (
             <DisplayTagWriteData data={writeData} />
           )}
         </div>
-        <p className="text-xs leading-5 text-muted-foreground italic">
+        <p className="text-muted-foreground text-xs leading-5 italic">
           To copy the above URL to your clipboard, click the{" "}
-          <span className="inline px-1 py-0.5 rounded-md border border-border">
-            <Copy className="size-3 inline" />
+          <span className="border-border inline rounded-md border px-1 py-0.5">
+            <Copy className="inline size-3" />
           </span>{" "}
           button.
         </p>
       </SubStep>
 
       <SubStep idx={1} title="Write the URL to the tag from your NFC device.">
-        <p className="text-xs text-muted-foreground italic">
-          This final step requires a physical device and accompanying software
-          to write NFC tags. Desktop computers require an external device while
-          mobile phones have NFC built in.{" "}
+        <p className="text-muted-foreground text-xs italic">
+          This final step requires a physical device and accompanying software to write NFC tags.
+          Desktop computers require an external device while mobile phones have NFC built in.{" "}
           <Link
             to="/docs/writing-nfc-tags"
             target="_blank"
@@ -92,7 +92,7 @@ export default function StepSingleProgram({
             className="text-primary"
           >
             Learn more about the setup required to write to NFC tags.{" "}
-            <ExternalLink className="size-3 inline" />
+            <ExternalLink className="inline size-3" />
           </Link>
         </p>
       </SubStep>

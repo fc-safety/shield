@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, PackagePlus, RotateCcw } from "lucide-react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import AssetCombobox from "~/components/assets/asset-combobox";
@@ -39,6 +39,7 @@ export default function StepSingleRegister({
   tagUrl,
   onRestart,
   onStepBackward,
+  onClose,
   clientId,
   siteId,
   assetId,
@@ -47,10 +48,12 @@ export default function StepSingleRegister({
   setAssetId,
   isRegistrationCompleted,
   onRegistrationCompleted,
+  registerToAssetMode,
 }: {
   tagUrl: string;
   onRestart: () => void;
   onStepBackward: () => void;
+  onClose?: () => void;
   clientId?: string;
   siteId?: string;
   assetId?: string;
@@ -59,6 +62,7 @@ export default function StepSingleRegister({
   setAssetId: (assetId: string) => void;
   isRegistrationCompleted: boolean;
   onRegistrationCompleted: () => void;
+  registerToAssetMode: boolean;
 }) {
   const { createOrUpdateJson, isSubmitting } = useModalFetcher({
     onSubmitted: () => {
@@ -110,16 +114,41 @@ export default function StepSingleRegister({
     registerTag(data);
   };
 
+  const autoSubmitted = useRef(false);
+  useEffect(() => {
+    if (
+      !isRegistrationCompleted &&
+      !isSubmitting &&
+      registerToAssetMode &&
+      !autoSubmitted.current
+    ) {
+      autoSubmitted.current = true;
+      onSubmit(form.getValues());
+    }
+  }, [isRegistrationCompleted, isSubmitting, registerToAssetMode, form, onSubmit]);
+
+  const title = registerToAssetMode ? undefined : "Register the tag to a client asset.";
+  const subtitle = registerToAssetMode
+    ? undefined
+    : "This tag will now be associated with the selected asset.";
+
   return (
     <Step
-      title="Register the tag to a client asset."
-      subtitle="This tag will now be associated with the selected asset."
+      title={title}
+      subtitle={subtitle}
       onStepBackward={onStepBackward}
       footerSlotEnd={
         <>
-          <Button onClick={onRestart} variant="secondary">
-            <RotateCcw /> Write another tag
-          </Button>
+          {registerToAssetMode ? undefined : (
+            <Button onClick={onRestart} variant="secondary">
+              <RotateCcw /> Write another tag
+            </Button>
+          )}
+          {onClose && (
+            <Button onClick={onClose} variant="default">
+              Close
+            </Button>
+          )}
         </>
       }
     >
@@ -127,6 +156,11 @@ export default function StepSingleRegister({
         <div className="flex flex-col items-center gap-2 py-4">
           <SuccessCircle />
           <p>Tag registered successfully!</p>
+        </div>
+      ) : registerToAssetMode ? (
+        <div className="flex flex-col items-center justify-center gap-2 py-4">
+          <Loader2 className="text-muted-foreground size-16 animate-spin" />
+          <p>Registering tag to asset...</p>
         </div>
       ) : (
         <FormProvider {...form}>

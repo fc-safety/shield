@@ -7,16 +7,22 @@ export default function StepSingleSerialNumberInput({
   onContinue,
   serialNumber,
   setSerialNumber,
+  registerToAssetMode,
 }: {
   onStepBackward: () => void;
   onContinue: () => void;
   serialNumber: string | undefined;
   setSerialNumber: (serialNumber: string) => void;
+  registerToAssetMode: boolean;
 }) {
+  const title = registerToAssetMode
+    ? "First, what's the serial number on the asset's tag?"
+    : "What's the serial number of the tag you want to program?";
+
   return (
     <Step
-      title="What's the serial number of the tag you want to program?"
-      onStepBackward={onStepBackward}
+      title={title}
+      onStepBackward={registerToAssetMode ? undefined : onStepBackward}
       onContinue={onContinue}
       continueDisabled={!serialNumber}
       className="max-w-xs"
@@ -27,8 +33,13 @@ export default function StepSingleSerialNumberInput({
           value={serialNumber}
           onChange={(e) => setSerialNumber(coerceNumeric(e.target.value))}
           placeholder="0000099"
+          onKeyUp={(e) => {
+            if (e.key === "Enter" && serialNumber) {
+              onContinue();
+            }
+          }}
         />
-        <p className="text-xs text-muted-foreground italic mt-1">
+        <p className="text-muted-foreground mt-1 text-xs italic">
           The serial number is printed on the front of each tag.
         </p>
       </div>

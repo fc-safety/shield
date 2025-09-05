@@ -64,20 +64,19 @@ export default function AnsiCategoryCombobox({
         onValueChange={onValueChange}
         onBlur={onBlur}
         displayValue={(value) => {
-          const ansiCategory = ansiCategories.find(
-            (ansiCategory) => ansiCategory.id === value
-          );
+          const ansiCategory = ansiCategories.find((ansiCategory) => ansiCategory.id === value);
 
-          return ansiCategory ? (
-            <AnsiCategoryDisplay ansiCategory={ansiCategory} />
-          ) : (
-            <>&mdash;</>
-          );
+          return ansiCategory ? <AnsiCategoryDisplay ansiCategory={ansiCategory} /> : <>&mdash;</>;
         }}
         options={options}
         loading={fetcher.state === "loading"}
         onMouseOver={() => preloadAnsiCategories()}
         onTouchStart={() => preloadAnsiCategories()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            preloadAnsiCategories();
+          }
+        }}
         searchValue={search}
         onSearchValueChange={setSearch}
         className={className}
@@ -119,8 +118,8 @@ export function AnsiCategoryDisplay({
               } as React.CSSProperties
             }
             className={cn(
-              "text-[var(--ansi-icon-color)] bg-[var(--ansi-bg)] rounded-sm flex items-center justify-center",
-              size === "sm" ? "text-xs size-5" : "text-sm size-6"
+              "flex items-center justify-center rounded-sm bg-[var(--ansi-bg)] text-[var(--ansi-icon-color)]",
+              size === "sm" ? "size-5 text-xs" : "size-6 text-sm"
             )}
           >
             <i className={`fa-solid fa-${ansiCategory.icon}`} />

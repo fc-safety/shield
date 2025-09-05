@@ -117,6 +117,11 @@ export default function ConsumableCombobox({
         disabled={disabled}
         onMouseOver={() => !disabled && preloadConsumableProducts(parentProductId)}
         onTouchStart={() => !disabled && preloadConsumableProducts(parentProductId)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !disabled) {
+            preloadConsumableProducts(parentProductId);
+          }
+        }}
         searchValue={productSearch}
         onSearchValueChange={setProductSearch}
         placeholder="Select a supply..."

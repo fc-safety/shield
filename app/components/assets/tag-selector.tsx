@@ -15,9 +15,9 @@ import { Loader2, Nfc, Pencil, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
-import type { ResultsPage, Tag } from "~/lib/models";
+import type { Asset, ResultsPage, Tag } from "~/lib/models";
 import { cn } from "~/lib/utils";
-import { CopyableText } from "../copyable-text";
+import EditableTagDisplay from "./editable-tag-display";
 
 interface TagSelectorProps {
   value?: string;
@@ -45,10 +45,7 @@ export default function TagSelector({
 
   const [tags, setTags] = useState<Tag[]>([]);
 
-  const defaultTag = useMemo(
-    () => tags.find((c) => c.id === value),
-    [tags, value]
-  );
+  const defaultTag = useMemo(() => tags.find((c) => c.id === value), [tags, value]);
 
   // Preload all tags lazily.
   const handlePreload = useCallback(() => {
@@ -76,14 +73,10 @@ export default function TagSelector({
       {value ? (
         <TagCard
           tag={defaultTag}
+          tagLoading={!defaultTag}
           renderEditButton={() => (
             <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={disabled}
-              >
+              <Button type="button" variant="ghost" size="icon" disabled={disabled}>
                 <Pencil />
               </Button>
             </DialogTrigger>
@@ -114,9 +107,7 @@ export default function TagSelector({
           }}
         >
           {tags.length === 0 && (
-            <div className="text-sm flex flex-col items-center p-4 mt-2">
-              No tags found.
-            </div>
+            <div className="mt-2 flex flex-col items-center p-4 text-sm">No tags found.</div>
           )}
           <RadioGroup
             defaultValue="card"
@@ -142,13 +133,11 @@ export default function TagSelector({
                   />
                   <Label
                     htmlFor={tag.id}
-                    className="font-semibold h-full flex flex-col gap-2 items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex h-full flex-col items-center justify-center gap-2 rounded-md border-2 p-4 font-semibold"
                   >
-                    <span className="text-xs text-center">
-                      {tag.serialNumber}
-                    </span>
+                    <span className="text-center text-xs">{tag.serialNumber}</span>
                     {tag.asset && (
-                      <span className="font-light text-xs text-center">
+                      <span className="text-center text-xs font-light">
                         assigned to {tag.asset.name}
                       </span>
                     )}
@@ -180,35 +169,35 @@ export default function TagSelector({
 
 interface TagCardProps {
   tag: Tag | undefined;
+  asset?: Asset;
+  tagLoading?: boolean;
   renderEditButton?: () => React.ReactNode;
 }
 
-export function TagCard({ tag, renderEditButton }: TagCardProps) {
+export function TagCard({ tag, asset, tagLoading, renderEditButton }: TagCardProps) {
   return (
     <Card>
-      {tag ? (
+      {tagLoading ? (
+        <CardHeader>
+          <CardTitle>
+            <Loader2 className="animate-spin" />
+          </CardTitle>
+        </CardHeader>
+      ) : (
         <>
           <CardHeader>
-            <CardTitle className="flex justify-between items-center">
+            <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Nfc className="size-6! text-primary" />
+                <Nfc className="text-primary size-6!" />
                 <div className="grid gap-0">
-                  <span className="text-xs text-muted-foreground">
-                    Serial Number
-                  </span>
-                  <CopyableText text={tag?.serialNumber ?? ""} />
+                  {tag && <span className="text-muted-foreground text-xs">Serial Number</span>}
+                  <EditableTagDisplay tag={tag} asset={asset ?? tag?.asset ?? undefined} />
                 </div>
               </div>
               {renderEditButton?.()}
             </CardTitle>
           </CardHeader>
         </>
-      ) : (
-        <CardHeader>
-          <CardTitle>
-            <Loader2 className="animate-spin" />
-          </CardTitle>
-        </CardHeader>
       )}
     </Card>
   );
