@@ -7,7 +7,6 @@ import ActiveIndicator2 from "~/components/active-indicator-2";
 import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
-import { CopyableText } from "~/components/copyable-text";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
@@ -30,6 +29,7 @@ import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
 import { ResponsiveDialog } from "../responsive-dialog";
 import AssetDetailsForm from "./asset-details-form";
+import EditableTagDisplay from "./editable-tag-display";
 
 export default function AssetsTable({
   assets,
@@ -46,6 +46,9 @@ export default function AssetsTable({
   const canCreate = can(user, "create", "assets");
   const canDelete = can(user, "delete", "assets");
   const canEdit = can(user, "update", "assets");
+
+  const canCreateTags = can(user, "create", "tags");
+  const canUpdateTags = can(user, "update", "tags");
 
   const [searchParams] = useSearchParams();
 
@@ -113,9 +116,15 @@ export default function AssetsTable({
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} title="Tag Serial No." />
         ),
-        cell: ({ getValue }) => {
-          const text = getValue() as string;
-          return text ? <CopyableText text={getValue() as string} hoverOnly /> : <>&mdash;</>;
+        cell: ({ row }) => {
+          return (
+            <EditableTagDisplay
+              asset={row.original}
+              tag={row.original.tag}
+              key={`asset-tag-${row.original.id}`}
+              variant="compact"
+            />
+          );
         },
       },
       {

@@ -105,13 +105,16 @@ export default function SiteCombobox({
       value={value}
       onValueChange={onValueChange}
       onBlur={onBlur}
-      displayValue={(value) =>
-        sites.find((c) => c[valueKey] === value)?.name ?? <>&mdash;</>
-      }
+      displayValue={(value) => sites.find((c) => c[valueKey] === value)?.name ?? <>&mdash;</>}
       loading={fetcher.state === "loading"}
       options={options}
       onMouseOver={() => !disabled && preloadSites(clientId)}
       onTouchStart={() => !disabled && preloadSites(clientId)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !disabled) {
+          preloadSites(clientId);
+        }
+      }}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}

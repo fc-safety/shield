@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useImmer, type Updater } from "use-immer";
 import { create } from "zustand";
+import type { Asset } from "~/lib/models";
 import StepBulkProgramExport from "./steps/bulk-program-export";
 import StepBulkProgramPart1 from "./steps/bulk-program-part-1";
 import StepBulkProgramPart2 from "./steps/bulk-program-part-2";
@@ -17,9 +18,9 @@ import type { Mode } from "./types/core";
 
 interface StepsState {
   stepId: string;
-  stepTo: (stepId: string, direction?: "forward" | "backward") => void;
+  stepTo: (stepId: string, direction?: "forward" | "backward" | "none") => void;
   stepDirection: "forward" | "backward" | "none";
-  reset: () => void;
+  reset: (state?: Partial<StepsState>) => void;
 }
 
 interface AssistantState {
@@ -53,15 +54,24 @@ const createUseSteps = (options: { firstStepId: string }) => {
 
   return create<StepsState>((set, get) => ({
     ...initialState,
-    stepTo: (stepId: string, direction: "forward" | "backward" = "forward") =>
+    stepTo: (stepId: string, direction: "forward" | "backward" | "none" = "forward") =>
       set({ stepId, stepDirection: direction }),
-    reset: () => set(initialState),
+    reset: (state?: Partial<StepsState>) => set({ ...initialState, ...state }),
   }));
 };
 
-const useSteps = createUseSteps({ firstStepId: StepSelectMode.StepId });
-
-export default function TagAssistant() {
+export default function TagAssistant({
+  assetToRegister,
+  onClose,
+}: {
+  assetToRegister?: Pick<Asset, "id" | "siteId" | "clientId">;
+  onClose?: () => void;
+}) {
+  const useSteps = useRef(
+    createUseSteps({
+      firstStepId: assetToRegister ? StepSingleSerialNumberInput.StepId : StepSelectMode.StepId,
+    })
+  ).current;
   const { stepId, stepTo, stepDirection, reset: resetSteps } = useSteps();
 
   useEffect(() => {
@@ -71,14 +81,25 @@ export default function TagAssistant() {
   }, [resetSteps]);
 
   const [assistantState, setAssistantState] = useImmer<AssistantState>({
-    mode: "preprogram-single",
+    mode: assetToRegister ? "register-to-asset" : "preprogram-single",
     serialNumberMethod: "sequential",
     registrationCompleted: false,
   });
 
+  useEffect(() => {
+    if (assetToRegister) {
+      setAssistantState((draft) => {
+        draft.assetId = assetToRegister.id;
+        draft.siteId = assetToRegister.siteId;
+        draft.clientId = assetToRegister.clientId;
+      });
+    }
+  }, [assetToRegister]);
+
   return (
-    <div className="h-full w-full flex flex-col items-center">
+    <div className="flex h-full w-full flex-col items-center">
       <CurrentStep
+        onClose={onClose}
         stepId={stepId}
         stepTo={stepTo}
         stepDirection={stepDirection}
@@ -90,12 +111,14 @@ export default function TagAssistant() {
 }
 
 const CurrentStep = ({
+  onClose,
   stepId,
   stepTo,
   stepDirection,
   assistantState,
   setAssistantState,
 }: {
+  onClose?: () => void;
   stepId: StepsState["stepId"];
   stepTo: StepsState["stepTo"];
   stepDirection: StepsState["stepDirection"];
@@ -129,8 +152,8 @@ const CurrentStep = ({
                 mode === "preprogram-single"
                   ? StepSingleSerialNumberInput.StepId
                   : mode === "preprogram-batch"
-                  ? StepBulkSerialNumberInput.StepId
-                  : StepSelectClient.StepId,
+                    ? StepBulkSerialNumberInput.StepId
+                    : StepSelectClient.StepId,
                 "forward"
               );
             }}
@@ -147,15 +170,14 @@ const CurrentStep = ({
                 draft.serialNumberRangeStart = serialNumber;
               });
             }}
+            registerToAssetMode={assistantState.mode === "register-to-asset"}
           />
         );
       case StepSingleProgram.StepId:
         return (
           <StepSingleProgram
             serialNumber={assistantState.serialNumberRangeStart ?? ""}
-            onStepBackward={() =>
-              stepTo(StepSingleSerialNumberInput.StepId, "backward")
-            }
+            onStepBackward={() => stepTo(StepSingleSerialNumberInput.StepId, "backward")}
             onRestart={() => {
               stepTo(StepSingleSerialNumberInput.StepId, "backward");
               setAssistantState((draft) => {
@@ -168,6 +190,7 @@ const CurrentStep = ({
                 draft.currentTagUrl = tagUrl;
               });
             }}
+            registerToAssetMode={assistantState.mode === "register-to-asset"}
           />
         );
       case StepSingleRegister.StepId:
@@ -183,6 +206,7 @@ const CurrentStep = ({
                 draft.registrationCompleted = false;
               });
             }}
+            onClose={onClose}
             clientId={assistantState.clientId}
             siteId={assistantState.siteId}
             assetId={assistantState.assetId}
@@ -207,6 +231,7 @@ const CurrentStep = ({
                 draft.registrationCompleted = true;
               });
             }}
+            registerToAssetMode={assistantState.mode === "register-to-asset"}
           />
         );
       case StepBulkSerialNumberInput.StepId:
@@ -243,9 +268,7 @@ const CurrentStep = ({
       case StepBulkProgramPart1.StepId:
         return (
           <StepBulkProgramPart1
-            onStepBackward={() =>
-              stepTo(StepBulkSerialNumberInput.StepId, "backward")
-            }
+            onStepBackward={() => stepTo(StepBulkSerialNumberInput.StepId, "backward")}
             onExport={() => stepTo(StepBulkProgramExport.StepId, "forward")}
             onProgramNow={() => stepTo(StepBulkProgramPart2.StepId, "forward")}
             serialNumberMethod={assistantState.serialNumberMethod}
@@ -258,9 +281,7 @@ const CurrentStep = ({
         return (
           <StepBulkProgramExport
             onRestart={onBulkProgramRestart}
-            onStepBackward={() =>
-              stepTo(StepBulkProgramPart1.StepId, "backward")
-            }
+            onStepBackward={() => stepTo(StepBulkProgramPart1.StepId, "backward")}
             serialNumberMethod={assistantState.serialNumberMethod}
             serialNumberRangeStart={assistantState.serialNumberRangeStart}
             serialNumberRangeEnd={assistantState.serialNumberRangeEnd}
@@ -271,9 +292,7 @@ const CurrentStep = ({
         return (
           <StepBulkProgramPart2
             onRestart={onBulkProgramRestart}
-            onStepBackward={() =>
-              stepTo(StepBulkProgramPart1.StepId, "backward")
-            }
+            onStepBackward={() => stepTo(StepBulkProgramPart1.StepId, "backward")}
             serialNumberMethod={assistantState.serialNumberMethod}
             serialNumberRangeStart={assistantState.serialNumberRangeStart}
             serialNumberRangeEnd={assistantState.serialNumberRangeEnd}
@@ -309,9 +328,7 @@ const CurrentStep = ({
       case StepPreprocessBatchFile.StepId:
         return (
           <StepPreprocessBatchFile
-            onStepBackward={() =>
-              stepTo(StepUploadBatchFile.StepId, "backward")
-            }
+            onStepBackward={() => stepTo(StepUploadBatchFile.StepId, "backward")}
             batchFile={assistantState.batchFile}
           />
         );
@@ -321,7 +338,7 @@ const CurrentStep = ({
   }, [stepId, assistantState]);
 
   return (
-    <div className="h-full w-full relative">
+    <div className="relative h-full w-full">
       <AnimatePresence custom={stepDirection}>
         <motion.div
           key={stepId}
@@ -331,11 +348,7 @@ const CurrentStep = ({
             slideIn: (direction: typeof stepDirection) => ({
               opacity: 0,
               translateX:
-                direction === "forward"
-                  ? "100%"
-                  : direction === "backward"
-                  ? "-100%"
-                  : "0%",
+                direction === "forward" ? "100%" : direction === "backward" ? "-100%" : "0%",
             }),
             slideOut: (direction: typeof stepDirection) => ({
               opacity: 0,

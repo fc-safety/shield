@@ -283,13 +283,7 @@ export default function AssetDetails({
             </div>
             <div className="grid gap-4">
               <Label>Tag</Label>
-              {asset.tag ? (
-                <TagCard tag={asset.tag} />
-              ) : (
-                <span className="text-muted-foreground text-sm">
-                  No tag has been assigned to this asset.
-                </span>
-              )}
+              <TagCard tag={asset.tag} asset={asset} />
             </div>
             <div className="grid gap-4">
               <Label>Other</Label>

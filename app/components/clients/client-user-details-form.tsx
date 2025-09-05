@@ -50,6 +50,7 @@ export default function ClientUserDetailsForm({
       ...FORM_DEFAULTS,
       siteExternalId: siteExternalId ?? "",
     }) as TForm,
+    mode: "onBlur",
   });
 
   const {

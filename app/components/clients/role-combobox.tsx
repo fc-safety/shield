@@ -86,14 +86,17 @@ export default function RoleCombobox({
       value={value}
       onValueChange={onValueChange}
       onBlur={onBlur}
-      displayValue={(value) =>
-        roles.find((c) => c.id === value)?.name ?? <>&mdash;</>
-      }
+      displayValue={(value) => roles.find((c) => c.id === value)?.name ?? <>&mdash;</>}
       loading={fetcher.state === "loading"}
       options={options}
       disabled={disabled}
       onMouseOver={() => !disabled && preloadRoles()}
       onTouchStart={() => !disabled && preloadRoles()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && !disabled) {
+          preloadRoles();
+        }
+      }}
       searchValue={search}
       onSearchValueChange={setSearch}
       className={className}
