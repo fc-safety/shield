@@ -140,17 +140,18 @@ export default function StepSingleRegister({
       footerSlotEnd={
         <>
           {registerToAssetMode ? undefined : (
-            <Button onClick={onRestart} variant="secondary">
+            <Button onClick={onRestart} variant="secondary" disabled={isSubmitting}>
               <RotateCcw /> Write another tag
             </Button>
           )}
           {onClose && (
-            <Button onClick={onClose} variant="default">
+            <Button onClick={onClose} variant="default" disabled={isSubmitting}>
               Close
             </Button>
           )}
         </>
       }
+      stepBackwardDisabled={isSubmitting}
     >
       {isRegistrationCompleted ? (
         <div className="flex flex-col items-center gap-2 py-4">

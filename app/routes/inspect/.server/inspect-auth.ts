@@ -7,9 +7,7 @@ import { getSearchParam } from "~/lib/utils";
 export async function getUserOrHandleInspectLoginRedirect(request: Request) {
   // If the user is being referred to from the legacy Tags page, we want to show
   // the legacy redirect landing page (unless it's been explicitly marked as viewed).
-  const appStateSession = await appStateSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const appStateSession = await appStateSessionStorage.getSession(request.headers.get("cookie"));
   if (appStateSession.get("show_legacy_redirect")) {
     throw redirect(
       `/legacy-redirect?returnTo=${encodeURIComponent(
@@ -27,7 +25,7 @@ export async function getUserOrHandleInspectLoginRedirect(request: Request) {
   // inspection data without logging in.
   let loginRoute: string | undefined = "/public-inspect/login";
 
-  if (intent === "register-tag") {
+  if (intent === "register-tag" || intent === "login") {
     // Use default login route if the intent is to register a tag, which
     // requires a login.
     loginRoute = undefined;

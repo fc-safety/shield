@@ -11,6 +11,7 @@ export default function Step({
   continueDisabled,
   continueButtonText,
   onStepBackward,
+  stepBackwardDisabled,
   children,
   footerSlotEnd: footerSlotRight,
   footerSlotStart: footerSlotLeft,
@@ -22,28 +23,22 @@ export default function Step({
   continueDisabled?: boolean;
   continueButtonText?: string;
   onStepBackward?: () => void;
+  stepBackwardDisabled?: boolean;
   footerSlotEnd?: ReactNode;
   footerSlotStart?: ReactNode;
 }>) {
   return (
     <div
-      className={cn(
-        "w-full max-w-xl flex flex-col items-stretch justify-center gap-4",
-        className
-      )}
+      className={cn("flex w-full max-w-xl flex-col items-stretch justify-center gap-4", className)}
     >
       <div>
         {title && <h3 className="text-center text-lg font-bold">{title}</h3>}
-        {subtitle && (
-          <h4 className="text-center text-base text-muted-foreground">
-            {subtitle}
-          </h4>
-        )}
+        {subtitle && <h4 className="text-muted-foreground text-center text-base">{subtitle}</h4>}
       </div>
       {children}
       <div className="flex gap-4">
         {onStepBackward && (
-          <Button onClick={onStepBackward} variant="secondary">
+          <Button onClick={onStepBackward} variant="secondary" disabled={stepBackwardDisabled}>
             <ArrowLeft /> Back
           </Button>
         )}
