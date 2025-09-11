@@ -22,14 +22,14 @@ export default function Header({
   const matches = useMatches();
 
   const {
-    bannerLogoDark: { h24px: bannerLogoDarkUrl },
-    bannerLogoLight: { h24px: bannerLogoLightUrl },
+    bannerLogoDark: { h48px: bannerLogoDarkUrl },
+    bannerLogoLight: { h48px: bannerLogoLightUrl },
   } = useOptimizedImageUrls();
 
   return (
     <header
       className={cn(
-        "flex flex-col shrink-0 gap-y-1 pt-4 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2",
+        "flex shrink-0 flex-col gap-y-1 px-2 pt-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2 sm:px-4",
         className
       )}
     >
@@ -45,7 +45,7 @@ export default function Header({
             <img
               src={bannerLogoDarkUrl}
               alt=""
-              className="h-5 w-auto object-contain hidden dark:block"
+              className="hidden h-5 w-auto object-contain dark:block"
             />
           </Link>
         )}

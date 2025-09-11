@@ -2,14 +2,10 @@ import { useOptimizedImageUrls } from "~/contexts/optimized-image-context";
 
 import { cn } from "~/lib/utils";
 
-export default function ShieldBannerLogo({
-  className,
-}: {
-  className?: string;
-}) {
+export default function ShieldBannerLogo({ className }: { className?: string }) {
   const {
-    bannerLogoDark: { h24px: bannerLogoDarkUrl },
-    bannerLogoLight: { h24px: bannerLogoLightUrl },
+    bannerLogoDark: { h48px: bannerLogoDarkUrl },
+    bannerLogoLight: { h48px: bannerLogoLightUrl },
   } = useOptimizedImageUrls();
 
   return (
@@ -22,7 +18,7 @@ export default function ShieldBannerLogo({
       <img
         src={bannerLogoDarkUrl}
         alt="FC Safety Shield"
-        className={cn("w-64 hidden dark:block", className)}
+        className={cn("hidden w-64 dark:block", className)}
       />{" "}
     </>
   );

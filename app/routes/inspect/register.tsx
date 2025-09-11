@@ -43,7 +43,7 @@ export default function InspectRegister({
   loaderData: { tag, inspectionToken },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canRegister = can(user, "register", "tags");
+  const canRegister = can(user, "register", "tags") && can(user, "create", "assets");
 
   const [recentlyRegistered, setRecentlyRegistered] = useState(false);
 

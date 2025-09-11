@@ -2,10 +2,10 @@ import { createContext, useContext } from "react";
 
 export interface OptimizedImageUrls {
   bannerLogoLight: {
-    h24px: string;
+    h48px: string;
   };
   bannerLogoDark: {
-    h24px: string;
+    h48px: string;
   };
 }
 
@@ -30,9 +30,7 @@ export const OptimizedImageProvider = ({
 export const useOptimizedImageUrls = () => {
   const context = useContext(OptimizedImageContext);
   if (!context) {
-    throw new Error(
-      "useOptimizedImageUrls must be used within a OptimizedImageProvider"
-    );
+    throw new Error("useOptimizedImageUrls must be used within a OptimizedImageProvider");
   }
   return context.optimizedImageUrls;
 };

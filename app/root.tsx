@@ -52,10 +52,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const optimizedImageUrls: OptimizedImageUrls = {
     bannerLogoLight: {
-      h24px: buildImageProxyUrl(BANNER_LOGO_LIGHT_URL, ["h:24"]),
+      h48px: buildImageProxyUrl(BANNER_LOGO_LIGHT_URL, ["h:48"]),
     },
     bannerLogoDark: {
-      h24px: buildImageProxyUrl(BANNER_LOGO_DARK_URL, ["h:24"]),
+      h48px: buildImageProxyUrl(BANNER_LOGO_DARK_URL, ["h:48"]),
     },
   };
 

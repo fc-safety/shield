@@ -2,8 +2,8 @@ import { useOptimizedImageUrls } from "~/contexts/optimized-image-context";
 
 export default function Footer() {
   const {
-    bannerLogoDark: { h24px: bannerLogoDarkUrl },
-    bannerLogoLight: { h24px: bannerLogoLightUrl },
+    bannerLogoDark: { h48px: bannerLogoDarkUrl },
+    bannerLogoLight: { h48px: bannerLogoLightUrl },
   } = useOptimizedImageUrls();
 
   return (
