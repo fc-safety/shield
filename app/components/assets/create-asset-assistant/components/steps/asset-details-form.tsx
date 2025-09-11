@@ -92,8 +92,8 @@ export default function StepAssetDetailsForm({
 
   return (
     <Step
-      title="Asset Details"
-      subtitle="Enter the details of the asset."
+      title="Just a few more details..."
+      subtitle="This is needed to finish storing your asset in the system."
       onStepBackward={onStepBackward}
       onContinue={
         onContinue

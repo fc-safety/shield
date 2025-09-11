@@ -27,7 +27,7 @@ export default function StepSelectCategoryOrExistingAsset({
   return (
     <Step
       title="Which category is this asset?"
-      subtitle="Select a category or existing asset to continue."
+      subtitle="Select a category or continue with an existing asset."
       onContinue={() => onContinue({ skipToSelectExistingAsset: false })}
       continueDisabled={!productCategoryId}
       onStepBackward={onStepBackward}

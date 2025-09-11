@@ -15,6 +15,7 @@ import { isEmpty } from "~/lib/utils";
 import ActiveToggleFormInput from "../active-toggle-form-input";
 import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
+import HelpPopover from "../help-popover";
 import LegacyIdField from "../legacy-id-field";
 import ProductSelector from "../products/product-selector";
 import {
@@ -172,6 +173,7 @@ export function AssetDetailFormFields({
   productReadOnly?: boolean;
 }) {
   const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
@@ -204,7 +206,10 @@ export function AssetDetailFormFields({
         name="serialNumber"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Serial Number</FormLabel>
+            <FormLabel className="inline-flex items-center gap-1">
+              Serial Number{" "}
+              <HelpPopover>The serial number is used to uniquely identify the asset.</HelpPopover>
+            </FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -217,7 +222,10 @@ export function AssetDetailFormFields({
         name="name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Friendly Name (Optional)</FormLabel>
+            <FormLabel className="inline-flex items-center gap-1">
+              Friendly Name (Optional){" "}
+              <HelpPopover>Optional name for easier identification.</HelpPopover>
+            </FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -277,7 +285,12 @@ export function AssetDetailFormFields({
         name="location"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Room / Area</FormLabel>
+            <FormLabel className="inline-flex items-center gap-1">
+              Room / Area
+              <HelpPopover>
+                This is the room or general space where the asset is or will be located.
+              </HelpPopover>
+            </FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -290,7 +303,13 @@ export function AssetDetailFormFields({
         name="placement"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Placement</FormLabel>
+            <FormLabel className="inline-flex items-center gap-1">
+              Placement
+              <HelpPopover>
+                Useful for helping to locate the asset, this is the specific placement of the asset
+                within the room or area.
+              </HelpPopover>
+            </FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -331,13 +350,18 @@ export function AssetDetailFormFields({
           style={{ overflow: "hidden" }}
         >
           <div className="space-y-4 pt-6">
-            <AssetMetadataInput />
+            {userIsGlobalAdmin && <AssetMetadataInput />}
             <FormField
               control={form.control}
               name="inspectionCycle"
               render={({ field: { value, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Inspection Cycle</FormLabel>
+                  <FormLabel className="inline-flex items-center gap-1">
+                    Inspection Cycle{" "}
+                    <HelpPopover>
+                      The required maximum number of days between inspections for this asset.
+                    </HelpPopover>
+                  </FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-2">
                       <Input {...field} value={isEmpty(value) ? "" : value} type="number" min={1} />
@@ -411,6 +435,9 @@ function AssetMetadataInput() {
           <FormItem>
             <FormLabel className="flex items-center gap-2">
               Metadata
+              <HelpPopover>
+                Metadata can be used to store additional information about the asset.
+              </HelpPopover>
               <Button
                 variant="outline"
                 size="iconSm"
