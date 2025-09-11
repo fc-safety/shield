@@ -143,7 +143,7 @@ export function ResponsiveDialog({
     >
       <DrawerTrigger asChild={!!trigger}>{trigger}</DrawerTrigger>
       <DrawerContent className={cn("max-w-[100vw]", className, drawerClassName)}>
-        <ScrollAreaComponent className="h-[calc(100vh-5rem)]">
+        <ScrollAreaComponent className="h-[calc(100dvh-5rem)]">
           <div className="flex h-full flex-col">
             <DrawerHeader className="text-left">
               <DrawerTitle>{title}</DrawerTitle>

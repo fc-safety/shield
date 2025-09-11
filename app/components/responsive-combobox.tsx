@@ -178,7 +178,7 @@ function AsDrawer({
       {renderInput({
         renderTrigger: (trigger) => <DrawerTrigger asChild>{trigger}</DrawerTrigger>,
       })}
-      <DrawerContent className="min-h-[calc(100vh/2)]">
+      <DrawerContent className="min-h-[calc(100dvh/2)]">
         <div className="mt-4 border-t pb-4">{renderContent()}</div>
       </DrawerContent>
     </DrawerComponent>
