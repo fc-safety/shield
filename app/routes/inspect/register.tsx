@@ -61,8 +61,8 @@ export default function InspectRegister({
   };
 
   return (
-    <div className="flex h-full w-full max-w-sm flex-col items-center justify-center self-center">
-      <div className="h-full max-h-[36rem] w-full">
+    <div className="my-8 flex h-full w-full max-w-sm flex-col items-center justify-center self-center">
+      <div className="h-[42rem] max-h-[calc(100vh-10rem)] w-full">
         <RegisterAssetAssistant
           assetId={tag?.asset?.id}
           canRegister={canRegister}
