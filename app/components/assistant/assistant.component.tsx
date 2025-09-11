@@ -136,9 +136,6 @@ function CurrentStep({
             damping: 26,
           }}
         >
-          {/* <ScrollArea className="h-full w-full" disableDisplayTable>
-            {step}
-          </ScrollArea> */}
           {step}
         </motion.div>
       </AnimatePresence>

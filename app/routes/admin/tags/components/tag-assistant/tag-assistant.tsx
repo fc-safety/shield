@@ -217,17 +217,21 @@ export default function TagAssistant({
                     draft.registrationCompleted = true;
                   });
                 }}
-                onRestart={() => {
-                  resetCreateAssetAssistant();
-                  setTagAssistantState((draft) => {
-                    draft.registrationCompleted = false;
-                    draft.serialNumberRangeStart = undefined;
-                    draft.serialNumberRangeEnd = undefined;
-                    draft.serialNumbers = undefined;
-                    draft.currentTagUrl = undefined;
-                  });
-                  stepTo(StepSingleSerialNumberInput.StepId, "backward");
-                }}
+                onRestart={
+                  registerToAssetMode
+                    ? undefined
+                    : () => {
+                        resetCreateAssetAssistant();
+                        setTagAssistantState((draft) => {
+                          draft.registrationCompleted = false;
+                          draft.serialNumberRangeStart = undefined;
+                          draft.serialNumberRangeEnd = undefined;
+                          draft.serialNumbers = undefined;
+                          draft.currentTagUrl = undefined;
+                        });
+                        stepTo(StepSingleSerialNumberInput.StepId, "backward");
+                      }
+                }
               />
             );
           case StepBulkSerialNumberInput.StepId:
