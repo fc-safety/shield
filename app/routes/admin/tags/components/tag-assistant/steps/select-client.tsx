@@ -1,5 +1,5 @@
 import ClientCombobox from "~/components/clients/client-combobox";
-import Step from "../components/step";
+import Step from "../../../../../../components/assistant/components/step";
 
 export default function StepSelectClient({
   onContinue,

@@ -2,7 +2,7 @@ import { Upload } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import Step from "../components/step";
+import Step from "../../../../../../components/assistant/components/step";
 
 export default function StepUploadBatchFile({
   onContinue,
@@ -26,7 +26,7 @@ export default function StepUploadBatchFile({
     >
       <Label
         htmlFor="batch-file"
-        className="flex items-center gap-3 w-full rounded-md border border-input bg-transparent p-1.5 pr-3 text-sm shadow-xs transition-colors "
+        className="border-input flex w-full items-center gap-3 rounded-md border bg-transparent p-1.5 pr-3 text-sm shadow-xs transition-colors"
       >
         <Input
           id="batch-file"
@@ -43,7 +43,7 @@ export default function StepUploadBatchFile({
         <Button variant="secondary" size="sm" className="pointer-events-none">
           <Upload /> Upload
         </Button>
-        <span className="text-ellipsis overflow-hidden">
+        <span className="overflow-hidden text-ellipsis">
           {selectedFile ? selectedFile.name : "No file selected."}
         </span>
       </Label>

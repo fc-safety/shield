@@ -1,11 +1,8 @@
 import { Braces, Download, RotateCcw } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
-import {
-  exportTagDataAsCsv,
-  exportTagDataAsJson,
-} from "../../../services/tags.service";
-import Step from "../components/step";
+import Step from "../../../../../../components/assistant/components/step";
+import { exportTagDataAsCsv, exportTagDataAsJson } from "../../../services/tags.service";
 
 export default function StepBulkProgramExport({
   onRestart,

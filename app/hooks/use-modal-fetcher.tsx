@@ -7,11 +7,11 @@ import { cleanErrorMessage } from "~/lib/errors";
 import { buildPath, type QueryParams } from "~/lib/urls";
 
 export function useModalFetcher<T>({
-  onSubmitted,
+  onSubmitted: onSubmittedProp,
   onData,
   defaultErrorMessage,
 }: {
-  onSubmitted?: () => void;
+  onSubmitted?: (data: T) => void;
   onData?: (data: T) => void;
   defaultErrorMessage?: string;
 } = {}) {
@@ -19,6 +19,7 @@ export function useModalFetcher<T>({
   const errorReported = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dataCaptured = useRef(false);
+  const localOnSubmitted = useRef<((data: T) => void) | undefined>(undefined);
 
   const submit = useCallback(
     (...args: Parameters<typeof fetcher.submit>) => {
@@ -60,6 +61,7 @@ export function useModalFetcher<T>({
         throw?: boolean;
         method?: NonNullable<Parameters<typeof fetcher.submit>[1]>["method"];
         viewContext?: ViewContext;
+        onSubmitted?: (data: T) => void;
       }
     ) => {
       const cleanedPath = buildPath(options.path, {
@@ -67,6 +69,8 @@ export function useModalFetcher<T>({
         _viewContext: options.viewContext,
         ...options.query,
       });
+
+      localOnSubmitted.current = options.onSubmitted;
 
       return submit(data, {
         method: options.method ?? "post",
@@ -117,11 +121,13 @@ export function useModalFetcher<T>({
           );
         }
       } else {
-        onSubmitted?.();
+        localOnSubmitted.current
+          ? localOnSubmitted.current(fetcher.data as T)
+          : onSubmittedProp?.(fetcher.data as T);
       }
       setIsSubmitting(false);
     }
-  }, [fetcher.data, fetcher.state, onSubmitted, defaultErrorMessage, onData]);
+  }, [fetcher.data, fetcher.state, onSubmittedProp, defaultErrorMessage, onData]);
 
   return {
     fetcher,

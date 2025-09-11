@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import Step from "../../../../../../components/assistant/components/step";
+import SubStep from "../../../../../../components/assistant/components/sub-step";
 import { generateSignedTagUrl } from "../../../services/tags.service";
 import DisplayTagWriteData from "../components/display-tag-write-data";
-import Step from "../components/step";
-import SubStep from "../components/sub-step";
 
 export default function StepSingleProgram({
   serialNumber,
@@ -62,7 +62,7 @@ export default function StepSingleProgram({
       continueButtonText={registerToAssetMode ? "Register tag" : "(Optional) Register tag"}
     >
       <SubStep idx={0} title="Copy the following URL to your clipboard.">
-        <div className="bg-background text-foreground ring-accent flex h-16 flex-col items-center justify-center gap-2 rounded-md px-4 py-2 ring">
+        <div className="bg-background text-foreground border-accent flex h-16 flex-col items-center justify-center gap-2 rounded-md border px-4 py-2">
           {isGeneratingTagUrl || writeData === null ? (
             <div className="flex flex-col items-center justify-center gap-1">
               <Loader2 className="size-4 animate-spin" />

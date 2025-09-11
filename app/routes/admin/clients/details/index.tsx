@@ -44,10 +44,10 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 export default function ClientDetails({ loaderData: { users, assets } }: Route.ComponentProps) {
   const client = useRouteLoaderData<Client>("routes/admin/clients/details/layout");
   return (
-    <div className="grid gap-4">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-2 sm:gap-4">
         <ClientDetailsCard client={client} viewContext="admin" />
-        <div className="grid gap-4">
+        <div className="flex flex-col gap-2 sm:gap-4">
           <ClientSiteGroupCard
             siteGroups={client?.sites?.filter((s) => s._count?.subsites) ?? []}
             clientId={client?.id ?? ""}
@@ -67,7 +67,7 @@ export default function ClientDetails({ loaderData: { users, assets } }: Route.C
           clientId={client?.id ?? ""}
         />
       )}
-      <Card className="col-span-full">
+      <Card>
         <CardHeader>
           <CardTitle>
             <Shield /> Assets

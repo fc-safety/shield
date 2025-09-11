@@ -8,8 +8,12 @@ export function useAuthenticatedFetch() {
 
   const fetchAuthenticated = useCallback(
     async (url: Parameters<typeof fetch>[0], options?: RequestInit) => {
-      if (typeof url === "string" && !isAbsoluteUrl(url)) {
-        url = buildUrl(url, apiUrl).toString();
+      if (typeof url === "string") {
+        if (!isAbsoluteUrl(url)) {
+          url = buildUrl(url, apiUrl).toString();
+        } else if (url.startsWith("self://")) {
+          url = url.slice(7);
+        }
       }
 
       let accessToken = user.tokens.accessToken;

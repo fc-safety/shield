@@ -62,167 +62,165 @@ export default function ClientDetailsCard({
   const duplicateDemoClient = useOpenData();
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            <Building2 />
-            <div className="inline-flex items-center gap-4">
-              {title}
-              {client?.demoMode && <Badge variant="default">Demo Client</Badge>}
-              <div className="flex gap-2">
-                {canEditClient && (
-                  <EditClientButton
-                    client={client}
-                    trigger={
-                      <Button variant="secondary" size="icon" type="button">
-                        <Pencil />
-                      </Button>
-                    }
-                    viewContext={viewContext}
-                  />
-                )}
-                {userIsGlobalAdmin && client?.demoMode && (
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    type="button"
-                    title="Duplicate Demo Client"
-                    onClick={() => duplicateDemoClient.openNew()}
-                  >
-                    <CopyPlus />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-8">
-          {client ? (
-            <>
-              <div className="grid gap-4">
-                <Label>Properties</Label>
-                <DataList
-                  details={[
-                    {
-                      label: "Status",
-                      value: (
-                        <div className="flex items-center gap-2 capitalize">
-                          <ActiveIndicator2
-                            active={client.status.toLowerCase() as Lowercase<Client["status"]>}
-                          />
-                          {client.status.toLowerCase()}
-                        </div>
-                      ),
-                    },
-                    {
-                      label: "Name",
-                      value: client.name,
-                    },
-                    {
-                      label: "External ID",
-                      value: <CopyableText text={client.externalId} />,
-                      hidden: !userIsGlobalAdmin,
-                    },
-                    {
-                      label: isAfter(client.startedOn, startOfDay(new Date()))
-                        ? "Starting On"
-                        : "Started On",
-                      value: format(client.startedOn, "PP"),
-                    },
-                    {
-                      label: "Default Inspection Cycle",
-                      value: `${client.defaultInspectionCycle} days`,
-                    },
-                  ]}
-                  defaultValue={<>&mdash;</>}
-                  variant="thirds"
-                />
-              </div>
-              <div className="grid gap-4">
-                <Label>Contact</Label>
-                <DataList
-                  details={[
-                    {
-                      label: "Address",
-                      value: <DisplayAddress address={client.address} />,
-                    },
-                    {
-                      label: "Phone Number",
-                      value: beautifyPhone(client.phoneNumber),
-                    },
-                  ]}
-                  defaultValue={<>&mdash;</>}
-                  variant="thirds"
-                />
-              </div>
-              <div className="grid gap-4">
-                <Label>Other</Label>
-                <DataList
-                  details={[
-                    {
-                      label: "Created",
-                      value: format(client.createdOn, "PPpp"),
-                    },
-                    {
-                      label: "Last Updated",
-                      value: format(client.modifiedOn, "PPpp"),
-                    },
-                  ]}
-                  defaultValue={<>&mdash;</>}
-                  variant="thirds"
-                />
-              </div>
-            </>
-          ) : (
-            <Skeleton className="h-64 w-full rounded" />
-          )}
-          {canDeleteClient && (
-            <Alert variant="destructive">
-              <AlertTitle>Danger Zone</AlertTitle>
-              <AlertDescription className="flex flex-col items-start gap-2">
-                <p>
-                  Deleting this client may not be permitted if it is already in use and has data
-                  associated with it.
-                </p>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  type="button"
-                  onClick={() =>
-                    setDeleteClientAction((draft) => {
-                      draft.open = true;
-                      draft.message = `Are you sure you want to delete "${client.name}"?`;
-                      draft.requiredUserInput = client.name;
-                      draft.onConfirm = () => {
-                        submitDelete(
-                          {},
-                          {
-                            method: "delete",
-                            path: `/api/proxy/clients/${client.id}`,
-                            viewContext,
-                          }
-                        );
-                      };
-                    })
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <Building2 />
+          <div className="inline-flex items-center gap-4">
+            {title}
+            {client?.demoMode && <Badge variant="default">Demo Client</Badge>}
+            <div className="flex gap-2">
+              {canEditClient && (
+                <EditClientButton
+                  client={client}
+                  trigger={
+                    <Button variant="secondary" size="icon" type="button">
+                      <Pencil />
+                    </Button>
                   }
+                  viewContext={viewContext}
+                />
+              )}
+              {userIsGlobalAdmin && client?.demoMode && (
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  type="button"
+                  title="Duplicate Demo Client"
+                  onClick={() => duplicateDemoClient.openNew()}
                 >
-                  Delete Client
+                  <CopyPlus />
                 </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-        <ConfirmationDialog {...deleteClientAction} />
-        {userIsGlobalAdmin && client?.demoMode && (
-          <DuplicateDemoClientDialog
-            client={client}
-            open={duplicateDemoClient.open}
-            onOpenChange={duplicateDemoClient.setOpen}
-          />
+              )}
+            </div>
+          </div>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-8">
+        {client ? (
+          <>
+            <div className="grid gap-4">
+              <Label>Properties</Label>
+              <DataList
+                details={[
+                  {
+                    label: "Status",
+                    value: (
+                      <div className="flex items-center gap-2 capitalize">
+                        <ActiveIndicator2
+                          active={client.status.toLowerCase() as Lowercase<Client["status"]>}
+                        />
+                        {client.status.toLowerCase()}
+                      </div>
+                    ),
+                  },
+                  {
+                    label: "Name",
+                    value: client.name,
+                  },
+                  {
+                    label: "External ID",
+                    value: <CopyableText text={client.externalId} />,
+                    hidden: !userIsGlobalAdmin,
+                  },
+                  {
+                    label: isAfter(client.startedOn, startOfDay(new Date()))
+                      ? "Starting On"
+                      : "Started On",
+                    value: format(client.startedOn, "PP"),
+                  },
+                  {
+                    label: "Default Inspection Cycle",
+                    value: `${client.defaultInspectionCycle} days`,
+                  },
+                ]}
+                defaultValue={<>&mdash;</>}
+                variant="thirds"
+              />
+            </div>
+            <div className="grid gap-4">
+              <Label>Contact</Label>
+              <DataList
+                details={[
+                  {
+                    label: "Address",
+                    value: <DisplayAddress address={client.address} />,
+                  },
+                  {
+                    label: "Phone Number",
+                    value: beautifyPhone(client.phoneNumber),
+                  },
+                ]}
+                defaultValue={<>&mdash;</>}
+                variant="thirds"
+              />
+            </div>
+            <div className="grid gap-4">
+              <Label>Other</Label>
+              <DataList
+                details={[
+                  {
+                    label: "Created",
+                    value: format(client.createdOn, "PPpp"),
+                  },
+                  {
+                    label: "Last Updated",
+                    value: format(client.modifiedOn, "PPpp"),
+                  },
+                ]}
+                defaultValue={<>&mdash;</>}
+                variant="thirds"
+              />
+            </div>
+          </>
+        ) : (
+          <Skeleton className="h-64 w-full rounded" />
         )}
-      </Card>
-    </>
+        {canDeleteClient && (
+          <Alert variant="destructive">
+            <AlertTitle>Danger Zone</AlertTitle>
+            <AlertDescription className="flex flex-col items-start gap-2">
+              <p>
+                Deleting this client may not be permitted if it is already in use and has data
+                associated with it.
+              </p>
+              <Button
+                variant="destructive"
+                size="sm"
+                type="button"
+                onClick={() =>
+                  setDeleteClientAction((draft) => {
+                    draft.open = true;
+                    draft.message = `Are you sure you want to delete "${client.name}"?`;
+                    draft.requiredUserInput = client.name;
+                    draft.onConfirm = () => {
+                      submitDelete(
+                        {},
+                        {
+                          method: "delete",
+                          path: `/api/proxy/clients/${client.id}`,
+                          viewContext,
+                        }
+                      );
+                    };
+                  })
+                }
+              >
+                Delete Client
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+      <ConfirmationDialog {...deleteClientAction} />
+      {userIsGlobalAdmin && client?.demoMode && (
+        <DuplicateDemoClientDialog
+          client={client}
+          open={duplicateDemoClient.open}
+          onOpenChange={duplicateDemoClient.setOpen}
+        />
+      )}
+    </Card>
   );
 }
 

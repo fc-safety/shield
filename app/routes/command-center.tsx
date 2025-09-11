@@ -31,16 +31,12 @@ export default function Dashboard() {
   const canReadSites = can(user, "read", "sites");
   const canViewMultipleSites = hasMultiSiteVisibility(user);
 
-  const [overallComplianceRefreshKey, setOverallComplianceRefreshKey] =
-    useState(0);
-  const [complianceBySiteRefreshKey, setComplianceBySiteRefreshKey] =
-    useState(0);
-  const [complianceByCategoryRefreshKey, setComplianceByCategoryRefreshKey] =
-    useState(0);
+  const [overallComplianceRefreshKey, setOverallComplianceRefreshKey] = useState(0);
+  const [complianceBySiteRefreshKey, setComplianceBySiteRefreshKey] = useState(0);
+  const [complianceByCategoryRefreshKey, setComplianceByCategoryRefreshKey] = useState(0);
   const [productRequestsRefreshKey, setProductRequestsRefreshKey] = useState(0);
   const [complianceHistoryKey, setComplianceHistoryKey] = useState(0);
-  const [inspectionAlertsRefreshKey, setInspectionAlertsRefreshKey] =
-    useState(0);
+  const [inspectionAlertsRefreshKey, setInspectionAlertsRefreshKey] = useState(0);
 
   useServerSentEvents({
     key: "command-center",
@@ -63,40 +59,26 @@ export default function Dashboard() {
   });
 
   const canReadDashboard =
-    canReadAssets ||
-    canReadInspections ||
-    canReadProductRequests ||
-    canReadAlerts;
+    canReadAssets || canReadInspections || canReadProductRequests || canReadAlerts;
 
-  // TODO: Refine styling so that the boxes fit really nicely on most screens.
   return (
     <div className="h-[calc(100vh-110px)] overflow-y-auto">
-      <div className="h-full grid grid-cols-[repeat(auto-fill,minmax(375px,1fr))] 2xl:grid-cols-3 auto-rows-[minmax(400px,1fr)] gap-2 sm:gap-4">
-        {canReadAssets && (
-          <OverallComplianceChart refreshKey={overallComplianceRefreshKey} />
-        )}
+      <div className="grid h-full auto-rows-[minmax(400px,1fr)] grid-cols-[repeat(auto-fill,minmax(375px,1fr))] gap-2 sm:gap-4 2xl:grid-cols-3">
+        {canReadAssets && <OverallComplianceChart refreshKey={overallComplianceRefreshKey} />}
         {canReadAssets && canViewMultipleSites && canReadSites && (
           <ComplianceBySiteChart refreshKey={complianceBySiteRefreshKey} />
         )}
-        {canReadAssets && (
-          <ComplianceByCategoryChart
-            refreshKey={complianceByCategoryRefreshKey}
-          />
-        )}
+        {canReadAssets && <ComplianceByCategoryChart refreshKey={complianceByCategoryRefreshKey} />}
         {canReadProductRequests && (
           <ProductRequestsOverview refreshKey={productRequestsRefreshKey} />
         )}
-        {canReadAssets && (
-          <ComplianceHistoryChart refreshKey={complianceHistoryKey} />
-        )}
+        {canReadAssets && <ComplianceHistoryChart refreshKey={complianceHistoryKey} />}
         {/* {canReadInspections && (
         <InspectionsOverview refreshKey={inspectionsRefreshKey} />
       )} */}
-        {canReadAlerts && (
-          <InspectionAlertsOverview refreshKey={inspectionAlertsRefreshKey} />
-        )}
+        {canReadAlerts && <InspectionAlertsOverview refreshKey={inspectionAlertsRefreshKey} />}
         {!canReadDashboard && (
-          <div className="flex flex-col items-center justify-center h-full col-span-full">
+          <div className="col-span-full flex h-full flex-col items-center justify-center">
             <div className="text-muted-foreground">
               You do not have permission to view any dashboard items.
             </div>

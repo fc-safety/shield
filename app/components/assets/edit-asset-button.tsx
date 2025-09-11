@@ -41,11 +41,10 @@ export default function EditAssetButton({
           </Button>
         )
       }
+      hasNestedDrawer={true}
     >
       <AssetDetailsForm
-        onSubmitted={() =>
-          onOpenChange ? onOpenChange(false) : setOpen(false)
-        }
+        onSubmitted={() => (onOpenChange ? onOpenChange(false) : setOpen(false))}
         asset={asset}
         {...props}
       />

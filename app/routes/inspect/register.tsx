@@ -1,16 +1,14 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
-import { CircleSlash } from "lucide-react";
+import { CircleSlash, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
 import { Link } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { catchResponse } from "~/.server/api-utils";
 import { validateInspectionSession } from "~/.server/inspections";
-import AssetCombobox from "~/components/assets/asset-combobox";
+import { useCreateAssetAssistant } from "~/components/assets/create-asset-assistant/create-asset-assistant.component";
+import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
+import Step from "~/components/assistant/components/step";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { registerTagSchema } from "~/lib/schema";
@@ -47,23 +45,7 @@ export default function InspectRegister({
   const { user } = useAuth();
   const canRegister = can(user, "register", "tags");
 
-  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [recentlyRegistered, setRecentlyRegistered] = useState(false);
-
-  const form = useForm({
-    resolver: zodResolver(registerTagSchema),
-    defaultValues: {
-      asset: {
-        connect: {
-          id: tag?.asset?.id ?? "",
-        },
-      },
-    },
-  });
-
-  const {
-    formState: { isValid },
-  } = form;
 
   const { submitJson: submitRegisterTag, isSubmitting } = useModalFetcher<TForm>();
 
@@ -79,81 +61,152 @@ export default function InspectRegister({
   };
 
   return (
-    <div className="flex h-full w-full max-w-sm flex-col items-center justify-center gap-2 self-center">
-      {tag?.asset ? (
-        <>
-          <SuccessCircle />
-          <h2 className="text-lg font-semibold">
-            This tag is {recentlyRegistered ? "now" : "already"} registered to an asset.
-          </h2>
-          <Button asChild>
-            <Link to="/inspect">Begin Inspection</Link>
-          </Button>
-        </>
-      ) : (
-        <>
-          <CircleSlash className="text-destructive size-16" />
-          <h2 className="text-lg font-semibold">This tag is not registered to an asset.</h2>
-          <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="grid w-full gap-4">
-              {showRegistrationForm && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  transition={{ duration: 0.1 }}
-                  className="grid w-full gap-4 overflow-hidden"
-                >
-                  <FormField
-                    control={form.control}
-                    name="asset.connect.id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Which asset is this tag for?</FormLabel>
-                        <FormControl>
-                          <AssetCombobox
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            className="w-full"
-                            onBlur={field.onBlur}
-                            optionQueryFilter={{
-                              tagId: "_NULL",
-                            }}
-                            showClear={false}
-                            viewContext="user"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </motion.div>
-              )}
-              {!canRegister && (
-                <p className="text-destructive text-center text-sm">
-                  You do not have permission to register tags.
-                </p>
-              )}
-              {showRegistrationForm ? (
-                <Button
-                  key="submit-button"
-                  type="submit"
-                  disabled={!isValid || isSubmitting || !canRegister}
-                >
-                  {isSubmitting ? "Registering..." : "Register"}
-                </Button>
-              ) : (
-                <Button
-                  key="open-form-button"
-                  type="button"
-                  onClick={() => setShowRegistrationForm(true)}
-                  disabled={!canRegister}
-                >
-                  Register Tag
-                </Button>
-              )}
-            </form>
-          </FormProvider>
-        </>
-      )}
+    <div className="flex h-full w-full max-w-sm flex-col items-center justify-center self-center">
+      <div className="h-full max-h-[36rem] w-full">
+        <RegisterAssetAssistant
+          assetId={tag?.asset?.id}
+          canRegister={canRegister}
+          isRegistered={!!tag?.asset}
+          isRegisteredRecently={recentlyRegistered}
+          onRegister={(assetId) =>
+            handleSubmit({
+              client: undefined,
+              site: undefined,
+              asset: {
+                connect: {
+                  id: assetId,
+                },
+              },
+            })
+          }
+          isRegistering={isSubmitting}
+        />
+      </div>
     </div>
   );
 }
+
+function RegisterAssetAssistant({
+  assetId,
+  canRegister,
+  isRegistered,
+  isRegisteredRecently,
+  onRegister,
+  isRegistering,
+}: {
+  assetId?: string;
+  canRegister: boolean;
+  isRegistered: boolean;
+  isRegisteredRecently: boolean;
+  onRegister: (assetId: string) => void;
+  isRegistering: boolean;
+}) {
+  const assistant = useAssistant({
+    firstStepId: StepInitial.StepId,
+  });
+
+  const { stepTo } = assistant;
+
+  const handleRegister = (assetId: string) => {
+    onRegister(assetId);
+    stepTo(StepInitial.StepId, "forward");
+  };
+
+  const { renderStep: renderCreateAssetAssistantStep, firstStepId: createAssetFirstStepId } =
+    useCreateAssetAssistant({
+      onStepBackward: () => {
+        stepTo(StepInitial.StepId, "backward");
+      },
+      onContinue: (data) => {
+        handleRegister(data.id);
+      },
+      continueLabel: "Register",
+      state: {
+        assetData: {
+          id: assetId,
+        },
+      },
+      viewContext: "user",
+    });
+
+  return (
+    <AssistantProvider
+      context={assistant}
+      renderStep={(context) => {
+        const { stepId, stepTo } = context;
+        switch (stepId) {
+          case StepInitial.StepId:
+            return (
+              <StepInitial
+                isRegistered={isRegistered}
+                isRegisteredRecently={isRegisteredRecently}
+                canRegister={canRegister}
+                onRegister={() => stepTo(createAssetFirstStepId, "forward")}
+                isRegistering={isRegistering}
+              />
+            );
+          default:
+            return renderCreateAssetAssistantStep(context);
+        }
+      }}
+    />
+  );
+}
+
+function StepInitial({
+  isRegistered,
+  isRegisteredRecently,
+  canRegister,
+  onRegister,
+  isRegistering,
+}: {
+  isRegistered: boolean;
+  isRegisteredRecently: boolean;
+  canRegister: boolean;
+  onRegister: () => void;
+  isRegistering: boolean;
+}) {
+  return (
+    <Step>
+      <div className="flex flex-col items-center justify-center gap-2">
+        {isRegistering ? (
+          <>
+            <Loader2 className="text-muted-foreground size-16 animate-spin" />
+            <h2 className="text-lg font-semibold">Registering tag to asset...</h2>
+          </>
+        ) : isRegistered ? (
+          <>
+            <SuccessCircle />
+            <h2 className="text-lg font-semibold">
+              This tag is {isRegisteredRecently ? "now" : "already"} registered to an asset.
+            </h2>
+            <Button asChild>
+              <Link to="/inspect">Begin Inspection</Link>
+            </Button>
+          </>
+        ) : (
+          <>
+            <CircleSlash className="text-destructive size-16" />
+            <h2 className="text-lg font-semibold">This tag is not registered to an asset.</h2>
+            {!canRegister && (
+              <p className="text-destructive text-center text-sm">
+                You do not have permission to register tags.
+              </p>
+            )}
+            <Button
+              key="open-form-button"
+              type="button"
+              onClick={onRegister}
+              disabled={!canRegister}
+              className="w-full"
+            >
+              Register Tag
+            </Button>
+          </>
+        )}
+      </div>
+    </Step>
+  );
+}
+
+StepInitial.StepId = "initial";

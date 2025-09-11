@@ -2,7 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { ChevronDown, Eraser, Plus } from "lucide-react";
 import { Fragment, useState } from "react";
-import { useForm, useFormContext } from "react-hook-form";
+import { useForm, useFormContext, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
@@ -53,7 +53,6 @@ export default function AssetDetailsForm({
   context,
 }: AssetDetailsFormProps) {
   const { user } = useAuth();
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const isNew = !asset;
 
@@ -132,8 +131,54 @@ export default function AssetDetailsForm({
           form.handleSubmit(handleSubmit)(e);
         }}
       >
-        <Input type="hidden" {...form.register("id")} hidden />
-        <ActiveToggleFormInput />
+        <AssetDetailFormFields
+          form={form}
+          showClientSelect={isGlobalAdmin(user) && context === "admin" && !clientId}
+          showSiteSelect={hasMultiSiteVisibility(user) && !siteId}
+          clientId={formClientId}
+          showProductSelect
+          productReadOnly={!!asset?.setupOn}
+          viewContext={context}
+        />
+        <Button
+          className="w-full"
+          type="submit"
+          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
+        >
+          {isSubmitting ? "Saving..." : "Save"}
+        </Button>
+      </form>
+    </FormProvider>
+  );
+}
+
+export function AssetDetailFormFields({
+  form,
+  showActiveToggle = true,
+  showClientSelect = false,
+  showSiteSelect = false,
+  showProductSelect = false,
+  clientId,
+  viewContext = "user",
+  productReadOnly = false,
+}: {
+  form: UseFormReturn<TForm>;
+  showActiveToggle?: boolean;
+  showClientSelect?: boolean;
+  showSiteSelect?: boolean;
+  showProductSelect?: boolean;
+  clientId?: string;
+  viewContext?: ViewContext;
+  productReadOnly?: boolean;
+}) {
+  const { user } = useAuth();
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  return (
+    <>
+      <Input type="hidden" {...form.register("id")} hidden />
+      {showActiveToggle && <ActiveToggleFormInput />}
+      {showProductSelect && (
         <FormField
           control={form.control}
           name="product"
@@ -145,7 +190,7 @@ export default function AssetDetailsForm({
                   value={value?.connect.id ?? ""}
                   onValueChange={(id) => onChange(id ? { connect: { id } } : undefined)}
                   disabled={disabled}
-                  readOnly={!!asset?.setupOn}
+                  readOnly={productReadOnly}
                   className="flex"
                 />
               </FormControl>
@@ -153,196 +198,183 @@ export default function AssetDetailsForm({
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="serialNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Serial Number</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Friendly Name (Optional)</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {isGlobalAdmin(user) && context === "admin" && !clientId && (
-          <FormField
-            control={form.control}
-            name="client.connect.id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Client</FormLabel>
-                <FormControl>
-                  <ClientCombobox
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    onBlur={field.onBlur}
-                    className="w-full"
-                    showClear={false}
-                    viewContext={context}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      )}
+      <FormField
+        control={form.control}
+        name="serialNumber"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Serial Number</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
-
-        {hasMultiSiteVisibility(user) && !siteId && (
-          <FormField
-            control={form.control}
-            name="site.connect.id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Site</FormLabel>
-                <FormControl>
-                  <SiteCombobox
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    onBlur={field.onBlur}
-                    className="w-full"
-                    showClear={false}
-                    clientId={formClientId}
-                    disabled={isGlobalAdmin(user) && context === "admin" && !formClientId}
-                    viewContext={context}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+      />
+      <FormField
+        control={form.control}
+        name="name"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Friendly Name (Optional)</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
+      />
+      {showClientSelect && (
         <FormField
           control={form.control}
-          name="location"
+          name="client.connect.id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Room / Area</FormLabel>
+              <FormLabel>Client</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <ClientCombobox
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  className="w-full"
+                  showClear={false}
+                  viewContext={viewContext}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+      )}
+
+      {showSiteSelect && (
         <FormField
           control={form.control}
-          name="placement"
+          name="site.connect.id"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Placement</FormLabel>
+              <FormLabel>Site</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <SiteCombobox
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  onBlur={field.onBlur}
+                  className="w-full"
+                  showClear={false}
+                  clientId={clientId}
+                  disabled={isGlobalAdmin(user) && viewContext === "admin" && !clientId}
+                  viewContext={viewContext}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+      )}
+      <FormField
+        control={form.control}
+        name="location"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Room / Area</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="placement"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Placement</FormLabel>
+            <FormControl>
+              <Input {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-        {/* Advanced Section */}
-        <div className="rounded-lg border p-4">
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="hover:text-muted-foreground flex w-full items-center justify-between text-sm font-medium transition-colors"
-          >
-            <span>Advanced Options</span>
-            <motion.div animate={{ rotate: showAdvanced ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown className="size-4" />
-            </motion.div>
-          </button>
-
-          <motion.div
-            initial={false}
-            animate={{
-              height: showAdvanced ? "auto" : 0,
-              opacity: showAdvanced ? 1 : 0,
-            }}
-            transition={{
-              height: {
-                duration: 0.3,
-                ease: "easeInOut",
-              },
-              opacity: {
-                duration: 0.2,
-                ease: "easeInOut",
-              },
-            }}
-            style={{ overflow: "hidden" }}
-          >
-            <div className="space-y-4 pt-6">
-              <AssetMetadataInput />
-              <FormField
-                control={form.control}
-                name="inspectionCycle"
-                render={({ field: { value, ...field } }) => (
-                  <FormItem>
-                    <FormLabel>Inspection Cycle</FormLabel>
-                    <FormControl>
-                      <div className="flex items-center gap-2">
-                        <Input
-                          {...field}
-                          value={isEmpty(value) ? "" : value}
-                          type="number"
-                          min={1}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          type="button"
-                          disabled={isEmpty(value)}
-                          onClick={() =>
-                            form.setValue("inspectionCycle", null, {
-                              shouldDirty: true,
-                              shouldValidate: true,
-                            })
-                          }
-                        >
-                          Reset to client default
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormDescription>
-                      The number of days between inspections for this asset.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <LegacyIdField
-                form={form}
-                fieldName="legacyAssetId"
-                label="Legacy Asset ID"
-                description="Asset ID from the legacy Shield system"
-              />
-            </div>
-          </motion.div>
-        </div>
-
-        <Button
-          className="w-full"
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
+      {/* Advanced Section */}
+      <div className="rounded-lg border p-4">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="hover:text-muted-foreground flex w-full items-center justify-between text-sm font-medium transition-colors"
         >
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
-      </form>
-    </FormProvider>
+          <span>Advanced Options</span>
+          <motion.div animate={{ rotate: showAdvanced ? 180 : 0 }} transition={{ duration: 0.2 }}>
+            <ChevronDown className="size-4" />
+          </motion.div>
+        </button>
+
+        <motion.div
+          initial={false}
+          animate={{
+            height: showAdvanced ? "auto" : 0,
+            opacity: showAdvanced ? 1 : 0,
+          }}
+          transition={{
+            height: {
+              duration: 0.3,
+              ease: "easeInOut",
+            },
+            opacity: {
+              duration: 0.2,
+              ease: "easeInOut",
+            },
+          }}
+          style={{ overflow: "hidden" }}
+        >
+          <div className="space-y-4 pt-6">
+            <AssetMetadataInput />
+            <FormField
+              control={form.control}
+              name="inspectionCycle"
+              render={({ field: { value, ...field } }) => (
+                <FormItem>
+                  <FormLabel>Inspection Cycle</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Input {...field} value={isEmpty(value) ? "" : value} type="number" min={1} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        disabled={isEmpty(value)}
+                        onClick={() =>
+                          form.setValue("inspectionCycle", null, {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          })
+                        }
+                      >
+                        Reset to client default
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    The number of days between inspections for this asset.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <LegacyIdField
+              form={form}
+              fieldName="legacyAssetId"
+              label="Legacy Asset ID"
+              description="Asset ID from the legacy Shield system"
+            />
+          </div>
+        </motion.div>
+      </div>
+    </>
   );
 }
 
