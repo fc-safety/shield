@@ -29,11 +29,7 @@ import { useAppState, useAppStateValue } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useOpenData } from "~/hooks/use-open-data";
-import {
-  type ProductRequest,
-  type ProductRequestStatus,
-  type ResultsPage,
-} from "~/lib/models";
+import { type ProductRequest, type ProductRequestStatus, type ResultsPage } from "~/lib/models";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import { cn, humanize } from "~/lib/utils";
@@ -64,15 +60,9 @@ import {
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 
-export default function ProductRequestsOverview({
-  refreshKey,
-}: {
-  refreshKey: number;
-}) {
+export default function ProductRequestsOverview({ refreshKey }: { refreshKey: number }) {
   const { appState, setAppState } = useAppState();
-  const [sorting, setSorting] = useAppStateValue("dash_pr_sort", [
-    { id: "orderedOn", desc: true },
-  ]);
+  const [sorting, setSorting] = useAppStateValue("dash_pr_sort", [{ id: "orderedOn", desc: true }]);
   const [view, setView] = useAppStateValue("dash_pr_view", "summary");
 
   const [isLoading, setIsLoading] = useState(false);
@@ -126,7 +116,7 @@ export default function ProductRequestsOverview({
           </Button> */}
         </DashboardCardTitle>
       </DashboardCardHeader>
-      <DashboardCardContent className="min-h-0 flex-1 flex flex-col bg-inherit space-y-4 rounded-[inherit]">
+      <DashboardCardContent className="flex min-h-0 flex-1 flex-col space-y-4 rounded-[inherit] bg-inherit">
         {/* <VirtualizedDataTable
           height="100%"
           maxHeight={400}
@@ -141,9 +131,10 @@ export default function ProductRequestsOverview({
           data={data?.results ?? []}
           loading={isLoading}
         /> */}
-        <div className="flex gap-2 flex-wrap items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <DateRangeSelect
             iconOnly
+            quickRangeId={appState.dash_pr_quickRangeId}
             value={
               productRequestsQuery.createdOn?.gte
                 ? {
@@ -166,22 +157,13 @@ export default function ProductRequestsOverview({
                     },
                   }
                 : productRequestsQuery;
-              handleSetProductRequestsQuery(
-                newProductRequestsQuery,
-                quickRangeId
-              );
+              handleSetProductRequestsQuery(newProductRequestsQuery, quickRangeId);
             }}
-            defaultQuickRangeId={
-              appState.dash_pr_quickRangeId ?? "last-30-days"
-            }
+            defaultQuickRangeId={appState.dash_pr_quickRangeId ?? "last-30-days"}
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(view === "summary" && "hidden")}
-              >
+              <Button variant="outline" size="sm" className={cn(view === "summary" && "hidden")}>
                 Sort by
                 <ChevronsUpDown />
               </Button>
@@ -208,9 +190,7 @@ export default function ProductRequestsOverview({
                   <Check
                     className={cn(
                       "opacity-0",
-                      sorting.some(
-                        (s) => s.id === sort.id && s.desc === sort.desc
-                      ) && "opacity-100"
+                      sorting.some((s) => s.id === sort.id && s.desc === sort.desc) && "opacity-100"
                     )}
                   />
                   {label}
@@ -241,9 +221,7 @@ export default function ProductRequestsOverview({
       {isLoading ? (
         <LoadingOverlay />
       ) : error ? (
-        <ErrorOverlay>
-          Error occurred while loading product requests.
-        </ErrorOverlay>
+        <ErrorOverlay>Error occurred while loading product requests.</ErrorOverlay>
       ) : null}
     </DashboardCard>
   );
@@ -281,8 +259,7 @@ function ProductRequestsSummary({
     return DISPLAY_STATUSES.map(({ status, icon }) => ({
       status,
       icon,
-      count: productRequests.filter((request) => request.status === status)
-        .length,
+      count: productRequests.filter((request) => request.status === status).length,
     }));
   }, [productRequests]);
 
@@ -290,13 +267,10 @@ function ProductRequestsSummary({
     <GradientScrollArea className="flex-1" variant="card">
       <div className="flex flex-col gap-4">
         {productRequestsCounts.map(({ status, icon: Icon, count }) => (
-          <div
-            key={status}
-            className={cn("rounded-lg flex items-center gap-4")}
-          >
+          <div key={status} className={cn("flex items-center gap-4 rounded-lg")}>
             <ProductRequestStatusBadge
               status={status}
-              className="shrink-0 size-10 p-2 flex items-center justify-center"
+              className="flex size-10 shrink-0 items-center justify-center p-2"
             >
               <Icon className="size-5" />
             </ProductRequestStatusBadge>
@@ -357,37 +331,27 @@ function ProductRequestsDetails({
       {
         accessorKey: "createdOn",
         id: "orderedOn",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ getValue }) => (
-          <DisplayRelativeDate date={getValue() as string} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => <DisplayRelativeDate date={getValue() as string} />,
       },
       {
         accessorKey: "status",
         id: "status",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => (
-          <ProductRequestStatusBadge
-            status={getValue() as ProductRequestStatus}
-          />
+          <ProductRequestStatusBadge status={getValue() as ProductRequestStatus} />
         ),
       },
       {
         accessorKey: "asset.name",
         id: "asset",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row, getValue }) => {
           const assetName = getValue() as string;
           return (
             <Link
               to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
-              className="flex items-center gap-2 group"
+              className="group flex items-center gap-2"
             >
               <span className="group-hover:underline">{assetName}</span>
               {row.original.asset?.product?.productCategory?.icon && (
@@ -404,16 +368,12 @@ function ProductRequestsDetails({
       {
         accessorKey: "site.name",
         id: "site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "productRequestItems",
         id: "items",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row }) => {
           const items = row.original.productRequestItems;
           return (
@@ -421,8 +381,7 @@ function ProductRequestsDetails({
               {items.slice(0, MAX_ITEMS_IN_SUMMARY).map((i, idx) => (
                 <span key={i.id}>
                   {idx > 0 && ", "}
-                  <span className="font-bold">{i.quantity}x</span>{" "}
-                  {i.product?.name}
+                  <span className="font-bold">{i.quantity}x</span> {i.product?.name}
                 </span>
               ))}
               {items.length > MAX_ITEMS_IN_SUMMARY && (
@@ -440,9 +399,7 @@ function ProductRequestsDetails({
       {
         accessorKey: "requestor",
         id: "requestor",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row }) => {
           const requestor = row.original.requestor;
           return getUserDisplayName(requestor);
@@ -503,7 +460,7 @@ function ProductRequestsDetails({
             <button
               type="button"
               onClick={() => reviewRequest.openData(request)}
-              className="underline text-xs font-semibold"
+              className="text-xs font-semibold underline"
             >
               more
             </button>
@@ -541,32 +498,33 @@ function ProductRequestsDetails({
     <>
       <GradientScrollArea className="flex-1" variant="card">
         {!isLoading && isEmpty ? (
-          <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
+          <p className="text-muted-foreground border-border border-t py-4 text-center text-sm">
             No supply requests to display.
           </p>
         ) : null}
         {rows.map((row) => {
           const productRequest = row.original;
-          const cells = row.getVisibleCells().reduce((acc, cell) => {
-            acc[String(cell.column.id)] = cell;
-            return acc;
-          }, {} as Record<string, Cell<ProductRequest, unknown>>);
+          const cells = row.getVisibleCells().reduce(
+            (acc, cell) => {
+              acc[String(cell.column.id)] = cell;
+              return acc;
+            },
+            {} as Record<string, Cell<ProductRequest, unknown>>
+          );
 
           return (
             <div
               key={productRequest.id}
-              className="py-2 flex flex-col gap-2 border-t border-border"
+              className="border-border flex flex-col gap-2 border-t py-2"
             >
-              <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
+              <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
                 {format(productRequest.createdOn, "PPpp")}
                 {renderCell(cells.status)}
               </div>
               <div className="space-y-1">
                 <p className="text-sm">
                   {cells.site ? (
-                    <span className="font-semibold">
-                      [{renderCell(cells.site)}]
-                    </span>
+                    <span className="font-semibold">[{renderCell(cells.site)}]</span>
                   ) : (
                     ""
                   )}{" "}
@@ -688,9 +646,7 @@ function ReviewProductRequestModal({
               details={[
                 {
                   label: "Requestor",
-                  value:
-                    request?.requestor &&
-                    getUserDisplayName(request?.requestor),
+                  value: request?.requestor && getUserDisplayName(request?.requestor),
                 },
                 {
                   label: "Site",
@@ -699,11 +655,7 @@ function ReviewProductRequestModal({
               ]}
               defaultValue={<>&mdash;</>}
             />
-            {request ? (
-              <ProductRequestCard request={request} />
-            ) : (
-              <p>No request selected</p>
-            )}
+            {request ? <ProductRequestCard request={request} /> : <p>No request selected</p>}
           </div>
           <DialogFooter className="flex items-center gap-2">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>

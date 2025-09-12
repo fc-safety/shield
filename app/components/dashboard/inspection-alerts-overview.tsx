@@ -16,6 +16,7 @@ import {
   AlertCircle,
   AlertTriangle,
   Check,
+  CheckCircle2,
   ChevronsUpDown,
   Info,
   LayoutDashboard,
@@ -58,15 +59,9 @@ import {
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 
-export default function InspectionAlertsOverview({
-  refreshKey,
-}: {
-  refreshKey: number;
-}) {
+export default function InspectionAlertsOverview({ refreshKey }: { refreshKey: number }) {
   const { appState, setAppState } = useAppState();
-  const [sorting, setSorting] = useAppStateValue("dash_alert_sort", [
-    { id: "date", desc: true },
-  ]);
+  const [sorting, setSorting] = useAppStateValue("dash_alert_sort", [{ id: "date", desc: true }]);
   const [view, setView] = useAppStateValue("dash_alert_view", "summary");
 
   const [isLoading, setIsLoading] = useState(false);
@@ -120,10 +115,11 @@ export default function InspectionAlertsOverview({
           </Button> */}
         </DashboardCardTitle>
       </DashboardCardHeader>
-      <DashboardCardContent className="min-h-0 flex-1 flex flex-col bg-inherit space-y-4 rounded-[inherit]">
-        <div className="flex gap-2 flex-wrap items-center justify-between">
+      <DashboardCardContent className="flex min-h-0 flex-1 flex-col space-y-4 rounded-[inherit] bg-inherit">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <DateRangeSelect
             iconOnly
+            quickRangeId={appState.dash_alert_quickRangeId}
             value={
               queryParams.createdOn?.gte
                 ? {
@@ -148,17 +144,11 @@ export default function InspectionAlertsOverview({
                 : queryParams;
               handleSetQueryParams(newQueryParams, quickRangeId);
             }}
-            defaultQuickRangeId={
-              appState.dash_alert_quickRangeId ?? "last-30-days"
-            }
+            defaultQuickRangeId={appState.dash_alert_quickRangeId ?? "last-30-days"}
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(view === "summary" && "hidden")}
-              >
+              <Button variant="outline" size="sm" className={cn(view === "summary" && "hidden")}>
                 Sort by
                 <ChevronsUpDown />
               </Button>
@@ -185,9 +175,7 @@ export default function InspectionAlertsOverview({
                   <Check
                     className={cn(
                       "opacity-0",
-                      sorting.some(
-                        (s) => s.id === sort.id && s.desc === sort.desc
-                      ) && "opacity-100"
+                      sorting.some((s) => s.id === sort.id && s.desc === sort.desc) && "opacity-100"
                     )}
                   />
                   {label}
@@ -268,17 +256,13 @@ function AlertsSummary({
     return AlertLevels.map((alertLevel) => {
       return {
         alertLevel,
-        count: unresolvedAlerts.filter(
-          (alert) => alert.alertLevel === alertLevel
-        ).length,
+        count: unresolvedAlerts.filter((alert) => alert.alertLevel === alertLevel).length,
       };
     });
   }, [unresolvedAlerts]);
 
   const percentResolved = useMemo(() => {
-    return alerts.length < 1
-      ? 0
-      : (resolvedAlerts.length / alerts.length) * 100;
+    return alerts.length < 1 ? 0 : (resolvedAlerts.length / alerts.length) * 100;
   }, [resolvedAlerts, unresolvedAlerts]);
 
   return (
@@ -306,87 +290,102 @@ function AlertsSummary({
             <div
               key={options.label}
               className={cn(
-                "flex items-center gap-2 justify-between rounded-lg p-2 sm:p-4 shadow-sm",
+                "flex items-center justify-between gap-2 rounded-lg p-2 shadow-sm sm:p-4",
                 options.coloring
               )}
             >
               <div>
                 <h3 className="text-sm font-semibold">{options.label}</h3>
-                <h1 className="text-xl xl:text-2xl font-bold">
-                  {options.count}
+                <h1
+                  className={cn("text-xl xl:text-2xl", options.count ? "font-bold" : "font-normal")}
+                >
+                  {options.count || <>&mdash;</>}
                 </h1>
               </div>
-              <div
-                className={cn("rounded-full p-2 xl:p-3", options.iconColoring)}
-              >
+              <div className={cn("rounded-full p-2 xl:p-3", options.iconColoring)}>
                 <options.icon className="size-5 xl:size-6" />
               </div>
             </div>
           ))}
         </div>
-        <div>
-          <h3 className="text-sm font-semibold mb-2">
-            Unresolved alert breakdown
-          </h3>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(100px,1fr))] gap-x-3 md:gap-x-4 gap-y-3">
-            {unresolvedAlertsCounts.map(({ alertLevel, count }, idx) => {
-              const LevelIcon =
-                alertLevel === "CRITICAL"
-                  ? OctagonAlert
-                  : alertLevel === "URGENT"
-                  ? AlertCircle
-                  : alertLevel === "WARNING"
-                  ? AlertTriangle
-                  : alertLevel === "INFO"
-                  ? Info
-                  : alertLevel === "AUDIT"
-                  ? Activity
-                  : AlertTriangle;
-              return (
-                <div
-                  key={alertLevel}
-                  className={cn(
-                    "rounded-lg py-1 px-3 border flex items-center gap-3 shadow-sm",
-                    {
-                      "bg-critical-foreground/50 dark:bg-critical/20 border-critical/50 [&_svg]:text-critical":
-                        alertLevel === "CRITICAL",
-                      "bg-urgent-foreground/40 dark:bg-urgent/20 border-urgent/50 [&_svg]:text-urgent":
-                        alertLevel === "URGENT",
-                      "bg-warning/40 dark:bg-warning/20 border-warning-foreground/50 dark:border-warning/50 [&_svg]:text-warning-foreground dark:[&_svg]:text-warning":
-                        alertLevel === "WARNING",
-                      "bg-info/40 dark:bg-info/20 border-info-foreground/50 dark:border-info/50 [&_svg]:text-info-foreground dark:[&_svg]:text-info":
-                        alertLevel === "INFO",
-                      "bg-audit/40 dark:bg-audit/10 border-audit-foreground/50 dark:border-audit/50 [&_svg]:text-audit-foreground [&_svg]:dark:text-audit":
-                        alertLevel === "AUDIT",
-                    }
-                  )}
-                >
-                  <LevelIcon className="size-5 shrink-0" />
-                  <div className="flex flex-col items-center flex-1">
-                    <h2 className="text-lg leading-tight font-bold">{count}</h2>
-                    <h5 className="text-xs font-semibold">
-                      {humanize(alertLevel)}
-                    </h5>
-                  </div>
-                </div>
-              );
-            })}
+        {unresolvedAlerts.length === 0 ? (
+          <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 py-4">
+            <CheckCircle2 className="text-primary fill-primary/20 animate-pop-once size-16" />
+            <div className="text-center">
+              <h3 className="text-lg leading-6 font-bold">Awesome!</h3>
+              <p className="text-muted-foreground text-sm italic">No unresolved alerts.</p>
+            </div>
           </div>
-        </div>
-        <div className="border-t pt-2 space-y-2">
-          <h5 className="flex items-center gap-2 text-sm font-semibold">
-            Resolution progress
-            <div className="flex-1"></div>
-            <span className="text-sm text-muted-foreground">
-              {percentResolved.toFixed(0)}%
-            </span>
-          </h5>
-          <Progress value={percentResolved} />
-          <div className="text-xs text-muted-foreground">
-            {resolvedAlerts.length} resolved out of{" "}
-            {resolvedAlerts.length + unresolvedAlerts.length} total alerts
-          </div>
-        </div>
+        ) : (
+          <>
+            <div>
+              <h3 className="mb-2 text-sm font-semibold">Unresolved alert breakdown</h3>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(100px,1fr))] gap-x-3 gap-y-3 md:gap-x-4">
+                {unresolvedAlertsCounts
+                  .filter(({ count }) => count > 0)
+                  .map(({ alertLevel, count }, idx) => {
+                    const LevelIcon =
+                      alertLevel === "CRITICAL"
+                        ? OctagonAlert
+                        : alertLevel === "URGENT"
+                          ? AlertCircle
+                          : alertLevel === "WARNING"
+                            ? AlertTriangle
+                            : alertLevel === "INFO"
+                              ? Info
+                              : alertLevel === "AUDIT"
+                                ? Activity
+                                : AlertTriangle;
+                    return (
+                      <div
+                        key={alertLevel}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg border px-3 py-1 shadow-sm",
+                          {
+                            "bg-critical-foreground/50 dark:bg-critical/20 border-critical/50 [&_svg]:text-critical":
+                              alertLevel === "CRITICAL",
+                            "bg-urgent-foreground/40 dark:bg-urgent/20 border-urgent/50 [&_svg]:text-urgent":
+                              alertLevel === "URGENT",
+                            "bg-warning/40 dark:bg-warning/20 border-warning-foreground/50 dark:border-warning/50 [&_svg]:text-warning-foreground dark:[&_svg]:text-warning":
+                              alertLevel === "WARNING",
+                            "bg-info/40 dark:bg-info/20 border-info-foreground/50 dark:border-info/50 [&_svg]:text-info-foreground dark:[&_svg]:text-info":
+                              alertLevel === "INFO",
+                            "bg-audit/40 dark:bg-audit/10 border-audit-foreground/50 dark:border-audit/50 [&_svg]:text-audit-foreground [&_svg]:dark:text-audit":
+                              alertLevel === "AUDIT",
+                          }
+                        )}
+                      >
+                        <LevelIcon className="size-5 shrink-0" />
+                        <div className="flex flex-1 flex-col items-center">
+                          <h2
+                            className={cn(
+                              "text-lg leading-tight",
+                              count ? "font-bold" : "font-normal"
+                            )}
+                          >
+                            {count || <>&mdash;</>}
+                          </h2>
+                          <h5 className="text-xs font-semibold">{humanize(alertLevel)}</h5>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+            <div className="space-y-2 border-t pt-2">
+              <h5 className="flex items-center gap-2 text-sm font-semibold">
+                Resolution progress
+                <div className="flex-1"></div>
+                <span className="text-muted-foreground text-sm">{percentResolved.toFixed(0)}%</span>
+              </h5>
+              <Progress value={percentResolved} />
+              <div className="text-muted-foreground text-xs">
+                {resolvedAlerts.length} resolved out of{" "}
+                {resolvedAlerts.length + unresolvedAlerts.length} total alerts
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </GradientScrollArea>
   );
@@ -432,25 +431,19 @@ function AlertsDetails({
       {
         accessorKey: "createdOn",
         id: "date",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ getValue }) => (
-          <DisplayRelativeDate date={getValue() as string} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => <DisplayRelativeDate date={getValue() as string} />,
       },
       {
         accessorKey: "asset.name",
         id: "asset",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row, getValue }) => {
           const assetName = getValue() as string;
           return (
             <Link
               to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
-              className="inline-flex items-center gap-2 group"
+              className="group inline-flex items-center gap-2"
             >
               <span className="group-hover:underline">{assetName}</span>
               {row.original.asset?.product?.productCategory?.icon && (
@@ -467,35 +460,23 @@ function AlertsDetails({
       {
         accessorKey: "site.name",
         id: "site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "alertLevel",
         id: "level",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue, row: { original: alert } }) => {
           const level = getValue() as Alert["alertLevel"];
-          return (
-            <AlertLevelBadge resolved={alert.resolved} alertLevel={level} />
-          );
+          return <AlertLevelBadge resolved={alert.resolved} alertLevel={level} />;
         },
       },
       {
         accessorKey: "resolved",
         id: "resolved",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) =>
-          getValue() ? (
-            <Check className="size-5 text-status-compliant" />
-          ) : (
-            <>&mdash;</>
-          ),
+          getValue() ? <Check className="text-status-compliant size-5" /> : <>&mdash;</>,
       },
       {
         id: "details",
@@ -504,7 +485,7 @@ function AlertsDetails({
             assetId={row.original.assetId}
             alertId={row.original.id}
             trigger={
-              <button type="button" className="underline text-xs font-semibold">
+              <button type="button" className="text-xs font-semibold underline">
                 more
               </button>
             }
@@ -540,23 +521,23 @@ function AlertsDetails({
   return (
     <GradientScrollArea className="flex-1" variant="card">
       {!isLoading && isEmpty ? (
-        <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
+        <p className="text-muted-foreground border-border border-t py-4 text-center text-sm">
           No alerts to display.
         </p>
       ) : null}
       {rows.map((row) => {
         const alert = row.original;
-        const cells = row.getVisibleCells().reduce((acc, cell) => {
-          acc[String(cell.column.id)] = cell;
-          return acc;
-        }, {} as Record<string, Cell<Alert, unknown>>);
+        const cells = row.getVisibleCells().reduce(
+          (acc, cell) => {
+            acc[String(cell.column.id)] = cell;
+            return acc;
+          },
+          {} as Record<string, Cell<Alert, unknown>>
+        );
 
         return (
-          <div
-            key={alert.id}
-            className="py-2 flex flex-col gap-2 border-t border-border"
-          >
-            <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
+          <div key={alert.id} className="border-border flex flex-col gap-2 border-t py-2">
+            <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
               {format(alert.createdOn, "PPpp")}
               <div className="flex items-center gap-1">
                 {renderCell(cells.asset)}
@@ -567,9 +548,7 @@ function AlertsDetails({
             <div>
               <p className="text-sm">
                 {cells.site ? (
-                  <span className="font-semibold">
-                    [{renderCell(cells.site)}]
-                  </span>
+                  <span className="font-semibold">[{renderCell(cells.site)}]</span>
                 ) : (
                   ""
                 )}{" "}
@@ -594,14 +573,11 @@ function AlertLevelBadge({
   return (
     <span
       className={cn(
-        "capitalize rounded-md px-2 py-1 text-xs font-semibold flex items-center gap-1 [&_svg]:size-3.5 [&_svg]:shrink-0",
+        "flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold capitalize [&_svg]:size-3.5 [&_svg]:shrink-0",
         {
-          "bg-critical text-critical-foreground":
-            !resolved && alertLevel === "CRITICAL",
-          "bg-urgent text-urgent-foreground":
-            !resolved && alertLevel === "URGENT",
-          "bg-warning text-warning-foreground":
-            !resolved && alertLevel === "WARNING",
+          "bg-critical text-critical-foreground": !resolved && alertLevel === "CRITICAL",
+          "bg-urgent text-urgent-foreground": !resolved && alertLevel === "URGENT",
+          "bg-warning text-warning-foreground": !resolved && alertLevel === "WARNING",
           "bg-info text-info-foreground": !resolved && alertLevel === "INFO",
           "bg-audit text-audit-foreground": !resolved && alertLevel === "AUDIT",
           "bg-muted text-muted-foreground": resolved,

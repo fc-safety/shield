@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-  type PropsWithChildren,
-} from "react";
+import { createContext, useCallback, useContext, useState, type PropsWithChildren } from "react";
 import { useRevalidator } from "react-router";
 import type { AppState } from "~/lib/types";
 
@@ -29,15 +23,11 @@ export const AppStateProvider = ({
 
   const setAppState = useCallback(
     async (
-      appStateSetter:
-        | Partial<AppState>
-        | ((appState: AppState) => Partial<AppState>),
+      appStateSetter: Partial<AppState> | ((appState: AppState) => Partial<AppState>),
       options: SetAppStateOptions = {}
     ) => {
       const appStateToSet =
-        typeof appStateSetter === "function"
-          ? appStateSetter(appState)
-          : appStateSetter;
+        typeof appStateSetter === "function" ? appStateSetter(appState) : appStateSetter;
 
       setLocalAppState((prev) => ({
         ...prev,
@@ -80,30 +70,22 @@ export function useAppStateValue<K extends keyof AppState>(
 ): [
   NonNullable<AppState[K]>,
   (
-    value:
-      | NonNullable<AppState[K]>
-      | ((prev: NonNullable<AppState[K]>) => AppState[K]),
+    value: NonNullable<AppState[K]> | ((prev: NonNullable<AppState[K]>) => AppState[K]),
     options?: SetAppStateOptions
-  ) => void
+  ) => void,
 ];
 export function useAppStateValue<K extends keyof AppState>(
   key: K
 ): [
   AppState[K],
-  (
-    value: AppState[K] | ((prev: AppState[K]) => AppState[K]),
-    options?: SetAppStateOptions
-  ) => void
+  (value: AppState[K] | ((prev: AppState[K]) => AppState[K]), options?: SetAppStateOptions) => void,
 ];
 export function useAppStateValue<K extends keyof AppState>(
   key: K,
   defaultValue?: AppState[K]
 ): [
   AppState[K],
-  (
-    value: AppState[K] | ((prev: AppState[K]) => AppState[K]),
-    options?: SetAppStateOptions
-  ) => void
+  (value: AppState[K] | ((prev: AppState[K]) => AppState[K]), options?: SetAppStateOptions) => void,
 ] {
   const context = useContext(AppStateContext);
   if (!context) {
