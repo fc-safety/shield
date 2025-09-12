@@ -84,6 +84,7 @@ export default function TagAssistant({
       },
     },
     viewContext: "admin",
+    mode: "register-tag",
   });
 
   const registerToAssetMode = tagAssistantState.mode === "register-to-asset";

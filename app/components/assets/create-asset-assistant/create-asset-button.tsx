@@ -1,17 +1,30 @@
-import { WandSparkles } from "lucide-react";
+import { ShieldPlus } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import type { ViewContext } from "~/.server/api-utils";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
-import TagAssistant from "./tag-assistant";
+import CreateAssetAssistant from "./create-asset-assistant.component";
 
 interface Props {
   trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  clientId?: string;
+  siteId?: string;
+  viewContext?: ViewContext;
+  nestDrawers?: boolean;
 }
 
-export default function TagAssistantButton({ trigger, open: openProp, onOpenChange }: Props) {
+export default function CreateAssetButton({
+  trigger,
+  open: openProp,
+  onOpenChange,
+  clientId,
+  siteId,
+  viewContext,
+  nestDrawers,
+}: Props) {
   const [internalOpen, setInternalOpen] = useState(false);
 
   const open = openProp ?? internalOpen;
@@ -23,10 +36,10 @@ export default function TagAssistantButton({ trigger, open: openProp, onOpenChan
       onOpenChange={setOpen}
       title={
         <div className="flex items-center gap-1">
-          <WandSparkles className="size-5" /> Tag Assistant
+          <ShieldPlus className="size-5" /> Adding new asset...
         </div>
       }
-      description="Use this assistant to guide you through the process of programming new tags."
+      description=""
       dialogClassName="sm:max-w-2xl"
       disableScrollArea
       trigger={
@@ -34,15 +47,20 @@ export default function TagAssistantButton({ trigger, open: openProp, onOpenChan
           trigger
         ) : (
           <Button type="button" size="sm">
-            <WandSparkles /> Tag Assistant
+            <ShieldPlus /> Add Asset
           </Button>
         )
       }
       render={({ drawerContentHeight }) => (
         <div className="overflow-hidden" style={{ height: drawerContentHeight ?? "32rem" }}>
-          <TagAssistant onClose={() => setOpen(false)} />
+          <CreateAssetAssistant
+            onClose={() => setOpen(false)}
+            state={{ assetData: { clientId, siteId } }}
+            viewContext={viewContext}
+          />
         </div>
       )}
+      isNestedDrawer={nestDrawers}
     />
   );
 }

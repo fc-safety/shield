@@ -20,7 +20,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
+import { useCallback, useMemo, useRef, useState, type ComponentProps } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { ScrollArea } from "./ui/scroll-area";
 
@@ -50,7 +50,7 @@ interface ResponsiveDialogProps
   // scroll area props
   disableDisplayTable?: boolean;
   // end scroll area props
-  hasNestedDrawer?: boolean;
+  isNestedDrawer?: boolean;
   disableScrollArea?: boolean;
 }
 
@@ -69,7 +69,7 @@ export function ResponsiveDialog({
   minWidth = "768px",
   render,
   disableDisplayTable,
-  hasNestedDrawer = false,
+  isNestedDrawer = false,
   disableScrollArea = false,
 }: ResponsiveDialogProps) {
   const isDesktop = useMediaQuery(`(min-width: ${minWidth})`);
@@ -79,13 +79,8 @@ export function ResponsiveDialog({
 
   const drawerContentRef = useRef<HTMLDivElement>(null);
   const [drawerContentHeight, setDrawerContentHeight] = useState(
-    drawerContentRef.current?.clientHeight ?? 0
+    drawerContentRef.current?.clientHeight ?? 400
   );
-  useEffect(() => {
-    if (drawerContentRef.current && drawerContentHeight === 0) {
-      setDrawerContentHeight(drawerContentRef.current.clientHeight);
-    }
-  }, [drawerContentRef.current]);
 
   const renderedChildren = useMemo(() => {
     return render
@@ -111,8 +106,8 @@ export function ResponsiveDialog({
   );
 
   const DrawerComponent = useMemo(() => {
-    return hasNestedDrawer ? DrawerNested : Drawer;
-  }, [hasNestedDrawer]);
+    return isNestedDrawer ? DrawerNested : Drawer;
+  }, [isNestedDrawer]);
 
   if (isDesktop) {
     return (
@@ -134,13 +129,7 @@ export function ResponsiveDialog({
   }
 
   return (
-    <DrawerComponent
-      open={open}
-      onOpenChange={onOpenChange}
-      onAnimationEnd={() => {
-        setDrawerContentHeight(drawerContentRef.current?.clientHeight ?? 0);
-      }}
-    >
+    <DrawerComponent open={open} onOpenChange={onOpenChange}>
       <DrawerTrigger asChild={!!trigger}>{trigger}</DrawerTrigger>
       <DrawerContent className={cn("max-w-[100vw]", className, drawerClassName)}>
         <ScrollAreaComponent className="h-[calc(100dvh-5rem)]">
@@ -149,7 +138,15 @@ export function ResponsiveDialog({
               <DrawerTitle>{title}</DrawerTitle>
               <DrawerDescription>{description}</DrawerDescription>
             </DrawerHeader>
-            <div className="w-full flex-1 px-4" ref={drawerContentRef}>
+            <div
+              className="w-full flex-1 px-4"
+              ref={(el) => {
+                drawerContentRef.current = el;
+                if (el) {
+                  setDrawerContentHeight(el.clientHeight);
+                }
+              }}
+            >
               {renderedChildren ?? children}
             </div>
             <DrawerFooter className="pt-2">

@@ -5,7 +5,6 @@ import { Link, useSearchParams } from "react-router";
 import type { ViewContext } from "~/.server/api-utils";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
-import EditAssetButton from "~/components/assets/edit-asset-button";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -29,6 +28,7 @@ import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
 import { ResponsiveDialog } from "../responsive-dialog";
 import AssetDetailsForm from "./asset-details-form";
+import CreateAssetButton from "./create-asset-assistant/create-asset-button";
 import EditableTagDisplay from "./editable-tag-display";
 
 export default function AssetsTable({
@@ -362,7 +362,9 @@ export default function AssetsTable({
           },
         ]}
         actions={
-          canCreate ? [<EditAssetButton key="add" clientId={clientId} context={viewContext} />] : []
+          canCreate
+            ? [<CreateAssetButton key="add" clientId={clientId} viewContext={viewContext} />]
+            : []
         }
       />
       <ConfirmationDialog {...deleteAction} />

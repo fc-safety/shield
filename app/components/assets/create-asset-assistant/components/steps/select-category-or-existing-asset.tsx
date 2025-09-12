@@ -15,11 +15,13 @@ export default function StepSelectCategoryOrExistingAsset({
   setProductCategoryId,
   onContinue,
   onStepBackward,
+  allowSelectExistingAsset,
 }: {
   onStepBackward?: () => void;
   onContinue: (options: { skipToSelectExistingAsset?: boolean }) => void;
   productCategoryId?: string;
   setProductCategoryId: (productCategoryId: string) => void;
+  allowSelectExistingAsset?: boolean;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { data: categories, isLoading } = useQuery(getCategoriesByProductQuery(fetchOrThrow));
@@ -27,14 +29,20 @@ export default function StepSelectCategoryOrExistingAsset({
   return (
     <Step
       title="Which category is this asset?"
-      subtitle="Select a category or continue with an existing asset."
+      subtitle={
+        allowSelectExistingAsset
+          ? "Select a category or continue with an existing asset."
+          : "Select a category to continue."
+      }
       onContinue={() => onContinue({ skipToSelectExistingAsset: false })}
       continueDisabled={!productCategoryId}
       onStepBackward={onStepBackward}
       footerSlotEnd={
-        <Button variant="outline" onClick={() => onContinue({ skipToSelectExistingAsset: true })}>
-          Continue with existing asset
-        </Button>
+        allowSelectExistingAsset && (
+          <Button variant="outline" onClick={() => onContinue({ skipToSelectExistingAsset: true })}>
+            Continue with existing asset
+          </Button>
+        )
       }
     >
       <RadioGroup

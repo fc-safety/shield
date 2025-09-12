@@ -10,7 +10,7 @@ import { can } from "~/lib/users";
 import { objectsEqual } from "~/lib/utils";
 import { ResponsiveCombobox } from "../responsive-combobox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
-import EditAssetButton from "./edit-asset-button";
+import CreateAssetButton from "./create-asset-assistant/create-asset-button";
 
 interface AssetComboboxProps {
   value?: string | undefined;
@@ -24,6 +24,7 @@ interface AssetComboboxProps {
   clientId?: string;
   siteId?: string;
   showClear?: boolean;
+  nestDrawers?: boolean;
 }
 
 const fuse = new Fuse([] as Asset[], { keys: ["name"] });
@@ -40,6 +41,7 @@ export default function AssetCombobox({
   clientId,
   siteId,
   showClear,
+  nestDrawers,
 }: AssetComboboxProps) {
   const { user } = useAuth();
   const canCreate = useMemo(() => can(user, "create", "assets"), [user]);
@@ -118,16 +120,18 @@ export default function AssetCombobox({
         disabled={disabled}
         showClear={showClear}
         onCreate={() => createNew.openNew()}
+        isNestedDrawer={nestDrawers}
       />
       {canCreate ? (
-        <EditAssetButton
+        <CreateAssetButton
           trigger={null}
           open={createNew.open}
           onOpenChange={createNew.setOpen}
           clientId={clientId}
           siteId={siteId}
-          context={viewContext}
-          className="absolute"
+          viewContext={viewContext}
+          nestDrawers
+          // className="absolute"
         />
       ) : (
         <Dialog open={createNew.open} onOpenChange={createNew.setOpen}>

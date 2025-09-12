@@ -85,15 +85,15 @@ export default function StepSelectProduct({
                   key={manufacturerId}
                   className="col-span-full grid grid-cols-subgrid gap-2 sm:gap-4"
                 >
-                  <div className="col-span-full flex items-center gap-1 pt-2 text-xs font-bold">
+                  <div className="col-span-full flex items-center gap-1 pt-2 text-sm font-bold">
                     {manufacturer.homeUrl ? (
                       <URLFavicon
                         url={manufacturer.homeUrl}
                         alt={manufacturer.name}
-                        fallback={<Factory className="text-muted-foreground size-4" />}
+                        fallback={<Factory className="text-muted-foreground size-5" />}
                       />
                     ) : (
-                      <Factory className="text-muted-foreground size-4" />
+                      <Factory className="text-muted-foreground size-5" />
                     )}
                     <span className="line-clamp-2">{manufacturer.name}</span>
                   </div>

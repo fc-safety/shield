@@ -86,7 +86,7 @@ export default function StepBulkSerialNumberInput({
                 inputMode="numeric"
                 placeholder="0000099"
                 className="w-full"
-                value={serialNumberRangeStart}
+                value={serialNumberRangeStart ?? ""}
                 onChange={(e) => {
                   const newValue = coerceNumeric(e.target.value);
                   if (serialNumberRangeStart && serialNumberRangeEnd) {
@@ -105,7 +105,7 @@ export default function StepBulkSerialNumberInput({
                 inputMode="numeric"
                 placeholder="0001099"
                 className="w-full"
-                value={serialNumberRangeEnd}
+                value={serialNumberRangeEnd ?? ""}
                 onChange={(e) =>
                   setSerialNumberRangeEnd(
                     enforceMaxEndingSerialNumber(

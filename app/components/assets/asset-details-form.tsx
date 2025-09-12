@@ -36,6 +36,7 @@ interface AssetDetailsFormProps {
   clientId?: string;
   siteId?: string;
   context?: ViewContext;
+  nestDrawers?: boolean;
 }
 
 const FORM_DEFAULTS = {
@@ -52,6 +53,7 @@ export default function AssetDetailsForm({
   clientId,
   siteId,
   context,
+  nestDrawers,
 }: AssetDetailsFormProps) {
   const { user } = useAuth();
 
@@ -140,6 +142,7 @@ export default function AssetDetailsForm({
           showProductSelect
           productReadOnly={!!asset?.setupOn}
           viewContext={context}
+          nestDrawers={nestDrawers}
         />
         <Button
           className="w-full"
@@ -162,6 +165,7 @@ export function AssetDetailFormFields({
   clientId,
   viewContext = "user",
   productReadOnly = false,
+  nestDrawers = false,
 }: {
   form: UseFormReturn<TForm>;
   showActiveToggle?: boolean;
@@ -171,6 +175,7 @@ export function AssetDetailFormFields({
   clientId?: string;
   viewContext?: ViewContext;
   productReadOnly?: boolean;
+  nestDrawers?: boolean;
 }) {
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
@@ -248,6 +253,7 @@ export function AssetDetailFormFields({
                   className="w-full"
                   showClear={false}
                   viewContext={viewContext}
+                  nestDrawers={nestDrawers}
                 />
               </FormControl>
               <FormMessage />
@@ -273,6 +279,7 @@ export function AssetDetailFormFields({
                   clientId={clientId}
                   disabled={isGlobalAdmin(user) && viewContext === "admin" && !clientId}
                   viewContext={viewContext}
+                  nestDrawers={nestDrawers}
                 />
               </FormControl>
               <FormMessage />

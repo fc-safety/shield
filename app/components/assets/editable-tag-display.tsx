@@ -83,8 +83,8 @@ export default function EditableTagDisplay({
         open={modelOpen}
         onOpenChange={setModelOpen}
         title={
-          <div className="flex items-center gap-2">
-            <CirclePlus className="size-4" /> Register Asset Tag
+          <div className="flex items-center gap-1">
+            <CirclePlus className="size-5" /> Registering tag to asset...
           </div>
         }
         description="Follow the steps below to register a new tag to this asset."

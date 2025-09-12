@@ -24,6 +24,7 @@ export const useCreateAssetAssistant = ({
   onContinue,
   viewContext,
   continueLabel,
+  mode = "normal",
 }: {
   onClose?: () => void;
   initialState?: Partial<CreateAssetAssistantState>;
@@ -32,6 +33,7 @@ export const useCreateAssetAssistant = ({
   onContinue?: (data: Asset) => void;
   viewContext?: ViewContext;
   continueLabel?: string;
+  mode?: "normal" | "register-tag";
 }) => {
   const [lastStepId, setLastStepId] = useState(DEFAULT_LAST_STEP_ID);
 
@@ -78,15 +80,17 @@ export const useCreateAssetAssistant = ({
         case StepSelectCategoryOrExistingAsset.StepId:
           return (
             <StepSelectCategoryOrExistingAsset
+              allowSelectExistingAsset={mode === "register-tag"}
               onStepBackward={onStepBackward}
-              onContinue={({ skipToSelectExistingAsset }) =>
-                context.stepTo(
-                  skipToSelectExistingAsset
-                    ? StepSelectExistingAsset.StepId
-                    : StepSelectProduct.StepId,
-                  "forward"
-                )
-              }
+              onContinue={({ skipToSelectExistingAsset }) => {
+                if (skipToSelectExistingAsset) {
+                  setLastStepId(StepSelectExistingAsset.StepId);
+                  context.stepTo(StepSelectExistingAsset.StepId, "forward");
+                } else {
+                  setLastStepId(StepSelectProduct.StepId);
+                  context.stepTo(StepSelectProduct.StepId, "forward");
+                }
+              }}
               productCategoryId={createAssetAssistantState.productCategoryId}
               setProductCategoryId={(id) =>
                 setCreateAssetAssistantState((draft) => {
@@ -96,7 +100,6 @@ export const useCreateAssetAssistant = ({
             />
           );
         case StepSelectExistingAsset.StepId:
-          setLastStepId(StepSelectExistingAsset.StepId);
           return (
             <StepSelectExistingAsset
               onStepBackward={() =>
@@ -137,9 +140,9 @@ export const useCreateAssetAssistant = ({
             />
           );
         case StepAssetDetailsForm.StepId:
-          setLastStepId(StepAssetDetailsForm.StepId);
           return (
             <StepAssetDetailsForm
+              onClose={onClose}
               onStepBackward={() => context.stepTo(StepSelectProduct.StepId, "backward")}
               onContinue={onContinue}
               assetData={createAssetAssistantState.assetData}
