@@ -14,8 +14,11 @@
   --breakpoint-3xl: 1920px;
   --breakpoint-4xl: 2560px;
 
-  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji,
-    Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  --text-2xs: 0.625rem;
+
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol,
+    Noto Color Emoji;
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -71,9 +74,7 @@
   --color-status-due-soon-foreground: hsl(var(--status-due-soon-foreground));
 
   --color-status-non-compliant: hsl(var(--status-non-compliant));
-  --color-status-non-compliant-foreground: hsl(
-    var(--status-non-compliant-foreground)
-  );
+  --color-status-non-compliant-foreground: hsl(var(--status-non-compliant-foreground));
 
   --color-status-never: hsl(var(--status-never));
   --color-status-never-foreground: hsl(var(--status-never-foreground));

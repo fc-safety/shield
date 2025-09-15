@@ -206,6 +206,7 @@ export default function TagDetailsForm({ tag, onClose, viewContext }: TagDetails
                   onBlur={field.onBlur}
                   className="w-full"
                   viewContext={viewContext}
+                  showClear
                 />
               </FormControl>
               <FormMessage />

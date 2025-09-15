@@ -28,6 +28,7 @@ interface AssetQuestionResponseTypeInputProps<T extends AssetQuestionResponseTyp
   disabled?: boolean;
   tone?: string;
   options?: { value: string; label?: string }[];
+  placeholder?: string | null;
 }
 
 export default function AssetQuestionResponseTypeInput<T extends AssetQuestionResponseType>({
@@ -38,6 +39,7 @@ export default function AssetQuestionResponseTypeInput<T extends AssetQuestionRe
   disabled = false,
   tone,
   options,
+  placeholder,
 }: AssetQuestionResponseTypeInputProps<T>) {
   return valueType === "BINARY" || valueType === "INDETERMINATE_BINARY" ? (
     <ToggleGroup
@@ -122,6 +124,7 @@ export default function AssetQuestionResponseTypeInput<T extends AssetQuestionRe
         onValueChange((String(+v) !== v ? v : +v) as TValue<T>);
       }}
       disabled={disabled}
+      placeholder={placeholder ?? undefined}
     />
   );
 }

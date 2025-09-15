@@ -60,9 +60,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   const { products_showAll } = await getAppState(request);
 
-  let onlyMyProducts = !products_showAll;
+  let onlyMyProducts = products_showAll === undefined ? true : !products_showAll;
   if (products_showAll === undefined && isGlobalAdmin) {
-    onlyMyProducts = true;
+    onlyMyProducts = false;
   }
 
   const query = { type: "PRIMARY", limit: 10000 } as QueryParams;

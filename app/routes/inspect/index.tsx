@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter } from "date-fns";
@@ -397,6 +404,9 @@ function InspectionPage({
                               {question?.prompt}
                               {question?.required && " *"}
                             </FormLabel>
+                            {question?.helpText && (
+                              <FormDescription>{question?.helpText}</FormDescription>
+                            )}
                             <AssetQuestionRegulatoryCodesDisplay
                               regulatoryCodes={question?.regulatoryCodes}
                             />
@@ -410,6 +420,7 @@ function InspectionPage({
                               valueType={question?.valueType ?? "BINARY"}
                               tone={question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL}
                               options={question?.selectOptions ?? undefined}
+                              placeholder={question?.placeholder}
                             />
                           </FormControl>
                           <FormMessage />

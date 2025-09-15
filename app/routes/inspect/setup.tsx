@@ -1,5 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseISO } from "date-fns";
 import { AlertCircle, ArrowRight, Plus } from "lucide-react";
@@ -281,6 +288,9 @@ export default function InspectSetup({
                                 )}
                                 {question?.required && " *"}
                               </FormLabel>
+                              {question?.helpText && (
+                                <FormDescription>{question?.helpText}</FormDescription>
+                              )}
                               <AssetQuestionRegulatoryCodesDisplay
                                 regulatoryCodes={question?.regulatoryCodes}
                               />
@@ -297,6 +307,7 @@ export default function InspectSetup({
                                 disabled={isSetup || !question}
                                 tone={question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL}
                                 options={question?.selectOptions ?? undefined}
+                                placeholder={question?.placeholder}
                               />
                             </FormControl>
                             <FormMessage />
@@ -327,7 +338,7 @@ export default function InspectSetup({
                   </Button>
                   {isSetup && (
                     <Button variant="default" asChild type="button" className="w-full">
-                      <Link to={`/inspect/?tagNo=${tag.serialNumber}`}>Begin Inspection</Link>
+                      <Link to={`/inspect/`}>Begin Inspection</Link>
                     </Button>
                   )}
                 </Form>

@@ -12,6 +12,7 @@ interface EditConsumableButtonProps {
   parentProductId: string;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  nestDrawers?: boolean;
 }
 
 export default function EditConsumableButton({
@@ -21,6 +22,7 @@ export default function EditConsumableButton({
   parentProductId,
   open: openProp,
   onOpenChange,
+  nestDrawers,
 }: EditConsumableButtonProps) {
   const [open, setOpen] = useState(false);
   return (
@@ -39,11 +41,10 @@ export default function EditConsumableButton({
           </Button>
         )
       }
+      isNestedDrawer={nestDrawers}
     >
       <ConsumableDetailsForm
-        onSubmitted={() =>
-          onOpenChange ? onOpenChange(false) : setOpen(false)
-        }
+        onSubmitted={() => (onOpenChange ? onOpenChange(false) : setOpen(false))}
         consumable={consumable}
         assetId={assetId}
         parentProductId={parentProductId}

@@ -68,6 +68,13 @@ export default function ConsumableCombobox({
       filteredProducts = productSelectFuse.search(productSearch).map((result) => result.item);
     }
 
+    if (parentProductId) {
+      return filteredProducts.map((p) => ({
+        label: p.name,
+        value: p.id,
+      }));
+    }
+
     const groupedConsumableProducts = filteredProducts
       .sort((a, b) => {
         if (a.parentProduct && b.parentProduct && a.parentProduct.name !== b.parentProduct.name) {

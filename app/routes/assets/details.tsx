@@ -327,10 +327,22 @@ export default function AssetDetails({
                     <NewSupplyRequestButton
                       assetId={asset.id}
                       parentProductId={asset.productId}
-                      productCategoryId={asset.product.productCategoryId}
                       onSuccess={() => {
                         toast.success(
-                          "Supply request submitted! An FC Safety representative will reach out to you shortly."
+                          <div className="flex flex-col gap-2">
+                            <p>
+                              Your request was submitted! An FC Safety representative will reach out
+                              to your organization shortly.
+                            </p>
+                            <p>
+                              You can view recent requests in your{" "}
+                              <Link to="/dashboard" className="text-primary font-semibold">
+                                dashboard
+                              </Link>
+                              .
+                            </p>
+                          </div>,
+                          { duration: 10000 }
                         );
                       }}
                     />
@@ -545,7 +557,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
             actions: canUpdate || canDelete,
           },
         }}
-        searchPlaceholder="Search consumables..."
+        searchPlaceholder="Search supplies..."
         actions={
           canCreate
             ? [

@@ -226,10 +226,10 @@ export default function InspectNext({
                   <NewSupplyRequestButton
                     assetId={inspection.asset.id}
                     parentProductId={inspection.asset.productId}
-                    productCategoryId={inspection.asset.product.productCategoryId}
                     onSuccess={() => {
                       toast.success(
-                        "Supply request submitted! An FC Safety representative will reach out to you shortly."
+                        "Your request was submitted! An FC Safety representative will reach out to your organization shortly.",
+                        { duration: 10000 }
                       );
                     }}
                   />

@@ -264,6 +264,10 @@ function ManufacturersCard({
               columnVisibility: {
                 owner: showOwner,
               },
+              sorting: [
+                { id: "active", desc: true },
+                { id: "name", desc: false },
+              ],
             }}
             searchPlaceholder="Search manufacturers..."
             actions={canCreate ? [<NewManufacturerButton key="add" />] : undefined}
