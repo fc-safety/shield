@@ -20,7 +20,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const url = parseURL(rawUrl);
 
   if (!url) {
-    throw new Response(`URL "${url}" is invalid`, { status: 400 });
+    throw new Response(`URL "${rawUrl}" is invalid`, { status: 400 });
   }
 
   let response: Response;
