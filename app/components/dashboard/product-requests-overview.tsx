@@ -265,6 +265,11 @@ function ProductRequestsSummary({
 
   return (
     <GradientScrollArea className="flex-1" variant="card">
+      {productRequests.length === 0 && (
+        <p className="text-muted-foreground mb-4 text-center text-sm italic">
+          There are no supply requests to display.
+        </p>
+      )}
       <div className="flex flex-col gap-4">
         {productRequestsCounts.map(({ status, icon: Icon, count }) => (
           <div key={status} className={cn("flex items-center gap-4 rounded-lg")}>
@@ -275,17 +280,27 @@ function ProductRequestsSummary({
               <Icon className="size-5" />
             </ProductRequestStatusBadge>
             <div className="flex items-center gap-x-2 text-sm sm:text-base">
-              <h5 className="font-semibold">{humanize(status)}</h5>
-              <h6 className="text-muted-foreground">
-                (
-                {productRequests.length > 0
-                  ? ((count / productRequests.length) * 100).toFixed(0)
-                  : 0}
-                %)
-              </h6>
+              <h5
+                className={cn({
+                  "font-semibold": count > 0,
+                })}
+              >
+                {humanize(status)}
+              </h5>
+              {count > 0 ? (
+                <h6 className="text-muted-foreground">
+                  ({((count / productRequests.length) * 100).toFixed(0)}% )
+                </h6>
+              ) : null}
             </div>
             <div className="flex-1"></div>
-            <h5 className="leading-tight font-bold">{count}</h5>
+            <h5
+              className={cn("leading-tight", {
+                "font-bold": count > 0,
+              })}
+            >
+              {count > 0 ? count : <>&mdash;</>}
+            </h5>
           </div>
         ))}
       </div>

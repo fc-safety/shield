@@ -54,7 +54,7 @@ export default function AutomaticSupplySetupInput() {
   const autoSetupSupplyProductId = autoSetupSupplyConfig?.consumableProduct?.connect?.id;
 
   const { data: autoSetupSupply, isLoading: isLoadingAutoSetupSupply } = useQuery({
-    queryKey: ["products", autoSetupSupplyProductId],
+    queryKey: ["product-with-parent", autoSetupSupplyProductId],
     queryFn: ({ queryKey }) =>
       fetchOrThrow(`/products/?id=${queryKey[1]}&include[parentProduct]=true`, { method: "GET" })
         .then((r) => r.json() as Promise<ResultsPage<Product>>)

@@ -302,6 +302,10 @@ function ProductCategoriesCard({
               columnVisibility: {
                 owner: showOwner,
               },
+              sorting: [
+                { id: "active", desc: true },
+                { id: "name", desc: false },
+              ],
             }}
             searchPlaceholder="Search categories..."
             actions={

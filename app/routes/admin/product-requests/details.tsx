@@ -65,6 +65,10 @@ export default function AdminProductRequestsDetails({
               accessorKey: "product.name",
             },
             {
+              header: "SKU",
+              accessorKey: "product.sku",
+            },
+            {
               header: "Quantity",
               accessorKey: "quantity",
             },
@@ -74,9 +78,7 @@ export default function AdminProductRequestsDetails({
               accessorKey: "product.ansiCategory.name",
               cell: ({ row }) =>
                 row.original.product.ansiCategory ? (
-                  <AnsiCategoryDisplay
-                    ansiCategory={row.original.product.ansiCategory}
-                  />
+                  <AnsiCategoryDisplay ansiCategory={row.original.product.ansiCategory} />
                 ) : (
                   <>&mdash;</>
                 ),
@@ -84,9 +86,7 @@ export default function AdminProductRequestsDetails({
           ]}
           initialState={{
             columnVisibility: {
-              ansi: productRequest.productRequestItems.some(
-                (item) => item.product.ansiCategory
-              ),
+              ansi: productRequest.productRequestItems.some((item) => item.product.ansiCategory),
             },
           }}
           data={productRequest.productRequestItems}

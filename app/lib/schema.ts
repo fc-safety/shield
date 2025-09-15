@@ -485,6 +485,8 @@ export const baseCreateAssetQuestionSchema = z
         })
       )
       .optional(),
+    helpText: z.string().optional(),
+    placeholder: z.string().optional(),
     tone: z.string().optional(),
     assetAlertCriteria: z
       .object({

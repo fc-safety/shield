@@ -1,11 +1,17 @@
+import type { ReactNode } from "react";
 import { useFormContext } from "react-hook-form";
 import { cn } from "~/lib/utils";
+import HelpPopover from "./help-popover";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form";
 import { Switch } from "./ui/switch";
 
 type TForm = { active: boolean };
 
-export default function ActiveToggleFormInput() {
+export default function ActiveToggleFormInput({
+  helpPopoverContent,
+}: {
+  helpPopoverContent?: ReactNode;
+}) {
   const form = useFormContext<TForm>();
   return (
     <FormField
@@ -20,6 +26,7 @@ export default function ActiveToggleFormInput() {
             <FormLabel className={cn(!value && "text-muted-foreground")}>
               {value ? "Active" : "Inactive"}
             </FormLabel>
+            {helpPopoverContent && <HelpPopover>{helpPopoverContent}</HelpPopover>}
           </div>
           <FormMessage />
         </FormItem>

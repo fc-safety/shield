@@ -81,16 +81,30 @@ export function NewSupplyRequestButton({ ...props }: ComponentProps<typeof Produ
       }
       title="Supply Request"
       description="Please select which supplies and the quantities you would like to order."
-      dialogClassName="sm:max-w-xl"
+      dialogClassName="sm:max-w-3xl"
       disableDisplayTable
       render={({ isDesktop }) => (
         <ProductRequestForm
           {...props}
           renderSubmitButton={({ isSubmitting, disabled }) => {
             const btn = (
-              <Button type="submit" disabled={disabled || isSubmitting}>
-                {isSubmitting ? "Submitting..." : "Submit Request"}
-              </Button>
+              <div
+                className={cn("flex flex-col gap-2", {
+                  "items-end": isDesktop,
+                })}
+              >
+                <p
+                  className={cn("text-muted-foreground w-full text-xs font-semibold", {
+                    "text-end": isDesktop,
+                  })}
+                >
+                  Submitting this request will notify our team to contact your organization to
+                  finalize payment and delivery details.
+                </p>
+                <Button type="submit" disabled={disabled || isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
+                </Button>
+              </div>
             );
 
             return isDesktop ? <DialogFooter>{btn}</DialogFooter> : btn;
@@ -110,7 +124,6 @@ const resolver = zodResolver(createProductRequestSchema);
 function ProductRequestForm({
   assetId,
   parentProductId,
-  productCategoryId,
   renderSubmitButton = ({ isSubmitting, disabled }) => (
     <Button type="submit" disabled={disabled || isSubmitting}>
       {isSubmitting ? "Submitting..." : "Submit"}
@@ -121,7 +134,6 @@ function ProductRequestForm({
 }: {
   assetId: string;
   parentProductId: string;
-  productCategoryId: string;
   renderSubmitButton?: (options: { isSubmitting: boolean; disabled: boolean }) => React.ReactNode;
   onSubmitted?: () => void;
   onSuccess?: (data: ProductRequest) => void;
@@ -232,7 +244,7 @@ function ProductRequestForm({
   return (
     <>
       <Form {...form}>
-        <form className="mt-4 w-full space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+        <form className="w-full space-y-4 sm:mt-4" onSubmit={form.handleSubmit(handleSubmit)}>
           <div className="w-full">
             <h3 className="flex items-center gap-x-2 text-base font-medium">
               <ListPlus className="size-5" />
@@ -260,7 +272,7 @@ function ProductRequestForm({
               Order Items
             </h3>
             <ScrollArea
-              className="border-border relative h-[25dvh] min-h-54 border-t border-b"
+              className="border-border relative h-[25dvh] border-t border-b"
               onIsOverflowingY={setOrderItemsIsOverflowingY}
               onIsScrollMaxedY={setOrderItemsIsScrollMaxedY}
             >
@@ -419,7 +431,8 @@ function ConsumableSelectTabs({
           block: showTabs,
         })}
       >
-        <TabsList className="w-full min-w-fit gap-x-1.5">
+        {/* <GradientScrollArea> */}
+        <TabsList className="grid h-auto w-full min-w-fit grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-x-1.5 gap-y-1.5">
           {(ansiCategories ?? []).map((category) => (
             <TabsTrigger
               key={category.id}
@@ -433,12 +446,15 @@ function ConsumableSelectTabs({
                   "--tab-inactive-color": category.color ?? "hsl(var(--muted-foreground))",
                 } as React.CSSProperties
               }
-              className="flex shrink-0 grow bg-[var(--tab-active-bg)] font-bold text-[var(--tab-active-color)] data-[state=active]:scale-105 data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)]"
+              className="flex shrink-0 grow flex-col items-center justify-center bg-[var(--tab-active-bg)] py-1.5 font-bold text-[var(--tab-active-color)] data-[state=active]:scale-105 data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)]"
             >
-              {category.icon ? <Icon iconId={category.icon} /> : category.name}
+              {category.icon && <Icon iconId={category.icon} className="text-lg" />}
+              <div className="text-2xs w-min whitespace-nowrap">{category.name}</div>
             </TabsTrigger>
           ))}
         </TabsList>
+        {/* <ScrollBar orientation="horizontal" />
+        </GradientScrollArea> */}
         {(ansiCategories ?? []).map((category) => (
           <TabsContent key={category.id} value={category.id}>
             <AvailableConsumables

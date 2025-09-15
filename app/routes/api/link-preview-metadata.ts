@@ -23,18 +23,21 @@ export async function loader({ request }: Route.LoaderArgs) {
     throw new Response(`URL "${url}" is invalid`, { status: 400 });
   }
 
-  const response = await fetch(url, {
-    redirect: "follow",
-    headers: {
-      Accept: "text/html",
-    },
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      redirect: "follow",
+      headers: {
+        Accept: "text/html",
+      },
+    });
+  } catch (error) {
+    logger.warn({ error }, "Failed to fetch link preview metadata");
+    throw new Response("Failed to get link preview metadata", { status: 500 });
+  }
 
   if (!response.ok) {
-    logger.warn(
-      { url, status: response.status },
-      "Failed to get link preview metadata"
-    );
+    logger.warn({ url, status: response.status }, "Failed to get link preview metadata");
     throw new Response("Failed to get link preview metadata", { status: 500 });
   }
 
@@ -87,16 +90,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   };
 
   const title = getSafely(() => document.querySelector("title")?.textContent);
-  const description = getSafely(() =>
-    getMetaContent("description", "og:description")
-  );
+  const description = getSafely(() => getMetaContent("description", "og:description"));
   const image = getSafely(() => getMetaContent("og:image"));
   const favicon = getSafely(
     () =>
       document.querySelector("#favicon")?.getAttribute("href") ||
-      document
-        .querySelector('link[rel="shortcut icon"]')
-        ?.getAttribute("href") ||
+      document.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") ||
       document.querySelector("link[rel=icon]")?.getAttribute("href")
   );
 

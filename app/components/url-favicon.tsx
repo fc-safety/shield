@@ -15,7 +15,7 @@ export default function URLFavicon({
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { data: metadata, isLoading } = useQuery({
-    queryFn: () => getUrlPreviewMetadataFn(fetchOrThrow, url),
+    queryFn: () => getUrlPreviewMetadataFn(fetchOrThrow, url).catch(() => null),
     queryKey: ["url-preview-metadata", url],
   });
   const [hasError, setHasError] = useState(false);

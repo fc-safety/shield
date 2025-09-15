@@ -302,6 +302,8 @@ export interface AssetQuestion extends BaseModel {
         label?: string;
       }[]
     | null;
+  helpText: string | null;
+  placeholder: string | null;
   tone: string | null;
   assetAlertCriteria?: AssetAlertCriterion[];
   /** @deprecated */

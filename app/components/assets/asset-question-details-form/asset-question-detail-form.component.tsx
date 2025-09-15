@@ -95,6 +95,8 @@ function AssetQuestionDetailsFormContent({
           ...assetQuestion,
           order: assetQuestion.order ?? undefined,
           selectOptions: assetQuestion.selectOptions ?? undefined,
+          helpText: assetQuestion.helpText ?? undefined,
+          placeholder: assetQuestion.placeholder ?? undefined,
           assetAlertCriteria: {
             updateMany: assetQuestion.assetAlertCriteria?.map((c) => ({
               where: { id: c.id },
@@ -256,19 +258,21 @@ function AssetQuestionDetailsFormContent({
       >
         <div className="flex-1 space-y-4 p-4">
           <Input type="hidden" {...form.register("id")} hidden />
-          <ActiveToggleFormInput />
-          <LegacyIdField
-            form={form}
-            fieldName="legacyQuestionId"
-            label="Legacy Question ID"
-            description="Question ID from the legacy Shield system"
-          />
+          <ActiveToggleFormInput helpPopoverContent="Only active questions will be displayed to inspectors." />
           <FormField
             control={form.control}
             name="type"
             render={({ field: { onChange, ...field } }) => (
               <FormItem>
-                <FormLabel>Type</FormLabel>
+                <FormLabel className="inline-flex items-center gap-1">
+                  Type
+                  <HelpPopover>
+                    <p>
+                      The type determines whether this question is displayed during initial setup,
+                      during every subsequent inspection, or both.
+                    </p>
+                  </HelpPopover>
+                </FormLabel>
                 <FormControl>
                   <RadioGroup {...field} onValueChange={onChange} className="flex gap-4">
                     {AssetQuestionTypes.map((type, idx) => (
@@ -297,14 +301,19 @@ function AssetQuestionDetailsFormContent({
                       onBlur={onBlur}
                     />
                   </FormControl>
-                  <FormLabel>
+                  <FormLabel className="inline-flex items-center gap-1">
                     {value ? (
                       <span>
-                        <span className="text-urgent font-bold">*</span> (Required)
+                        <span className="text-urgent font-bold">*</span> Required
                       </span>
                     ) : (
                       "(Optional)"
                     )}
+                    <HelpPopover>
+                      <p>
+                        Required questions must be answered before the inspection can be completed.
+                      </p>
+                    </HelpPopover>
                   </FormLabel>
                 </div>
                 <FormMessage />
@@ -316,7 +325,15 @@ function AssetQuestionDetailsFormContent({
             name="prompt"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Prompt</FormLabel>
+                <FormLabel className="inline-flex items-center gap-1">
+                  Prompt *
+                  <HelpPopover>
+                    <p>
+                      This is what prompts the response from the inspector, usually a question
+                      relating to the condition of the asset.
+                    </p>
+                  </HelpPopover>
+                </FormLabel>
                 <FormControl>
                   <Textarea {...field} />
                 </FormControl>
@@ -329,7 +346,15 @@ function AssetQuestionDetailsFormContent({
             name="valueType"
             render={({ field: { onChange, onBlur, value } }) => (
               <FormItem>
-                <FormLabel>Answer Type</FormLabel>
+                <FormLabel className="inline-flex items-center gap-1">
+                  Answer Type *
+                  <HelpPopover>
+                    <p>
+                      The type of answer that is expected from the inspector. This determines what
+                      kind of input is displayed (e.g. text input, dropdown, etc.).
+                    </p>
+                  </HelpPopover>
+                </FormLabel>
                 <FormControl>
                   <Select value={value} onValueChange={onChange} disabled={!!requiredValueType}>
                     <SelectTrigger onBlur={onBlur}>
@@ -355,7 +380,12 @@ function AssetQuestionDetailsFormContent({
               name="selectOptions"
               render={() => (
                 <FormItem>
-                  <FormLabel>{RESPONSE_TYPE_LABELS[valueType]} Options</FormLabel>
+                  <FormLabel className="inline-flex items-center gap-1">
+                    {RESPONSE_TYPE_LABELS[valueType]} Options *
+                    <HelpPopover>
+                      <p>The options that are available for the inspector to select from.</p>
+                    </HelpPopover>
+                  </FormLabel>
                   <FormControl>
                     <SelectOptionsInput />
                   </FormControl>
@@ -401,6 +431,29 @@ function AssetQuestionDetailsFormContent({
             />
           )}
 
+          <FormField
+            control={form.control}
+            name="helpText"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="inline-flex items-center gap-1">
+                  Help Text
+                  <HelpPopover>
+                    <p>
+                      This is additional, optional text that can be displayed to the inspector to
+                      help them answer the question.
+                    </p>
+                  </HelpPopover>
+                </FormLabel>
+
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {type === "SETUP" && <AutomaticSupplySetupInput />}
 
           {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && <AlertTriggersInput />}
@@ -412,6 +465,13 @@ function AssetQuestionDetailsFormContent({
           <RegulatoryCodesInput />
 
           <SetMetadataInput />
+
+          <LegacyIdField
+            form={form}
+            fieldName="legacyQuestionId"
+            label="Legacy Question ID"
+            description="Question ID from the legacy Shield system"
+          />
 
           <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
             {isSubmitting ? "Saving..." : "Save"}
