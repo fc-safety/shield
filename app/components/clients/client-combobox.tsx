@@ -14,6 +14,7 @@ interface ClientComboboxProps {
   disabled?: boolean;
   viewContext?: ViewContext;
   showClear?: boolean;
+  nestDrawers?: boolean;
 }
 
 const fuse = new Fuse([] as Client[], { keys: ["name"] });
@@ -26,6 +27,7 @@ export default function ClientCombobox({
   disabled,
   viewContext,
   showClear,
+  nestDrawers,
 }: ClientComboboxProps) {
   const fetcher = useFetcher<DataOrError<ResultsPage<Client>>>();
 
@@ -93,6 +95,7 @@ export default function ClientCombobox({
       shouldFilter={false}
       showClear={showClear}
       errorMessage={hasError ? "Something went wrong." : undefined}
+      isNestedDrawer={nestDrawers}
     />
   );
 }

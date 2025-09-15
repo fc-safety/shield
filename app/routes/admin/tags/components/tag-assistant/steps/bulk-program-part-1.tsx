@@ -1,7 +1,7 @@
 import { Download, Nfc } from "lucide-react";
 import { useMemo } from "react";
-import OptionButton from "../components/option-button";
-import Step from "../components/step";
+import OptionButton from "../../../../../../components/assistant/components/option-button";
+import Step from "../../../../../../components/assistant/components/step";
 
 export default function StepBulkProgramPart1({
   onExport,
@@ -23,18 +23,11 @@ export default function StepBulkProgramPart1({
   const serialNumberCount = useMemo(() => {
     if (serialNumberMethod === "sequential") {
       return serialNumberRangeEnd
-        ? parseInt(serialNumberRangeEnd) -
-            parseInt(serialNumberRangeStart ?? "0") +
-            1
+        ? parseInt(serialNumberRangeEnd) - parseInt(serialNumberRangeStart ?? "0") + 1
         : 0;
     }
     return serialNumbers?.length ?? 0;
-  }, [
-    serialNumberMethod,
-    serialNumberRangeStart,
-    serialNumberRangeEnd,
-    serialNumbers,
-  ]);
+  }, [serialNumberMethod, serialNumberRangeStart, serialNumberRangeEnd, serialNumbers]);
 
   const subtitle = useMemo(
     () => (

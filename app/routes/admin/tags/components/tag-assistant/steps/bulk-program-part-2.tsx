@@ -1,20 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Copy,
-  ExternalLink,
-  Loader2,
-  RotateCcw,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Copy, ExternalLink, Loader2, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import Step from "../../../../../../components/assistant/components/step";
+import SubStep from "../../../../../../components/assistant/components/sub-step";
 import { generateSignedTagUrl } from "../../../services/tags.service";
 import DisplayTagWriteData from "../components/display-tag-write-data";
-import Step from "../components/step";
-import SubStep from "../components/sub-step";
 import { incrementSerialNumber } from "../utils/inputs";
 
 export default function StepBulkProgramPart2({
@@ -37,35 +30,21 @@ export default function StepBulkProgramPart2({
   const serialNumberCount = useMemo(() => {
     if (serialNumberMethod === "sequential") {
       return serialNumberRangeEnd
-        ? parseInt(serialNumberRangeEnd) -
-            parseInt(serialNumberRangeStart ?? "0") +
-            1
+        ? parseInt(serialNumberRangeEnd) - parseInt(serialNumberRangeStart ?? "0") + 1
         : 0;
     }
     return serialNumbers?.length ?? 0;
-  }, [
-    serialNumberMethod,
-    serialNumberRangeStart,
-    serialNumberRangeEnd,
-    serialNumbers,
-  ]);
+  }, [serialNumberMethod, serialNumberRangeStart, serialNumberRangeEnd, serialNumbers]);
 
   const getSerialNumber = useCallback(
     (idx: number) => {
       if (serialNumberMethod === "sequential") {
-        return serialNumberRangeStart
-          ? incrementSerialNumber(serialNumberRangeStart, idx)
-          : null;
+        return serialNumberRangeStart ? incrementSerialNumber(serialNumberRangeStart, idx) : null;
       } else {
         return serialNumbers?.at(idx) ?? null;
       }
     },
-    [
-      serialNumberMethod,
-      serialNumberRangeStart,
-      serialNumberRangeEnd,
-      serialNumbers,
-    ]
+    [serialNumberMethod, serialNumberRangeStart, serialNumberRangeEnd, serialNumbers]
   );
 
   const [currentSerialNumberIdx, setCurrentSerialNumberIdx] = useState(0);
@@ -74,18 +53,17 @@ export default function StepBulkProgramPart2({
   }, [currentSerialNumberIdx, getSerialNumber]);
 
   const { fetchOrThrow } = useAuthenticatedFetch();
-  const { mutate: getGeneratedTagUrl, isPending: isGeneratingTagUrl } =
-    useMutation({
-      mutationFn: async (serialNumber: string) => {
-        if (tagDataCache.has(serialNumber)) {
-          return tagDataCache.get(serialNumber) as string;
-        }
+  const { mutate: getGeneratedTagUrl, isPending: isGeneratingTagUrl } = useMutation({
+    mutationFn: async (serialNumber: string) => {
+      if (tagDataCache.has(serialNumber)) {
+        return tagDataCache.get(serialNumber) as string;
+      }
 
-        const data = await generateSignedTagUrl(fetchOrThrow, serialNumber);
-        tagDataCache.set(serialNumber, data.tagUrl);
-        return data.tagUrl;
-      },
-    });
+      const data = await generateSignedTagUrl(fetchOrThrow, serialNumber);
+      tagDataCache.set(serialNumber, data.tagUrl);
+      return data.tagUrl;
+    },
+  });
 
   const [writeData, setWriteData] = useState<string | null>(null);
   useEffect(() => {
@@ -112,11 +90,10 @@ export default function StepBulkProgramPart2({
       }
     >
       <SubStep idx={0} title="Copy the following URL to your clipboard.">
-        <div className="rounded-md bg-background text-foreground ring ring-accent">
-          <div className="text-xs w-full flex items-center justify-between gap-2 px-4 py-1 bg-card text-card-foreground rounded-t-md border-b border-accent">
+        <div className="bg-background text-foreground ring-accent rounded-md ring">
+          <div className="bg-card text-card-foreground border-accent flex w-full items-center justify-between gap-2 rounded-t-md border-b px-4 py-1 text-xs">
             <div>
-              {(currentSerialNumberIdx + 1).toLocaleString()} /{" "}
-              {serialNumberCount.toLocaleString()}
+              {(currentSerialNumberIdx + 1).toLocaleString()} / {serialNumberCount.toLocaleString()}
             </div>
             <div className="flex flex-row gap-1">
               <Button
@@ -134,10 +111,7 @@ export default function StepBulkProgramPart2({
               <Button
                 variant="secondary"
                 size="icon"
-                disabled={
-                  currentSerialNumberIdx === serialNumberCount - 1 ||
-                  isGeneratingTagUrl
-                }
+                disabled={currentSerialNumberIdx === serialNumberCount - 1 || isGeneratingTagUrl}
                 onClick={() => {
                   if (currentSerialNumberIdx < serialNumberCount - 1) {
                     setCurrentSerialNumberIdx(currentSerialNumberIdx + 1);
@@ -148,28 +122,25 @@ export default function StepBulkProgramPart2({
               </Button>
             </div>
           </div>
-          <div className="h-16 flex flex-col gap-2 items-center justify-center px-4 py-2">
+          <div className="flex h-16 flex-col items-center justify-center gap-2 px-4 py-2">
             {isGeneratingTagUrl || writeData === null ? (
-              <div className="flex flex-col gap-1 items-center justify-center">
+              <div className="flex flex-col items-center justify-center gap-1">
                 <Loader2 className="size-4 animate-spin" />
-                <p className="text-xs">
-                  Preparing your tag data for programming...
-                </p>
+                <p className="text-xs">Preparing your tag data for programming...</p>
               </div>
             ) : (
               <DisplayTagWriteData data={writeData} />
             )}
           </div>
         </div>
-        <p className="text-xs leading-5 text-muted-foreground italic">
+        <p className="text-muted-foreground text-xs leading-5 italic">
           Use the{" "}
-          <span className="inline px-1 py-0.5 rounded-md border border-border">
-            <ChevronRight className="size-3 inline" />
+          <span className="border-border inline rounded-md border px-1 py-0.5">
+            <ChevronRight className="inline size-3" />
           </span>{" "}
-          button to move the next serial number. To copy the above URL to your
-          clipboard, click the{" "}
-          <span className="inline px-1 py-0.5 rounded-md border border-border">
-            <Copy className="size-3 inline" />
+          button to move the next serial number. To copy the above URL to your clipboard, click the{" "}
+          <span className="border-border inline rounded-md border px-1 py-0.5">
+            <Copy className="inline size-3" />
           </span>{" "}
           button.
         </p>
@@ -184,13 +155,12 @@ export default function StepBulkProgramPart2({
           </>
         }
       >
-        <div className="border-border border rounded-md p-4 flex items-center justify-center">
-          <p className="font-bold text-lg">{currentSerialNumber}</p>
+        <div className="border-border flex items-center justify-center rounded-md border p-4">
+          <p className="text-lg font-bold">{currentSerialNumber}</p>
         </div>
-        <p className="text-xs text-muted-foreground italic">
-          This final step requires a physical device and accompanying software
-          to write NFC tags. Desktop computers require an external device while
-          mobile phones have NFC built in.{" "}
+        <p className="text-muted-foreground text-xs italic">
+          This final step requires a physical device and accompanying software to write NFC tags.
+          Desktop computers require an external device while mobile phones have NFC built in.{" "}
           <Link
             to="/docs/writing-nfc-tags"
             target="_blank"
@@ -198,7 +168,7 @@ export default function StepBulkProgramPart2({
             className="text-primary"
           >
             Learn more about the setup required to write to NFC tags.{" "}
-            <ExternalLink className="size-3 inline" />
+            <ExternalLink className="inline size-3" />
           </Link>
         </p>
       </SubStep>

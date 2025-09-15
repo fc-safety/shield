@@ -7,7 +7,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerNested,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
@@ -30,6 +37,7 @@ interface ResponsiveComboboxProps extends Omit<SelectOptionsProps, "setOpen" | "
   showClear?: boolean;
   disabled?: boolean;
   compactClearButton?: boolean;
+  isNestedDrawer?: boolean;
 }
 
 export function ResponsiveCombobox({
@@ -47,6 +55,7 @@ export function ResponsiveCombobox({
   showClear = false,
   disabled,
   compactClearButton = false,
+  isNestedDrawer = false,
   ...selectOptionsProps
 }: ResponsiveComboboxProps) {
   const [internalOpen, setInternalOpen] = useState(openProp ?? false);
@@ -138,6 +147,7 @@ export function ResponsiveCombobox({
       setOpen={setOpen}
       renderInput={renderInput}
       renderContent={renderContent}
+      isNestedDrawer={isNestedDrawer}
     />
   );
 }
@@ -162,16 +172,25 @@ function AsPopover({ open, setOpen, renderInput, renderContent }: BoxTypeProps) 
   );
 }
 
-function AsDrawer({ open, setOpen, renderInput, renderContent }: BoxTypeProps) {
+function AsDrawer({
+  open,
+  setOpen,
+  renderInput,
+  renderContent,
+  isNestedDrawer,
+}: BoxTypeProps & { isNestedDrawer: boolean }) {
+  const DrawerComponent = isNestedDrawer ? DrawerNested : Drawer;
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <DrawerComponent open={open} onOpenChange={setOpen}>
       {renderInput({
         renderTrigger: (trigger) => <DrawerTrigger asChild>{trigger}</DrawerTrigger>,
       })}
-      <DrawerContent>
+      <DrawerContent className="min-h-[calc(100dvh/2)]">
+        <DrawerTitle className="sr-only">Select</DrawerTitle>
+        <DrawerDescription className="sr-only">Select an option from the list.</DrawerDescription>
         <div className="mt-4 border-t pb-4">{renderContent()}</div>
       </DrawerContent>
-    </Drawer>
+    </DrawerComponent>
   );
 }
 

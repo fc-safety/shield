@@ -1,5 +1,5 @@
 import { Input } from "~/components/ui/input";
-import Step from "../components/step";
+import Step from "../../../../../../components/assistant/components/step";
 import { coerceNumeric } from "../utils/inputs";
 
 export default function StepSingleSerialNumberInput({
@@ -29,8 +29,9 @@ export default function StepSingleSerialNumberInput({
     >
       <div>
         <Input
+          autoFocus
           inputMode="numeric"
-          value={serialNumber}
+          value={serialNumber ?? ""}
           onChange={(e) => setSerialNumber(coerceNumeric(e.target.value))}
           placeholder="0000099"
           onKeyUp={(e) => {

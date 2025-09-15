@@ -11,11 +11,7 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
 }
 
-export default function TagAssistantButton({
-  trigger,
-  open: openProp,
-  onOpenChange,
-}: Props) {
+export default function TagAssistantButton({ trigger, open: openProp, onOpenChange }: Props) {
   const [internalOpen, setInternalOpen] = useState(false);
 
   const open = openProp ?? internalOpen;
@@ -26,12 +22,13 @@ export default function TagAssistantButton({
       open={open}
       onOpenChange={setOpen}
       title={
-        <div className="flex items-center gap-2">
-          <WandSparkles className="size-4" /> Tag Assistant
+        <div className="flex items-center gap-1">
+          <WandSparkles className="size-5" /> Tag Assistant
         </div>
       }
       description="Use this assistant to guide you through the process of programming new tags."
       dialogClassName="sm:max-w-2xl"
+      disableScrollArea
       trigger={
         trigger !== undefined ? (
           trigger
@@ -41,10 +38,11 @@ export default function TagAssistantButton({
           </Button>
         )
       }
-    >
-      <div className="h-[32rem]">
-        <TagAssistant />
-      </div>
-    </ResponsiveDialog>
+      render={({ drawerContentHeight }) => (
+        <div className="overflow-hidden" style={{ height: drawerContentHeight ?? "32rem" }}>
+          <TagAssistant onClose={() => setOpen(false)} />
+        </div>
+      )}
+    />
   );
 }

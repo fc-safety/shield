@@ -1,7 +1,7 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useImmer, type Updater } from "use-immer";
-import { create } from "zustand";
+import { useCallback, useEffect, useRef } from "react";
+import { useImmer } from "use-immer";
+import { useCreateAssetAssistant } from "~/components/assets/create-asset-assistant/create-asset-assistant.component";
+import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
 import type { Asset } from "~/lib/models";
 import StepBulkProgramExport from "./steps/bulk-program-export";
 import StepBulkProgramPart1 from "./steps/bulk-program-part-1";
@@ -10,20 +10,14 @@ import StepBulkSerialNumberInput from "./steps/bulk-serial-number-input";
 import StepPreprocessBatchFile from "./steps/preprocess-batch-file";
 import StepSelectClient from "./steps/select-client";
 import StepSelectMode from "./steps/select-mode";
+import StepSelectOwnership from "./steps/select-ownership";
 import StepSingleProgram from "./steps/single-program";
-import StepSingleRegister from "./steps/single-register";
+import StepSingleRegisterPreselectedAsset from "./steps/single-register-preselected-asset";
 import StepSingleSerialNumberInput from "./steps/single-serial-number-input";
 import StepUploadBatchFile from "./steps/upload-batch-file";
 import type { Mode } from "./types/core";
 
-interface StepsState {
-  stepId: string;
-  stepTo: (stepId: string, direction?: "forward" | "backward" | "none") => void;
-  stepDirection: "forward" | "backward" | "none";
-  reset: (state?: Partial<StepsState>) => void;
-}
-
-interface AssistantState {
+interface TagAssistantState {
   mode: Mode;
   serialNumberMethod: "sequential" | "manual";
   serialNumberRangeStart?: string;
@@ -42,24 +36,6 @@ interface AssistantState {
   selectedClientId?: string;
 }
 
-const initialStepsState = {
-  stepDirection: "none",
-} as const;
-
-const createUseSteps = (options: { firstStepId: string }) => {
-  const initialState = {
-    ...initialStepsState,
-    stepId: options.firstStepId,
-  };
-
-  return create<StepsState>((set, get) => ({
-    ...initialState,
-    stepTo: (stepId: string, direction: "forward" | "backward" | "none" = "forward") =>
-      set({ stepId, stepDirection: direction }),
-    reset: (state?: Partial<StepsState>) => set({ ...initialState, ...state }),
-  }));
-};
-
 export default function TagAssistant({
   assetToRegister,
   onClose,
@@ -67,28 +43,55 @@ export default function TagAssistant({
   assetToRegister?: Pick<Asset, "id" | "siteId" | "clientId">;
   onClose?: () => void;
 }) {
-  const useSteps = useRef(
-    createUseSteps({
-      firstStepId: assetToRegister ? StepSingleSerialNumberInput.StepId : StepSelectMode.StepId,
-    })
-  ).current;
-  const { stepId, stepTo, stepDirection, reset: resetSteps } = useSteps();
-
-  useEffect(() => {
-    return () => {
-      resetSteps();
-    };
-  }, [resetSteps]);
-
-  const [assistantState, setAssistantState] = useImmer<AssistantState>({
+  const INITIAL_STATE = useRef({
     mode: assetToRegister ? "register-to-asset" : "preprogram-single",
     serialNumberMethod: "sequential",
     registrationCompleted: false,
+  } as const).current;
+
+  const [tagAssistantState, setTagAssistantState] = useImmer<TagAssistantState>(INITIAL_STATE);
+
+  const assistant = useAssistant({
+    onClose,
+    firstStepId: assetToRegister ? StepSingleSerialNumberInput.StepId : StepSelectMode.StepId,
+    onReset: () => {
+      setTagAssistantState(INITIAL_STATE);
+    },
   });
+
+  const { stepTo } = assistant;
+
+  const isCreatingAsset = useRef(false);
+  const {
+    renderStep: renderCreateAssetAssistantStep,
+    firstStepId: createAssetFirstStepId,
+    lastStepId: createAssetLastStepId,
+    context: { reset: resetCreateAssetAssistant },
+  } = useCreateAssetAssistant({
+    onClose,
+    onStepBackward: () => stepTo(StepSelectOwnership.StepId, "backward"),
+    onContinue: (data) => {
+      setTagAssistantState((draft) => {
+        draft.assetId = data.id;
+      });
+      stepTo(StepSingleRegisterPreselectedAsset.StepId, "forward");
+    },
+    continueLabel: "Register",
+    state: {
+      assetData: {
+        siteId: tagAssistantState.siteId,
+        clientId: tagAssistantState.clientId,
+      },
+    },
+    viewContext: "admin",
+    mode: "register-tag",
+  });
+
+  const registerToAssetMode = tagAssistantState.mode === "register-to-asset";
 
   useEffect(() => {
     if (assetToRegister) {
-      setAssistantState((draft) => {
+      setTagAssistantState((draft) => {
         draft.assetId = assetToRegister.id;
         draft.siteId = assetToRegister.siteId;
         draft.clientId = assetToRegister.clientId;
@@ -96,38 +99,9 @@ export default function TagAssistant({
     }
   }, [assetToRegister]);
 
-  return (
-    <div className="flex h-full w-full flex-col items-center">
-      <CurrentStep
-        onClose={onClose}
-        stepId={stepId}
-        stepTo={stepTo}
-        stepDirection={stepDirection}
-        assistantState={assistantState}
-        setAssistantState={setAssistantState}
-      />
-    </div>
-  );
-}
-
-const CurrentStep = ({
-  onClose,
-  stepId,
-  stepTo,
-  stepDirection,
-  assistantState,
-  setAssistantState,
-}: {
-  onClose?: () => void;
-  stepId: StepsState["stepId"];
-  stepTo: StepsState["stepTo"];
-  stepDirection: StepsState["stepDirection"];
-  assistantState: AssistantState;
-  setAssistantState: Updater<AssistantState>;
-}) => {
   const onBulkProgramRestart = useCallback(() => {
     stepTo(StepBulkSerialNumberInput.StepId, "backward");
-    setAssistantState((draft) => {
+    setTagAssistantState((draft) => {
       // Leave the method as is, assuming the user will
       // want to continue with the same method.
       // draft.serialNumberMethod = "sequential";
@@ -137,239 +111,232 @@ const CurrentStep = ({
       draft.serialNumberRangeEnd = undefined;
       draft.serialNumbers = undefined;
     });
-  }, []);
-
-  const step = useMemo(() => {
-    switch (stepId) {
-      case StepSelectMode.StepId:
-        return (
-          <StepSelectMode
-            onSelectMode={(mode) => {
-              setAssistantState((draft) => {
-                draft.mode = mode;
-              });
-              stepTo(
-                mode === "preprogram-single"
-                  ? StepSingleSerialNumberInput.StepId
-                  : mode === "preprogram-batch"
-                    ? StepBulkSerialNumberInput.StepId
-                    : StepSelectClient.StepId,
-                "forward"
-              );
-            }}
-          />
-        );
-      case StepSingleSerialNumberInput.StepId:
-        return (
-          <StepSingleSerialNumberInput
-            onStepBackward={() => stepTo(StepSelectMode.StepId, "backward")}
-            onContinue={() => stepTo(StepSingleProgram.StepId, "forward")}
-            serialNumber={assistantState.serialNumberRangeStart}
-            setSerialNumber={(serialNumber) => {
-              setAssistantState((draft) => {
-                draft.serialNumberRangeStart = serialNumber;
-              });
-            }}
-            registerToAssetMode={assistantState.mode === "register-to-asset"}
-          />
-        );
-      case StepSingleProgram.StepId:
-        return (
-          <StepSingleProgram
-            serialNumber={assistantState.serialNumberRangeStart ?? ""}
-            onStepBackward={() => stepTo(StepSingleSerialNumberInput.StepId, "backward")}
-            onRestart={() => {
-              stepTo(StepSingleSerialNumberInput.StepId, "backward");
-              setAssistantState((draft) => {
-                draft.serialNumberRangeStart = undefined;
-              });
-            }}
-            onRegisterTag={(tagUrl: string) => {
-              stepTo(StepSingleRegister.StepId, "forward");
-              setAssistantState((draft) => {
-                draft.currentTagUrl = tagUrl;
-              });
-            }}
-            registerToAssetMode={assistantState.mode === "register-to-asset"}
-          />
-        );
-      case StepSingleRegister.StepId:
-        return (
-          <StepSingleRegister
-            tagUrl={assistantState.currentTagUrl ?? ""}
-            onStepBackward={() => stepTo(StepSingleProgram.StepId, "backward")}
-            onRestart={() => {
-              stepTo(StepSingleSerialNumberInput.StepId, "backward");
-              setAssistantState((draft) => {
-                draft.serialNumberRangeStart = undefined;
-                draft.assetId = undefined;
-                draft.registrationCompleted = false;
-              });
-            }}
-            onClose={onClose}
-            clientId={assistantState.clientId}
-            siteId={assistantState.siteId}
-            assetId={assistantState.assetId}
-            setClientId={(clientId) => {
-              setAssistantState((draft) => {
-                draft.clientId = clientId;
-              });
-            }}
-            setSiteId={(siteId) => {
-              setAssistantState((draft) => {
-                draft.siteId = siteId;
-              });
-            }}
-            setAssetId={(assetId) => {
-              setAssistantState((draft) => {
-                draft.assetId = assetId;
-              });
-            }}
-            isRegistrationCompleted={assistantState.registrationCompleted}
-            onRegistrationCompleted={() => {
-              setAssistantState((draft) => {
-                draft.registrationCompleted = true;
-              });
-            }}
-            registerToAssetMode={assistantState.mode === "register-to-asset"}
-          />
-        );
-      case StepBulkSerialNumberInput.StepId:
-        return (
-          <StepBulkSerialNumberInput
-            onStepBackward={() => stepTo(StepSelectMode.StepId, "backward")}
-            onContinue={() => stepTo(StepBulkProgramPart1.StepId, "forward")}
-            serialNumberMethod={assistantState.serialNumberMethod}
-            setSerialNumberMethod={(serialNumberMethod) => {
-              setAssistantState((draft) => {
-                draft.serialNumberMethod = serialNumberMethod;
-              });
-            }}
-            serialNumberRangeStart={assistantState.serialNumberRangeStart}
-            setSerialNumberRangeStart={(serialNumberRangeStart) => {
-              setAssistantState((draft) => {
-                draft.serialNumberRangeStart = serialNumberRangeStart;
-              });
-            }}
-            serialNumberRangeEnd={assistantState.serialNumberRangeEnd}
-            setSerialNumberRangeEnd={(serialNumberRangeEnd) => {
-              setAssistantState((draft) => {
-                draft.serialNumberRangeEnd = serialNumberRangeEnd;
-              });
-            }}
-            serialNumbers={assistantState.serialNumbers}
-            setSerialNumbers={(serialNumbers) => {
-              setAssistantState((draft) => {
-                draft.serialNumbers = serialNumbers;
-              });
-            }}
-          />
-        );
-      case StepBulkProgramPart1.StepId:
-        return (
-          <StepBulkProgramPart1
-            onStepBackward={() => stepTo(StepBulkSerialNumberInput.StepId, "backward")}
-            onExport={() => stepTo(StepBulkProgramExport.StepId, "forward")}
-            onProgramNow={() => stepTo(StepBulkProgramPart2.StepId, "forward")}
-            serialNumberMethod={assistantState.serialNumberMethod}
-            serialNumberRangeStart={assistantState.serialNumberRangeStart}
-            serialNumberRangeEnd={assistantState.serialNumberRangeEnd}
-            serialNumbers={assistantState.serialNumbers}
-          />
-        );
-      case StepBulkProgramExport.StepId:
-        return (
-          <StepBulkProgramExport
-            onRestart={onBulkProgramRestart}
-            onStepBackward={() => stepTo(StepBulkProgramPart1.StepId, "backward")}
-            serialNumberMethod={assistantState.serialNumberMethod}
-            serialNumberRangeStart={assistantState.serialNumberRangeStart}
-            serialNumberRangeEnd={assistantState.serialNumberRangeEnd}
-            serialNumbers={assistantState.serialNumbers}
-          />
-        );
-      case StepBulkProgramPart2.StepId:
-        return (
-          <StepBulkProgramPart2
-            onRestart={onBulkProgramRestart}
-            onStepBackward={() => stepTo(StepBulkProgramPart1.StepId, "backward")}
-            serialNumberMethod={assistantState.serialNumberMethod}
-            serialNumberRangeStart={assistantState.serialNumberRangeStart}
-            serialNumberRangeEnd={assistantState.serialNumberRangeEnd}
-            serialNumbers={assistantState.serialNumbers}
-          />
-        );
-      case StepSelectClient.StepId:
-        return (
-          <StepSelectClient
-            onContinue={() => stepTo(StepUploadBatchFile.StepId, "forward")}
-            onStepBackward={() => stepTo(StepSelectMode.StepId, "backward")}
-            selectedClientId={assistantState.selectedClientId}
-            onSelectClient={(clientId) => {
-              setAssistantState((draft) => {
-                draft.selectedClientId = clientId;
-              });
-            }}
-          />
-        );
-      case StepUploadBatchFile.StepId:
-        return (
-          <StepUploadBatchFile
-            onContinue={() => stepTo(StepPreprocessBatchFile.StepId, "forward")}
-            onStepBackward={() => stepTo(StepSelectClient.StepId, "backward")}
-            selectedFile={assistantState.batchFile}
-            onSelectFile={(file) => {
-              setAssistantState((draft) => {
-                draft.batchFile = file;
-              });
-            }}
-          />
-        );
-      case StepPreprocessBatchFile.StepId:
-        return (
-          <StepPreprocessBatchFile
-            onStepBackward={() => stepTo(StepUploadBatchFile.StepId, "backward")}
-            batchFile={assistantState.batchFile}
-          />
-        );
-      default:
-        null;
-    }
-  }, [stepId, assistantState]);
+  }, [stepTo]);
 
   return (
-    <div className="relative h-full w-full">
-      <AnimatePresence custom={stepDirection}>
-        <motion.div
-          key={stepId}
-          className="absolute inset-0 flex flex-col items-center justify-center"
-          custom={stepDirection}
-          variants={{
-            slideIn: (direction: typeof stepDirection) => ({
-              opacity: 0,
-              translateX:
-                direction === "forward" ? "100%" : direction === "backward" ? "-100%" : "0%",
-            }),
-            slideOut: (direction: typeof stepDirection) => ({
-              opacity: 0,
-              translateX: direction === "backward" ? "100%" : "-100%",
-            }),
-          }}
-          initial="slideIn"
-          animate={{
-            opacity: 1,
-            translateX: "0%",
-          }}
-          exit="slideOut"
-          transition={{
-            type: "spring",
-            stiffness: 200,
-            damping: 26,
-          }}
-        >
-          {step}
-        </motion.div>
-      </AnimatePresence>
-    </div>
+    <AssistantProvider
+      context={assistant}
+      renderStep={(context) => {
+        const { stepId, stepTo } = context;
+        switch (stepId) {
+          case StepSelectMode.StepId:
+            return (
+              <StepSelectMode
+                onSelectMode={(mode) => {
+                  setTagAssistantState((draft) => {
+                    draft.mode = mode;
+                  });
+                  stepTo(
+                    mode === "preprogram-single"
+                      ? StepSingleSerialNumberInput.StepId
+                      : mode === "preprogram-batch"
+                        ? StepBulkSerialNumberInput.StepId
+                        : StepSelectClient.StepId,
+                    "forward"
+                  );
+                }}
+              />
+            );
+          case StepSingleSerialNumberInput.StepId:
+            return (
+              <StepSingleSerialNumberInput
+                onStepBackward={() => stepTo(StepSelectMode.StepId, "backward")}
+                onContinue={() => stepTo(StepSingleProgram.StepId, "forward")}
+                serialNumber={tagAssistantState.serialNumberRangeStart}
+                setSerialNumber={(serialNumber) => {
+                  setTagAssistantState((draft) => {
+                    draft.serialNumberRangeStart = serialNumber;
+                  });
+                }}
+                registerToAssetMode={tagAssistantState.mode === "register-to-asset"}
+              />
+            );
+          case StepSingleProgram.StepId:
+            return (
+              <StepSingleProgram
+                serialNumber={tagAssistantState.serialNumberRangeStart ?? ""}
+                onStepBackward={() => stepTo(StepSingleSerialNumberInput.StepId, "backward")}
+                onRestart={() => {
+                  stepTo(StepSingleSerialNumberInput.StepId, "backward");
+                  setTagAssistantState((draft) => {
+                    draft.serialNumberRangeStart = undefined;
+                  });
+                }}
+                onRegisterTag={(tagUrl: string) => {
+                  if (registerToAssetMode) {
+                    stepTo(StepSingleRegisterPreselectedAsset.StepId, "forward");
+                  } else {
+                    stepTo(StepSelectOwnership.StepId, "forward");
+                  }
+                  setTagAssistantState((draft) => {
+                    draft.currentTagUrl = tagUrl;
+                  });
+                }}
+                registerToAssetMode={registerToAssetMode}
+              />
+            );
+          case StepSelectOwnership.StepId:
+            return (
+              <StepSelectOwnership
+                onStepBackward={() => stepTo(StepSingleProgram.StepId, "backward")}
+                onContinue={() => {
+                  isCreatingAsset.current = true;
+                  stepTo(createAssetFirstStepId, "forward");
+                }}
+                clientId={tagAssistantState.clientId}
+                siteId={tagAssistantState.siteId}
+                setClientId={(clientId) => {
+                  setTagAssistantState((draft) => {
+                    draft.clientId = clientId;
+                  });
+                }}
+                setSiteId={(siteId) => {
+                  setTagAssistantState((draft) => {
+                    draft.siteId = siteId;
+                  });
+                }}
+              />
+            );
+          case StepSingleRegisterPreselectedAsset.StepId:
+            return (
+              <StepSingleRegisterPreselectedAsset
+                tagUrl={tagAssistantState.currentTagUrl ?? ""}
+                onStepBackward={() => {
+                  if (isCreatingAsset.current) {
+                    stepTo(createAssetLastStepId, "backward");
+                  } else {
+                    stepTo(StepSingleProgram.StepId, "backward");
+                  }
+                }}
+                onClose={onClose}
+                clientId={tagAssistantState.clientId ?? ""}
+                siteId={tagAssistantState.siteId ?? ""}
+                assetId={tagAssistantState.assetId ?? ""}
+                isRegistrationCompleted={tagAssistantState.registrationCompleted}
+                onRegistrationCompleted={() => {
+                  setTagAssistantState((draft) => {
+                    draft.registrationCompleted = true;
+                  });
+                }}
+                onRestart={
+                  registerToAssetMode
+                    ? undefined
+                    : () => {
+                        resetCreateAssetAssistant();
+                        setTagAssistantState((draft) => {
+                          draft.registrationCompleted = false;
+                          draft.serialNumberRangeStart = undefined;
+                          draft.serialNumberRangeEnd = undefined;
+                          draft.serialNumbers = undefined;
+                          draft.currentTagUrl = undefined;
+                        });
+                        stepTo(StepSingleSerialNumberInput.StepId, "backward");
+                      }
+                }
+              />
+            );
+          case StepBulkSerialNumberInput.StepId:
+            return (
+              <StepBulkSerialNumberInput
+                onStepBackward={() => stepTo(StepSelectMode.StepId, "backward")}
+                onContinue={() => stepTo(StepBulkProgramPart1.StepId, "forward")}
+                serialNumberMethod={tagAssistantState.serialNumberMethod}
+                setSerialNumberMethod={(serialNumberMethod) => {
+                  setTagAssistantState((draft) => {
+                    draft.serialNumberMethod = serialNumberMethod;
+                  });
+                }}
+                serialNumberRangeStart={tagAssistantState.serialNumberRangeStart}
+                setSerialNumberRangeStart={(serialNumberRangeStart) => {
+                  setTagAssistantState((draft) => {
+                    draft.serialNumberRangeStart = serialNumberRangeStart;
+                  });
+                }}
+                serialNumberRangeEnd={tagAssistantState.serialNumberRangeEnd}
+                setSerialNumberRangeEnd={(serialNumberRangeEnd) => {
+                  setTagAssistantState((draft) => {
+                    draft.serialNumberRangeEnd = serialNumberRangeEnd;
+                  });
+                }}
+                serialNumbers={tagAssistantState.serialNumbers}
+                setSerialNumbers={(serialNumbers) => {
+                  setTagAssistantState((draft) => {
+                    draft.serialNumbers = serialNumbers;
+                  });
+                }}
+              />
+            );
+          case StepBulkProgramPart1.StepId:
+            return (
+              <StepBulkProgramPart1
+                onStepBackward={() => stepTo(StepBulkSerialNumberInput.StepId, "backward")}
+                onExport={() => stepTo(StepBulkProgramExport.StepId, "forward")}
+                onProgramNow={() => stepTo(StepBulkProgramPart2.StepId, "forward")}
+                serialNumberMethod={tagAssistantState.serialNumberMethod}
+                serialNumberRangeStart={tagAssistantState.serialNumberRangeStart}
+                serialNumberRangeEnd={tagAssistantState.serialNumberRangeEnd}
+                serialNumbers={tagAssistantState.serialNumbers}
+              />
+            );
+          case StepBulkProgramExport.StepId:
+            return (
+              <StepBulkProgramExport
+                onRestart={onBulkProgramRestart}
+                onStepBackward={() => stepTo(StepBulkProgramPart1.StepId, "backward")}
+                serialNumberMethod={tagAssistantState.serialNumberMethod}
+                serialNumberRangeStart={tagAssistantState.serialNumberRangeStart}
+                serialNumberRangeEnd={tagAssistantState.serialNumberRangeEnd}
+                serialNumbers={tagAssistantState.serialNumbers}
+              />
+            );
+          case StepBulkProgramPart2.StepId:
+            return (
+              <StepBulkProgramPart2
+                onRestart={onBulkProgramRestart}
+                onStepBackward={() => stepTo(StepBulkProgramPart1.StepId, "backward")}
+                serialNumberMethod={tagAssistantState.serialNumberMethod}
+                serialNumberRangeStart={tagAssistantState.serialNumberRangeStart}
+                serialNumberRangeEnd={tagAssistantState.serialNumberRangeEnd}
+                serialNumbers={tagAssistantState.serialNumbers}
+              />
+            );
+          case StepSelectClient.StepId:
+            return (
+              <StepSelectClient
+                onContinue={() => stepTo(StepUploadBatchFile.StepId, "forward")}
+                onStepBackward={() => stepTo(StepSelectMode.StepId, "backward")}
+                selectedClientId={tagAssistantState.selectedClientId}
+                onSelectClient={(clientId) => {
+                  setTagAssistantState((draft) => {
+                    draft.selectedClientId = clientId;
+                  });
+                }}
+              />
+            );
+          case StepUploadBatchFile.StepId:
+            return (
+              <StepUploadBatchFile
+                onContinue={() => stepTo(StepPreprocessBatchFile.StepId, "forward")}
+                onStepBackward={() => stepTo(StepSelectClient.StepId, "backward")}
+                selectedFile={tagAssistantState.batchFile}
+                onSelectFile={(file) => {
+                  setTagAssistantState((draft) => {
+                    draft.batchFile = file;
+                  });
+                }}
+              />
+            );
+          case StepPreprocessBatchFile.StepId:
+            return (
+              <StepPreprocessBatchFile
+                onStepBackward={() => stepTo(StepUploadBatchFile.StepId, "backward")}
+                batchFile={tagAssistantState.batchFile}
+              />
+            );
+          default:
+            return renderCreateAssetAssistantStep(context);
+        }
+      }}
+    />
   );
-};
+}

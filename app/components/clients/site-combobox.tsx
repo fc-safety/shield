@@ -17,6 +17,7 @@ interface SiteComboboxProps {
   showClear?: boolean;
   viewContext?: ViewContext;
   includeSiteGroups?: boolean | "exclusively";
+  nestDrawers?: boolean;
 }
 
 const fuse = new Fuse([] as Site[], { keys: ["name"] });
@@ -32,6 +33,7 @@ export default function SiteCombobox({
   showClear = true,
   viewContext,
   includeSiteGroups = false,
+  nestDrawers,
 }: SiteComboboxProps) {
   const fetcher = useFetcher<DataOrError<ResultsPage<Site>>>();
   const prevClientId = useRef<string | null>(null);
@@ -122,6 +124,7 @@ export default function SiteCombobox({
       showClear={showClear}
       disabled={disabled}
       errorMessage={hasError ? "Something went wrong." : undefined}
+      isNestedDrawer={nestDrawers}
     />
   );
 }

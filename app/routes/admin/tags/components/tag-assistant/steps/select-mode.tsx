@@ -1,14 +1,10 @@
 import { ExternalLink, Factory, SquarePlus } from "lucide-react";
 import { Link } from "react-router";
-import OptionButton from "../components/option-button";
-import Step from "../components/step";
+import OptionButton from "../../../../../../components/assistant/components/option-button";
+import Step from "../../../../../../components/assistant/components/step";
 import type { Mode } from "../types/core";
 
-export default function StepSelectMode({
-  onSelectMode,
-}: {
-  onSelectMode: (mode: Mode) => void;
-}) {
+export default function StepSelectMode({ onSelectMode }: { onSelectMode: (mode: Mode) => void }) {
   return (
     <Step
       title="How do you want to start?"
@@ -27,9 +23,8 @@ export default function StepSelectMode({
         <FileSpreadsheet />
         Register tags from a batch file
       </OptionButton> */}
-      <p className="text-xs text-muted-foreground italic text-center">
-        Tip: Make sure you have your NFC writer setup and ready to go before you
-        start.{" "}
+      <p className="text-muted-foreground text-center text-xs italic">
+        Tip: Make sure you have your NFC writer setup and ready to go before you start.{" "}
         <Link
           to="/docs/writing-nfc-tags"
           className="text-primary underline"
@@ -37,7 +32,7 @@ export default function StepSelectMode({
           rel="noreferrer"
         >
           Learn more here.
-          <ExternalLink className="size-3 inline" />
+          <ExternalLink className="inline size-3" />
         </Link>
       </p>
     </Step>

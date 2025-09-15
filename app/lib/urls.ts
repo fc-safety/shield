@@ -17,7 +17,7 @@ export interface QueryParams {
 }
 
 export const isAbsoluteUrl = (url: string) => {
-  return /^[a-z]?:\/\//.test(url);
+  return /^[a-z]+:\/\//.test(url);
 };
 
 export const stringifyQuery = qs.stringify;
@@ -27,10 +27,15 @@ export const buildPath = <TPath extends string>(
   params?: QueryParams & PathParams<TPath>,
   basePath = ""
 ) => {
+  const urlObj = new URL(path, "https://example.com");
+
   const paramsMap = new Map(Object.entries(params ?? {}));
+  for (const [key, value] of urlObj.searchParams.entries()) {
+    paramsMap.set(key, value);
+  }
 
   const cleanedBasePath = basePath.replace(/\/+$/, "");
-  const cleanedPath = path.replace(/^\/+/, "").replace(/:(\w+)/g, (_, key) => {
+  const cleanedPath = urlObj.pathname.replace(/^\/+/, "").replace(/:(\w+)/g, (_, key) => {
     const value = paramsMap.get(key);
     paramsMap.delete(key);
     return String(value) ?? key;

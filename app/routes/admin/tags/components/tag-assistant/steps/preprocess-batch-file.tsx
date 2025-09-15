@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
-import Step from "../components/step";
+import Step from "../../../../../../components/assistant/components/step";
 import { extractCsvHeaders } from "../utils/inputs";
 
 export default function StepPreprocessBatchFile({
@@ -39,9 +39,7 @@ export default function StepPreprocessBatchFile({
     >
       <div>
         <Suspense fallback={<Skeleton className="h-[200px] w-full" />}>
-          <ColumnMappingTable
-            rawCsvHeadersPromise={extractCsvHeaders(batchFile)}
-          />
+          <ColumnMappingTable rawCsvHeadersPromise={extractCsvHeaders(batchFile)} />
         </Suspense>
       </div>
     </Step>
@@ -80,7 +78,7 @@ const ColumnMappingTable = ({
           {requiredProperties.map((property) => (
             <TableRow key={property.propertyKey}>
               <TableCell>
-                <CheckCircle2 className="size-4 text-primary" />
+                <CheckCircle2 className="text-primary size-4" />
               </TableCell>
               <TableCell>{property.label}</TableCell>
               <TableCell>

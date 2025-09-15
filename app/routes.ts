@@ -27,9 +27,6 @@ export default [
     // User routes
     route("account", "./routes/inspect/account.tsx"),
 
-    // Support routes
-    // TODO
-
     route("*", "./routes/inspect/404.tsx"),
   ]),
 
@@ -57,6 +54,7 @@ export default [
     route("proxy/*", "./routes/api/proxy.ts"),
     route("image-upload-url", "./routes/api/image-upload-url.ts"),
     route("image-proxy-url", "./routes/api/image-proxy-url.ts"),
+    route("dummy", "./routes/api/dummy.ts"),
   ]),
 
   // App Routes

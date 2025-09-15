@@ -11,6 +11,7 @@ interface EditAssetButtonProps extends ComponentProps<typeof AssetDetailsForm> {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   className?: string;
+  nestDrawers?: boolean;
 }
 
 export default function EditAssetButton({
@@ -19,6 +20,7 @@ export default function EditAssetButton({
   open: openProp,
   onOpenChange,
   className,
+  nestDrawers,
   ...props
 }: EditAssetButtonProps) {
   const [open, setOpen] = useState(false);
@@ -41,12 +43,12 @@ export default function EditAssetButton({
           </Button>
         )
       }
+      isNestedDrawer={nestDrawers}
     >
       <AssetDetailsForm
-        onSubmitted={() =>
-          onOpenChange ? onOpenChange(false) : setOpen(false)
-        }
+        onSubmitted={() => (onOpenChange ? onOpenChange(false) : setOpen(false))}
         asset={asset}
+        nestDrawers
         {...props}
       />
     </ResponsiveDialog>

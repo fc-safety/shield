@@ -40,12 +40,12 @@ export default function ProductCard({
             custom={!!product.client}
             navigateTo={navigateTo}
           />
-          <div className="grow flex flex-col">
+          <div className="flex grow flex-col">
             <CardHeader className="p-2 sm:p-4">
-              <CardTitle className="flex justify-between items-center">
+              <CardTitle className="flex items-center justify-between">
                 <div className="grid gap-1">
                   {displayManufacturer && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-muted-foreground text-xs">
                       {product.manufacturer.name}
                     </span>
                   )}
@@ -57,7 +57,7 @@ export default function ProductCard({
                     <span>{product.name}</span>
                   )}
                   {product.sku && (
-                    <span className="text-xs font-light text-muted-foreground">
+                    <span className="text-muted-foreground text-xs font-light">
                       SKU: {product.sku}
                     </span>
                   )}
@@ -65,16 +65,16 @@ export default function ProductCard({
                 {renderEditButton?.()}
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col gap-2 justify-between p-2 sm:p-4 pt-0 sm:pt-0">
-              <p className="text-xs text-muted-foreground inline-flex flex-col justify-between gap-1">
+            <CardContent className="flex flex-1 flex-col justify-between gap-2 p-2 pt-0 sm:p-4 sm:pt-0">
+              <p className="text-muted-foreground inline-flex flex-col justify-between gap-1 text-xs">
                 {product.description ?? <>&mdash;</>}
                 {product.client && (
-                  <span className="mt-2 text-xs text-muted-foreground">
+                  <span className="text-muted-foreground mt-2 text-xs">
                     Owner: {product.client.name}
                   </span>
                 )}
               </p>
-              <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-2">
                 {displayCategory &&
                   (product.ansiCategory ? (
                     <AnsiCategoryDisplay ansiCategory={product.ansiCategory} />
@@ -87,12 +87,8 @@ export default function ProductCard({
                           className="text-xl"
                         />
                       )}
-                      <Badge
-                        className={cn("text-sm uppercase w-max")}
-                        variant="secondary"
-                      >
-                        {product.productCategory.shortName ??
-                          product.productCategory.name}
+                      <Badge className={cn("w-max text-sm uppercase")} variant="secondary">
+                        {product.productCategory.shortName ?? product.productCategory.name}
                       </Badge>
                     </>
                   ))}
@@ -133,8 +129,7 @@ export function ProductImage({
     ({
       children,
       ...props
-    }: Omit<React.ComponentProps<typeof Link>, "to"> &
-      React.ComponentProps<"div">) => {
+    }: Omit<React.ComponentProps<typeof Link>, "to"> & React.ComponentProps<"div">) => {
       return navigateTo ? (
         <Link to={navigateTo} {...props}>
           {children}
@@ -156,7 +151,7 @@ export function ProductImage({
   return (
     <Container
       className={cn(
-        "relative rounded-l-xl w-32 sm:w-40 min-h-36 shrink-0 overflow-hidden border-r",
+        "relative min-h-36 w-32 shrink-0 overflow-hidden rounded-l-xl border-r sm:w-40",
         className
       )}
     >
@@ -164,7 +159,7 @@ export function ProductImage({
         <div
           className={cn(
             "absolute top-0 left-0 w-full",
-            "p-0.5 text-xs text-center",
+            "p-0.5 text-center text-xs",
             "bg-important text-important-foreground"
           )}
         >
@@ -175,11 +170,9 @@ export function ProductImage({
         <img
           src={imageUrl}
           alt={name}
-          className="h-full w-full object-contain bg-white"
+          className="h-full w-full bg-white object-contain"
           loading="lazy"
-          onError={(e) =>
-            setError(new Error("Failed to load image", { cause: e }))
-          }
+          onError={(e) => setError(new Error("Failed to load image", { cause: e }))}
         />
       ) : (
         <DefaultProductImage />
@@ -190,7 +183,7 @@ export function ProductImage({
 
 function DefaultProductImage() {
   return (
-    <div className="h-full w-full flex flex-col items-center justify-center bg-muted text-muted-foreground gap-2">
+    <div className="bg-muted text-muted-foreground flex h-full w-full flex-col items-center justify-center gap-2">
       <ImageOff className="size-12" />
       <span className="text-xs">No image</span>
     </div>

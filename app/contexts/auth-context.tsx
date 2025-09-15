@@ -79,14 +79,10 @@ export const AuthProvider = ({
     });
 
     return pendingRefresh;
-  }, [fetcher]);
+  }, [fetcher.submit]);
 
   useEffect(() => {
-    if (
-      resolveAuthRefresh.current &&
-      fetcher.state === "idle" &&
-      fetcher.data
-    ) {
+    if (resolveAuthRefresh.current && fetcher.state === "idle" && fetcher.data) {
       resolveAuthRefresh.current(fetcher.data);
       resolveAuthRefresh.current = null;
       // Clear the pending refresh after it's complete
@@ -166,9 +162,7 @@ const CHECK_ACCESS_TOKEN_INTERVAL_SECONDS = 30;
 
 const getRefreshAuthAction = () =>
   typeof document !== "undefined"
-    ? `/action/refresh-auth?returnTo=${encodeURIComponent(
-        window.location.href
-      )}`
+    ? `/action/refresh-auth?returnTo=${encodeURIComponent(window.location.href)}`
     : "/action/refresh-auth";
 
 const getDocument = () => {

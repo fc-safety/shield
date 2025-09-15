@@ -8,19 +8,20 @@ interface Props extends PropsWithChildren {
     trigger?: string;
     content?: string;
   };
+  inline?: boolean;
 }
 
-export default function HelpPopover({ children, classNames }: Props) {
+export default function HelpPopover({ children, classNames, inline }: Props) {
   return (
     <HoverCard>
-      <HoverCardTrigger>
+      <HoverCardTrigger className={cn(inline && "inline-block")}>
         <CircleHelp className={cn("size-3.5", classNames?.trigger)} />
       </HoverCardTrigger>
       <HoverCardContent
         className={cn(
-          "w-72 rounded-lg p-4 bg-background text-foreground",
-          "border border-border shadow-md",
-          "text-xs whitespace-normal text-start",
+          "bg-background text-foreground w-72 rounded-lg p-4",
+          "border-border border shadow-md",
+          "text-start text-xs whitespace-normal",
           classNames?.content
         )}
       >
