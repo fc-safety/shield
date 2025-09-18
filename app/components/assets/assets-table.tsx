@@ -6,7 +6,7 @@ import type { ViewContext } from "~/.server/api-utils";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
 import ConfirmationDialog from "~/components/confirmation-dialog";
-import { DataTable } from "~/components/data-table/data-table";
+import { DataTable, type DataTableProps } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
 import { Button } from "~/components/ui/button";
@@ -36,19 +36,30 @@ export default function AssetsTable({
   clientId,
   viewContext,
   toDetailsRoute,
+  initialState,
+  onSortingChange,
+  onColumnFiltersChange,
+  onColumnVisibilityChange,
+  onColumnOrderChange,
+  onPaginationChange,
 }: {
   assets: Asset[];
   clientId?: string;
   viewContext?: ViewContext;
   toDetailsRoute?: (asset: Asset) => string;
-}) {
+} & Pick<
+  DataTableProps<Asset, any>,
+  | "initialState"
+  | "onSortingChange"
+  | "onColumnFiltersChange"
+  | "onColumnVisibilityChange"
+  | "onColumnOrderChange"
+  | "onPaginationChange"
+>) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "assets");
   const canDelete = can(user, "delete", "assets");
   const canEdit = can(user, "update", "assets");
-
-  const canCreateTags = can(user, "create", "tags");
-  const canUpdateTags = can(user, "update", "tags");
 
   const [searchParams] = useSearchParams();
 
@@ -60,7 +71,7 @@ export default function AssetsTable({
   const { submitJson: submitDelete } = useModalFetcher();
 
   const columnFilters = useMemo(() => {
-    const filters: { id: string; value: string }[] = [];
+    const filters: { id: string; value: unknown }[] = initialState?.columnFilters ?? [];
     if (searchParams.has("inspectionStatus")) {
       filters.push({
         id: "inspectionStatus",
@@ -80,7 +91,7 @@ export default function AssetsTable({
       });
     }
     return filters;
-  }, [searchParams]);
+  }, [searchParams, initialState?.columnFilters]);
 
   const columns = useMemo(
     (): ColumnDef<Asset>[] => [
@@ -287,6 +298,7 @@ export default function AssetsTable({
         data={assets}
         searchPlaceholder="Search assets..."
         initialState={{
+          ...initialState,
           columnFilters,
           columnVisibility: {
             active: true,
@@ -298,8 +310,14 @@ export default function AssetsTable({
             location: true,
             placement: false,
             site: hasMultiSiteVisibility(user),
+            ...initialState?.columnVisibility,
           },
         }}
+        onSortingChange={onSortingChange}
+        onColumnFiltersChange={onColumnFiltersChange}
+        onColumnVisibilityChange={onColumnVisibilityChange}
+        onColumnOrderChange={onColumnOrderChange}
+        onPaginationChange={onPaginationChange}
         filters={({ table }) => [
           {
             column: table.getColumn("category"),

@@ -1,4 +1,4 @@
-import { DataTable } from "@/components/data-table/data-table";
+import { DataTable, type DataTableProps } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +41,16 @@ import SubmittingSelect from "../submitting-select";
 import SubmittingTextarea from "../submitting-textarea";
 import QuestionResponseTypeDisplay from "./question-response-type-display";
 
-interface AssetQuestionsDataTableProps {
+interface AssetQuestionsDataTableProps
+  extends Pick<
+    DataTableProps<AssetQuestion, any>,
+    | "initialState"
+    | "onSortingChange"
+    | "onColumnFiltersChange"
+    | "onColumnVisibilityChange"
+    | "onColumnOrderChange"
+    | "onPaginationChange"
+  > {
   questions: AssetQuestion[];
   readOnly?: boolean;
   viewContext?: ViewContext;
@@ -51,6 +60,12 @@ export default function AssetQuestionsDataTable({
   questions,
   readOnly = false,
   viewContext,
+  initialState = {},
+  onSortingChange,
+  onColumnFiltersChange,
+  onColumnVisibilityChange,
+  onColumnOrderChange,
+  onPaginationChange,
 }: AssetQuestionsDataTableProps) {
   const editQuestion = useOpenData<AssetQuestion>();
   const { labels, prefetchLabels, isLoading, getLabel } = useConditionLabels();
@@ -502,10 +517,17 @@ export default function AssetQuestionsDataTable({
         columns={columns}
         searchPlaceholder="Search questions..."
         initialState={{
+          ...initialState,
           columnVisibility: {
             actions: !readOnly,
+            ...initialState.columnVisibility,
           },
         }}
+        onSortingChange={onSortingChange}
+        onColumnFiltersChange={onColumnFiltersChange}
+        onColumnVisibilityChange={onColumnVisibilityChange}
+        onColumnOrderChange={onColumnOrderChange}
+        onPaginationChange={onPaginationChange}
         getRowId={(row) => row.id}
         actions={readOnly ? [] : [<EditAssetQuestionButton key="add" viewContext={viewContext} />]}
         filters={({ table }) => [

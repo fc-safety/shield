@@ -4,8 +4,9 @@ import { requireUserSession } from "~/.server/user-sesssion";
 import AssetQuestionsDataTable from "~/components/products/asset-questions-data-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
+import { getQueryPersistedState, getQueryStatePersistor } from "~/lib/urls";
 import { can, isGlobalAdmin, isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
-import { buildTitleFromBreadcrumb } from "~/lib/utils";
+import { buildTitleFromBreadcrumb, getSearchParams } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const handle = {
@@ -21,6 +22,8 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
   const isGlobalAdmin = isGlobalAdminFn(user);
+
+  const searchParams = getSearchParams(request);
 
   // Check if user can manage asset questions
   if (!can(user, "read", "asset-questions")) {
@@ -43,6 +46,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return {
     questions: allQuestions,
+    sorting: getQueryPersistedState("sorting", searchParams),
+    columnFilters: getQueryPersistedState("columnFilters", searchParams),
+    pagination: getQueryPersistedState("pagination", searchParams),
   };
 };
 
@@ -69,6 +75,14 @@ export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
           questions={loaderData.questions}
           readOnly={!canManageQuestions}
           viewContext={viewContext}
+          initialState={{
+            sorting: loaderData.sorting,
+            columnFilters: loaderData.columnFilters,
+            pagination: loaderData.pagination,
+          }}
+          onSortingChange={getQueryStatePersistor("sorting")}
+          onColumnFiltersChange={getQueryStatePersistor("columnFilters")}
+          onPaginationChange={getQueryStatePersistor("pagination")}
         />
       </CardContent>
     </Card>
