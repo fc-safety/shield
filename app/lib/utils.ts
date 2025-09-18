@@ -257,8 +257,16 @@ export function formatDateAsTimestamp(rawDate: string, atEndOfDay = false) {
   return atEndOfDay ? endOfDay(parsedDate).toISOString() : parsedDate.toISOString();
 }
 
-export function nullValuesToUndefined<T extends object>(obj: T): T {
+type NullToUndefined<T> = {
+  [K in keyof T]: T[K] extends null
+    ? undefined
+    : T[K] extends NonNullable<T[K]>
+      ? T[K]
+      : NonNullable<T[K]> | undefined;
+};
+
+export function nullValuesToUndefined<T extends object>(obj: T): NullToUndefined<T> {
   return Object.fromEntries(
     Object.entries(obj).map(([key, value]) => [key, value === null ? undefined : value])
-  ) as T;
+  ) as NullToUndefined<T>;
 }
