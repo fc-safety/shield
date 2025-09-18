@@ -59,9 +59,17 @@ export default function FormSidepanel({ minWidth = "768px" }: { minWidth?: strin
         <ScrollArea
           classNames={{
             root: "h-[calc(100vh-5rem)]",
+            viewport: "flex flex-col",
           }}
         >
-          <div className="w-full px-4">{sidePanel}</div>
+          <div className="w-full flex-1 px-4">{sidePanel}</div>
+          <Button
+            onClick={() => closeSidepanel()}
+            variant="secondary"
+            className="mx-4 mt-8 w-[calc(100%-2rem)]"
+          >
+            Done
+          </Button>
         </ScrollArea>
       </DrawerContent>
     </Drawer>
