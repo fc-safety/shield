@@ -10,7 +10,7 @@ import {
   type OnChangeFn,
   type SortingState,
 } from "@tanstack/react-table";
-import { format, subDays } from "date-fns";
+import { endOfDay, format, startOfDay, subDays } from "date-fns";
 import {
   Check,
   ChevronsUpDown,
@@ -72,8 +72,8 @@ export default function ProductRequestsOverview({ refreshKey }: { refreshKey: nu
     return (
       appState.dash_pr_query ?? {
         createdOn: {
-          gte: subDays(new Date(), 30).toISOString(),
-          lte: new Date().toISOString(),
+          gte: startOfDay(subDays(new Date(), 30)).toISOString(),
+          lte: endOfDay(new Date()).toISOString(),
         },
       }
     );
