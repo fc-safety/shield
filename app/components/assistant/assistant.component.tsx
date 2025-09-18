@@ -80,14 +80,23 @@ export const useAssistantContext = () => {
 export default function AssistantProvider({
   context,
   renderStep,
+  onStepAnimationComplete,
+  onStepAnimationStart,
 }: {
   context: AssistantStateContext;
   renderStep: (context: AssistantStateContext) => React.ReactNode;
+  onStepAnimationComplete?: () => void;
+  onStepAnimationStart?: () => void;
 }) {
   return (
     <AssistantStateContext.Provider value={context}>
       <div className="flex h-full w-full flex-col items-center">
-        <CurrentStep renderStep={renderStep} context={context} />
+        <CurrentStep
+          renderStep={renderStep}
+          context={context}
+          onAnimationComplete={onStepAnimationComplete}
+          onAnimationStart={onStepAnimationStart}
+        />
       </div>
     </AssistantStateContext.Provider>
   );
@@ -96,9 +105,13 @@ export default function AssistantProvider({
 function CurrentStep({
   renderStep,
   context,
+  onAnimationComplete,
+  onAnimationStart,
 }: {
   renderStep: (context: AssistantStateContext) => React.ReactNode;
   context: AssistantStateContext;
+  onAnimationComplete?: () => void;
+  onAnimationStart?: () => void;
 }) {
   const { stepId, stepDirection } = context;
 
@@ -110,6 +123,8 @@ function CurrentStep({
     <div className="relative h-full w-full">
       <AnimatePresence custom={stepDirection}>
         <motion.div
+          onAnimationComplete={onAnimationComplete}
+          onAnimationStart={onAnimationStart}
           key={stepId}
           className="absolute inset-0 flex flex-col items-center justify-center"
           custom={stepDirection}

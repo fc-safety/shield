@@ -79,7 +79,7 @@ export function NewSupplyRequestButton({ ...props }: ComponentProps<typeof Produ
           New Supply Request
         </Button>
       }
-      title="Supply Request"
+      title="Building Supply Request"
       description="Please select which supplies and the quantities you would like to order."
       dialogClassName="sm:max-w-3xl"
       disableDisplayTable
@@ -244,10 +244,10 @@ function ProductRequestForm({
   return (
     <>
       <Form {...form}>
-        <form className="w-full space-y-4 sm:mt-4" onSubmit={form.handleSubmit(handleSubmit)}>
+        <form className="mt-2 w-full space-y-4 md:mt-4" onSubmit={form.handleSubmit(handleSubmit)}>
           <div className="w-full">
-            <h3 className="flex items-center gap-x-2 text-base font-medium">
-              <ListPlus className="size-5" />
+            <h3 className="flex items-center gap-x-2 text-sm font-medium md:text-base">
+              <ListPlus className="size-4 md:size-5" />
               Available Supplies
             </h3>
             <ConsumableSelectTabs
@@ -256,7 +256,7 @@ function ProductRequestForm({
               suppliesLoading={suppliesLoading}
               productRequestItems={productRequestItems}
               optimizedImageUrlsMap={optimizedImageUrlsMap}
-              append={append}
+              append={(item) => append(item, { shouldFocus: false })}
               onPreviewImage={previewImage.openData}
             />
             {ansiCategories && ansiCategories.length === 0 && (
@@ -267,12 +267,12 @@ function ProductRequestForm({
           </div>
 
           <div>
-            <h3 className="mb-2 flex items-center gap-x-2 text-base font-medium">
-              <ListOrdered className="size-5" />
+            <h3 className="mb-2 flex items-center gap-x-2 text-sm font-medium md:text-base">
+              <ListOrdered className="size-4 md:size-5" />
               Order Items
             </h3>
             <ScrollArea
-              className="border-border relative h-[25dvh] border-t border-b"
+              className="border-border [>div]:flex-1 relative flex max-h-[25dvh] flex-col border-t border-b"
               onIsOverflowingY={setOrderItemsIsOverflowingY}
               onIsScrollMaxedY={setOrderItemsIsScrollMaxedY}
             >
@@ -297,7 +297,6 @@ function ProductRequestForm({
                               </Button>
                               <div className="flex items-center">
                                 <Input
-                                  autoFocus={false}
                                   type="text"
                                   {...field}
                                   className="focus-visible:border-border h-8 w-10 rounded-none rounded-l-md border-0 border-t-1 border-b-1 border-l-1 px-1 text-center"
@@ -406,10 +405,10 @@ function ConsumableSelectTabs({
   }, [productRequestItems]);
 
   const showTabs = ansiCategories && ansiCategories.length > 1;
-  const [selectedTab, setSelectedTab] = useState(ansiCategories?.at(0)?.id);
+  const [selectedTab, setSelectedTab] = useState(ansiCategories?.at(0)?.id ?? "");
   useEffect(() => {
-    if (selectedTab) return;
-    setSelectedTab(ansiCategories?.at(0)?.id);
+    if (selectedTab || !ansiCategories) return;
+    setSelectedTab(ansiCategories.at(0)?.id ?? "");
   }, [ansiCategories]);
 
   return (
@@ -420,8 +419,8 @@ function ConsumableSelectTabs({
         </div>
       )}
       {showTabs && (
-        <div className="text-muted-foreground w-full pb-1 text-start text-xs">
-          Select a First Aid color to view supplies.
+        <div className="text-muted-foreground w-full pt-1 text-start text-xs">
+          Select a category to view supplies.
         </div>
       )}
       <Tabs
@@ -446,9 +445,9 @@ function ConsumableSelectTabs({
                   "--tab-inactive-color": category.color ?? "hsl(var(--muted-foreground))",
                 } as React.CSSProperties
               }
-              className="flex shrink-0 grow flex-col items-center justify-center bg-[var(--tab-active-bg)] py-1.5 font-bold text-[var(--tab-active-color)] data-[state=active]:scale-105 data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)]"
+              className="flex shrink-0 grow flex-col items-center justify-center bg-[var(--tab-active-bg)] py-1 font-bold text-[var(--tab-active-color)] data-[state=active]:scale-105 data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] sm:py-1.5"
             >
-              {category.icon && <Icon iconId={category.icon} className="text-lg" />}
+              {category.icon && <Icon iconId={category.icon} className="text-base sm:text-lg" />}
               <div className="text-2xs w-min whitespace-nowrap">{category.name}</div>
             </TabsTrigger>
           ))}
@@ -519,7 +518,7 @@ function AvailableConsumables({
       }
       onIsOverflowingY={setAvailableConsumablesIsOverflowingY}
       onIsScrollMaxedY={setAvailableConsumablesIsScrollMaxedY}
-      className={cn("relative h-[25dvh] min-h-54 border-t-2 border-b-2", {
+      className={cn("[>div]:flex-1 relative flex max-h-[25dvh] flex-col border-t-2 border-b-2", {
         "border-t-[var(--ansi-color)]": ansiCategory.color,
         "border-b-[var(--ansi-color)]": ansiCategory.color,
       })}

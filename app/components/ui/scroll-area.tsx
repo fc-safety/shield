@@ -43,17 +43,12 @@ const ScrollArea = React.forwardRef<
     ref
   ) => {
     const viewportRef = useRef<HTMLDivElement>(null);
-    const {
-      isOverflowingX,
-      isOverflowingY,
-      isScrollMaxedX,
-      isScrollMaxedY,
-      recalculate,
-    } = useIsOverflowing({
-      ref: viewportRef,
-      scrollbarOffsetX: 8,
-      scrollbarOffsetY: 8,
-    });
+    const { isOverflowingX, isOverflowingY, isScrollMaxedX, isScrollMaxedY, recalculate } =
+      useIsOverflowing({
+        ref: viewportRef,
+        scrollbarOffsetX: 8,
+        scrollbarOffsetY: 8,
+      });
 
     useEffect(() => {
       recalculate();
@@ -78,11 +73,7 @@ const ScrollArea = React.forwardRef<
     return (
       <ScrollAreaPrimitive.Root
         ref={ref}
-        className={cn(
-          "relative overflow-hidden grid",
-          className,
-          classNames?.root
-        )}
+        className={cn("relative grid overflow-hidden", className, classNames?.root)}
         {...props}
       >
         <ScrollAreaPrimitive.Viewport
@@ -112,16 +103,14 @@ const ScrollBar = React.forwardRef<
     ref={ref}
     orientation={orientation}
     className={cn(
-      "flex touch-none select-none transition-colors",
-      orientation === "vertical" &&
-        "h-full w-2.5 border-l border-l-transparent p-[1px]",
-      orientation === "horizontal" &&
-        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
+      "flex touch-none transition-colors select-none",
+      orientation === "vertical" && "h-full w-2.5 border-l border-l-transparent p-[1px]",
+      orientation === "horizontal" && "h-2.5 flex-col border-t border-t-transparent p-[1px]",
       className
     )}
     {...props}
   >
-    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+    <ScrollAreaPrimitive.ScrollAreaThumb className="bg-border relative flex-1 rounded-full" />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>
 ));
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;

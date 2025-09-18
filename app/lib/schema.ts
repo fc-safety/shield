@@ -405,7 +405,10 @@ export const ruleOperatorsSchema = z
     beforeDaysFuture: z.coerce.number<number>(),
     afterDaysFuture: z.coerce.number<number>(),
   })
-  .partial();
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    error: "At least one operator is required",
+  });
 
 const baseCreateAssetAlertCriterionRuleSchema = z.object({
   value: z.union([z.string(), ruleOperatorsSchema]).optional(),
@@ -419,10 +422,14 @@ export type CreateAssetAlertCriterionRule = z.infer<
 };
 
 export const createAssetAlertCriterionRuleSchema: z.ZodType<CreateAssetAlertCriterionRule> =
-  baseCreateAssetAlertCriterionRuleSchema.extend({
-    AND: z.array(baseCreateAssetAlertCriterionRuleSchema).optional(),
-    OR: z.array(baseCreateAssetAlertCriterionRuleSchema).optional(),
-  });
+  baseCreateAssetAlertCriterionRuleSchema
+    .extend({
+      AND: z.array(baseCreateAssetAlertCriterionRuleSchema).optional(),
+      OR: z.array(baseCreateAssetAlertCriterionRuleSchema).optional(),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      error: "At least one rule is required",
+    });
 
 export const createAssetAlertCriterionSchema = z.object({
   rule: createAssetAlertCriterionRuleSchema,
