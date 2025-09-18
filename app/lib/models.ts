@@ -323,6 +323,8 @@ export interface AssetQuestion extends BaseModel {
   files?: File[];
   regulatoryCodes?: RegulatoryCode[];
   setAssetMetadataConfig?: SetAssetMetadataConfig | null;
+  client?: Client | null;
+  clientId: string | null;
   _count?: {
     assetAlertCriteria: number;
     conditions: number;

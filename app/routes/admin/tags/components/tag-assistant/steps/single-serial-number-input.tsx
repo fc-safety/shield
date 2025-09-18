@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Input } from "~/components/ui/input";
 import Step from "../../../../../../components/assistant/components/step";
 import { coerceNumeric } from "../utils/inputs";
@@ -8,16 +9,28 @@ export default function StepSingleSerialNumberInput({
   serialNumber,
   setSerialNumber,
   registerToAssetMode,
+  isStepAnimating = false,
 }: {
   onStepBackward: () => void;
   onContinue: () => void;
   serialNumber: string | undefined;
   setSerialNumber: (serialNumber: string) => void;
   registerToAssetMode: boolean;
+  isStepAnimating?: boolean;
 }) {
   const title = registerToAssetMode
     ? "First, what's the serial number on the asset's tag?"
     : "What's the serial number of the tag you want to program?";
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const prevIsStepAnimating = useRef(isStepAnimating);
+
+  useEffect(() => {
+    if (!isStepAnimating && prevIsStepAnimating.current) {
+      inputRef.current?.focus();
+    }
+    prevIsStepAnimating.current = isStepAnimating;
+  }, [isStepAnimating]);
 
   return (
     <Step
@@ -29,7 +42,7 @@ export default function StepSingleSerialNumberInput({
     >
       <div>
         <Input
-          autoFocus
+          ref={inputRef}
           inputMode="numeric"
           value={serialNumber ?? ""}
           onChange={(e) => setSerialNumber(coerceNumeric(e.target.value))}

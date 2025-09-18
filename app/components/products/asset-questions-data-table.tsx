@@ -12,10 +12,11 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { isAfter } from "date-fns";
 import { Copy, MoreHorizontal, Pencil, Trash } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type z from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import ConditionPill from "~/components/assets/condition-pill";
+import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -30,6 +31,7 @@ import type {
 import { AssetQuestionTypes } from "~/lib/models";
 import type { createAssetQuestionSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
+import { isGlobalAdmin } from "~/lib/users";
 import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
 import EditAssetQuestionButton from "../assets/asset-question-details-form/edit-asset-question-button";
@@ -53,11 +55,22 @@ export default function AssetQuestionsDataTable({
   const editQuestion = useOpenData<AssetQuestion>();
   const { labels, prefetchLabels, isLoading, getLabel } = useConditionLabels();
   const { fetchOrThrow } = useAuthenticatedFetch();
+
+  const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
+
   const { submitJson: submitDelete } = useModalFetcher();
   const { submitJson: submitDuplicateQuestion } = useModalFetcher();
 
   const [deleteAction, setDeleteAction] = useConfirmAction();
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
+
+  const getIsOwnerOrGlobalAdmin = useCallback(
+    (question: AssetQuestion) => {
+      return userIsGlobalAdmin || question.client?.externalId === user.clientId;
+    },
+    [user]
+  );
 
   // Prefetch all labels when questions change
   useEffect(() => {
@@ -126,7 +139,7 @@ export default function AssetQuestionsDataTable({
         cell: ({ getValue, row }) => {
           const question = row.original;
           const isActive = getValue() as boolean;
-          return readOnly ? (
+          return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
             <ActiveIndicator2 active={isActive} />
           ) : (
             <ActiveToggle
@@ -151,7 +164,7 @@ export default function AssetQuestionsDataTable({
               .replace(/\b\w/g, (l) => l.toUpperCase()),
           }));
 
-          return readOnly ? (
+          return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
             <span className="capitalize">{currentType.replace(/_/g, " ").toLowerCase()}</span>
           ) : (
             <SubmittingSelect
@@ -171,7 +184,7 @@ export default function AssetQuestionsDataTable({
         cell: ({ getValue, row }) => {
           const question = row.original;
           const isRequired = getValue() as boolean;
-          return readOnly ? (
+          return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
             <span className="text-muted-foreground text-xs">{isRequired ? "Yes" : "No"}</span>
           ) : (
             <SubmittingCheckbox
@@ -191,7 +204,7 @@ export default function AssetQuestionsDataTable({
           const question = row.original;
           const prompt = getValue() as string;
 
-          return readOnly ? (
+          return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
             <span className="line-clamp-2">{prompt}</span>
           ) : (
             <SubmittingTextarea
@@ -337,6 +350,7 @@ export default function AssetQuestionsDataTable({
         id: "actions",
         cell: ({ row }) => {
           const question = row.original;
+          const canManage = !readOnly && getIsOwnerOrGlobalAdmin(question);
 
           return (
             <DropdownMenu>
@@ -347,11 +361,15 @@ export default function AssetQuestionsDataTable({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={() => editQuestion.openData(question)}>
+                <DropdownMenuItem
+                  disabled={!canManage}
+                  onSelect={() => editQuestion.openData(question)}
+                >
                   <Pencil />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem
+                  disabled={!canManage}
                   onSelect={() => {
                     const payload = {
                       active: false,
@@ -435,6 +453,7 @@ export default function AssetQuestionsDataTable({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  disabled={!canManage}
                   onSelect={() =>
                     setDeleteAction((draft) => {
                       draft.open = true;
@@ -472,6 +491,7 @@ export default function AssetQuestionsDataTable({
       categoryFilterOptions,
       editingPromptId,
       setEditingPromptId,
+      getIsOwnerOrGlobalAdmin,
     ]
   );
 

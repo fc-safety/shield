@@ -38,11 +38,14 @@ export default function TagAssistantButton({ trigger, open: openProp, onOpenChan
           </Button>
         )
       }
-      render={({ drawerContentHeight }) => (
-        <div className="overflow-hidden" style={{ height: drawerContentHeight ?? "32rem" }}>
-          <TagAssistant onClose={() => setOpen(false)} />
-        </div>
-      )}
+      render={({ drawerContentHeight }) => {
+        console.log("drawerContentHeight", drawerContentHeight);
+        return (
+          <div className="overflow-hidden" style={{ height: drawerContentHeight ?? "32rem" }}>
+            <TagAssistant onClose={() => setOpen(false)} />
+          </div>
+        );
+      }}
     />
   );
 }

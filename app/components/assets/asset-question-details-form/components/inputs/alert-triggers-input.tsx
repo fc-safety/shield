@@ -6,7 +6,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
-import { cn } from "~/lib/utils";
+import { cn, isNil } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
 import { alertTriggerVariants } from "../../utils/styles";
 import {
@@ -19,7 +19,7 @@ type TForm = Pick<z.infer<typeof updateAssetQuestionSchema>, "assetAlertCriteria
 export default function AlertTriggersInput() {
   const { setData, openSidepanel } = useAssetQuestionDetailFormContext();
 
-  const { watch, setValue, control } = useFormContext<TForm>();
+  const { watch, setValue, control, getFieldState } = useFormContext<TForm>();
 
   const createAlertTriggers = watch("assetAlertCriteria.createMany.data");
   const updateAlertTriggers = watch("assetAlertCriteria.updateMany");
@@ -54,7 +54,7 @@ export default function AlertTriggersInput() {
           autoResolve: false,
         },
       ],
-      { shouldDirty: true }
+      { shouldDirty: true, shouldValidate: true }
     );
     setData((d) => {
       d.idx = (createAlertTriggers ?? []).length;
@@ -145,9 +145,9 @@ function AlertTrigger({
   if (!alertTriggerData) return null;
 
   const [operator, operand] = useMemo(() => {
-    if (!alertTriggerData.rule?.value) return ["equals", "unknown"];
+    if (isNil(alertTriggerData.rule?.value)) return ["equals", "unknown"];
     if (typeof alertTriggerData.rule.value === "string")
-      return ["equals", alertTriggerData.rule.value];
+      return ["equals", alertTriggerData.rule.value || `""`];
     const ops = Object.entries(alertTriggerData.rule.value).at(0);
     if (!ops) return ["equals", "unknown"];
     return [ops[0], ops[1] || '""'];

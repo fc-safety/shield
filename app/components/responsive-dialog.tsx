@@ -20,8 +20,8 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
-import { useCallback, useMemo, useRef, useState, type ComponentProps } from "react";
-import { useMediaQuery } from "usehooks-ts";
+import { useCallback, useMemo, useState, type ComponentProps } from "react";
+import { useMediaQuery, useResizeObserver } from "usehooks-ts";
 import { ScrollArea } from "./ui/scroll-area";
 
 interface ResponsiveDialogProps
@@ -77,10 +77,17 @@ export function ResponsiveDialog({
   const open = openProp ?? internalOpen;
   const onOpenChange = onOpenChangeProp ?? setInternalOpen;
 
-  const drawerContentRef = useRef<HTMLDivElement>(null);
+  const [drawerContentElement, setDrawerContentElement] = useState<HTMLDivElement | null>(null);
   const [drawerContentHeight, setDrawerContentHeight] = useState(
-    drawerContentRef.current?.clientHeight ?? 400
+    drawerContentElement?.clientHeight ?? 400
   );
+
+  useResizeObserver({
+    ref: { current: drawerContentElement } as React.RefObject<HTMLElement>,
+    onResize: ({ height }) => {
+      if (height) setDrawerContentHeight(height);
+    },
+  });
 
   const renderedChildren = useMemo(() => {
     return render
@@ -139,9 +146,9 @@ export function ResponsiveDialog({
               <DrawerDescription>{description}</DrawerDescription>
             </DrawerHeader>
             <div
-              className="w-full flex-1 px-4"
+              className="min-h-0 w-full flex-1 px-4"
               ref={(el) => {
-                drawerContentRef.current = el;
+                setDrawerContentElement(el);
                 if (el) {
                   setDrawerContentHeight(el.clientHeight);
                 }

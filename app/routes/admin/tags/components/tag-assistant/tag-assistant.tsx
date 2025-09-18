@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useImmer } from "use-immer";
 import { useCreateAssetAssistant } from "~/components/assets/create-asset-assistant/create-asset-assistant.component";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
@@ -43,6 +43,8 @@ export default function TagAssistant({
   assetToRegister?: Pick<Asset, "id" | "siteId" | "clientId">;
   onClose?: () => void;
 }) {
+  const [isStepAnimating, setIsStepAnimating] = useState(false);
+
   const INITIAL_STATE = useRef({
     mode: assetToRegister ? "register-to-asset" : "preprogram-single",
     serialNumberMethod: "sequential",
@@ -116,6 +118,8 @@ export default function TagAssistant({
   return (
     <AssistantProvider
       context={assistant}
+      onStepAnimationComplete={() => setIsStepAnimating(false)}
+      onStepAnimationStart={() => setIsStepAnimating(true)}
       renderStep={(context) => {
         const { stepId, stepTo } = context;
         switch (stepId) {
@@ -149,6 +153,7 @@ export default function TagAssistant({
                   });
                 }}
                 registerToAssetMode={tagAssistantState.mode === "register-to-asset"}
+                isStepAnimating={isStepAnimating}
               />
             );
           case StepSingleProgram.StepId:

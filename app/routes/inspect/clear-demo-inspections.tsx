@@ -1,6 +1,8 @@
 import {
+  endOfDay,
   format,
   formatDistanceToNow,
+  parseISO,
   startOfDay,
   startOfMonth,
   startOfWeek,
@@ -8,21 +10,27 @@ import {
   subMinutes,
 } from "date-fns";
 import { Loader2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import Icon from "~/components/icons/icon";
+import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "~/components/ui/form";
+import { Input } from "~/components/ui/input";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { getUserDisplayName } from "~/lib/users";
@@ -79,8 +87,7 @@ export default function ClearDemoInspections({
           Clear Inspections – {client.name}
         </CardTitle>
         <CardDescription>
-          Clear inspections for the current demo client for one of the following
-          time periods:
+          Clear inspections for the current demo client for one of the following time periods:
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -94,24 +101,20 @@ export default function ClearDemoInspections({
               endDate={interval.endDate}
             />
           ))}
+          <ClearInspectionsByDateRangeButton clientId={client.id} />
         </div>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Recent Inspections</h3>
+        <h3 className="mt-4 mb-2 text-lg font-semibold">Recent Inspections</h3>
         <div className="flex flex-col gap-2">
           {recentInspections.map((inspection) => (
-            <div
-              key={inspection.id}
-              className="py-2 flex flex-col gap-2 border-t border-border"
-            >
-              <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
+            <div key={inspection.id} className="border-border flex flex-col gap-2 border-t py-2">
+              <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
                 {format(inspection.createdOn, "PPpp")}
                 <Link
                   to={inspection.asset ? `/assets/${inspection.asset.id}` : "#"}
-                  className="inline-flex items-center gap-2 group"
+                  className="group inline-flex items-center gap-2"
                 >
-                  <span className="group-hover:underline">
-                    {inspection.asset.name}
-                  </span>
+                  <span className="group-hover:underline">{inspection.asset.name}</span>
                   {inspection.asset.product.productCategory.icon && (
                     <Icon
                       iconId={inspection.asset.product.productCategory.icon}
@@ -124,9 +127,7 @@ export default function ClearDemoInspections({
               <div>
                 <p className="text-sm">
                   {inspection.site ? (
-                    <span className="font-semibold">
-                      [{inspection.site.name}]
-                    </span>
+                    <span className="font-semibold">[{inspection.site.name}]</span>
                   ) : (
                     ""
                   )}{" "}
@@ -143,9 +144,7 @@ export default function ClearDemoInspections({
             </div>
           ))}
           {recentInspections.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No recent inspections found.
-            </p>
+            <p className="text-muted-foreground text-sm">No recent inspections found.</p>
           )}
         </div>
       </CardContent>
@@ -153,15 +152,17 @@ export default function ClearDemoInspections({
   );
 }
 
-function DeleteInspectionsButton({
+const useDeleteInspectionsButton = ({
   clientId,
   label,
   startDate,
   endDate,
-}: QuickInterval & { clientId: string }) {
+  onSuccess,
+}: QuickInterval & { clientId: string; onSuccess?: () => void }) => {
   const { submitJson, isSubmitting } = useModalFetcher({
     onSubmitted: () => {
       toast.success("Inspections cleared successfully.");
+      onSuccess?.();
     },
   });
   const [confirm, setConfirm] = useConfirmAction({
@@ -170,27 +171,30 @@ function DeleteInspectionsButton({
     },
   });
 
-  const handleClear = async () => {
+  const handleConfirm = useCallback(() => {
+    submitJson(
+      { startDate, endDate: endDate ?? null, clientId },
+      {
+        path: "/api/proxy/clients/clear-demo-inspections",
+        method: "POST",
+      }
+    );
+  }, [submitJson, clientId, startDate, endDate]);
+
+  const handleClear = useCallback(async () => {
     setConfirm((d) => {
       d.open = true;
       d.title = `Demo Inspections – ${label}`;
       d.message =
         "Are you sure you want to clear all inspections for the current demo client for this time period?";
-      d.onConfirm = () => {
-        submitJson(
-          { startDate, endDate: endDate ?? null, clientId },
-          {
-            path: "/api/proxy/clients/clear-demo-inspections",
-            method: "POST",
-          }
-        );
-      };
+      d.onConfirm = handleConfirm;
     });
-  };
+  }, [submitJson, label, clientId, startDate, endDate]);
 
-  return (
-    <div>
+  const DeleteButton = useCallback(
+    () => (
       <Button
+        type="button"
         variant="destructive"
         onClick={() => handleClear()}
         disabled={isSubmitting}
@@ -198,8 +202,124 @@ function DeleteInspectionsButton({
       >
         {isSubmitting ? <Loader2 className="animate-spin" /> : label}
       </Button>
-      <ConfirmationDialog {...confirm} />
+    ),
+    [isSubmitting, label, handleClear]
+  );
+
+  const ConfirmDeleteDialog = useCallback(
+    () => <ConfirmationDialog {...confirm} />,
+    [confirm.open, confirm.title, confirm.message, confirm.onConfirm]
+  );
+
+  return {
+    handleClear,
+    isSubmitting,
+    DeleteButton,
+    ConfirmDeleteDialog,
+  };
+};
+
+function DeleteInspectionsButton({
+  clientId,
+  label,
+  startDate,
+  endDate,
+}: QuickInterval & { clientId: string }) {
+  const { DeleteButton, ConfirmDeleteDialog } = useDeleteInspectionsButton({
+    clientId,
+    label,
+    startDate,
+    endDate,
+  });
+  return (
+    <div>
+      <DeleteButton />
+      <ConfirmDeleteDialog />
     </div>
+  );
+}
+
+function ClearInspectionsByDateRangeButton({ clientId }: { clientId: string }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const form = useForm({
+    values: {
+      startDate: startOfDay(new Date()).toISOString(),
+      endDate: endOfDay(new Date()).toISOString(),
+    },
+  });
+
+  const { DeleteButton, ConfirmDeleteDialog } = useDeleteInspectionsButton({
+    clientId,
+    label: "Custom",
+    startDate: form.watch("startDate"),
+    endDate: form.watch("endDate"),
+    onSuccess: () => setDialogOpen(false),
+  });
+
+  return (
+    <>
+      <ResponsiveDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        trigger={
+          <Button type="button" variant="outline">
+            Clear Custom
+          </Button>
+        }
+        title="Clear Inspections By Date Range"
+        dialogClassName="sm:max-w-lg"
+      >
+        <Form {...form}>
+          <form className="flex flex-col gap-2" onSubmit={(e) => e.preventDefault()}>
+            <FormField
+              control={form.control}
+              name="startDate"
+              render={({ field: { onChange, value, ...field } }) => (
+                <FormItem>
+                  <FormLabel>Start Date</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      value={value ? format(parseISO(value), "yyyy-MM-dd") : undefined}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        onChange(startOfDay(parseISO(value)).toISOString());
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="endDate"
+              render={({ field: { onChange, value, ...field } }) => (
+                <FormItem>
+                  <FormLabel>End Date</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="date"
+                      {...field}
+                      value={value ? format(parseISO(value), "yyyy-MM-dd") : undefined}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        onChange(endOfDay(parseISO(value)).toISOString());
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DeleteButton />
+          </form>
+        </Form>
+      </ResponsiveDialog>
+      <ConfirmDeleteDialog />
+    </>
   );
 }
 
