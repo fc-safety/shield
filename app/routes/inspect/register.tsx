@@ -407,7 +407,6 @@ function StepCompleteAssetSetup({
               type="submit"
               variant={setupComplete ? "secondary" : "default"}
               disabled={setupComplete || isSubmitting || !isValid}
-              className="self-center"
             >
               {isSubmitting && <Loader2 className="animate-spin" />}
               {isSubmitting ? "Processing..." : setupComplete ? "Setup Complete" : "Complete Setup"}
@@ -420,10 +419,7 @@ function StepCompleteAssetSetup({
                   transition={{ duration: 0.5, ease: "easeOut" }}
                   variant="default"
                   type="button"
-                  className="self-center"
-                  onClick={() => {
-                    setSetupComplete(false);
-                  }}
+                  asChild
                 >
                   <Link to={`/inspect/`}>
                     Begin inspection <ArrowRight />
