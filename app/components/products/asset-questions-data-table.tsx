@@ -128,7 +128,11 @@ export default function AssetQuestionsDataTable({
           return readOnly ? (
             <ActiveIndicator2 active={isActive} />
           ) : (
-            <ActiveToggle active={isActive} path={getResourcePath(question)} />
+            <ActiveToggle
+              active={isActive}
+              path={getResourcePath(question)}
+              viewContext={viewContext}
+            />
           );
         },
       },
