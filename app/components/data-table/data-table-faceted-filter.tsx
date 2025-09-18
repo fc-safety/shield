@@ -23,7 +23,7 @@ export interface DataTableFacetedFilterProps<TData, TValue> {
   multiple?: boolean;
   options: {
     label: string;
-    value: string;
+    value: TValue;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
   loading?: boolean;
@@ -37,7 +37,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   loading = false,
 }: DataTableFacetedFilterProps<TData, TValue>) {
   const facets = column?.getFacetedUniqueValues();
-  const selectedValues = new Set(asArray<string>(column?.getFilterValue() as string[]));
+  const selectedValues = new Set(asArray<TValue>(column?.getFilterValue() as TValue[]));
 
   return (
     <Popover>
@@ -62,7 +62,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     .map((option) => (
                       <Badge
                         variant="secondary"
-                        key={option.value}
+                        key={option.value + ""}
                         className="rounded-sm px-1 font-normal"
                       >
                         {option.label}
@@ -80,44 +80,46 @@ export function DataTableFacetedFilter<TData, TValue>({
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => {
-                const isSelected = selectedValues.has(option.value);
-                return (
-                  <CommandItem
-                    key={option.value}
-                    onSelect={() => {
-                      if (isSelected) {
-                        selectedValues.delete(option.value);
+              {options.map((option) => (
+                <CommandItem
+                  key={option.value + ""}
+                  onSelect={() => {
+                    column?.setFilterValue((prev: TValue[] | TValue) => {
+                      const selection = new Set(asArray<TValue>(prev));
+                      if (selection.has(option.value)) {
+                        selection.delete(option.value);
                       } else {
                         if (selectedValues.size > 0 && !multiple) {
-                          selectedValues.clear();
+                          selection.clear();
                         }
-                        selectedValues.add(option.value);
+                        selection.add(option.value);
                       }
-                      const filterValues = Array.from(selectedValues);
-                      column?.setFilterValue(filterValues.length ? filterValues : undefined);
-                    }}
-                  >
-                    <div
-                      className={cn(
-                        "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
-                      )}
-                    >
-                      <Check />
-                    </div>
-                    {option.icon && <option.icon className="text-muted-foreground mr-2 h-4 w-4" />}
-                    <span>{option.label}</span>
-                    {facets?.get(option.value) && (
-                      <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
-                        {facets.get(option.value)}
-                      </span>
+                      if (selection.size === 0) {
+                        return undefined;
+                      }
+                      return Array.from(selection);
+                    });
+                  }}
+                >
+                  <div
+                    className={cn(
+                      "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+                      selectedValues.has(option.value)
+                        ? "bg-primary text-primary-foreground"
+                        : "opacity-50 [&_svg]:invisible"
                     )}
-                  </CommandItem>
-                );
-              })}
+                  >
+                    <Check />
+                  </div>
+                  {option.icon && <option.icon className="text-muted-foreground mr-2 h-4 w-4" />}
+                  <span>{option.label}</span>
+                  {facets?.get(option.value) && (
+                    <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
+                      {facets.get(option.value)}
+                    </span>
+                  )}
+                </CommandItem>
+              ))}
             </CommandGroup>
             {selectedValues.size > 0 && (
               <>

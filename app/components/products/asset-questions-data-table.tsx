@@ -122,6 +122,7 @@ export default function AssetQuestionsDataTable({
       {
         accessorKey: "active",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        filterFn: "defaultIncludes" as any,
         cell: ({ getValue, row }) => {
           const question = row.original;
           const isActive = getValue() as boolean;
@@ -488,6 +489,14 @@ export default function AssetQuestionsDataTable({
         getRowId={(row) => row.id}
         actions={readOnly ? [] : [<EditAssetQuestionButton key="add" viewContext={viewContext} />]}
         filters={({ table }) => [
+          {
+            column: table.getColumn("active"),
+            title: "Status",
+            options: [
+              { value: true, label: "Active" },
+              { value: false, label: "Inactive" },
+            ],
+          },
           {
             column: table.getColumn("conditions"),
             title: "Category",

@@ -1,4 +1,12 @@
 import {
+  flexRender,
+  getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
   type Cell,
   type ColumnDef,
   type ColumnFiltersState,
@@ -10,14 +18,6 @@ import {
   type SortingState,
   type Table as TTable,
   type VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFacetedRowModel,
-  getFacetedUniqueValues,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
 } from "@tanstack/react-table";
 import * as React from "react";
 
@@ -30,15 +30,12 @@ import {
   TableRow,
 } from "~/components/ui/table";
 
-import { cn } from "~/lib/utils";
+import { asArray, cn } from "~/lib/utils";
 import { DataTablePagination } from "./data-table-pagination";
-import {
-  DataTableToolbar,
-  type DataTableToolbarProps,
-} from "./data-table-toolbar";
+import { DataTableToolbar, type DataTableToolbarProps } from "./data-table-toolbar";
 
 import "@tanstack/react-table";
-import type { ComponentProps } from "react";
+import { type ComponentProps } from "react";
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -47,8 +44,7 @@ declare module "@tanstack/react-table" {
   }
 }
 
-interface DataTableProps<TData, TValue>
-  extends Omit<DataTableToolbarProps<TData>, "table"> {
+interface DataTableProps<TData, TValue> extends Omit<DataTableToolbarProps<TData>, "table"> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   initialState?: InitialTableState;
@@ -72,14 +68,13 @@ export function DataTable<TData, TValue>({
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>(initialState?.columnVisibility ?? {});
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(
+    initialState?.columnVisibility ?? {}
+  );
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     initialState?.columnFilters ?? []
   );
-  const [sorting, setSorting] = React.useState<SortingState>(
-    initialState?.sorting ?? []
-  );
+  const [sorting, setSorting] = React.useState<SortingState>(initialState?.sorting ?? []);
   const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(
     initialState?.columnOrder ?? []
   );
@@ -108,32 +103,26 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     getRowId,
+    filterFns: {
+      defaultIncludes: customArrayIncludesFilterFn,
+    },
   });
 
   return (
-    <div
-      className={cn("flex flex-col gap-y-4 bg-inherit", classNames?.container)}
-    >
+    <div className={cn("flex flex-col gap-y-4 bg-inherit", classNames?.container)}>
       {!hideToolbar && <DataTableToolbar table={table} {...passThroughProps} />}
-      <div className="flex-1 min-h-0 rounded-md border flex flex-col bg-inherit">
+      <div className="flex min-h-0 flex-1 flex-col rounded-md border bg-inherit">
         <Table
-          className="bg-inherit h-full rounded-[inherit]"
+          className="h-full rounded-[inherit] bg-inherit"
           containerProps={{
             className: "h-full bg-inherit rounded-[inherit] flex flex-col",
           }}
         >
-          <TableHeader className="sticky top-0 z-10 bg-inherit rounded-t-[inherit]">
+          <TableHeader className="sticky top-0 z-10 rounded-t-[inherit] bg-inherit">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header, idx) => {
-                  return (
-                    <DataTableHead
-                      key={header.id}
-                      header={header}
-                      idx={idx}
-                      table={table}
-                    />
-                  );
+                  return <DataTableHead key={header.id} header={header} idx={idx} table={table} />;
                 })}
               </TableRow>
             ))}
@@ -141,26 +130,15 @@ export function DataTable<TData, TValue>({
           <TableBody className={cn("min-h-0 flex-1", classNames?.body)}>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell, idx) => (
-                    <DataTableCell
-                      key={cell.id}
-                      cell={cell}
-                      idx={idx}
-                      row={row}
-                    />
+                    <DataTableCell key={cell.id} cell={cell} idx={idx} row={row} />
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -193,10 +171,10 @@ export function DataTableHead<TData, TValue>({
         header.column.columnDef.meta?.align === "center"
           ? "justify-center text-center"
           : header.column.columnDef.meta?.align === "right"
-          ? "justify-end text-end"
-          : header.column.columnDef.meta?.align === "left"
-          ? "justify-start text-start"
-          : null,
+            ? "justify-end text-end"
+            : header.column.columnDef.meta?.align === "left"
+              ? "justify-start text-start"
+              : null,
         className
       )}
       {...props}
@@ -228,10 +206,10 @@ export function DataTableCell<TData, TValue>({
         cell.column.columnDef.meta?.align === "center"
           ? "justify-center text-center"
           : cell.column.columnDef.meta?.align === "right"
-          ? "justify-end text-end"
-          : cell.column.columnDef.meta?.align === "left"
-          ? "justify-start text-start"
-          : null,
+            ? "justify-end text-end"
+            : cell.column.columnDef.meta?.align === "left"
+              ? "justify-start text-start"
+              : null,
         className
       )}
       {...props}
@@ -240,3 +218,11 @@ export function DataTableCell<TData, TValue>({
     </TableCell>
   );
 }
+
+const customArrayIncludesFilterFn = <TData, TValue>(
+  row: Row<TData>,
+  columnId: string,
+  filterValue: TValue[] | TValue
+) => {
+  return asArray(filterValue).includes(row.getValue(columnId));
+};
