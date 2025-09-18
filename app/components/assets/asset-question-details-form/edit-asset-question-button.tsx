@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import { ResponsiveDialog } from "../../responsive-dialog";
 import type { AssetQuestionDetailFormProps } from "./asset-question-detail-form.component";
 import AssetQuestionDetailForm from "./asset-question-detail-form.component";
@@ -17,10 +18,19 @@ export default function EditAssetQuestionButton({
   onOpenChange,
   ...passthroughProps
 }: NewAssetQuestionButtonProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useLocalStorage(
+    "shield:edit-asset-question-dialog-open",
+    false
+  );
 
   const open = openProp ?? internalOpen;
-  const setOpen = onOpenChange ?? setInternalOpen;
+  const setOpen = (open: boolean) => {
+    setInternalOpen(open);
+    onOpenChange?.(open);
+  };
+  useEffect(() => {
+    onOpenChange?.(internalOpen);
+  }, [internalOpen, onOpenChange]);
 
   return (
     <ResponsiveDialog
@@ -47,6 +57,7 @@ export default function EditAssetQuestionButton({
           setOpen(false);
           passthroughProps.onSubmitted?.();
         }}
+        open={open}
         {...passthroughProps}
       />
     </ResponsiveDialog>

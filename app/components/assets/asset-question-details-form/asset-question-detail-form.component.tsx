@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { useLocalStorage } from "usehooks-ts";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import ActiveToggleFormInput from "~/components/active-toggle-form-input";
@@ -59,6 +60,7 @@ export interface AssetQuestionDetailFormProps {
   assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
   viewContext?: ViewContext;
+  open?: boolean;
 }
 
 const FORM_DEFAULTS = {
@@ -84,70 +86,81 @@ function AssetQuestionDetailsFormContent({
   assetQuestion,
   onSubmitted,
   viewContext,
+  open,
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
   const { closeSidepanel } = useAssetQuestionDetailFormContext();
 
+  const [localFormValues, setLocalFormValues] = useLocalStorage<TForm>(
+    "shield:asset-question-form-values",
+    FORM_DEFAULTS
+  );
+
+  const formValues = useMemo((): TForm => {
+    if (!assetQuestion || ("id" in localFormValues && localFormValues.id === assetQuestion.id)) {
+      return localFormValues;
+    }
+
+    return {
+      ...nullValuesToUndefined(assetQuestion),
+      assetAlertCriteria: {
+        updateMany: assetQuestion.assetAlertCriteria?.map((c) => ({
+          where: { id: c.id },
+          data: { ...c },
+        })),
+      },
+      consumableConfig: assetQuestion.consumableConfig
+        ? {
+            update: {
+              consumableProduct: assetQuestion.consumableConfig.consumableProductId
+                ? {
+                    connect: {
+                      id: assetQuestion.consumableConfig.consumableProductId,
+                    },
+                  }
+                : undefined,
+              mappingType: assetQuestion.consumableConfig.mappingType,
+            },
+          }
+        : undefined,
+      tone: assetQuestion?.tone ?? ASSET_QUESTION_TONES.NEUTRAL,
+      variants: undefined,
+      conditions: {
+        updateMany: assetQuestion.conditions?.map((c) => ({
+          where: { id: c.id },
+          data: { ...nullValuesToUndefined(c) },
+        })),
+      },
+      files: {
+        updateMany: assetQuestion.files?.map((f) => ({
+          where: { id: f.id },
+          data: { ...f },
+        })),
+      },
+      regulatoryCodes: assetQuestion.regulatoryCodes
+        ? {
+            update: assetQuestion.regulatoryCodes.map((rc) => ({
+              where: { id: rc.id },
+              data: { ...nullValuesToUndefined(rc) },
+            })),
+          }
+        : undefined,
+      setAssetMetadataConfig: assetQuestion.setAssetMetadataConfig
+        ? {
+            update: {
+              ...assetQuestion.setAssetMetadataConfig,
+              metadata: assetQuestion.setAssetMetadataConfig.metadata?.map((m) => ({
+                ...nullValuesToUndefined(m),
+              })),
+            },
+          }
+        : undefined,
+    };
+  }, [localFormValues, assetQuestion]);
+
   const form = useForm({
     resolver: zodResolver(assetQuestion ? updateAssetQuestionSchema : createAssetQuestionSchema),
-    values: (assetQuestion
-      ? {
-          ...assetQuestion,
-          order: assetQuestion.order ?? undefined,
-          selectOptions: assetQuestion.selectOptions ?? undefined,
-          helpText: assetQuestion.helpText ?? undefined,
-          placeholder: assetQuestion.placeholder ?? undefined,
-          assetAlertCriteria: {
-            updateMany: assetQuestion.assetAlertCriteria?.map((c) => ({
-              where: { id: c.id },
-              data: { ...c },
-            })),
-          },
-          consumableConfig: assetQuestion.consumableConfig
-            ? {
-                update: {
-                  consumableProduct: assetQuestion.consumableConfig.consumableProductId
-                    ? {
-                        connect: {
-                          id: assetQuestion.consumableConfig.consumableProductId,
-                        },
-                      }
-                    : undefined,
-                  mappingType: assetQuestion.consumableConfig.mappingType,
-                },
-              }
-            : undefined,
-          tone: assetQuestion?.tone ?? ASSET_QUESTION_TONES.NEUTRAL,
-          variants: undefined,
-          conditions: {
-            updateMany: assetQuestion.conditions?.map((c) => ({
-              where: { id: c.id },
-              data: { ...c },
-            })),
-          },
-          files: {
-            updateMany: assetQuestion.files?.map((f) => ({
-              where: { id: f.id },
-              data: { ...f },
-            })),
-          },
-          regulatoryCodes: assetQuestion.regulatoryCodes
-            ? {
-                update: assetQuestion.regulatoryCodes.map((rc) => ({
-                  where: { id: rc.id },
-                  data: { ...nullValuesToUndefined(rc) },
-                })),
-              }
-            : undefined,
-          setAssetMetadataConfig: assetQuestion.setAssetMetadataConfig
-            ? {
-                update: assetQuestion.setAssetMetadataConfig,
-              }
-            : undefined,
-        }
-      : {
-          ...FORM_DEFAULTS,
-        }) as TForm,
+    values: formValues,
     mode: "onChange",
   });
 
@@ -188,6 +201,19 @@ function AssetQuestionDetailsFormContent({
   const valueType = watch("valueType");
   const tone = watch("tone");
 
+  useEffect(() => {
+    const subscription = watch((value) => {
+      setLocalFormValues(value as TForm);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setLocalFormValues]);
+
+  useEffect(() => {
+    if (!open) {
+      form.reset(FORM_DEFAULTS);
+    }
+  }, [open, form.reset]);
+
   // Automatically set the tone based on question type if the question is new.
   useEffect(() => {
     if (
@@ -215,7 +241,10 @@ function AssetQuestionDetailsFormContent({
   }, [type]);
 
   const { createOrUpdateJson: submit, isSubmitting } = useModalFetcher({
-    onSubmitted,
+    onSubmitted: () => {
+      onSubmitted?.();
+      setLocalFormValues(FORM_DEFAULTS);
+    },
   });
 
   const handleSubmit = (data: TForm) => {
