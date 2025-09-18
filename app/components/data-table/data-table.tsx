@@ -13,6 +13,8 @@ import {
   type ColumnOrderState,
   type Header,
   type InitialTableState,
+  type OnChangeFn,
+  type PaginationState,
   type Row,
   type RowData,
   type SortingState,
@@ -35,7 +37,7 @@ import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar, type DataTableToolbarProps } from "./data-table-toolbar";
 
 import "@tanstack/react-table";
-import { type ComponentProps } from "react";
+import { useEffect, type ComponentProps } from "react";
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -44,7 +46,7 @@ declare module "@tanstack/react-table" {
   }
 }
 
-interface DataTableProps<TData, TValue> extends Omit<DataTableToolbarProps<TData>, "table"> {
+export interface DataTableProps<TData, TValue> extends Omit<DataTableToolbarProps<TData>, "table"> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   initialState?: InitialTableState;
@@ -55,6 +57,11 @@ interface DataTableProps<TData, TValue> extends Omit<DataTableToolbarProps<TData
     body?: string;
   };
   getRowId?: (originalRow: TData, index: number, parent?: Row<TData>) => string;
+  onSortingChange?: OnChangeFn<SortingState>;
+  onColumnFiltersChange?: OnChangeFn<ColumnFiltersState>;
+  onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
+  onColumnOrderChange?: OnChangeFn<ColumnOrderState>;
+  onPaginationChange?: OnChangeFn<PaginationState>;
 }
 
 export function DataTable<TData, TValue>({
@@ -65,6 +72,11 @@ export function DataTable<TData, TValue>({
   hideToolbar,
   classNames,
   getRowId,
+  onSortingChange,
+  onColumnFiltersChange,
+  onColumnVisibilityChange,
+  onColumnOrderChange,
+  onPaginationChange,
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
@@ -79,6 +91,27 @@ export function DataTable<TData, TValue>({
     initialState?.columnOrder ?? []
   );
 
+  const [pagination, setPagination] = React.useState<PaginationState>({
+    pageIndex: initialState?.pagination?.pageIndex ?? 0,
+    pageSize: initialState?.pagination?.pageSize ?? 10,
+  });
+
+  useEffect(() => {
+    onSortingChange?.(sorting);
+  }, [sorting, onSortingChange]);
+  useEffect(() => {
+    onColumnFiltersChange?.(columnFilters);
+  }, [columnFilters, onColumnFiltersChange]);
+  useEffect(() => {
+    onColumnVisibilityChange?.(columnVisibility);
+  }, [columnVisibility, onColumnVisibilityChange]);
+  useEffect(() => {
+    onColumnOrderChange?.(columnOrder);
+  }, [columnOrder, onColumnOrderChange]);
+  useEffect(() => {
+    onPaginationChange?.(pagination);
+  }, [pagination, onPaginationChange]);
+
   const table = useReactTable({
     data,
     columns,
@@ -88,6 +121,7 @@ export function DataTable<TData, TValue>({
       rowSelection,
       columnFilters,
       columnOrder,
+      pagination,
     },
     initialState,
     enableRowSelection: true,
@@ -96,6 +130,7 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

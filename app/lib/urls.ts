@@ -64,3 +64,75 @@ export const buildUrl = <TPath extends string>(
 ) => {
   return new URL(buildPath<TPath>(path, params, baseUrl));
 };
+
+// Custom function to update query parameters without navigation
+export function updateQueryParams(
+  updates: URLSearchParams | string | ((prev: URLSearchParams) => URLSearchParams),
+  options: { replace?: boolean } = {}
+) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const { replace = false } = options;
+
+  // Get current URL and search params
+  const url = new URL(window.location.href);
+  const searchParams = new URLSearchParams(url.search);
+
+  // Handle different types of updates
+  if (typeof updates === "function") {
+    // Functional update: updates((prev) => newParams)
+    const currentParams = new URLSearchParams(searchParams);
+    const newParams = updates(currentParams);
+
+    // Clear existing params and set new ones
+    url.search = newParams.toString();
+  } else if (updates instanceof URLSearchParams) {
+    // Direct URLSearchParams object
+    url.search = updates.toString();
+  } else if (typeof updates === "object" && updates !== null) {
+    // Object with key-value pairs
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === undefined || value === "") {
+        searchParams.delete(key);
+      } else {
+        searchParams.set(key, String(value));
+      }
+    });
+    url.search = searchParams.toString();
+  } else if (typeof updates === "string") {
+    // Raw query string
+    url.search = updates.startsWith("?") ? updates.slice(1) : updates;
+  }
+
+  // Update the URL without navigation
+  if (replace) {
+    window.history.replaceState(null, "", url);
+  } else {
+    window.history.pushState(null, "", url);
+  }
+}
+
+export const getQueryStatePersistor = (key: string) => (value: object) => {
+  updateQueryParams(
+    (prev) => {
+      prev.set(key, JSON.stringify(value));
+      return prev;
+    },
+    {
+      replace: true,
+    }
+  );
+};
+
+export const getQueryPersistedState = (key: string, searchParams: URLSearchParams) => {
+  if (searchParams.has(key)) {
+    try {
+      return JSON.parse(searchParams.get(key)!);
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+};
