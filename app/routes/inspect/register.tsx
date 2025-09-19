@@ -436,4 +436,4 @@ function StepCompleteAssetSetup({
 
 StepCompleteAssetSetup.StepId = "complete-asset-setup";
 
-const MotionButton = motion(Button);
+const MotionButton = motion.create(Button);

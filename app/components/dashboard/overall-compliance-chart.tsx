@@ -2,16 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import type { PieSeriesOption } from "echarts";
 import { Shield } from "lucide-react";
 import * as React from "react";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
-import {
-  AssetInspectionsStatuses,
-  type AssetInspectionsStatus,
-} from "~/lib/enums";
+import { AssetInspectionsStatuses, type AssetInspectionsStatus } from "~/lib/enums";
+import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
 import {
   DashboardCard,
@@ -22,7 +20,7 @@ import {
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
-import { getComplianceHistory } from "./services/stats";
+import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 import type { AssetRow } from "./types/stats";
 
 export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
@@ -38,14 +36,9 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
     error,
     isLoading,
     refetch,
-  } = useQuery({
-    queryKey: ["compliance-history", 1] as const,
-    queryFn: ({ queryKey: [, months] }) => getComplianceHistory(fetch, months),
-  });
+  } = useQuery(getComplianceHistoryQueryOptions(fetch, { months: 1 }));
 
-  useEffect(() => {
-    refetch();
-  }, [refreshKey, refetch]);
+  useRefreshByNumericKey(refreshKey, refetch);
 
   const data = React.useMemo(() => {
     if (!complianceHistory || !complianceHistory.length) {
@@ -59,7 +52,7 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
     return (
       Object.entries(complianceHistory[0].assetsByComplianceStatus) as [
         AssetInspectionsStatus,
-        AssetRow[]
+        AssetRow[],
       ][]
     )
       .sort(([statusA], [statusB]) => sortByStatus()(statusA, statusB))
@@ -72,7 +65,7 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
             itemStyle: {
               color: themeValues[status],
             },
-          } satisfies NonNullable<PieSeriesOption["data"]>[number])
+          }) satisfies NonNullable<PieSeriesOption["data"]>[number]
       )
       .filter((d) => d.value > 0);
   }, [complianceHistory, themeValues]);
@@ -164,41 +157,37 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
             show: true,
           },
           data: Object.values(
-            data?.reduce((acc, d) => {
-              if (
-                d.id === "COMPLIANT_DUE_LATER" ||
-                d.id === "COMPLIANT_DUE_SOON"
-              ) {
-                if (!acc.compliant) {
-                  acc.compliant = {
-                    id: "compliant",
-                    name: "Compliant",
-                    value: 0,
-                    itemStyle: {
-                      color:
-                        themeValues?.COMPLIANT_DUE_LATER ?? d.itemStyle.color,
-                    },
-                  };
+            data?.reduce(
+              (acc, d) => {
+                if (d.id === "COMPLIANT_DUE_LATER" || d.id === "COMPLIANT_DUE_SOON") {
+                  if (!acc.compliant) {
+                    acc.compliant = {
+                      id: "compliant",
+                      name: "Compliant",
+                      value: 0,
+                      itemStyle: {
+                        color: themeValues?.COMPLIANT_DUE_LATER ?? d.itemStyle.color,
+                      },
+                    };
+                  }
+                  (acc.compliant as any).value += d.value;
+                } else {
+                  if (!acc.nonCompliant) {
+                    acc.nonCompliant = {
+                      id: "nonCompliant",
+                      name: "Non-Compliant",
+                      value: 0,
+                      itemStyle: {
+                        color: themeValues?.NON_COMPLIANT_INSPECTED ?? d.itemStyle.color,
+                      },
+                    };
+                  }
+                  (acc.nonCompliant as any).value += d.value;
                 }
-                (acc.compliant as any).value += d.value;
-              } else {
-                if (!acc.nonCompliant) {
-                  acc.nonCompliant = {
-                    id: "nonCompliant",
-                    name: "Non-Compliant",
-                    value: 0,
-                    itemStyle: {
-                      color:
-                        themeValues?.NON_COMPLIANT_INSPECTED ??
-                        d.itemStyle.color,
-                    },
-                  };
-                }
-                (acc.nonCompliant as any).value += d.value;
-              }
-              return acc;
-            }, {} as Record<string, NonNullable<PieSeriesOption["data"]>[number]>) ||
-              {}
+                return acc;
+              },
+              {} as Record<string, NonNullable<PieSeriesOption["data"]>[number]>
+            ) || {}
           ),
         },
       ],
@@ -217,7 +206,7 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
           </Button> */}
         </DashboardCardTitle>
       </DashboardCardHeader>
-      <DashboardCardContent className="h-[calc(100%-64px)] flex flex-col items-center">
+      <DashboardCardContent className="flex h-[calc(100%-64px)] flex-col items-center">
         <ReactECharts
           theme={theme ?? undefined}
           settings={{
@@ -226,16 +215,12 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
           option={chartOption}
           onClick={(e) => {
             const status = (e.data as { id: string }).id;
-            if (
-              !AssetInspectionsStatuses.includes(
-                status as AssetInspectionsStatus
-              )
-            ) {
+            if (!AssetInspectionsStatuses.includes(status as AssetInspectionsStatus)) {
               return;
             }
             navigate(`/assets?inspectionStatus=${status}`);
           }}
-          className="w-full flex-1 min-h-[250px] max-w-(--breakpoint-sm)"
+          className="min-h-[250px] w-full max-w-(--breakpoint-sm) flex-1"
         />
       </DashboardCardContent>
       {isLoading ? (

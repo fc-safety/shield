@@ -2,11 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight, Shapes, Shield } from "lucide-react";
 import * as React from "react";
-import { useEffect } from "react";
 import { Link } from "react-router";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { AssetInspectionsStatus } from "~/lib/enums";
 import type { ProductCategory, ResultsPage } from "~/lib/models";
+import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
+import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { DataTable } from "../data-table/data-table";
 import ProductCategoryIcon from "../products/product-category-icon";
 import {
@@ -19,7 +20,7 @@ import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 import MiniStatusProgressBar from "./components/mini-status-progress-bar";
-import { getComplianceHistory } from "./services/stats";
+import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
 export function ComplianceByCategoryChart({ refreshKey }: { refreshKey: number }) {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
@@ -29,19 +30,13 @@ export function ComplianceByCategoryChart({ refreshKey }: { refreshKey: number }
     error,
     isLoading,
     refetch,
-  } = useQuery({
-    queryKey: ["compliance-history", 1] as const,
-    queryFn: ({ queryKey: [, months] }) => getComplianceHistory(fetch, months),
-  });
+  } = useQuery(getComplianceHistoryQueryOptions(fetch, { months: 1 }));
 
-  useEffect(() => {
-    refetch();
-  }, [refreshKey, refetch]);
+  useRefreshByNumericKey(refreshKey, refetch);
 
-  const { data: productCategories } = useQuery({
-    queryKey: ["product-categories-200"],
-    queryFn: () => getProductCategories(fetch).then((r) => r.results),
-  });
+  const { data: productCategories } = useQuery(
+    getProductCategoriesQueryOptions(fetch, { limit: 200 })
+  );
 
   const categoryRows = React.useMemo(() => {
     if (!productCategories || !complianceHistory || !complianceHistory.length) {

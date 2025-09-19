@@ -1,9 +1,12 @@
+import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { ShieldQuestion } from "lucide-react";
 import { api } from "~/.server/api";
+import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/user-sesssion";
 import AssetQuestionsDataTable from "~/components/products/asset-questions-data-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
+import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { getQueryPersistedState, getQueryStatePersistor } from "~/lib/urls";
 import { can, isGlobalAdmin, isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParams } from "~/lib/utils";
@@ -31,7 +34,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }
 
   // Fetch all products and product categories to get their questions
-  const allQuestions = await api.assetQuestions
+  const allQuestionsPromise = api.assetQuestions
     .list(
       request,
       {
@@ -44,11 +47,23 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     )
     .then((r) => r.results);
 
+  // Prefetch queries
+  const queryClient = new QueryClient();
+  const prefetchProductCategoriesPromise = queryClient.prefetchQuery(
+    getProductCategoriesQueryOptions(getAuthenticatedFetcher(request))
+  );
+
+  const [allQuestions, _] = await Promise.all([
+    allQuestionsPromise,
+    prefetchProductCategoriesPromise,
+  ]);
+
   return {
     questions: allQuestions,
     sorting: getQueryPersistedState("sorting", searchParams),
     columnFilters: getQueryPersistedState("columnFilters", searchParams),
     pagination: getQueryPersistedState("pagination", searchParams),
+    dehydratedState: dehydrate(queryClient),
   };
 };
 

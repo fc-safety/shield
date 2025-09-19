@@ -29,8 +29,9 @@ import { useAppState, useAppStateValue } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useOpenData } from "~/hooks/use-open-data";
-import { type ProductRequest, type ProductRequestStatus, type ResultsPage } from "~/lib/models";
-import { stringifyQuery, type QueryParams } from "~/lib/urls";
+import { type ProductRequest, type ProductRequestStatus } from "~/lib/models";
+import { getProductRequestsQueryOptions } from "~/lib/services/dashboard.service";
+import { type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import { cn, humanize } from "~/lib/utils";
 import { ProductRequestStatusBadge } from "../assets/product-request-status-badge";
@@ -59,6 +60,7 @@ import {
 } from "./components/dashboard-card";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
+import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
 export default function ProductRequestsOverview({ refreshKey }: { refreshKey: number }) {
   const { appState, setAppState } = useAppState();
@@ -240,10 +242,11 @@ function ProductRequestsSummary({
 }) {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["product-requests", queryParams, refreshKey] as const,
-    queryFn: ({ queryKey }) => getProductRequests(fetch, queryKey[1]),
-  });
+  const { data, error, isLoading, refetch } = useQuery(
+    getProductRequestsQueryOptions(fetch, queryParams)
+  );
+
+  useRefreshByNumericKey(refreshKey, refetch);
 
   useEffect(() => {
     setIsLoading(isLoading);
@@ -326,10 +329,11 @@ function ProductRequestsDetails({
   const { user } = useAuth();
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error, isLoading } = useQuery({
-    queryKey: ["product-requests", queryParams, refreshKey] as const,
-    queryFn: ({ queryKey }) => getProductRequests(fetch, queryKey[1]),
-  });
+  const { data, error, isLoading, refetch } = useQuery(
+    getProductRequestsQueryOptions(fetch, queryParams)
+  );
+
+  useRefreshByNumericKey(refreshKey, refetch);
 
   useEffect(() => {
     setIsLoading(isLoading);
@@ -561,21 +565,6 @@ function ProductRequestsDetails({
     </>
   );
 }
-
-const getProductRequests = async (
-  fetch: (url: string, options: RequestInit) => Promise<Response>,
-  queryParams: QueryParams
-) => {
-  const qs = stringifyQuery({
-    ...queryParams,
-    limit: 10000,
-  });
-  const response = await fetch(`/product-requests?${qs}`, {
-    method: "GET",
-  });
-
-  return response.json() as Promise<ResultsPage<ProductRequest>>;
-};
 
 // const reviewProductRequest = async (
 //   fetch: (url: string, options: RequestInit) => Promise<Response>,

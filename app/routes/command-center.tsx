@@ -1,4 +1,7 @@
+import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { getAuthenticatedFetcher } from "~/.server/api-utils";
+import { getAppState } from "~/.server/sessions";
 import { ComplianceByCategoryChart } from "~/components/dashboard/compliance-by-category-chart";
 import { ComplianceBySiteChart } from "~/components/dashboard/compliance-by-site-chart";
 import { ComplianceHistoryChart } from "~/components/dashboard/compliance-history-chart";
@@ -7,6 +10,13 @@ import { OverallComplianceChart } from "~/components/dashboard/overall-complianc
 import ProductRequestsOverview from "~/components/dashboard/product-requests-overview";
 import { useAuth } from "~/contexts/auth-context";
 import { useServerSentEvents } from "~/hooks/use-server-sent-events";
+import {
+  getComplianceHistoryQueryOptions,
+  getInspectionAlertsQueryOptions,
+  getMySitesQueryOptions,
+  getProductRequestsQueryOptions,
+} from "~/lib/services/dashboard.service";
+import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/command-center";
@@ -19,6 +29,53 @@ export const handle = {
 
 export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
+};
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const appState = await getAppState(request);
+
+  const queryClient = new QueryClient();
+  const prefetchPromises: Promise<void>[] = [];
+
+  const monthsToPrefetch = new Set([1, appState.dash_comp_hist_months ?? 6]);
+  for (const month of monthsToPrefetch) {
+    prefetchPromises.push(
+      queryClient.prefetchQuery(
+        getComplianceHistoryQueryOptions(getAuthenticatedFetcher(request), { months: month })
+      )
+    );
+  }
+
+  prefetchPromises.push(
+    queryClient.prefetchQuery(
+      getProductRequestsQueryOptions(getAuthenticatedFetcher(request), appState.dash_pr_query ?? {})
+    )
+  );
+
+  prefetchPromises.push(
+    queryClient.prefetchQuery(
+      getInspectionAlertsQueryOptions(
+        getAuthenticatedFetcher(request),
+        appState.dash_alert_query ?? {}
+      )
+    )
+  );
+
+  prefetchPromises.push(
+    queryClient.prefetchQuery(getMySitesQueryOptions(getAuthenticatedFetcher(request)))
+  );
+
+  prefetchPromises.push(
+    queryClient.prefetchQuery(
+      getProductCategoriesQueryOptions(getAuthenticatedFetcher(request), { limit: 200 })
+    )
+  );
+
+  await Promise.all(prefetchPromises);
+
+  return {
+    dehydratedState: dehydrate(queryClient),
+  };
 };
 
 export default function Dashboard() {

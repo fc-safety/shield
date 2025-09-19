@@ -439,6 +439,18 @@ export class ApiFetcher {
   }
 }
 
+export const getAuthenticatedFetcher =
+  <T>(request: Request) =>
+  (...args: Parameters<typeof fetch>) => {
+    const [urlOrPath, options] = args;
+
+    let url = urlOrPath;
+    if (typeof urlOrPath === "string" && !isAbsoluteUrl(urlOrPath)) {
+      url = buildUrl(urlOrPath, config.API_BASE_URL);
+    }
+    return fetchAuthenticated(request, url, options);
+  };
+
 interface AllCrudActions<T> {
   list: (
     request: Request,
