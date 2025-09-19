@@ -22,15 +22,10 @@ import { useConditionLabels } from "~/hooks/use-condition-labels";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
-import type {
-  AssetQuestion,
-  AssetQuestionResponseType,
-  ProductCategory,
-  ResultsPage,
-} from "~/lib/models";
+import type { AssetQuestion, AssetQuestionResponseType } from "~/lib/models";
 import { AssetQuestionTypes } from "~/lib/models";
 import type { createAssetQuestionSchema } from "~/lib/schema";
-import { buildPath } from "~/lib/urls";
+import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { isGlobalAdmin } from "~/lib/users";
 import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
@@ -110,18 +105,9 @@ export default function AssetQuestionsDataTable({
     });
   }, [questions]);
 
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["product-categories"],
-    queryFn: () =>
-      fetchOrThrow(
-        buildPath("/product-categories", {
-          limit: 10000,
-          order: { name: "asc" },
-        })
-      )
-        .then((r) => r.json() as Promise<ResultsPage<ProductCategory>>)
-        .then((r) => r.results),
-  });
+  const { data: categories, isLoading: categoriesLoading } = useQuery(
+    getProductCategoriesQueryOptions(fetchOrThrow)
+  );
 
   // Prepare category filter options
   const categoryFilterOptions = useMemo(() => {
@@ -544,7 +530,7 @@ export default function AssetQuestionsDataTable({
             title: "Category",
             options: categoryFilterOptions,
             multiple: true,
-            loading: categoriesLoading,
+            loading: categoriesLoading ?? false,
             key: "category",
           },
           {

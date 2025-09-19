@@ -30,9 +30,9 @@ import { Link } from "react-router";
 import { useAppState, useAppStateValue } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
-import { AlertLevels, type Alert, type ResultsPage } from "~/lib/models";
+import { AlertLevels, type Alert } from "~/lib/models";
+import { getInspectionAlertsQueryOptions } from "~/lib/services/dashboard.service";
 import type { QueryParams } from "~/lib/urls";
-import { stringifyQuery } from "~/lib/urls";
 import { hasMultiSiteVisibility } from "~/lib/users";
 import { cn, humanize } from "~/lib/utils";
 import AssetInspectionAlert from "../assets/asset-inspection-alert";
@@ -58,6 +58,7 @@ import {
 } from "./components/dashboard-card";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
+import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
 export default function InspectionAlertsOverview({ refreshKey }: { refreshKey: number }) {
   const { appState, setAppState } = useAppState();
@@ -225,14 +226,11 @@ function AlertsSummary({
 }) {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ["inspection-alerts", queryParams] as const,
-    queryFn: ({ queryKey }) => getInspectionAlerts(fetch, queryKey[1]),
-  });
+  const { data, error, isLoading, refetch } = useQuery(
+    getInspectionAlertsQueryOptions(fetch, queryParams)
+  );
 
-  useEffect(() => {
-    refetch();
-  }, [refreshKey, refetch]);
+  useRefreshByNumericKey(refreshKey, refetch);
 
   useEffect(() => {
     setIsLoading(isLoading);
@@ -409,14 +407,11 @@ function AlertsDetails({
   const { user } = useAuth();
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error, isLoading, refetch } = useQuery({
-    queryKey: ["inspection-alerts", queryParams] as const,
-    queryFn: ({ queryKey }) => getInspectionAlerts(fetch, queryKey[1]),
-  });
+  const { data, error, isLoading, refetch } = useQuery(
+    getInspectionAlertsQueryOptions(fetch, queryParams)
+  );
 
-  useEffect(() => {
-    refetch();
-  }, [refreshKey, refetch]);
+  useRefreshByNumericKey(refreshKey, refetch);
 
   useEffect(() => {
     setIsLoading(isLoading);
@@ -596,21 +591,6 @@ function AlertLevelBadge({
     </span>
   );
 }
-
-const getInspectionAlerts = async (
-  fetch: (url: string, options: RequestInit) => Promise<Response>,
-  queryParams: QueryParams
-) => {
-  const qs = stringifyQuery({
-    ...queryParams,
-    limit: 10000,
-  });
-  const response = await fetch(`/alerts?${qs}`, {
-    method: "GET",
-  });
-
-  return response.json() as Promise<ResultsPage<Alert>>;
-};
 
 const renderCell = (cell: Cell<Alert, unknown> | undefined | null) =>
   cell ? flexRender(cell.column.columnDef.cell, cell.getContext()) : null;

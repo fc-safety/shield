@@ -38,9 +38,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return api.settings.getGlobal(request);
 };
 
-export default function AdminSettings({
-  loaderData: { data: settings },
-}: Route.ComponentProps) {
+export default function AdminSettings({ loaderData: { data: settings } }: Route.ComponentProps) {
   const { user } = useAuth();
 
   const form = useForm<TForm>({
@@ -88,9 +86,9 @@ export default function AdminSettings({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    The from address for all emails sent from Shield. Can be an
-                    email address or a friendly name in the following format:
-                    <span className="px-1 py-0.5 bg-muted rounded-md ml-1">
+                    The from address for all emails sent from Shield. Can be an email address or a
+                    friendly name in the following format:
+                    <span className="bg-muted ml-1 rounded-md px-1 py-0.5">
                       Your Name &lt;sender@notify.fc-safety.com&gt;
                     </span>
                   </FormDescription>
@@ -107,7 +105,7 @@ export default function AdminSettings({
                   <FormLabel>Supply Request To Address</FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-2">
-                      <Input {...field} type="email" />
+                      <Input {...field} type="email" inputMode="email" />
                       <SendTestEmailButton
                         to={field.value}
                         from={systemEmailFromAddress}
@@ -131,7 +129,7 @@ export default function AdminSettings({
                   <FormLabel>Landing Form Lead To Address</FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-2">
-                      <Input {...field} type="email" />
+                      <Input {...field} type="email" inputMode="email" />
                       <SendTestEmailButton
                         to={field.value}
                         from={systemEmailFromAddress}
@@ -140,8 +138,8 @@ export default function AdminSettings({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    New lead form submissions from the Shield landing site will
-                    be sent to this address.
+                    New lead form submissions from the Shield landing site will be sent to this
+                    address.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -149,10 +147,7 @@ export default function AdminSettings({
             />
           </CardContent>
           <CardFooter>
-            <Button
-              type="submit"
-              disabled={!isValid || !isDirty || isSubmitting}
-            >
+            <Button type="submit" disabled={!isValid || !isDirty || isSubmitting}>
               {isSubmitting ? "Saving..." : "Save"}
             </Button>
           </CardFooter>
@@ -187,11 +182,7 @@ function SendTestEmailButton({
       onClick={() => sendTestEmail(to)}
       disabled={isSendingTestEmail}
     >
-      {isSendingTestEmail ? (
-        <Loader2 className="animate-spin" />
-      ) : (
-        <SendHorizonal />
-      )}
+      {isSendingTestEmail ? <Loader2 className="animate-spin" /> : <SendHorizonal />}
       Test
     </Button>
   );

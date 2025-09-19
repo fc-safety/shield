@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight, Shield, Warehouse } from "lucide-react";
 import * as React from "react";
-import { useEffect } from "react";
 import { Link } from "react-router";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { AssetInspectionsStatus } from "~/lib/enums";
-import type { ResultsPage, Site } from "~/lib/models";
+import {
+  getComplianceHistoryQueryOptions,
+  getMySitesQueryOptions,
+} from "~/lib/services/dashboard.service";
 import { DataTable } from "../data-table/data-table";
 import {
   DashboardCard,
@@ -18,7 +20,7 @@ import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 import MiniStatusProgressBar from "./components/mini-status-progress-bar";
-import { getComplianceHistory } from "./services/stats";
+import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
 export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
@@ -28,46 +30,33 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
     error,
     isLoading,
     refetch,
-  } = useQuery({
-    queryKey: ["compliance-history", 1] as const,
-    queryFn: ({ queryKey: [, months] }) => getComplianceHistory(fetch, months),
-  });
+  } = useQuery(getComplianceHistoryQueryOptions(fetch, { months: 1 }));
 
-  useEffect(() => {
-    refetch();
-  }, [refreshKey, refetch]);
+  useRefreshByNumericKey(refreshKey, refetch);
 
-  const { data: mySites } = useQuery({
-    queryKey: ["my-sites-200"],
-    queryFn: () => getMySites(fetch).then((r) => r.results),
-  });
+  const { data: mySites } = useQuery(getMySitesQueryOptions(fetch));
 
   const siteRows = React.useMemo(() => {
     if (!mySites || !complianceHistory || !complianceHistory.length) {
       return null;
     }
 
-    const newGrouping: Record<
-      string,
-      Record<AssetInspectionsStatus, number>
-    > = {};
+    const newGrouping: Record<string, Record<AssetInspectionsStatus, number>> = {};
 
-    Object.entries(complianceHistory[0].assetsByComplianceStatus).forEach(
-      ([rawStatus, assets]) => {
-        assets.forEach((asset) => {
-          const status = rawStatus as AssetInspectionsStatus;
-          if (!newGrouping[asset.site.id]) {
-            newGrouping[asset.site.id] = {
-              COMPLIANT_DUE_LATER: 0,
-              COMPLIANT_DUE_SOON: 0,
-              NON_COMPLIANT_INSPECTED: 0,
-              NON_COMPLIANT_NEVER_INSPECTED: 0,
-            };
-          }
-          newGrouping[asset.site.id][status] += 1;
-        });
-      }
-    );
+    Object.entries(complianceHistory[0].assetsByComplianceStatus).forEach(([rawStatus, assets]) => {
+      assets.forEach((asset) => {
+        const status = rawStatus as AssetInspectionsStatus;
+        if (!newGrouping[asset.site.id]) {
+          newGrouping[asset.site.id] = {
+            COMPLIANT_DUE_LATER: 0,
+            COMPLIANT_DUE_SOON: 0,
+            NON_COMPLIANT_INSPECTED: 0,
+            NON_COMPLIANT_NEVER_INSPECTED: 0,
+          };
+        }
+        newGrouping[asset.site.id][status] += 1;
+      });
+    });
 
     return mySites.map(({ id: siteId, name: siteName }) => {
       const assetsByStatus = newGrouping[siteId];
@@ -80,11 +69,9 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
         };
       }
 
-      const totalCompliant =
-        assetsByStatus.COMPLIANT_DUE_LATER + assetsByStatus.COMPLIANT_DUE_SOON;
+      const totalCompliant = assetsByStatus.COMPLIANT_DUE_LATER + assetsByStatus.COMPLIANT_DUE_SOON;
       const totalNonCompliant =
-        assetsByStatus.NON_COMPLIANT_INSPECTED +
-        assetsByStatus.NON_COMPLIANT_NEVER_INSPECTED;
+        assetsByStatus.NON_COMPLIANT_INSPECTED + assetsByStatus.NON_COMPLIANT_NEVER_INSPECTED;
       const total = totalCompliant + totalNonCompliant;
       const score = total ? totalCompliant / total : 0;
 
@@ -97,9 +84,7 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
     });
   }, [mySites, complianceHistory]);
 
-  const columns = React.useMemo((): ColumnDef<
-    NonNullable<typeof siteRows>[number]
-  >[] => {
+  const columns = React.useMemo((): ColumnDef<NonNullable<typeof siteRows>[number]>[] => {
     return [
       {
         header: "Site",
@@ -126,7 +111,7 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
         id: "details",
         cell: ({ row }) => (
           <Link to={`/assets?siteId=${row.original.id}`}>
-            <ChevronRight className="size-4.5 text-primary" />
+            <ChevronRight className="text-primary size-4.5" />
           </Link>
         ),
       },
@@ -144,7 +129,7 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
           </Button> */}
         </DashboardCardTitle>
       </DashboardCardHeader>
-      <DashboardCardContent className="min-h-0 flex-1 flex flex-col bg-inherit rounded-[inherit]">
+      <DashboardCardContent className="flex min-h-0 flex-1 flex-col rounded-[inherit] bg-inherit">
         <DataTable
           columns={columns}
           data={siteRows ?? []}
@@ -171,13 +156,3 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
     </DashboardCard>
   );
 }
-
-const getMySites = async (
-  fetch: (url: string, options: RequestInit) => Promise<Response>
-) => {
-  const response = await fetch("/sites?limit=200&subsites[none]=", {
-    method: "GET",
-  });
-
-  return response.json() as Promise<ResultsPage<Site>>;
-};

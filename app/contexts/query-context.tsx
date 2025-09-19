@@ -1,5 +1,6 @@
 import {
   type DefaultError,
+  HydrationBoundary,
   MutationCache,
   QueryCache,
   QueryClient,
@@ -7,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { type PropsWithChildren, useCallback, useId, useState } from "react";
 import { toast } from "sonner";
+import { useDehydratedState } from "~/hooks/use-dehydrated-state";
 import { buildErrorDisplay } from "~/lib/error-handling";
 import { cleanErrorMessage, extractErrorMessage } from "../lib/errors";
 export default function QueryContext({ children }: PropsWithChildren) {
@@ -46,11 +48,22 @@ export default function QueryContext({ children }: PropsWithChildren) {
           handleError(error);
         },
       }),
+      defaultOptions: {
+        queries: {
+          // With SSR, we usually want to set some default staleTime
+          // above 0 to avoid refetching immediately on the client
+          staleTime: 60 * 1000,
+        },
+      },
     });
   });
 
+  const dehydratedState = useDehydratedState();
+
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <HydrationBoundary state={dehydratedState}>{children}</HydrationBoundary>
+    </QueryClientProvider>
   );
 }
 

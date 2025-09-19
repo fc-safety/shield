@@ -3,13 +3,14 @@ import { format, isSameMonth } from "date-fns";
 import type { EChartsOption } from "echarts";
 import { History } from "lucide-react";
 import * as React from "react";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useTheme } from "remix-themes";
 import { useAppStateValue } from "~/contexts/app-state-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
 import type { AssetInspectionsStatus } from "~/lib/enums";
+import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import {
@@ -21,7 +22,7 @@ import {
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
-import { getComplianceHistory } from "./services/stats";
+import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
 export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
   const [theme] = useTheme();
@@ -35,14 +36,9 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
     error,
     isLoading,
     refetch,
-  } = useQuery({
-    queryKey: ["compliance-history", months] as const,
-    queryFn: ({ queryKey: [, months] }) => getComplianceHistory(fetch, months),
-  });
+  } = useQuery(getComplianceHistoryQueryOptions(fetch, { months }));
 
-  useEffect(() => {
-    refetch();
-  }, [refreshKey, refetch]);
+  useRefreshByNumericKey(refreshKey, refetch);
 
   const rowsGroupedByStatus = React.useMemo(() => {
     if (!complianceHistory || !complianceHistory.length) {
@@ -59,22 +55,18 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
     };
 
     complianceHistory?.forEach(({ endDate, assetsByComplianceStatus }, idx) => {
-      Object.entries(assetsByComplianceStatus).forEach(
-        ([rawStatus, assets]) => {
-          const month = getMonthLabel(endDate);
-          // Treat Due Soon as simply Compliant since "Due Soon" doesn't make
-          // sense for historical data.
-          const status = (
-            rawStatus === "COMPLIANT_DUE_SOON"
-              ? "COMPLIANT_DUE_LATER"
-              : rawStatus
-          ) as Exclude<AssetInspectionsStatus, "COMPLIANT_DUE_SOON">;
-          if (!newGrouping[status][month]) {
-            newGrouping[status][month] = 0;
-          }
-          newGrouping[status][month] += assets.length;
+      Object.entries(assetsByComplianceStatus).forEach(([rawStatus, assets]) => {
+        const month = getMonthLabel(endDate);
+        // Treat Due Soon as simply Compliant since "Due Soon" doesn't make
+        // sense for historical data.
+        const status = (
+          rawStatus === "COMPLIANT_DUE_SOON" ? "COMPLIANT_DUE_LATER" : rawStatus
+        ) as Exclude<AssetInspectionsStatus, "COMPLIANT_DUE_SOON">;
+        if (!newGrouping[status][month]) {
+          newGrouping[status][month] = 0;
         }
-      );
+        newGrouping[status][month] += assets.length;
+      });
     });
 
     return newGrouping;
@@ -86,10 +78,7 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
     }
 
     return (
-      Object.entries(rowsGroupedByStatus) as [
-        AssetInspectionsStatus,
-        Record<string, number>
-      ][]
+      Object.entries(rowsGroupedByStatus) as [AssetInspectionsStatus, Record<string, number>][]
     )
       .sort(([statusA], [statusB]) => sortByStatus()(statusA, statusB))
       .map(([status, statusMonthlyCounts]) => {
@@ -194,14 +183,14 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
           </Button> */}
         </DashboardCardTitle>
       </DashboardCardHeader>
-      <DashboardCardContent className="h-[calc(100%-64px)] flex flex-col items-center">
+      <DashboardCardContent className="flex h-[calc(100%-64px)] flex-col items-center">
         <ReactECharts
           theme={theme ?? undefined}
           settings={{
             silent: true,
           }}
           option={chartOption}
-          className="w-full flex-1 min-h-[250px] max-w-(--breakpoint-sm)"
+          className="min-h-[250px] w-full max-w-(--breakpoint-sm) flex-1"
         />
       </DashboardCardContent>
       {isLoading ? (
