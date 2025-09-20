@@ -271,6 +271,7 @@ function InspectionPage({
         createMany: {
           data: questions.map((question) => ({
             assetQuestionId: question.id,
+            originalPrompt: question.prompt,
             value: "",
           })),
         },

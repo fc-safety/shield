@@ -649,6 +649,7 @@ export const responseValueImageSchema = z.object({
 export const createAssetQuestionResponseSchema = z.object({
   id: z.string().optional(),
   value: z.union([z.string(), z.number().int(), responseValueImageSchema]),
+  originalPrompt: z.string(),
   assetQuestionId: z.string().nonempty(),
 });
 export const createAssetQuestionResponseSchemaResolver = zodResolver(

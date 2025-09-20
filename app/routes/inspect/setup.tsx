@@ -136,6 +136,7 @@ export default function InspectSetup({
                 acc.createMany.data.push({
                   value: "",
                   assetQuestionId: question.id,
+                  originalPrompt: question.prompt,
                 });
               }
 
@@ -153,6 +154,7 @@ export default function InspectSetup({
               data: questions.map((question) => ({
                 value: "",
                 assetQuestionId: question.id,
+                originalPrompt: question.prompt,
               })),
             },
             updateMany: [],
