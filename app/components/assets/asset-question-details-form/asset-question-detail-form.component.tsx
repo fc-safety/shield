@@ -60,7 +60,6 @@ export interface AssetQuestionDetailFormProps {
   assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
   viewContext?: ViewContext;
-  open?: boolean;
 }
 
 const FORM_DEFAULTS = {
@@ -86,7 +85,6 @@ function AssetQuestionDetailsFormContent({
   assetQuestion,
   onSubmitted,
   viewContext,
-  open,
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
   const { closeSidepanel } = useAssetQuestionDetailFormContext();
@@ -135,7 +133,7 @@ function AssetQuestionDetailsFormContent({
             : undefined,
         }
       : undefined) as TForm | undefined,
-    defaultValues: assetQuestion ? (FORM_DEFAULTS as TForm) : undefined,
+    defaultValues: assetQuestion ? undefined : (FORM_DEFAULTS as TForm),
     mode: "onChange",
   });
 

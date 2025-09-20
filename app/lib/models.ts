@@ -56,6 +56,7 @@ export interface Consumable extends BaseModel {
 
 export interface AssetQuestionResponse extends BaseModel {
   value: string | number | ResponseValueImage;
+  originalPrompt: string;
   assetQuestion?: AssetQuestion;
   assetQuestionId: string;
 }

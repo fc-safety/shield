@@ -24,14 +24,14 @@ export const getProductCategoriesFn =
       });
   };
 
-export const getProductCategoriesQueryKey = (options: GetProductCategoriesOptions = {}) => [
+export const getProductCategoriesQueryKey = (options: GetProductCategoriesOptions) => [
   "product-categories",
   options,
 ];
 
 export const getProductCategoriesQueryOptions = (
   fetcher: typeof fetch,
-  options: GetProductCategoriesOptions
+  options: GetProductCategoriesOptions = {}
 ) => ({
   queryKey: getProductCategoriesQueryKey(options),
   queryFn: getProductCategoriesFn(fetcher, options),
