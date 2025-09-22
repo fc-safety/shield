@@ -1,8 +1,11 @@
+import type { ComponentProps } from "react";
 import { Link, useMatches } from "react-router";
 import { useOptimizedImageUrls } from "~/contexts/optimized-image-context";
 import { cn, validateBreadcrumb } from "~/lib/utils";
 import { BreadcrumbResponsive } from "./breadcrumb-responsive";
 import { ModeToggle } from "./mode-toggle";
+import { Separator } from "./ui/separator";
+import { UserDropdownMenu } from "./user-dropdown-menu";
 
 export default function Header({
   leftSlot,
@@ -11,6 +14,9 @@ export default function Header({
   showBreadcrumb = true,
   showBannerLogo = true,
   className,
+  user,
+  userRoutes,
+  logoutReturnTo,
 }: {
   leftSlot?: React.ReactNode;
   rightSlot?: React.ReactNode;
@@ -18,7 +24,7 @@ export default function Header({
   showBreadcrumb?: boolean;
   showBannerLogo?: boolean;
   className?: string;
-}) {
+} & Partial<ComponentProps<typeof UserDropdownMenu>>) {
   const matches = useMatches();
 
   const {
@@ -40,18 +46,28 @@ export default function Header({
             <img
               src={bannerLogoLightUrl}
               alt=""
-              className="h-5 w-auto object-contain dark:hidden"
+              className="h-4 w-auto object-contain sm:h-5 dark:hidden"
             />
             <img
               src={bannerLogoDarkUrl}
               alt=""
-              className="hidden h-5 w-auto object-contain dark:block"
+              className="hidden h-4 w-auto object-contain sm:h-5 dark:block"
             />
           </Link>
         )}
         <div className="flex-1" />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-x-2">
           {rightSlot}
+          {user && (
+            <>
+              <UserDropdownMenu
+                user={user}
+                userRoutes={userRoutes}
+                logoutReturnTo={logoutReturnTo}
+              />
+              <Separator orientation="vertical" className="h-5" />
+            </>
+          )}
           <ModeToggle />
         </div>
       </div>

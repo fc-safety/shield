@@ -23,7 +23,11 @@ export default function Account({ user }: { user: User }) {
             {
               label: "Password",
               value: (
-                <Button variant="link" className="h-min p-0 leading-none" asChild>
+                <Button
+                  variant="link"
+                  className="h-min p-0 py-0 leading-none has-[>svg]:px-0"
+                  asChild
+                >
                   <Link
                     to="/login?action=UPDATE_PASSWORD"
                     target="_blank"
@@ -38,7 +42,11 @@ export default function Account({ user }: { user: User }) {
             {
               label: "Passkey",
               value: (
-                <Button variant="link" className="h-min p-0 leading-none" asChild>
+                <Button
+                  variant="link"
+                  className="h-min p-0 py-0 leading-none has-[>svg]:px-0"
+                  asChild
+                >
                   <Link
                     to="/login?action=webauthn-register-passwordless"
                     target="_blank"
@@ -53,7 +61,11 @@ export default function Account({ user }: { user: User }) {
             {
               label: "Authenticator",
               value: (
-                <Button variant="link" className="h-min p-0 leading-none" asChild>
+                <Button
+                  variant="link"
+                  className="h-min p-0 py-0 leading-none has-[>svg]:px-0"
+                  asChild
+                >
                   <Link to="/login?action=CONFIGURE_TOTP" target="_blank" rel="noopener noreferrer">
                     Configure Authenticator
                     <ExternalLink />
