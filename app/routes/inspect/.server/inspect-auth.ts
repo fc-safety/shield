@@ -27,7 +27,7 @@ export async function getUserOrHandleInspectLoginRedirect(request: Request) {
   // inspection data without logging in.
   let loginRoute: string | undefined = "/public-inspect/login";
 
-  const pathname = URL.parse(request.url)?.pathname;
+  const pathname = URL.parse(request.url)?.pathname.replace(/\/+$/, "");
 
   if (
     intent === "register-tag" ||
