@@ -6,7 +6,7 @@ import HelpPopover from "~/components/help-popover";
 import MetadataKeyCombobox from "~/components/metadata-key-combobox";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
@@ -73,7 +73,6 @@ export default function SetMetadataInput() {
                 <Plus /> Add Metadata
               </Button>
             </FormLabel>
-            <FormMessage />
             <FormControl>
               <div className="divide-y-border divide-y">
                 {setMetadataConfigs.map(({ data, key, action }, idx) => (

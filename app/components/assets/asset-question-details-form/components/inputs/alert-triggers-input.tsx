@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import type z from "zod";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { cn, isNil } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
@@ -95,7 +95,6 @@ export default function AlertTriggersInput() {
                 <Plus /> Add Trigger
               </Button>
             </FormLabel>
-            <FormMessage />
             <FormControl>
               <div className="divide-y-border divide-y">
                 {alertTriggers.map(({ idx, key, action, data }) => (

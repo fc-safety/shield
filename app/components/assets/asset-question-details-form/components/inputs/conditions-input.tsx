@@ -5,7 +5,7 @@ import type z from "zod";
 import ConditionPill from "~/components/assets/condition-pill";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
@@ -111,7 +111,6 @@ export default function ConditionsInput() {
                 <Plus /> Add Condition
               </Button>
             </FormLabel>
-            <FormMessage />
             <FormControl>
               <div className="divide-y-border divide-y">
                 {conditions.flatMap(({ idx, key, action, data: condition }) =>

@@ -19,14 +19,28 @@ export default function AssetQuestionRegulatoryCodesDisplay({
               rel="noopener noreferrer"
               className="hover:underline"
             >
-              {rc.codeIdentifier}
+              <RegulatoryCodeDisplay regulatoryCode={rc} />
             </Link>
           ) : (
-            <span>{rc.codeIdentifier}</span>
+            <RegulatoryCodeDisplay regulatoryCode={rc} />
           )}
           {idx < regulatoryCodes.length - 1 && <span>,</span>}
         </div>
       ))}
     </div>
   ) : null;
+}
+
+function RegulatoryCodeDisplay({
+  regulatoryCode,
+}: {
+  regulatoryCode: NonNullable<AssetQuestion["regulatoryCodes"]>[number];
+}) {
+  return (
+    <div>
+      <span>
+        {regulatoryCode.governingBody}: {regulatoryCode.codeIdentifier}
+      </span>
+    </div>
+  );
 }

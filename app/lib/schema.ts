@@ -32,11 +32,11 @@ export const addressSchema = z.object({
 
 export const createRegulatoryCodeSchema = z.object({
   active: z.boolean().default(true),
-  codeIdentifier: z.string().nonempty(),
-  title: z.string().nonempty(),
+  codeIdentifier: z.string().nonempty("Code identifier is required."),
+  title: z.string().optional(),
   section: z.string().optional(),
-  governingBody: z.string().nonempty(),
-  sourceUrl: z.url().optional(),
+  governingBody: z.string().nonempty("Governing body is required."),
+  sourceUrl: z.preprocess((url) => url || undefined, z.url().optional()).optional(),
   documentVersion: z.string().optional(),
 });
 
@@ -113,7 +113,7 @@ export const fromAddressSchema = z.union([
 ]);
 
 export const createFileSchema = z.object({
-  name: z.string().nonempty(),
+  name: z.string().nonempty("Name is required."),
   url: z.url().nonempty(),
 });
 
