@@ -45,8 +45,8 @@ export default function ClientCombobox({
   }, [fetcher, viewContext]);
 
   useEffect(() => {
-    if (value) preloadClients();
-  }, [value, preloadClients]);
+    if (value || viewContext !== "admin") preloadClients();
+  }, [value, viewContext, preloadClients]);
 
   const [clients, setClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
@@ -72,6 +72,12 @@ export default function ClientCombobox({
       value: c.id,
     }));
   }, [clients, search]);
+
+  useEffect(() => {
+    if (!value && viewContext !== "admin" && clients.length > 0) {
+      onValueChange?.(clients[0].id);
+    }
+  }, [value, viewContext, clients, onValueChange]);
 
   return (
     <ResponsiveCombobox

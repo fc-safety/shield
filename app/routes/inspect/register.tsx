@@ -307,6 +307,7 @@ function StepCompleteAssetSetup({
         createMany: {
           data: setupQuestions.map((question) => ({
             value: "",
+            originalPrompt: question.prompt,
             assetQuestionId: question.id,
           })),
         },

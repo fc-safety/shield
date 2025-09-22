@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
 import type { ViewContext } from "~/.server/api-utils";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
+import { useAuth } from "~/contexts/auth-context";
 import type { Asset } from "~/lib/models";
+import { hasMultiSiteVisibility } from "~/lib/users";
+import StepSelectOwnership from "~/routes/admin/tags/components/tag-assistant/steps/select-ownership";
 import StepAssetDetailsForm from "./components/steps/asset-details-form";
 import StepSelectCategoryOrExistingAsset from "./components/steps/select-category-or-existing-asset";
 import StepSelectExistingAsset from "./components/steps/select-existing-asset";
@@ -37,6 +40,9 @@ export const useCreateAssetAssistant = ({
 }) => {
   const [lastStepId, setLastStepId] = useState(DEFAULT_LAST_STEP_ID);
 
+  const { user } = useAuth();
+  const userHasMultiSiteVisibility = useMemo(() => hasMultiSiteVisibility(user), [user]);
+
   const INITIAL_STATE = useRef({
     ...state,
     ...initialState,
@@ -45,9 +51,23 @@ export const useCreateAssetAssistant = ({
   const [createAssetAssistantState, setCreateAssetAssistantState] =
     useImmer<CreateAssetAssistantState>(INITIAL_STATE);
 
+  const shouldRequireClientId = useMemo(() => {
+    return viewContext === "admin" && INITIAL_STATE.assetData?.clientId === undefined;
+  }, [viewContext]);
+  const shouldRequireSiteId = useMemo(() => {
+    return userHasMultiSiteVisibility && INITIAL_STATE.assetData?.siteId === undefined;
+  }, [userHasMultiSiteVisibility]);
+
+  const firstStepId = useMemo(() => {
+    if (shouldRequireClientId || shouldRequireSiteId) {
+      return StepSelectOwnership.StepId;
+    }
+    return DEFAULT_FIRST_STEP_ID;
+  }, [shouldRequireClientId, shouldRequireSiteId]);
+
   const assistant = useAssistant({
     onClose,
-    firstStepId: DEFAULT_FIRST_STEP_ID,
+    firstStepId,
     onReset: () => {
       setCreateAssetAssistantState(INITIAL_STATE);
     },
@@ -77,11 +97,37 @@ export const useCreateAssetAssistant = ({
   const renderStep = useCallback(
     (context: typeof assistant) => {
       switch (context.stepId) {
+        case StepSelectOwnership.StepId:
+          return (
+            <StepSelectOwnership
+              onStepBackward={onStepBackward}
+              onContinue={() => context.stepTo(StepSelectCategoryOrExistingAsset.StepId, "forward")}
+              clientId={createAssetAssistantState.assetData?.clientId}
+              siteId={createAssetAssistantState.assetData?.siteId}
+              setClientId={(clientId) =>
+                setCreateAssetAssistantState((draft) => {
+                  draft.assetData = { ...draft.assetData, clientId };
+                })
+              }
+              setSiteId={(siteId) =>
+                setCreateAssetAssistantState((draft) => {
+                  draft.assetData = { ...draft.assetData, siteId };
+                })
+              }
+              viewContext={viewContext}
+              clientIdInputDisabled={!shouldRequireClientId}
+              ownershipObjectName="asset"
+            />
+          );
         case StepSelectCategoryOrExistingAsset.StepId:
           return (
             <StepSelectCategoryOrExistingAsset
               allowSelectExistingAsset={mode === "register-tag"}
-              onStepBackward={onStepBackward}
+              onStepBackward={
+                firstStepId === StepSelectOwnership.StepId
+                  ? () => context.stepTo(StepSelectOwnership.StepId, "backward")
+                  : onStepBackward
+              }
               onContinue={({ skipToSelectExistingAsset }) => {
                 if (skipToSelectExistingAsset) {
                   setLastStepId(StepSelectExistingAsset.StepId);
@@ -165,7 +211,7 @@ export const useCreateAssetAssistant = ({
   return {
     context: assistant,
     renderStep,
-    firstStepId: DEFAULT_FIRST_STEP_ID,
+    firstStepId,
     lastStepId,
   };
 };

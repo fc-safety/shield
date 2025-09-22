@@ -200,6 +200,7 @@ export default function TagAssistant({
                     draft.siteId = siteId;
                   });
                 }}
+                viewContext="admin"
               />
             );
           case StepSingleRegisterPreselectedAsset.StepId:
