@@ -192,6 +192,7 @@ export default function Layout({
           <AppSidebar groups={groups} />
           <SidebarInset className="min-w-0">
             <Header
+              user={user}
               leftSlot={
                 <>
                   <SidebarTrigger className="-ml-1.5 [&_svg]:size-5" />

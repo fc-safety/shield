@@ -1,12 +1,6 @@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronRight, ChevronUp, ExternalLink, LogOut, User2, UserCog } from "lucide-react";
-import { Link, NavLink, useMatches } from "react-router";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
+import { ChevronRight, ExternalLink } from "lucide-react";
+import { NavLink, useMatches } from "react-router";
 import {
   Sidebar,
   SidebarContent,
@@ -49,23 +43,7 @@ export interface SidebarMenuSubItem {
   exact?: boolean;
 }
 
-export const DEFAULT_USER_ROUTES = [
-  {
-    title: "Account",
-    url: "/account",
-    icon: UserCog,
-  },
-];
-
-export function AppSidebar({
-  groups,
-  userRoutes = DEFAULT_USER_ROUTES,
-  logoutReturnTo,
-}: {
-  groups: SidebarGroup[];
-  userRoutes?: (Omit<SidebarMenuItem, "children" | "url"> & { url: string })[];
-  logoutReturnTo?: string;
-}) {
+export function AppSidebar({ groups }: { groups: SidebarGroup[] }) {
   const { user } = useAuth();
   const { setOpenMobile } = useSidebar();
 
@@ -220,7 +198,7 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
+          {/* <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton>
@@ -244,7 +222,7 @@ export function AppSidebar({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </SidebarMenuItem>
+          </SidebarMenuItem> */}
         </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />

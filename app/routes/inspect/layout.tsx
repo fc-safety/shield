@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { data, Link, Outlet } from "react-router";
 import { config } from "~/.server/config";
-import { AppSidebar, DEFAULT_USER_ROUTES, type SidebarGroup } from "~/components/app-sidebar";
+import { AppSidebar, type SidebarGroup } from "~/components/app-sidebar";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
@@ -15,6 +15,7 @@ import HelpSidebar from "~/components/help-sidebar";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import { DEFAULT_USER_ROUTES } from "~/components/user-dropdown-menu";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import { can } from "~/lib/users";
@@ -111,18 +112,17 @@ export default function Layout({
     >
       <SidebarProvider defaultOpenState={{ help: false }}>
         <HelpSidebarProvider>
-          <AppSidebar
-            groups={groups}
-            userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
-              ...r,
-              url: `/inspect${r.url}`,
-            }))}
-            logoutReturnTo="/inspect"
-          />
+          <AppSidebar groups={groups} />
           <SidebarInset>
             <Header
               homeTo="/inspect"
               showBreadcrumb={false}
+              user={user}
+              userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
+                ...r,
+                url: `/inspect${r.url}`,
+              }))}
+              logoutReturnTo="/inspect"
               leftSlot={
                 <>
                   <SidebarTrigger className="-ml-1.5 [&_svg]:size-5" />
