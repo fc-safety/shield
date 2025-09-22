@@ -2,9 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import ClientCombobox from "~/components/clients/client-combobox";
 import SiteCombobox from "~/components/clients/site-combobox";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { useAuth } from "~/contexts/auth-context";
+import { can } from "~/lib/users";
 import Step from "../../../../../../components/assistant/components/step";
 
 const selectOwnershipSchema = z.object({
@@ -21,14 +24,23 @@ export default function StepSelectOwnership({
   siteId,
   setClientId,
   setSiteId,
+  viewContext = "user",
+  clientIdInputDisabled = false,
+  ownershipObjectName = "tag",
 }: {
-  onStepBackward: () => void;
+  onStepBackward?: () => void;
   onContinue: () => void;
   clientId?: string;
   siteId?: string;
   setClientId: (clientId: string) => void;
   setSiteId: (siteId: string) => void;
+  viewContext?: ViewContext;
+  clientIdInputDisabled?: boolean;
+  ownershipObjectName?: string;
 }) {
+  const { user } = useAuth();
+  const canReadClients = can(user, "read", "clients");
+
   const form = useForm<TForm>({
     resolver: zodResolver(selectOwnershipSchema),
     values: {
@@ -57,8 +69,8 @@ export default function StepSelectOwnership({
 
   return (
     <Step
-      title="Where and to whom will this tag be registered?"
-      subtitle="Select a client and site to continue."
+      title={`Where and to whom will this ${ownershipObjectName} belong?`}
+      subtitle={`Select a ${canReadClients ? "client and " : ""}site to continue.`}
       onStepBackward={onStepBackward}
       onContinue={() => {
         setClientId(fieldClientId);
@@ -69,32 +81,39 @@ export default function StepSelectOwnership({
     >
       <FormProvider {...form}>
         <form onSubmit={() => onContinue()} className="w-full max-w-sm space-y-4 self-center pb-8">
-          <FormField
-            control={form.control}
-            name="clientId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Which client will this tag belong to?</FormLabel>
-                <FormControl>
-                  <ClientCombobox
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    onBlur={field.onBlur}
-                    className="w-full"
-                    showClear={false}
-                    viewContext="admin"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {canReadClients && (
+            <FormField
+              control={form.control}
+              name="clientId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Which client will this {ownershipObjectName} belong to?</FormLabel>
+                  <FormControl>
+                    <ClientCombobox
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      className="w-full"
+                      showClear={false}
+                      viewContext={viewContext}
+                      disabled={clientIdInputDisabled || viewContext !== "admin"}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <FormField
             control={form.control}
             name="siteId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>And which site?</FormLabel>
+                <FormLabel>
+                  {canReadClients
+                    ? "And which site?"
+                    : `Which site will this ${ownershipObjectName} belong to?`}
+                </FormLabel>
                 <FormControl>
                   <SiteCombobox
                     value={field.value}
@@ -103,8 +122,8 @@ export default function StepSelectOwnership({
                     className="w-full"
                     clientId={fieldClientId}
                     showClear={false}
-                    viewContext="admin"
-                    disabled={!fieldClientId}
+                    viewContext={viewContext}
+                    disabled={!fieldClientId && viewContext === "admin"}
                   />
                 </FormControl>
                 <FormMessage />

@@ -4,6 +4,8 @@ import { requireUserSession } from "~/.server/user-sesssion";
 import { MARK_LEGACY_REDIRECT_VIEWED_QUERY_KEY } from "~/lib/constants";
 import { getSearchParam } from "~/lib/utils";
 
+const LOGIN_REQUIRED_ROUTES = ["/inspect/clear-demo-inspections"];
+
 export async function getUserOrHandleInspectLoginRedirect(request: Request) {
   // If the user is being referred to from the legacy Tags page, we want to show
   // the legacy redirect landing page (unless it's been explicitly marked as viewed).
@@ -25,7 +27,13 @@ export async function getUserOrHandleInspectLoginRedirect(request: Request) {
   // inspection data without logging in.
   let loginRoute: string | undefined = "/public-inspect/login";
 
-  if (intent === "register-tag" || intent === "login") {
+  const pathname = URL.parse(request.url)?.pathname;
+
+  if (
+    intent === "register-tag" ||
+    intent === "login" ||
+    (pathname && LOGIN_REQUIRED_ROUTES.includes(pathname))
+  ) {
     // Use default login route if the intent is to register a tag, which
     // requires a login.
     loginRoute = undefined;
