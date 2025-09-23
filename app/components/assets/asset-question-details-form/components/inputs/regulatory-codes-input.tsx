@@ -145,12 +145,12 @@ export default function RegulatoryCodesInput() {
                       {data.governingBody && (
                         <span className="font-medium">{data.governingBody}: </span>
                       )}
-                      <span className="font-medium">{data.codeIdentifier || "No Code"}</span>
+                      <span>{data.codeIdentifier || "No Code"}</span>
                       {data.title && (
-                        <span className="text-muted-foreground ml-2">- {data.title}</span>
+                        <span className="text-muted-foreground ml-1">- {data.title}</span>
                       )}
                       {data.section && (
-                        <span className="text-muted-foreground ml-2">({data.section})</span>
+                        <span className="text-muted-foreground ml-1">({data.section})</span>
                       )}
                     </div>
                   </div>

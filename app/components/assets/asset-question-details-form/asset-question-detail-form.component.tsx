@@ -143,15 +143,6 @@ function AssetQuestionDetailsFormContent({
     getFieldState,
   } = form;
 
-  useEffect(() => {
-    const sub = watch((values) => {
-      const results = updateAssetQuestionSchema.safeParse(values);
-      console.log(results);
-    });
-
-    return () => sub.unsubscribe();
-  }, [form.formState]);
-
   const type = watch("type");
   const autoSetupSupplyConfigInput = watch("consumableConfig");
 
