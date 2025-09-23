@@ -10,10 +10,10 @@ import { OverallComplianceChart } from "~/components/dashboard/overall-complianc
 import ProductRequestsOverview from "~/components/dashboard/product-requests-overview";
 import { useAuth } from "~/contexts/auth-context";
 import { useServerSentEvents } from "~/hooks/use-server-sent-events";
+import { getSitesQueryOptions } from "~/lib/services/clients.service";
 import {
   getComplianceHistoryQueryOptions,
   getInspectionAlertsQueryOptions,
-  getMySitesQueryOptions,
   getProductRequestsQueryOptions,
 } from "~/lib/services/dashboard.service";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
@@ -36,39 +36,33 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   const queryClient = new QueryClient();
   const prefetchPromises: Promise<void>[] = [];
-
-  const monthsToPrefetch = new Set([1, appState.dash_comp_hist_months ?? 6]);
-  for (const month of monthsToPrefetch) {
-    prefetchPromises.push(
-      queryClient.prefetchQuery(
-        getComplianceHistoryQueryOptions(getAuthenticatedFetcher(request), { months: month })
-      )
-    );
-  }
+  const fetcher = getAuthenticatedFetcher(request);
 
   prefetchPromises.push(
+    // Prefetch overall compliance (just latest month)
     queryClient.prefetchQuery(
-      getProductRequestsQueryOptions(getAuthenticatedFetcher(request), appState.dash_pr_query ?? {})
-    )
-  );
-
-  prefetchPromises.push(
+      getComplianceHistoryQueryOptions(fetcher, { months: 1, siteId: appState.dash_sum_site_id })
+    ),
+    // Prefetch overall compliance (just latest month), but no site filtering
     queryClient.prefetchQuery(
-      getInspectionAlertsQueryOptions(
-        getAuthenticatedFetcher(request),
-        appState.dash_alert_query ?? {}
-      )
-    )
-  );
-
-  prefetchPromises.push(
-    queryClient.prefetchQuery(getMySitesQueryOptions(getAuthenticatedFetcher(request)))
-  );
-
-  prefetchPromises.push(
+      getComplianceHistoryQueryOptions(fetcher, { months: 1, siteId: "all" })
+    ),
+    // Prefetch compliance history
     queryClient.prefetchQuery(
-      getProductCategoriesQueryOptions(getAuthenticatedFetcher(request), { limit: 200 })
-    )
+      getComplianceHistoryQueryOptions(fetcher, { months: appState.dash_comp_hist_months ?? 6 })
+    ),
+    // Prefetch product/supply requests
+    queryClient.prefetchQuery(
+      getProductRequestsQueryOptions(fetcher, appState.dash_pr_query ?? {})
+    ),
+    // Prefetch inspection alerts
+    queryClient.prefetchQuery(
+      getInspectionAlertsQueryOptions(fetcher, appState.dash_alert_query ?? {})
+    ),
+    // Prefetch sites without groups
+    queryClient.prefetchQuery(getSitesQueryOptions(fetcher, { excludeGroups: true, limit: 200 })),
+    // Prefetch product categories
+    queryClient.prefetchQuery(getProductCategoriesQueryOptions(fetcher, { limit: 200 }))
   );
 
   await Promise.all(prefetchPromises);
@@ -120,7 +114,7 @@ export default function Dashboard() {
 
   return (
     <div className="h-[calc(100vh-110px)] overflow-y-auto">
-      <div className="grid h-full auto-rows-[minmax(400px,1fr)] grid-cols-[repeat(auto-fill,minmax(375px,1fr))] gap-2 sm:gap-4 2xl:grid-cols-3">
+      <div className="grid h-full auto-rows-[minmax(400px,1fr)] grid-cols-1 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(375px,1fr))] sm:gap-4 2xl:grid-cols-3">
         {canReadAssets && <OverallComplianceChart refreshKey={overallComplianceRefreshKey} />}
         {canReadAssets && canViewMultipleSites && canReadSites && (
           <ComplianceBySiteChart refreshKey={complianceBySiteRefreshKey} />

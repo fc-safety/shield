@@ -5,21 +5,28 @@ import { Button } from "./ui/button";
 import { Sidebar, SidebarContent, SidebarHeader } from "./ui/sidebar";
 
 export default function HelpSidebar() {
-  const { title, content, setOpen } = useHelpSidebar();
+  const { title, content, contentId, setOpen } = useHelpSidebar();
+
+  // if (contentId === null) {
+  //   return null;
+  // }
 
   return (
-    <Sidebar collapsible="offcanvas" name="help" side="right">
+    <Sidebar
+      collapsible="offcanvas"
+      name="help"
+      side="right"
+      open={contentId === null ? false : undefined}
+    >
       <SidebarHeader className="p-2 sm:p-4">
-        <h2 className="text-lg font-bold flex items-center justify-between">
+        <h2 className="flex items-center justify-between text-lg font-bold">
           <div>{title}</div>
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)}>
             <X />
           </Button>
         </h2>
       </SidebarHeader>
-      <SidebarContent className="p-2 sm:p-4 pt-0 sm:pt-0 text-sm">
-        {content}
-      </SidebarContent>
+      <SidebarContent className="p-2 pt-0 text-sm sm:p-4 sm:pt-0">{content}</SidebarContent>
     </Sidebar>
   );
 }
@@ -40,7 +47,7 @@ export function HelpSidebarSection({
     <div className="grid gap-2">
       <h3 className="text-sm font-semibold">{title}</h3>
       {contents.map((c, index) => (
-        <p key={index} className="text-sm text-muted-foreground indent-2">
+        <p key={index} className="text-muted-foreground indent-2 text-sm">
           {c}
         </p>
       ))}

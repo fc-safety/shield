@@ -5,10 +5,8 @@ import * as React from "react";
 import { Link } from "react-router";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { AssetInspectionsStatus } from "~/lib/enums";
-import {
-  getComplianceHistoryQueryOptions,
-  getMySitesQueryOptions,
-} from "~/lib/services/dashboard.service";
+import { getSitesQueryOptions } from "~/lib/services/clients.service";
+import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
 import { DataTable } from "../data-table/data-table";
 import {
   DashboardCard,
@@ -34,7 +32,9 @@ export function ComplianceBySiteChart({ refreshKey }: { refreshKey: number }) {
 
   useRefreshByNumericKey(refreshKey, refetch);
 
-  const { data: mySites } = useQuery(getMySitesQueryOptions(fetch));
+  const { data: mySites } = useQuery(
+    getSitesQueryOptions(fetch, { excludeGroups: true, limit: 200 })
+  );
 
   const siteRows = React.useMemo(() => {
     if (!mySites || !complianceHistory || !complianceHistory.length) {

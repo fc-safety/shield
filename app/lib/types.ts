@@ -13,6 +13,9 @@ export interface AppState {
   sidebarState?: Record<string, boolean>;
 
   // Dashboard
+  // Overall Compliance Summary
+  dash_sum_site_id?: string;
+
   // -> Supply Requests
   dash_pr_query?: QueryParams & {
     createdOn: {
