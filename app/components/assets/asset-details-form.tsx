@@ -8,10 +8,11 @@ import type { ViewContext } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { connectOrEmpty } from "~/lib/model-form-converters";
 import type { Asset } from "~/lib/models";
 import { createAssetSchema, updateAssetSchema } from "~/lib/schema";
 import { hasMultiSiteVisibility, isGlobalAdmin } from "~/lib/users";
-import { isEmpty } from "~/lib/utils";
+import { isEmpty, nullValuesToUndefined } from "~/lib/utils";
 import ActiveToggleFormInput from "../active-toggle-form-input";
 import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
@@ -63,26 +64,10 @@ export default function AssetDetailsForm({
     resolver: zodResolver(asset ? updateAssetSchema : createAssetSchema),
     values: asset
       ? {
-          ...asset,
-          product: asset.productId
-            ? {
-                connect: {
-                  id: asset.productId,
-                },
-              }
-            : undefined,
-          site: {
-            connect: {
-              id: asset.siteId,
-            },
-          },
-          client: clientId
-            ? {
-                connect: {
-                  id: clientId,
-                },
-              }
-            : undefined,
+          ...nullValuesToUndefined(asset),
+          product: connectOrEmpty(asset, "productId"),
+          site: connectOrEmpty(asset, "siteId"),
+          client: connectOrEmpty(asset, "clientId"),
         }
       : {
           ...FORM_DEFAULTS,

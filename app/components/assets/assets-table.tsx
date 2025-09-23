@@ -26,6 +26,7 @@ import { getAssetAlertsStatus, getAssetInspectionStatus } from "~/lib/model-util
 import type { Asset, ProductCategory } from "~/lib/models";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
+import ActiveToggle from "../active-toggle";
 import { ResponsiveDialog } from "../responsive-dialog";
 import AssetDetailsForm from "./asset-details-form";
 import CreateAssetButton from "./create-asset-assistant/create-asset-button";
@@ -98,7 +99,19 @@ export default function AssetsTable({
       {
         accessorKey: "active",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ getValue }) => <ActiveIndicator2 active={!!getValue()} />,
+        cell: ({ getValue, row }) => {
+          const asset = row.original;
+          const isActive = getValue() as boolean;
+          return !canEdit ? (
+            <ActiveIndicator2 active={isActive} />
+          ) : (
+            <ActiveToggle
+              active={isActive}
+              path={getResourcePath(asset)}
+              viewContext={viewContext}
+            />
+          );
+        },
       },
       {
         accessorKey: "name",
@@ -408,4 +421,8 @@ export default function AssetsTable({
 const getCategoryName = (category: ProductCategory | undefined | null) => {
   if (!category) return "";
   return category.shortName || category.name;
+};
+
+const getResourcePath = (asset?: Asset) => {
+  return `/api/proxy/assets/${asset?.id ?? ""}`;
 };
