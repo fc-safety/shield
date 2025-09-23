@@ -24,11 +24,7 @@ const HelpSidebarContext = createContext<{
   setContentId: () => {},
 });
 
-export function HelpSidebarProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function HelpSidebarProvider({ children }: { children: React.ReactNode }) {
   const {
     isMobile,
     openMobile,
@@ -45,7 +41,7 @@ export function HelpSidebarProvider({
   const [content, setContent] = useState<React.ReactNode>(null);
   const [contentId, setContentId] = useState<string | null>(null);
 
-  const open = isMobile ? openState.help : openMobile === "help";
+  const open = !isMobile ? openState.help : openMobile === "help";
   const setOpen = (open: boolean) => {
     if (!open) {
       setContentId(null);

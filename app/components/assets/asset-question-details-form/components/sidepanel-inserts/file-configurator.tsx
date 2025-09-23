@@ -6,7 +6,7 @@ import { useFormContext } from "react-hook-form";
 import { Link } from "react-router";
 import type z from "zod";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
@@ -50,6 +50,7 @@ export default function FileConfigurator() {
               <FormControl>
                 <Input value={value} onChange={onChange} onBlur={onBlur} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -66,6 +67,7 @@ export default function FileConfigurator() {
               <FormControl>
                 <FileInput value={value} onValueChange={onChange} onBlur={onBlur} />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

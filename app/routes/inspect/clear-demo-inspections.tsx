@@ -9,7 +9,7 @@ import {
   subHours,
   subMinutes,
 } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, Nfc } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
@@ -67,6 +67,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       order: {
         createdOn: "desc",
       },
+      include: {
+        asset: {
+          include: {
+            tag: true,
+          },
+        },
+      },
     })
     .then(({ results }) => results);
 
@@ -109,20 +116,28 @@ export default function ClearDemoInspections({
           {recentInspections.map((inspection) => (
             <div key={inspection.id} className="border-border flex flex-col gap-2 border-t py-2">
               <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+                <div className="flex shrink-0 items-center gap-1">
+                  <div className="border-border text-foreground inline-flex items-center gap-1 rounded-sm border px-1 py-0.5 text-xs font-semibold">
+                    <Nfc className="size-3" />
+                    {inspection.asset.tag?.serialNumber || <>&mdash;</>}
+                  </div>
+                  <div>&bull;</div>
+
+                  <Link
+                    to={inspection.asset ? `/assets/${inspection.asset.id}` : "#"}
+                    className="group inline-flex items-center gap-2"
+                  >
+                    <span className="group-hover:underline">{inspection.asset.name}</span>
+                    {inspection.asset.product.productCategory.icon && (
+                      <Icon
+                        iconId={inspection.asset.product.productCategory.icon}
+                        color={inspection.asset.product.productCategory.color}
+                        className="text-lg"
+                      />
+                    )}
+                  </Link>
+                </div>
                 {format(inspection.createdOn, "PPpp")}
-                <Link
-                  to={inspection.asset ? `/assets/${inspection.asset.id}` : "#"}
-                  className="group inline-flex items-center gap-2"
-                >
-                  <span className="group-hover:underline">{inspection.asset.name}</span>
-                  {inspection.asset.product.productCategory.icon && (
-                    <Icon
-                      iconId={inspection.asset.product.productCategory.icon}
-                      color={inspection.asset.product.productCategory.color}
-                      className="text-lg"
-                    />
-                  )}
-                </Link>
               </div>
               <div>
                 <p className="text-sm">

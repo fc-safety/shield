@@ -1,16 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import type { PieSeriesOption } from "echarts";
-import { Shield } from "lucide-react";
+import { Shield, Warehouse } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
+import { useAppStateValue } from "~/contexts/app-state-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
 import { AssetInspectionsStatuses, type AssetInspectionsStatus } from "~/lib/enums";
+import { getSitesQueryOptions } from "~/lib/services/clients.service";
 import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import {
   DashboardCard,
   DashboardCardContent,
@@ -26,6 +29,7 @@ import type { AssetRow } from "./types/stats";
 export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
   const [theme] = useTheme();
   const themeValues = useThemeValues();
+  const [siteId, setSiteId] = useAppStateValue("dash_sum_site_id");
 
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
@@ -36,7 +40,16 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
     error,
     isLoading,
     refetch,
-  } = useQuery(getComplianceHistoryQueryOptions(fetch, { months: 1 }));
+  } = useQuery(
+    getComplianceHistoryQueryOptions(fetch, {
+      months: 1,
+      siteId,
+    })
+  );
+
+  const { data: mySites } = useQuery(
+    getSitesQueryOptions(fetch, { excludeGroups: true, limit: 200 })
+  );
 
   useRefreshByNumericKey(refreshKey, refetch);
 
@@ -198,9 +211,23 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
   return (
     <DashboardCard>
       <DashboardCardHeader>
-        <DashboardCardTitle>
-          <Shield /> Overall Compliance
+        <DashboardCardTitle className="flex-nowrap">
+          <Shield /> <span className="whitespace-nowrap">Overall Compliance</span>
           <div className="flex-1"></div>
+          <Select value={siteId} onValueChange={(value) => setSiteId(value)}>
+            <SelectTrigger className="w-auto min-w-[100px] shrink" size="sm">
+              <Warehouse />
+              <SelectValue placeholder="All Sites" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={"all"}>All Sites</SelectItem>
+              {mySites?.map((site) => (
+                <SelectItem key={site.id} value={site.id}>
+                  {site.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {/* <Button variant="outline" size="iconSm">
             <Printer />
           </Button> */}

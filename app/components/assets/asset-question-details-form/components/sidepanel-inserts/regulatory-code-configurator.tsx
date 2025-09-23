@@ -1,6 +1,6 @@
 import { useFormContext } from "react-hook-form";
 import type z from "zod";
-import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
@@ -37,6 +37,28 @@ export default function RegulatoryCodeConfigurator() {
           control={control}
           name={
             regulatoryCodeAction === "create"
+              ? `regulatoryCodes.create.${idx}.governingBody`
+              : `regulatoryCodes.update.${idx}.data.governingBody`
+          }
+          render={({ field: { onChange, onBlur, value } }) => (
+            <FormItem>
+              <FormLabel>Governing Body / Agency</FormLabel>
+              <FormControl>
+                <Input
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder="e.g., ISO, OSHA, FDA, ANSI"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name={
+            regulatoryCodeAction === "create"
               ? `regulatoryCodes.create.${idx}.codeIdentifier`
               : `regulatoryCodes.update.${idx}.data.codeIdentifier`
           }
@@ -51,6 +73,7 @@ export default function RegulatoryCodeConfigurator() {
                   placeholder="e.g., ISO-9001, OSHA-1910.147, FDA-21CFR820"
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -63,7 +86,7 @@ export default function RegulatoryCodeConfigurator() {
           }
           render={({ field: { onChange, onBlur, value } }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel>Title (Optional)</FormLabel>
               <FormControl>
                 <Input
                   value={value}
@@ -72,27 +95,7 @@ export default function RegulatoryCodeConfigurator() {
                   placeholder="Brief title of the regulation"
                 />
               </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={control}
-          name={
-            regulatoryCodeAction === "create"
-              ? `regulatoryCodes.create.${idx}.governingBody`
-              : `regulatoryCodes.update.${idx}.data.governingBody`
-          }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Governing Body</FormLabel>
-              <FormControl>
-                <Input
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="e.g., ISO, OSHA, FDA, ANSI"
-                />
-              </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -115,6 +118,7 @@ export default function RegulatoryCodeConfigurator() {
                   rows={2}
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -137,6 +141,7 @@ export default function RegulatoryCodeConfigurator() {
                   type="url"
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -158,6 +163,7 @@ export default function RegulatoryCodeConfigurator() {
                   placeholder="e.g., 2023-06, Rev 3.1, Version 2.0"
                 />
               </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />

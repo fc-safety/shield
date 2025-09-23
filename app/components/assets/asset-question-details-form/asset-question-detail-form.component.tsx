@@ -90,8 +90,8 @@ function AssetQuestionDetailsFormContent({
   const { closeSidepanel } = useAssetQuestionDetailFormContext();
 
   const form = useForm({
-    resolver: zodResolver(assetQuestion ? updateAssetQuestionSchema : createAssetQuestionSchema),
-    values: (assetQuestion
+    resolver: zodResolver(!isNew ? updateAssetQuestionSchema : createAssetQuestionSchema),
+    values: (!isNew
       ? {
           ...nullValuesToUndefined(assetQuestion),
           assetAlertCriteria: {
@@ -133,7 +133,7 @@ function AssetQuestionDetailsFormContent({
             : undefined,
         }
       : undefined) as TForm | undefined,
-    defaultValues: assetQuestion ? undefined : (FORM_DEFAULTS as TForm),
+    defaultValues: !isNew ? undefined : (FORM_DEFAULTS as TForm),
     mode: "onChange",
   });
 

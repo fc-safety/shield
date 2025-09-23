@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import type z from "zod";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
 import RegulatoryCodeConfigurator from "../sidepanel-inserts/regulatory-code-configurator";
@@ -111,7 +111,6 @@ export default function RegulatoryCodesInput() {
                 <Plus /> Add Regulatory Code
               </Button>
             </FormLabel>
-            <FormMessage />
             <FormControl>
               <div className="divide-y-border divide-y">
                 {regulatoryCodes.map(({ idx, key, action, data }) => (
@@ -143,12 +142,15 @@ export default function RegulatoryCodesInput() {
                       <Pencil />
                     </Button>
                     <div className="flex-1 text-sm">
-                      <span className="font-medium">{data.codeIdentifier || "No Code"}</span>
+                      {data.governingBody && (
+                        <span className="font-medium">{data.governingBody}: </span>
+                      )}
+                      <span>{data.codeIdentifier || "No Code"}</span>
                       {data.title && (
-                        <span className="text-muted-foreground ml-2">- {data.title}</span>
+                        <span className="text-muted-foreground ml-1">- {data.title}</span>
                       )}
                       {data.section && (
-                        <span className="text-muted-foreground ml-2">({data.section})</span>
+                        <span className="text-muted-foreground ml-1">({data.section})</span>
                       )}
                     </div>
                   </div>

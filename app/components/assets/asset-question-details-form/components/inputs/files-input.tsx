@@ -5,7 +5,7 @@ import { Link } from "react-router";
 import type z from "zod";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
 import FileConfigurator from "../sidepanel-inserts/file-configurator";
@@ -92,7 +92,6 @@ export default function FilesInput() {
                 <Plus /> Add File
               </Button>
             </FormLabel>
-            <FormMessage />
             <FormControl>
               <div className="divide-y-border divide-y">
                 {files.map(({ idx, key, action, data }) => (
