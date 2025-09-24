@@ -21,7 +21,7 @@ export default [
     route("setup", "./routes/inspect/setup.tsx"),
     route("next", "./routes/inspect/next.tsx"),
     route("routes", "./routes/inspect/routes.tsx"),
-    route("register", "./routes/inspect/register.tsx"),
+    route("register", "./routes/inspect/register/index.tsx"),
     route("clear-demo-inspections", "./routes/inspect/clear-demo-inspections.tsx"),
 
     // User routes

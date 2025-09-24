@@ -8,8 +8,10 @@ import Step from "~/components/assistant/components/step";
 import { Button } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { connectOrEmpty } from "~/lib/model-form-converters";
 import type { Asset } from "~/lib/models";
 import { createAssetSchema, updateAssetSchema } from "~/lib/schema";
+import { nullValuesToUndefined } from "~/lib/utils";
 
 type TForm = z.infer<typeof createAssetSchema | typeof updateAssetSchema>;
 
@@ -39,28 +41,10 @@ export default function StepAssetDetailsForm({
       location: "",
       placement: "",
       metadata: {},
-      ...assetData,
-      product: assetData?.productId
-        ? {
-            connect: {
-              id: assetData.productId,
-            },
-          }
-        : undefined,
-      site: assetData?.siteId
-        ? {
-            connect: {
-              id: assetData.siteId,
-            },
-          }
-        : undefined,
-      client: assetData?.clientId
-        ? {
-            connect: {
-              id: assetData.clientId,
-            },
-          }
-        : undefined,
+      ...nullValuesToUndefined(assetData ?? {}),
+      product: connectOrEmpty(assetData, "productId"),
+      site: connectOrEmpty(assetData, "siteId"),
+      client: connectOrEmpty(assetData, "clientId"),
     },
   });
 

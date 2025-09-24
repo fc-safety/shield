@@ -13,7 +13,7 @@ import type { updateAssetQuestionSchema } from "~/lib/schema";
 
 type TForm = Pick<z.infer<typeof updateAssetQuestionSchema>, "setAssetMetadataConfig">;
 
-export default function SetMetadataInput() {
+export default function SetMetadataInput({ requireDynamic = false }: { requireDynamic?: boolean }) {
   const { watch, setValue, control } = useFormContext<TForm>();
 
   const createSetAssetMetadataConfigs = watch("setAssetMetadataConfig.create.metadata");
@@ -108,6 +108,7 @@ export default function SetMetadataInput() {
                     />
                     <Label className="flex items-center gap-1">
                       <Checkbox
+                        disabled={requireDynamic}
                         checked={data.type === "STATIC"}
                         onCheckedChange={(checked) =>
                           setValue(

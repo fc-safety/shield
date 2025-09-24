@@ -22,6 +22,7 @@ import type { Tag } from "~/lib/models";
 import { can } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
 import type { Route } from "./+types/index";
+import EditableAssetDisplay from "./components/editable-asset-display";
 import TagAssistantButton from "./components/tag-assistant/tag-assistant-button";
 import { generateSignedTagUrl } from "./services/tags.service";
 
@@ -87,7 +88,17 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
           [asset?.product?.name, asset?.location, asset?.placement].filter(Boolean).join(" - "),
         id: "assigned asset",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ getValue }) => getValue() || <>&mdash;</>,
+        cell: ({ row }) => {
+          const tag = row.original;
+          return (
+            <EditableAssetDisplay
+              tag={tag}
+              asset={tag.asset ?? undefined}
+              key={`tag-row-${tag.id}`}
+              viewContext="admin"
+            />
+          );
+        },
       },
       {
         accessorFn: ({ asset }) => asset?.setupOn,
@@ -170,7 +181,7 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
         ),
       },
     ],
-    [copyUrlForTagExternalId, canUpdate, canDelete, editTag, submitDelete, setDeleteAction]
+    [copyUrlForTagExternalId, canUpdate, canDelete, editTag.openData, submitDelete, setDeleteAction]
   );
 
   const allClients = dedupById(

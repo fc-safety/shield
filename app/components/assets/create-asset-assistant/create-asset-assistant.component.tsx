@@ -1,12 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import type { ViewContext } from "~/.server/api-utils";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
 import { useAuth } from "~/contexts/auth-context";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Asset } from "~/lib/models";
+import { getAssetQuestionsByAssetPropertiesQueryOptions } from "~/lib/services/assets.service";
 import { hasMultiSiteVisibility } from "~/lib/users";
 import StepSelectOwnership from "~/routes/admin/tags/components/tag-assistant/steps/select-ownership";
 import StepAssetDetailsForm from "./components/steps/asset-details-form";
+import StepConfigureAsset from "./components/steps/configure-asset";
 import StepSelectCategoryOrExistingAsset from "./components/steps/select-category-or-existing-asset";
 import StepSelectExistingAsset from "./components/steps/select-existing-asset";
 import StepSelectProduct from "./components/steps/select-product";
@@ -14,6 +18,7 @@ import StepSelectProduct from "./components/steps/select-product";
 interface CreateAssetAssistantState {
   productCategoryId?: string;
   assetData?: Partial<Asset>;
+  asset?: Asset;
 }
 
 const DEFAULT_FIRST_STEP_ID = StepSelectCategoryOrExistingAsset.StepId;
@@ -41,37 +46,28 @@ export const useCreateAssetAssistant = ({
   const [lastStepId, setLastStepId] = useState(DEFAULT_LAST_STEP_ID);
 
   const { user } = useAuth();
+  const { fetchOrThrow } = useAuthenticatedFetch();
   const userHasMultiSiteVisibility = useMemo(() => hasMultiSiteVisibility(user), [user]);
 
-  const INITIAL_STATE = useRef({
-    ...state,
+  // Keep stable reference to initial state that only changes when the assistant is reset.
+  // This is used to maintain a non-stale version of the initial state for use by the combined
+  // state below (called `externalState`).
+  const [initialExternalState, setInitialExternalState] = useState({
     ...initialState,
-  } as const).current;
+    ...state,
+  } as const);
+  // Keep an unstable reference to the state that updates whenever the upstream props change.
+  const externalState = useMemo(
+    () =>
+      ({
+        ...initialExternalState,
+        ...state,
+      }) as const,
+    [initialExternalState, state]
+  );
 
   const [createAssetAssistantState, setCreateAssetAssistantState] =
-    useImmer<CreateAssetAssistantState>(INITIAL_STATE);
-
-  const shouldRequireClientId = useMemo(() => {
-    return viewContext === "admin" && INITIAL_STATE.assetData?.clientId === undefined;
-  }, [viewContext]);
-  const shouldRequireSiteId = useMemo(() => {
-    return userHasMultiSiteVisibility && INITIAL_STATE.assetData?.siteId === undefined;
-  }, [userHasMultiSiteVisibility]);
-
-  const firstStepId = useMemo(() => {
-    if (shouldRequireClientId || shouldRequireSiteId) {
-      return StepSelectOwnership.StepId;
-    }
-    return DEFAULT_FIRST_STEP_ID;
-  }, [shouldRequireClientId, shouldRequireSiteId]);
-
-  const assistant = useAssistant({
-    onClose,
-    firstStepId,
-    onReset: () => {
-      setCreateAssetAssistantState(INITIAL_STATE);
-    },
-  });
+    useImmer<CreateAssetAssistantState>(initialExternalState);
 
   useEffect(() => {
     if (!state) return;
@@ -93,6 +89,47 @@ export const useCreateAssetAssistant = ({
     state?.assetData?.inspectionCycle,
     setCreateAssetAssistantState,
   ]);
+
+  const shouldRequireClientId = useMemo(() => {
+    return viewContext === "admin" && !externalState.assetData?.clientId;
+  }, [viewContext, externalState.assetData?.clientId]);
+  const shouldRequireSiteId = useMemo(() => {
+    return userHasMultiSiteVisibility && !externalState.assetData?.siteId;
+  }, [userHasMultiSiteVisibility, externalState.assetData?.siteId]);
+
+  const firstStepId = useMemo(() => {
+    if (shouldRequireClientId || shouldRequireSiteId) {
+      return StepSelectOwnership.StepId;
+    }
+    return DEFAULT_FIRST_STEP_ID;
+  }, [shouldRequireClientId, shouldRequireSiteId]);
+
+  const assistant = useAssistant({
+    onClose,
+    firstStepId,
+    onReset: () => {
+      const newInitialExternalState = {
+        ...initialState,
+        ...state,
+      } as const;
+      setInitialExternalState(newInitialExternalState);
+      setCreateAssetAssistantState(newInitialExternalState);
+    },
+  });
+
+  const { data: assetConfigurationQuestions } = useQuery({
+    ...getAssetQuestionsByAssetPropertiesQueryOptions(fetchOrThrow, {
+      type: "CONFIGURATION",
+      siteId: createAssetAssistantState.assetData?.siteId ?? "",
+      productId: createAssetAssistantState.assetData?.productId ?? "",
+    }),
+    enabled:
+      !!createAssetAssistantState.assetData &&
+      !createAssetAssistantState.assetData.configured &&
+      !!createAssetAssistantState.assetData.siteId &&
+      !!createAssetAssistantState.assetData.productId,
+  });
+  const shouldConfigure = assetConfigurationQuestions && assetConfigurationQuestions.length > 0;
 
   const renderStep = useCallback(
     (context: typeof assistant) => {
@@ -190,7 +227,16 @@ export const useCreateAssetAssistant = ({
             <StepAssetDetailsForm
               onClose={onClose}
               onStepBackward={() => context.stepTo(StepSelectProduct.StepId, "backward")}
-              onContinue={onContinue}
+              onContinue={
+                shouldConfigure
+                  ? (asset) => {
+                      setCreateAssetAssistantState((draft) => {
+                        draft.asset = asset;
+                      });
+                      context.stepTo(StepConfigureAsset.StepId, "forward");
+                    }
+                  : onContinue
+              }
               assetData={createAssetAssistantState.assetData}
               setAssetData={(data) =>
                 setCreateAssetAssistantState((draft) => {
@@ -198,14 +244,32 @@ export const useCreateAssetAssistant = ({
                 })
               }
               viewContext={viewContext}
+              continueLabel={shouldConfigure ? "Configure" : continueLabel}
+            />
+          );
+        case StepConfigureAsset.StepId:
+          return (
+            <StepConfigureAsset
+              assetId={createAssetAssistantState.asset?.id ?? ""}
+              questions={assetConfigurationQuestions ?? []}
+              onStepBackward={() => context.stepTo(StepAssetDetailsForm.StepId, "backward")}
+              onContinue={
+                onContinue && createAssetAssistantState.asset
+                  ? () =>
+                      createAssetAssistantState.asset &&
+                      onContinue?.(createAssetAssistantState.asset)
+                  : undefined
+              }
               continueLabel={continueLabel}
+              onClose={onClose}
+              viewContext={viewContext}
             />
           );
         default:
           return null;
       }
     },
-    [createAssetAssistantState]
+    [createAssetAssistantState, shouldConfigure, assetConfigurationQuestions]
   );
 
   return {

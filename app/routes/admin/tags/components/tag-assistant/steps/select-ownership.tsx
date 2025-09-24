@@ -43,7 +43,7 @@ export default function StepSelectOwnership({
 
   const form = useForm<TForm>({
     resolver: zodResolver(selectOwnershipSchema),
-    values: {
+    defaultValues: {
       clientId: clientId ?? "",
       siteId: siteId ?? "",
     },
@@ -56,16 +56,25 @@ export default function StepSelectOwnership({
     setValue,
   } = form;
 
-  const fieldClientId = watch("clientId");
-  const fieldSiteId = watch("siteId");
-
   useEffect(() => {
-    if (!fieldClientId || !fieldSiteId) return;
-    if (fieldClientId === clientId && fieldSiteId === siteId) return;
-    setValue("siteId", "", {
-      shouldValidate: true,
+    const subscription = watch(({ siteId, clientId }, { name, type }) => {
+      if (type === "change") {
+        if (name === "clientId" && clientId) {
+          setClientId(clientId);
+          if (siteId) {
+            setValue("siteId", "", {
+              shouldValidate: true,
+            });
+          }
+        } else if (name === "siteId" && siteId) {
+          setSiteId(siteId ?? "");
+        }
+      }
     });
-  }, [fieldClientId]);
+    return () => subscription.unsubscribe();
+  }, [watch]);
+
+  const fieldClientId = watch("clientId");
 
   return (
     <Step
@@ -73,8 +82,6 @@ export default function StepSelectOwnership({
       subtitle={`Select a ${canReadClients ? "client and " : ""}site to continue.`}
       onStepBackward={onStepBackward}
       onContinue={() => {
-        setClientId(fieldClientId);
-        setSiteId(fieldSiteId);
         onContinue();
       }}
       continueDisabled={!isValid}

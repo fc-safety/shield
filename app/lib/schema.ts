@@ -738,6 +738,14 @@ const buildQuestionResponseValidator =
     });
   };
 
+export const buildConfigureAssetSchema = (questions: AssetQuestion[]) => {
+  return z.object({
+    responses: z
+      .array(createAssetQuestionResponseSchema)
+      .superRefine(buildQuestionResponseValidator(questions)),
+  });
+};
+
 /**
  * Builds a Zod schema for inspection creation, dynamically validating each response
  * according to the corresponding question's requirements.
