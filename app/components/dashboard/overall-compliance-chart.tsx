@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { PieSeriesOption } from "echarts";
 import { Shield, Warehouse } from "lucide-react";
 import * as React from "react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
 import { useAppStateValue } from "~/contexts/app-state-context";
@@ -50,6 +50,12 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
   const { data: mySites } = useQuery(
     getSitesQueryOptions(fetch, { excludeGroups: true, limit: 200 })
   );
+
+  useEffect(() => {
+    if (mySites && siteId && siteId !== "all" && !mySites.some((site) => site.id === siteId)) {
+      setSiteId("all");
+    }
+  }, [siteId, mySites, setSiteId]);
 
   useRefreshByNumericKey(refreshKey, refetch);
 
