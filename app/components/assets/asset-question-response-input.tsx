@@ -37,7 +37,7 @@ export default function AssetQuestionResponseTypeInput<T extends AssetQuestionRe
   onValueChange,
   onBlur,
   disabled = false,
-  tone,
+  tone = ASSET_QUESTION_TONES.NEUTRAL,
   options,
   placeholder,
 }: AssetQuestionResponseTypeInputProps<T>) {

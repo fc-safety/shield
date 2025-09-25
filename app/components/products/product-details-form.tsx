@@ -369,12 +369,20 @@ export default function ProductDetailsForm({
         {canAssignOwnership && (
           <FormField
             control={form.control}
-            name="client.connect.id"
+            name="client"
             render={({ field: { value, onChange } }) => (
               <FormItem>
                 <FormLabel>Owner</FormLabel>
                 <FormControl>
-                  <ClientCombobox value={value} onValueChange={onChange} className="w-full" />
+                  <ClientCombobox
+                    value={value?.connect?.id}
+                    onValueChange={(v) =>
+                      onChange(v ? { connect: { id: v } } : { disconnect: true })
+                    }
+                    className="w-full"
+                    showClear={viewContext === "admin"}
+                    viewContext={viewContext}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

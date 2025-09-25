@@ -233,7 +233,7 @@ export const createProductCategorySchema = z.object({
   description: z.string().optional(),
   icon: z.string().optional(),
   color: z.string().optional(),
-  client: optionalConnectSchema,
+  client: disconnectableSchema.optional(),
 });
 
 export const updateProductCategorySchema = createProductCategorySchema
@@ -251,7 +251,7 @@ export const createManufacturerSchema = z.object({
       message: "Manufacturer name cannot be generic.",
     }),
   homeUrl: z.string().optional(),
-  client: optionalConnectSchema,
+  client: disconnectableSchema.optional(),
 });
 
 export const updateManufacturerSchema = createManufacturerSchema
@@ -291,7 +291,7 @@ export const createProductSchema = z.object({
       id: z.string(),
     }),
   }),
-  client: optionalConnectSchema,
+  client: disconnectableSchema.optional(),
   parentProduct: optionalConnectSchema,
   ansiCategory: optionalConnectOrCreateSchema(createAnsiCategorySchema).optional(),
 });

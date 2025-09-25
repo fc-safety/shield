@@ -153,7 +153,7 @@ function ProductCategoriesCard({
   showOwner?: boolean;
   viewContext?: ViewContext;
 }) {
-  const { submit: submitDelete } = useModalFetcher({
+  const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete product category",
   });
 
@@ -267,7 +267,8 @@ function ProductCategoriesCard({
                           {},
                           {
                             method: "delete",
-                            action: `/api/proxy/product-categories/${category.id}`,
+                            path: `/api/proxy/product-categories/${category.id}`,
+                            viewContext,
                           }
                         );
                       };
