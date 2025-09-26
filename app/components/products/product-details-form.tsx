@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
@@ -21,12 +23,13 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
 import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
-import { can } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { slugify } from "~/lib/utils";
 import ActiveToggleFormInput from "../active-toggle-form-input";
 import ClientCombobox from "../clients/client-combobox";
 import { ImageUploadInput } from "../image-upload-input";
 import LegacyIdField from "../legacy-id-field";
+import MetadataInput from "../metadata-input";
 import { Label } from "../ui/label";
 import AnsiCategoryCombobox from "./ansi-category-combobox";
 import ManufacturerSelector from "./manufacturer-selector";
@@ -55,7 +58,10 @@ export default function ProductDetailsForm({
   consumable = false,
   viewContext,
 }: ProductDetailsFormProps) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
   const { user } = useAuth();
+  const userIsGlobalAdmin = isGlobalAdmin(user);
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
 
   const isNew = !product;
@@ -366,28 +372,69 @@ export default function ProductDetailsForm({
             </FormItem>
           )}
         />
-        {canAssignOwnership && (
-          <FormField
-            control={form.control}
-            name="client"
-            render={({ field: { value, onChange } }) => (
-              <FormItem>
-                <FormLabel>Owner</FormLabel>
-                <FormControl>
-                  <ClientCombobox
-                    value={value?.connect?.id}
-                    onValueChange={(v) =>
-                      onChange(v ? { connect: { id: v } } : { disconnect: true })
-                    }
-                    className="w-full"
-                    showClear={viewContext === "admin"}
-                    viewContext={viewContext}
+        {/* Advanced Section */}
+        {(userIsGlobalAdmin || canAssignOwnership) && (
+          <div className="rounded-lg border p-4">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="hover:text-muted-foreground flex w-full items-center justify-between text-sm font-medium transition-colors"
+            >
+              <span>Advanced Options</span>
+              <motion.div
+                animate={{ rotate: showAdvanced ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ChevronDown className="size-4" />
+              </motion.div>
+            </button>
+            <motion.div
+              initial={false}
+              animate={{
+                height: showAdvanced ? "auto" : 0,
+                opacity: showAdvanced ? 1 : 0,
+              }}
+              transition={{
+                height: {
+                  duration: 0.3,
+                  ease: "easeInOut",
+                },
+                opacity: {
+                  duration: 0.2,
+                  ease: "easeInOut",
+                },
+              }}
+              style={{ overflow: "hidden" }}
+            >
+              {" "}
+              <div className="space-y-4 pt-6">
+                {userIsGlobalAdmin && <MetadataInput />}
+                {canAssignOwnership && (
+                  <FormField
+                    control={form.control}
+                    name="client"
+                    render={({ field: { value, onChange } }) => (
+                      <FormItem>
+                        <FormLabel>Owner</FormLabel>
+                        <FormControl>
+                          <ClientCombobox
+                            value={value?.connect?.id}
+                            onValueChange={(v) =>
+                              onChange(v ? { connect: { id: v } } : { disconnect: true })
+                            }
+                            className="w-full"
+                            showClear={viewContext === "admin"}
+                            viewContext={viewContext}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
         <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
           {isSubmitting ? "Saving..." : "Save"}

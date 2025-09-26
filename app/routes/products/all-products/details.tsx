@@ -127,6 +127,27 @@ export default function ProductDetails({
                   label: "Owner",
                   value: product.client ? <CustomTag text={product.client.name} /> : <>&mdash;</>,
                 },
+                {
+                  label: "Metadata",
+                  value:
+                    product.metadata && Object.keys(product.metadata).length > 0 ? (
+                      <div className="flex flex-col flex-wrap gap-2">
+                        {Object.entries(product.metadata ?? {}).map(([key, value]) => (
+                          <div
+                            key={key}
+                            className="flex w-max overflow-hidden rounded-full border border-gray-500 text-xs dark:border-gray-400"
+                          >
+                            <div className="bg-gray-500 px-2 py-1 font-medium text-white dark:bg-gray-400 dark:text-gray-900">
+                              {key}
+                            </div>
+                            <div className="px-2 py-1">{value}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">No metadata.</span>
+                    ),
+                },
               ]}
               defaultValue={<>&mdash;</>}
             />

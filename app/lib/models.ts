@@ -460,6 +460,7 @@ export interface Product extends BaseModel {
   parentProduct?: Product | null;
   assetQuestions?: AssetQuestion[];
   client?: Client | null;
+  metadata?: Record<string, string>;
 
   consumableProducts?: Product[];
   ansiCategory?: AnsiCategory | null;

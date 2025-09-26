@@ -292,6 +292,7 @@ export const createProductSchema = z.object({
     }),
   }),
   client: disconnectableSchema.optional(),
+  metadata: z.record(z.string().nonempty(), z.string().nonempty()).optional(),
   parentProduct: optionalConnectSchema,
   ansiCategory: optionalConnectOrCreateSchema(createAnsiCategorySchema).optional(),
 });
