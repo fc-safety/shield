@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { FireExtinguisher, MoreHorizontal, Pencil, SquareStack, Trash } from "lucide-react";
-import { type UIMatch } from "react-router";
+import { useNavigate, type ShouldRevalidateFunctionArgs, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
 import { requireUserSession } from "~/.server/user-sesssion";
@@ -35,6 +35,15 @@ import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
+// When deleting a product, we don't want to revalidate the page. This would
+// cause a 404 before the page could navigate back.
+export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
+  if (arg.formMethod === "DELETE") {
+    return false;
+  }
+  return arg.defaultShouldRevalidate;
+};
+
 export const handle = {
   breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
     label: data?.product.name || "Details",
@@ -67,9 +76,22 @@ export default function ProductDetails({
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const globalAdmin = isGlobalAdmin(user);
-  const canUpdate =
-    can(user, "update", "products") &&
-    (globalAdmin || product.client?.externalId === user.clientId);
+
+  const hasOwnership = globalAdmin || product.client?.externalId === user.clientId;
+  const canUpdate = can(user, "update", "products") && hasOwnership;
+  const canDelete = can(user, "delete", "products") && hasOwnership;
+  const navigate = useNavigate();
+
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
+
+  const { submitJson: submitDelete } = useModalFetcher({
+    defaultErrorMessage: "Error: Failed to delete product",
+    onSubmitted: () => {
+      navigate(`../`);
+    },
+  });
 
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
@@ -91,6 +113,33 @@ export default function ProductDetails({
                     canAssignOwnership={globalAdmin}
                     viewContext={globalAdmin ? "admin" : "user"}
                   />
+                )}
+                {canDelete && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    type="button"
+                    onClick={() => {
+                      setDeleteAction((draft) => {
+                        draft.open = true;
+                        draft.title = "Delete Product";
+                        draft.message = `Are you sure you want to delete ${product.name}?`;
+                        draft.requiredUserInput = product.name;
+                        draft.onConfirm = () => {
+                          submitDelete(
+                            {},
+                            {
+                              method: "delete",
+                              path: `/api/proxy/products/${product.id}`,
+                              viewContext: globalAdmin ? "admin" : "user",
+                            }
+                          );
+                        };
+                      });
+                    }}
+                  >
+                    <Trash />
+                  </Button>
                 )}
               </div>
             </div>
@@ -243,6 +292,8 @@ export default function ProductDetails({
           </CardContent>
         </Card> */}
       </div>
+
+      <ConfirmationDialog {...deleteAction} />
     </div>
   );
 }

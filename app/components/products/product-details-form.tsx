@@ -14,7 +14,7 @@ import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
@@ -24,7 +24,7 @@ import { type Manufacturer, type Product, type ProductCategory } from "~/lib/mod
 import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
-import { slugify } from "~/lib/utils";
+import { nullValuesToUndefined, slugify } from "~/lib/utils";
 import ActiveToggleFormInput from "../active-toggle-form-input";
 import ClientCombobox from "../clients/client-combobox";
 import { ImageUploadInput } from "../image-upload-input";
@@ -98,7 +98,7 @@ export default function ProductDetailsForm({
     resolver: zodResolver(isNew ? createProductSchema : updateProductSchema),
     values: (product
       ? {
-          ...product,
+          ...nullValuesToUndefined(product),
           productCategory: {
             connect: {
               id: product.productCategoryId,
@@ -129,6 +129,13 @@ export default function ProductDetailsForm({
   } = form;
 
   const productType = watch("type");
+
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      console.debug(updateProductSchema.safeParse(value));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const { createOrUpdateJson: submit, isSubmitting: isSubmittingData } = useModalFetcher({
     onSubmitted,
