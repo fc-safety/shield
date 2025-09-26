@@ -14,7 +14,7 @@ import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
@@ -129,13 +129,6 @@ export default function ProductDetailsForm({
   } = form;
 
   const productType = watch("type");
-
-  useEffect(() => {
-    const subscription = watch((value, { name }) => {
-      console.debug(updateProductSchema.safeParse(value));
-    });
-    return () => subscription.unsubscribe();
-  }, [watch]);
 
   const { createOrUpdateJson: submit, isSubmitting: isSubmittingData } = useModalFetcher({
     onSubmitted,
