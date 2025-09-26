@@ -10,8 +10,8 @@ export default function AssetQuestionRegulatoryCodesDisplay({
   regulatoryCodes: AssetQuestion["regulatoryCodes"] | undefined | null;
 }) {
   return regulatoryCodes && regulatoryCodes.length > 0 ? (
-    <div className="flex items-center gap-1.5 py-1">
-      <ScrollText className="text-muted-foreground size-4" />
+    <div className="flex flex-wrap items-center gap-1.5 py-1">
+      <ScrollText className="text-muted-foreground size-4 shrink-0" />
       {regulatoryCodes.map((rc, idx) => (
         <div key={rc.id} title={rc.title}>
           <RegulatoryCodeDisplay regulatoryCode={rc} />
