@@ -68,6 +68,7 @@ const FORM_DEFAULTS = {
   required: true,
   prompt: "",
   valueType: "BINARY",
+  tone: ASSET_QUESTION_TONES.POSITIVE,
 } satisfies TForm;
 
 export default function AssetQuestionDetailForm({
@@ -141,6 +142,7 @@ function AssetQuestionDetailsFormContent({
     formState: { isDirty, isValid },
     watch,
     getFieldState,
+    setValue,
   } = form;
 
   const type = watch("type");
@@ -176,25 +178,32 @@ function AssetQuestionDetailsFormContent({
 
   // Automatically set the tone based on question type if the question is new.
   useEffect(() => {
-    if (
-      !isNew ||
-      !valueType ||
-      !TONE_SUPPORTED_VALUE_TYPES.includes(valueType) ||
-      getFieldState("tone").isTouched
-    ) {
-      return;
-    }
-
-    if (type === "SETUP" && tone !== ASSET_QUESTION_TONES.NEUTRAL) {
-      form.setValue("tone", ASSET_QUESTION_TONES.NEUTRAL, {
-        shouldDirty: true,
-      });
-    } else if (type === "INSPECTION" && tone !== ASSET_QUESTION_TONES.POSITIVE) {
-      form.setValue("tone", ASSET_QUESTION_TONES.POSITIVE, {
-        shouldDirty: true,
-      });
-    }
-  }, [valueType, form, tone, type, getFieldState]);
+    const subscription = watch(({ valueType, tone, type }, { name, type: watchType }) => {
+      if ((name === "valueType" || name === "type") && watchType === "change") {
+        if (
+          isNew &&
+          valueType &&
+          type &&
+          TONE_SUPPORTED_VALUE_TYPES.includes(valueType) &&
+          !getFieldState("tone").isTouched
+        ) {
+          if (
+            ["INSPECTION", "SETUP_AND_INSPECTION", "SETUP"].includes(type) &&
+            tone !== ASSET_QUESTION_TONES.POSITIVE
+          ) {
+            setValue("tone", ASSET_QUESTION_TONES.POSITIVE, {
+              shouldDirty: true,
+            });
+          } else if (["CONFIGURATION"].includes(type) && tone !== ASSET_QUESTION_TONES.NEUTRAL) {
+            setValue("tone", ASSET_QUESTION_TONES.NEUTRAL, {
+              shouldDirty: true,
+            });
+          }
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, isNew, getFieldState, setValue]);
 
   useEffect(() => {
     closeSidepanel();
@@ -456,7 +465,9 @@ function AssetQuestionDetailsFormContent({
 
           <FilesInput />
 
-          {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && <RegulatoryCodesInput />}
+          {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION" || type === "SETUP") && (
+            <RegulatoryCodesInput />
+          )}
 
           <SetMetadataInput requireDynamic={type === "CONFIGURATION"} />
 
