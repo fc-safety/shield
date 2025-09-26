@@ -233,7 +233,7 @@ export const createProductCategorySchema = z.object({
   description: z.string().optional(),
   icon: z.string().optional(),
   color: z.string().optional(),
-  client: optionalConnectSchema,
+  client: disconnectableSchema.optional(),
 });
 
 export const updateProductCategorySchema = createProductCategorySchema
@@ -251,7 +251,7 @@ export const createManufacturerSchema = z.object({
       message: "Manufacturer name cannot be generic.",
     }),
   homeUrl: z.string().optional(),
-  client: optionalConnectSchema,
+  client: disconnectableSchema.optional(),
 });
 
 export const updateManufacturerSchema = createManufacturerSchema
@@ -291,7 +291,8 @@ export const createProductSchema = z.object({
       id: z.string(),
     }),
   }),
-  client: optionalConnectSchema,
+  client: disconnectableSchema.optional(),
+  metadata: z.record(z.string().nonempty(), z.string().nonempty()).optional(),
   parentProduct: optionalConnectSchema,
   ansiCategory: optionalConnectOrCreateSchema(createAnsiCategorySchema).optional(),
 });
@@ -737,6 +738,14 @@ const buildQuestionResponseValidator =
       }
     });
   };
+
+export const buildConfigureAssetSchema = (questions: AssetQuestion[]) => {
+  return z.object({
+    responses: z
+      .array(createAssetQuestionResponseSchema)
+      .superRefine(buildQuestionResponseValidator(questions)),
+  });
+};
 
 /**
  * Builds a Zod schema for inspection creation, dynamically validating each response

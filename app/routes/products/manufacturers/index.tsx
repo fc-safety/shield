@@ -135,7 +135,7 @@ function ManufacturersCard({
   canUpdate: boolean;
   viewContext?: ViewContext;
 }) {
-  const { submit: submitDelete } = useModalFetcher({
+  const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete manufacturer",
   });
 
@@ -229,7 +229,8 @@ function ManufacturersCard({
                           {},
                           {
                             method: "delete",
-                            action: `/api/proxy/manufacturers/${manufacturer.id}?_throw=false`,
+                            path: `/api/proxy/manufacturers/${manufacturer.id}`,
+                            viewContext,
                           }
                         );
                       };
@@ -270,7 +271,11 @@ function ManufacturersCard({
               ],
             }}
             searchPlaceholder="Search manufacturers..."
-            actions={canCreate ? [<NewManufacturerButton key="add" />] : undefined}
+            actions={
+              canCreate
+                ? [<NewManufacturerButton key="add" viewContext={viewContext} />]
+                : undefined
+            }
           />
         </CardContent>
       </Card>

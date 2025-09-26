@@ -1,12 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter } from "date-fns";
@@ -27,9 +20,8 @@ import {
 } from "~/.server/inspections";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
-import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-display";
-import AssetQuestionRegulatoryCodesDisplay from "~/components/assets/asset-question-regulatory-codes-display";
-import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
+import AssetQuestionFormInputLabel from "~/components/assets/asset-question-form-input-label";
+import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
@@ -47,7 +39,6 @@ import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Textarea } from "~/components/ui/textarea";
 import { useAuth } from "~/contexts/auth-context";
-import { ASSET_QUESTION_TONES } from "~/lib/constants";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import type { Asset, AssetQuestion, InspectionRoute, InspectionSession, Tag } from "~/lib/models";
 import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
@@ -400,28 +391,13 @@ function InspectionPage({
                       name={`responses.createMany.data.${index}.value`}
                       render={({ field: { value, onChange, onBlur } }) => (
                         <FormItem>
-                          <div>
-                            <FormLabel>
-                              {question?.prompt}
-                              {question?.required && " *"}
-                            </FormLabel>
-                            {question?.helpText && (
-                              <FormDescription>{question?.helpText}</FormDescription>
-                            )}
-                            <AssetQuestionRegulatoryCodesDisplay
-                              regulatoryCodes={question?.regulatoryCodes}
-                            />
-                            <AssetQuestionFilesDisplay files={question?.files} />
-                          </div>
+                          <AssetQuestionFormInputLabel question={question} />
                           <FormControl>
-                            <AssetQuestionResponseTypeInput
+                            <AssetQuestionResponseField
                               value={value ?? ""}
                               onValueChange={onChange}
                               onBlur={onBlur}
-                              valueType={question?.valueType ?? "BINARY"}
-                              tone={question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL}
-                              options={question?.selectOptions ?? undefined}
-                              placeholder={question?.placeholder}
+                              question={question}
                             />
                           </FormControl>
                           <FormMessage />

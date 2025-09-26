@@ -146,7 +146,7 @@ export default function AssetsTable({
               asset={row.original}
               tag={row.original.tag}
               key={`asset-tag-${row.original.id}`}
-              variant="compact"
+              size="compact"
             />
           );
         },

@@ -257,6 +257,14 @@ function AssetQuestionDetailsFormContent({
                       The type determines whether this question is displayed during initial setup,
                       during every subsequent inspection, or both.
                     </p>
+                    <br />
+                    <p>
+                      Configuration type questions are a special type that is designed to configure
+                      arbitrary metadata on the asset, useful for storing information beyond what
+                      the system readily provides. Examples include subcategories, unique product
+                      types, etc. Used in conjunction with inspection question conditions, these can
+                      be a powerful way to dynamically present questions to inspectors.
+                    </p>
                   </HelpPopover>
                 </FormLabel>
                 <FormControl>
@@ -448,9 +456,9 @@ function AssetQuestionDetailsFormContent({
 
           <FilesInput />
 
-          <RegulatoryCodesInput />
+          {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && <RegulatoryCodesInput />}
 
-          <SetMetadataInput />
+          <SetMetadataInput requireDynamic={type === "CONFIGURATION"} />
 
           <LegacyIdField
             form={form}

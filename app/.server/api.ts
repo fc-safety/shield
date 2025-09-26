@@ -18,6 +18,7 @@ import {
   type VaultOwnership,
 } from "~/lib/models";
 import {
+  buildConfigureAssetSchema,
   createInspectionSchema,
   createTagSchema,
   createVaultOwnershipSchema,
@@ -40,6 +41,14 @@ export const api = {
   // ASSETS
   assets: {
     ...CRUD.for<Asset>("/assets").all(),
+    configure: (
+      request: Request,
+      assetId: string,
+      input: z.infer<ReturnType<typeof buildConfigureAssetSchema>>
+    ) =>
+      ApiFetcher.create(request, "/assets/:id/configure", { id: assetId })
+        .json(input)
+        .post<Asset>(),
 
     // Asset setup questions
     setup: (request: Request, input: z.infer<typeof setupAssetSchema>) =>
@@ -146,7 +155,11 @@ export const api = {
   ansiCategories: CRUD.for<AnsiCategory>("/ansi-categories").all(),
   assetQuestions: {
     ...CRUD.for<AssetQuestion>("/asset-questions").all(),
-    findByAsset: (request: Request, assetId: string, type?: "SETUP" | "INSPECTION") =>
+    findByAsset: (
+      request: Request,
+      assetId: string,
+      type?: "SETUP" | "INSPECTION" | "CONFIGURATION"
+    ) =>
       ApiFetcher.create(request, "/asset-questions/by-asset/:assetId", {
         assetId,
         ...(type && { type }),

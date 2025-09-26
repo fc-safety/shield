@@ -17,11 +17,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/
 export default function EditableTagDisplay({
   asset,
   tag,
-  variant = "default",
+  size = "default",
 }: {
   asset?: Pick<Asset, "id" | "siteId" | "clientId">;
   tag: Pick<Tag, "serialNumber" | "externalId"> | null | undefined;
-  variant?: "default" | "compact";
+  size?: "default" | "compact";
 }) {
   const { user } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
@@ -44,7 +44,7 @@ export default function EditableTagDisplay({
     <div className="flex items-center gap-2">
       {tag ? (
         <div className="group flex items-center gap-2">
-          <CopyableText text={tag.serialNumber} compact={variant === "compact"} />
+          <CopyableText text={tag.serialNumber} compact={size === "compact"} />
           {canProgramTags && (
             <TooltipProvider>
               <Tooltip>

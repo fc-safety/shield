@@ -601,5 +601,11 @@ const getResourcePath = (question?: AssetQuestion) => {
 };
 
 const numerizeType = (type: AssetQuestion["type"]) => {
-  return type === "SETUP" ? 0 : type === "SETUP_AND_INSPECTION" ? 1 : 2;
+  return type === "CONFIGURATION"
+    ? 0
+    : type === "SETUP"
+      ? 1
+      : type === "SETUP_AND_INSPECTION"
+        ? 2
+        : 3;
 };

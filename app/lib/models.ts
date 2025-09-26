@@ -16,6 +16,7 @@ export interface BaseModel {
 export interface Asset extends BaseModel {
   legacyAssetId?: string | null;
   setupOn: string | null;
+  configured: boolean;
   active: boolean;
   name: string;
   product: Product;
@@ -237,7 +238,12 @@ export interface Person extends BaseModel {
   clientId: string;
 }
 
-export const AssetQuestionTypes = ["SETUP", "INSPECTION", "SETUP_AND_INSPECTION"] as const;
+export const AssetQuestionTypes = [
+  "CONFIGURATION",
+  "SETUP",
+  "INSPECTION",
+  "SETUP_AND_INSPECTION",
+] as const;
 export type AssetQuestionType = (typeof AssetQuestionTypes)[number];
 
 export const AssetQuestionResponseTypes = [
@@ -454,6 +460,7 @@ export interface Product extends BaseModel {
   parentProduct?: Product | null;
   assetQuestions?: AssetQuestion[];
   client?: Client | null;
+  metadata?: Record<string, string>;
 
   consumableProducts?: Product[];
   ansiCategory?: AnsiCategory | null;

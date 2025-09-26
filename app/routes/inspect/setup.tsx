@@ -1,12 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseISO } from "date-fns";
 import { AlertCircle, ArrowRight, Plus } from "lucide-react";
@@ -23,16 +16,15 @@ import {
   validateInspectionSession,
 } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
-import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-display";
-import AssetQuestionRegulatoryCodesDisplay from "~/components/assets/asset-question-regulatory-codes-display";
-import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
+import AssetQuestionFormInputLabel from "~/components/assets/asset-question-form-input-label";
+import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
+import ConfigureAssetForm from "~/components/assets/configure-asset-form";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { useAuth } from "~/contexts/auth-context";
-import { ASSET_QUESTION_TONES } from "~/lib/constants";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
@@ -57,15 +49,25 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const tag = await api.tags.getForAssetSetup(request, tagExternalId);
 
   if (tag.asset?.id) {
-    const [routeContext, setupQuestions] = await Promise.all([
+    const [routeContext, setupQuestions, configurationQuestions] = await Promise.all([
       fetchActiveInspectionRouteContext(request, tag.asset.id),
       api.assetQuestions.findByAsset(request, tag.asset.id, "SETUP"),
+      tag.asset.configured
+        ? Promise.resolve([])
+        : api.assetQuestions.findByAsset(request, tag.asset.id, "CONFIGURATION"),
     ]);
+
+    if (!tag.asset.configured && configurationQuestions.length === 0) {
+      await api.assets.configure(request, tag.asset.id, {
+        responses: [],
+      });
+    }
 
     return {
       tag: tag,
       ...routeContext,
       setupQuestions,
+      configurationQuestions,
       processedProductImageUrl:
         tag.asset?.product.imageUrl &&
         buildImageProxyUrl(tag.asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
@@ -77,6 +79,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     activeSessions: null,
     matchingRoutes: null,
     setupQuestions: [],
+    configurationQuestions: [],
     processedProductImageUrl: null,
   };
 };
@@ -96,7 +99,13 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 type TForm = z.infer<typeof setupAssetSchema>;
 
 export default function InspectSetup({
-  loaderData: { tag, matchingRoutes, setupQuestions, processedProductImageUrl },
+  loaderData: {
+    tag,
+    matchingRoutes,
+    setupQuestions,
+    configurationQuestions,
+    processedProductImageUrl,
+  },
 }: Route.ComponentProps) {
   const isSetup = !!tag.asset?.setupOn;
 
@@ -259,92 +268,83 @@ export default function InspectSetup({
           </CardHeader>
           <CardContent className="flex flex-col gap-6 sm:gap-8">
             {tag.asset ? (
-              <RemixFormProvider {...form}>
-                <Form className="space-y-4" method={"post"} onSubmit={form.handleSubmit}>
-                  {questions.filter((q) => q.required).length > 0 && (
-                    <p className="text-muted-foreground mb-4 text-sm">
-                      * indicates a required field
-                    </p>
-                  )}
-                  <Input type="hidden" {...form.register("id")} hidden />
-                  {isSetup && <Input type="hidden" {...form.register("setupOn")} hidden />}
-                  {allQuestionFields.map(({ key, data }, index) => {
-                    const question = questions.find((q) => q.id === data.assetQuestionId);
-                    return (
-                      <FormField
-                        key={key}
-                        control={form.control}
-                        name={
-                          data.id
-                            ? `setupQuestionResponses.updateMany.${index}.data.value`
-                            : `setupQuestionResponses.createMany.data.${index}.value`
-                        }
-                        render={({ field: { value, onChange, onBlur } }) => (
-                          <FormItem>
-                            <div>
-                              <FormLabel>
-                                {question?.prompt ?? (
-                                  <span className="italic">
-                                    Prompt for this question has been removed or is not available.
-                                  </span>
-                                )}
-                                {question?.required && " *"}
-                              </FormLabel>
-                              {question?.helpText && (
-                                <FormDescription>{question?.helpText}</FormDescription>
-                              )}
-                              <AssetQuestionRegulatoryCodesDisplay
-                                regulatoryCodes={question?.regulatoryCodes}
-                              />
-                              <AssetQuestionFilesDisplay files={question?.files} />
-                            </div>
-                            <FormControl>
-                              <AssetQuestionResponseTypeInput
-                                value={value}
-                                onValueChange={onChange}
-                                onBlur={onBlur}
-                                valueType={question?.valueType ?? "BINARY"}
-                                // Disabling for now.
-                                // TODO: Not sure if questions should be able to be updated after setup.
-                                disabled={isSetup || !question}
-                                tone={question?.tone ?? ASSET_QUESTION_TONES.NEUTRAL}
-                                options={question?.selectOptions ?? undefined}
-                                placeholder={question?.placeholder}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
+              !tag.asset.configured && configurationQuestions.length > 0 ? (
+                <ConfigureAssetForm
+                  assetId={tag.asset.id}
+                  questions={configurationQuestions}
+                  showSubmitButton
+                  submitButtonText="Next"
+                />
+              ) : (
+                <RemixFormProvider {...form}>
+                  <Form className="space-y-4" method={"post"} onSubmit={form.handleSubmit}>
+                    {questions.filter((q) => q.required).length > 0 && (
+                      <p className="text-muted-foreground mb-4 text-sm">
+                        * indicates a required field
+                      </p>
+                    )}
+                    <Input type="hidden" {...form.register("id")} hidden />
+                    {isSetup && <Input type="hidden" {...form.register("setupOn")} hidden />}
+                    {allQuestionFields.map(({ key, data }, index) => {
+                      const question = questions.find((q) => q.id === data.assetQuestionId);
+                      return !question ? null : (
+                        <FormField
+                          key={key}
+                          control={form.control}
+                          name={
+                            data.id
+                              ? `setupQuestionResponses.updateMany.${index}.data.value`
+                              : `setupQuestionResponses.createMany.data.${index}.value`
+                          }
+                          render={({ field: { value, onChange, onBlur } }) => (
+                            <FormItem>
+                              <AssetQuestionFormInputLabel question={question} />
+                              <FormControl>
+                                <AssetQuestionResponseField
+                                  value={value}
+                                  onValueChange={onChange}
+                                  onBlur={onBlur}
+                                  question={question}
+                                  disabled={isSetup || !question}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      );
+                    })}
+                    {allQuestionFields.length === 0 && (
+                      <p className="text-center text-xs font-bold">
+                        {isSetup ? (
+                          <>There is nothing to update. You can continue to the inspection.</>
+                        ) : (
+                          <>Go ahead and click complete setup to begin your inspection.</>
                         )}
-                      />
-                    );
-                  })}
-                  {allQuestionFields.length === 0 && (
-                    <p className="text-center text-xs font-bold">
-                      <span className="font-bold">No setup questions found.</span>{" "}
-                      {isSetup ? (
-                        <>There is nothing to update.</>
-                      ) : (
-                        <>Go ahead and click complete setup to begin your inspection.</>
-                      )}
-                    </p>
-                  )}
-                  <Button
-                    type="submit"
-                    // TODO: Not sure if questions should be able to be updated after setup.
-                    // Disabling for now.
-                    disabled={isSetup || isSubmitting || (isSetup && !isDirty) || !isValid}
-                    variant={isSetup ? "secondary" : "default"}
-                    className={cn("w-full", isSubmitting && "animate-pulse")}
-                  >
-                    {isSubmitting ? "Processing..." : isSetup ? "Setup Complete" : "Complete Setup"}
-                  </Button>
-                  {isSetup && (
-                    <Button variant="default" asChild type="button" className="w-full">
-                      <Link to={`/inspect/`}>Begin Inspection</Link>
+                      </p>
+                    )}
+                    <Button
+                      type="submit"
+                      // TODO: Not sure if questions should be able to be updated after setup.
+                      // Disabling for now.
+                      disabled={isSetup || isSubmitting || (isSetup && !isDirty) || !isValid}
+                      variant={isSetup ? "secondary" : "default"}
+                      className={cn("w-full", isSubmitting && "animate-pulse")}
+                    >
+                      {isSubmitting
+                        ? "Processing..."
+                        : isSetup
+                          ? "Setup Complete"
+                          : "Complete Setup"}
                     </Button>
-                  )}
-                </Form>
-              </RemixFormProvider>
+                    {isSetup && (
+                      <Button variant="default" asChild type="button" className="w-full">
+                        <Link to={`/inspect/`}>Begin Inspection</Link>
+                      </Button>
+                    )}
+                  </Form>
+                </RemixFormProvider>
+              )
             ) : (
               <Alert variant="warning">
                 <AlertTitle>Oops! This tag hasn&apos;t been registered correctly.</AlertTitle>
