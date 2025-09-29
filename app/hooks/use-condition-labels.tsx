@@ -49,8 +49,19 @@ export function useConditionLabels() {
       }
 
       // Return ID immediately for regions or unknown types
-      if (type === "REGION" || !["PRODUCT", "MANUFACTURER", "PRODUCT_CATEGORY"].includes(type)) {
+      if (
+        type === "REGION" ||
+        !["PRODUCT", "MANUFACTURER", "PRODUCT_CATEGORY", "METADATA"].includes(type)
+      ) {
         return setLabel(type, id);
+      }
+
+      if (type === "METADATA") {
+        const colonIdx = id.indexOf(":");
+        const key = colonIdx > -1 ? id.slice(0, colonIdx) : id;
+        const value = colonIdx > -1 ? id.slice(colonIdx + 1) : "";
+        const label = `${key} = ${value || `""`}`;
+        return setLabel(type, id, label);
       }
 
       // Set loading state

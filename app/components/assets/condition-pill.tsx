@@ -1,8 +1,9 @@
 import { cva } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
-import { useMemo, type ComponentProps } from "react";
+import { useMemo, type ComponentProps, type ReactNode } from "react";
 import type { AssetQuestionCondition } from "~/lib/models";
 import { cn } from "~/lib/utils";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card";
 
 export const conditionTypeVariants = cva("", {
   variants: {
@@ -18,7 +19,7 @@ export const conditionTypeVariants = cva("", {
 
 interface ConditionPillProps extends ComponentProps<"span"> {
   condition: Pick<AssetQuestionCondition, "conditionType" | "value">;
-  label?: string;
+  label?: ReactNode;
   isLoading?: boolean;
 }
 
@@ -47,7 +48,10 @@ export default function ConditionPill({
   };
 
   const conditionValueDisplay = useMemo(() => {
-    let values = label ? [label] : condition.value;
+    if (label) {
+      return label;
+    }
+    let values = condition.value;
     if (condition.conditionType === "METADATA") {
       values = values.map((v) => {
         const [key, value] = v.split(":");
@@ -81,9 +85,14 @@ export default function ConditionPill({
             <span className="opacity-50">Loading...</span>
           </>
         ) : (
-          <span className="line-clamp-1 min-w-0" title={conditionValueDisplay}>
-            {conditionValueDisplay}
-          </span>
+          <HoverCard>
+            <HoverCardTrigger className={"inline min-w-0"}>
+              <span className="line-clamp-1">{conditionValueDisplay}</span>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-fit min-w-8 p-2">
+              {conditionValueDisplay}
+            </HoverCardContent>
+          </HoverCard>
         )}
       </span>
     </span>

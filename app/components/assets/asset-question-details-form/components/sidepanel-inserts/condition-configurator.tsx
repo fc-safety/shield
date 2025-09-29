@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
-import { ChevronsUpDown, Loader2 } from "lucide-react";
+import { ChevronsUpDown, Eraser, Loader2, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type z from "zod";
@@ -78,7 +78,7 @@ export const ConditionConfigurator = () => {
           }
           render={({ field: { onChange, onBlur, value } }) => (
             <FormItem>
-              <FormLabel>Condition Type</FormLabel>
+              <FormLabel>Match when the...</FormLabel>
               <FormControl>
                 <Select
                   value={value}
@@ -112,39 +112,45 @@ export const ConditionConfigurator = () => {
           control={control}
           name={
             conditionAction === "create"
-              ? `conditions.createMany.data.${idx}.value.0`
-              : `conditions.updateMany.${idx}.data.value.0`
+              ? `conditions.createMany.data.${idx}.value`
+              : `conditions.updateMany.${idx}.data.value`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
+          render={({ field: { onChange, onBlur, value: values } }) => (
             <FormItem>
               <FormLabel>
                 {conditionDataInput?.conditionType === "METADATA"
-                  ? "Metadata Key"
-                  : "Matching Value"}
+                  ? "with key..."
+                  : "is equal to..."}
               </FormLabel>
               <FormControl>
-                <MatchingValueInput
-                  value={(() => {
-                    if (conditionDataInput?.conditionType === "METADATA") {
-                      return value.split(":")[0] ?? value;
-                    }
-                    return value;
-                  })()}
-                  onValueChange={(v) => {
-                    if (v && conditionDataInput?.conditionType === "METADATA") {
-                      const colonIdx = value.indexOf(":");
-                      if (colonIdx > -1) {
-                        onChange(v + value.slice(colonIdx));
-                      } else {
-                        onChange(v + ":");
-                      }
-                    } else {
-                      onChange(v);
-                    }
-                  }}
-                  onBlur={onBlur}
-                  conditionType={conditionDataInput?.conditionType}
-                />
+                {conditionDataInput?.conditionType === "METADATA" ? (
+                  <MatchingValueInput
+                    value={parseMatchingValueInput(values.at(0), "metadata-key")}
+                    onValueChange={handleMatchingValueInputChange(
+                      (v) => onChange([v]),
+                      "metadata-key",
+                      values.at(0)
+                    )}
+                    onBlur={onBlur}
+                    conditionType={"METADATA"}
+                    className="flex-1"
+                  />
+                ) : (
+                  <MultivaluesInput
+                    values={values}
+                    onValuesChange={onChange}
+                    onBlur={onBlur}
+                    renderSingularInput={({ value, onValueChange, onBlur, className }) => (
+                      <MatchingValueInput
+                        value={value}
+                        onValueChange={onValueChange}
+                        onBlur={onBlur}
+                        conditionType={conditionDataInput?.conditionType}
+                        className={className}
+                      />
+                    )}
+                  />
+                )}
               </FormControl>
             </FormItem>
           )}
@@ -154,25 +160,35 @@ export const ConditionConfigurator = () => {
             control={control}
             name={
               conditionAction === "create"
-                ? `conditions.createMany.data.${idx}.value.0`
-                : `conditions.updateMany.${idx}.data.value.0`
+                ? `conditions.createMany.data.${idx}.value`
+                : `conditions.updateMany.${idx}.data.value`
             }
-            render={({ field: { onChange, onBlur, value } }) => (
+            render={({ field: { onChange, onBlur, value: values } }) => (
               <FormItem>
-                <FormLabel>Metadata Value</FormLabel>
+                <FormLabel>is equal to...</FormLabel>
                 <FormControl>
-                  <Input
-                    value={value.split(":")[1] || ""}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      const colonIdx = value.indexOf(":");
-                      if (colonIdx > -1) {
-                        onChange(value.slice(0, colonIdx + 1) + v);
-                      } else {
-                        onChange(":" + v);
-                      }
+                  <MultivaluesInput
+                    values={values.map((v) => parseMatchingValueInput(v, "metadata-value") ?? "")}
+                    onValuesChange={(newMetadataValues) => {
+                      const newValues: string[] = [];
+                      newMetadataValues.forEach(
+                        handleMatchingValueInputChange(
+                          (v) => newValues.push(v),
+                          "metadata-value",
+                          values.at(0)
+                        )
+                      );
+                      onChange(newValues);
                     }}
                     onBlur={onBlur}
+                    renderSingularInput={({ value, onValueChange, onBlur, className }) => (
+                      <Input
+                        value={value}
+                        onChange={(e) => onValueChange(e.target.value)}
+                        onBlur={onBlur}
+                        className={className}
+                      />
+                    )}
                   />
                 </FormControl>
               </FormItem>
@@ -188,16 +204,93 @@ export const ConditionConfigurator = () => {
 
 ConditionConfigurator.Id = "condition-configurator";
 
+function MultivaluesInput({
+  values: valuesProp,
+  onValuesChange,
+  onBlur,
+  renderSingularInput,
+}: {
+  values: string[];
+  onValuesChange: (value: string[]) => void;
+  onBlur: () => void;
+  renderSingularInput: ({
+    value,
+    onValueChange,
+    onBlur,
+    className,
+  }: {
+    value: string | undefined;
+    onValueChange: (value: string) => void;
+    onBlur: () => void;
+    className?: string;
+  }) => React.ReactNode;
+}) {
+  const handleUpdateValue = (newValue: string, idx: number) => {
+    const newValues = [...valuesProp];
+    newValues[idx] = newValue;
+    onValuesChange(newValues);
+  };
+
+  const handleAddValue = () => {
+    onValuesChange([...valuesProp, ""]);
+  };
+
+  const handleDeleteValue = (idx: number) => {
+    const newValues = [...valuesProp];
+    newValues.splice(idx, 1);
+    onValuesChange(newValues);
+  };
+
+  const values = valuesProp.length > 0 ? valuesProp : [undefined];
+  return (
+    <div className="flex flex-col gap-2">
+      {values.map((value, idx) => (
+        <div key={idx} className="flex w-full items-center gap-2">
+          {idx > 0 && <div>or</div>}
+          {renderSingularInput({
+            value,
+            onValueChange: (v) => handleUpdateValue(v, idx),
+            onBlur,
+            className: "flex-1",
+          })}
+          {values.length > 1 && (
+            <Button
+              size="iconSm"
+              variant="outline"
+              type="button"
+              onClick={() => handleDeleteValue(idx)}
+            >
+              <Eraser className="text-destructive" />
+            </Button>
+          )}
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => handleAddValue()}
+        className="w-fit"
+        disabled={values.some((v) => !v)}
+      >
+        <Plus /> Add OR
+      </Button>
+    </div>
+  );
+}
+
 function MatchingValueInput({
   value,
   onValueChange,
   onBlur,
   conditionType,
+  className,
 }: {
   value: string | undefined;
-  onValueChange: (value: string | undefined) => void;
+  onValueChange: (value: string) => void;
   onBlur: () => void;
   conditionType: AssetQuestionConditionType | undefined;
+  className?: string;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
 
@@ -255,7 +348,11 @@ function MatchingValueInput({
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen} modal>
       <PopoverTrigger asChild>
-        <Button type="button" variant="outline" className={cn("flex-1 justify-between text-start")}>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn("flex-1 justify-between text-start", className)}
+        >
           <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
             {isLoading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -392,3 +489,44 @@ const getValueOptionsForType = async (
 
   return options;
 };
+
+const parseMatchingValueInput = (
+  value: string | undefined,
+  type: "metadata-key" | "metadata-value" | "plain"
+) => {
+  if (type === "plain") {
+    return value;
+  } else if (type === "metadata-key") {
+    return value?.split(":").at(0);
+  } else if (type === "metadata-value") {
+    return value?.split(":").at(1);
+  }
+};
+
+const handleMatchingValueInputChange =
+  (
+    onValueChange: (value: string) => void,
+    type: "metadata-key" | "metadata-value" | "plain",
+    prevValue: string | undefined
+  ) =>
+  (value: string) => {
+    if (type === "plain") {
+      onValueChange(value);
+    } else {
+      const colonIdx = prevValue?.indexOf(":") ?? -1;
+      const cleanedNewValue = value.replace(/[:]/g, "");
+      if (type === "metadata-key") {
+        if (prevValue && colonIdx > -1) {
+          onValueChange(cleanedNewValue + prevValue.slice(colonIdx));
+        } else {
+          onValueChange(cleanedNewValue + ":");
+        }
+      } else if (type === "metadata-value") {
+        if (prevValue && colonIdx > -1) {
+          onValueChange(prevValue.slice(0, colonIdx + 1) + cleanedNewValue);
+        } else {
+          onValueChange(":" + cleanedNewValue);
+        }
+      }
+    }
+  };

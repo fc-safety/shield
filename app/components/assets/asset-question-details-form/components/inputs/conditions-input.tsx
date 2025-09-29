@@ -1,4 +1,4 @@
-import { Columns3Cog, Eraser, Pencil, Plus } from "lucide-react";
+import { Columns3Cog, Eraser, Loader2, Pencil, Plus } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import type z from "zod";
@@ -113,56 +113,65 @@ export default function ConditionsInput() {
             </FormLabel>
             <FormControl>
               <div className="divide-y-border divide-y">
-                {conditions.flatMap(({ idx, key, action, data: condition }) =>
-                  (condition.value ?? []).map((value, valueIndex) => {
-                    const label = getLabel(condition.conditionType, value, "–");
-                    const isValueLoading = isLoading(condition.conditionType, value);
+                {conditions.flatMap(({ idx, key, action, data: condition }) => (
+                  <div className="flex flex-row items-center gap-2 py-1" key={`${key}-${idx}`}>
+                    <Button
+                      size="iconSm"
+                      variant="outline"
+                      type="button"
+                      onClick={
+                        action === "create"
+                          ? () => handleCancelAddCondition(idx)
+                          : () =>
+                              handleDeleteCondition(
+                                (condition as z.infer<typeof updateAssetQuestionSchema>).id
+                              )
+                      }
+                    >
+                      <Eraser className="text-destructive" />
+                    </Button>
+                    <Button
+                      size="iconSm"
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        setConfiguratorData(idx, action);
+                        openSidepanel(ConditionConfigurator.Id);
+                      }}
+                    >
+                      <Pencil />
+                    </Button>
+                    <ConditionPill
+                      condition={condition}
+                      label={
+                        <div>
+                          {condition.value.map((v, idx) => {
+                            const label = getLabel(condition.conditionType, v, "–");
+                            const isValueLoading = isLoading(condition.conditionType, v);
 
-                    return (
-                      <div
-                        className="flex flex-row items-center gap-2 py-1"
-                        key={`${key}-${valueIndex}`}
-                      >
-                        <Button
-                          size="iconSm"
-                          variant="outline"
-                          type="button"
-                          onClick={
-                            action === "create"
-                              ? () => handleCancelAddCondition(idx)
-                              : () =>
-                                  handleDeleteCondition(
-                                    (condition as z.infer<typeof updateAssetQuestionSchema>).id
-                                  )
-                          }
-                        >
-                          <Eraser className="text-destructive" />
-                        </Button>
-                        <Button
-                          size="iconSm"
-                          variant="outline"
-                          type="button"
-                          onClick={() => {
-                            setConfiguratorData(idx, action);
-                            openSidepanel(ConditionConfigurator.Id);
-                          }}
-                        >
-                          <Pencil />
-                        </Button>
-                        <ConditionPill
-                          condition={{ ...condition, value: [value] }}
-                          label={label}
-                          isLoading={isValueLoading}
-                          className="cursor-pointer"
-                          onClick={() => {
-                            setConfiguratorData(idx, action);
-                            openSidepanel(ConditionConfigurator.Id);
-                          }}
-                        />
-                      </div>
-                    );
-                  })
-                )}
+                            return (
+                              <span key={v}>
+                                {isValueLoading ? (
+                                  <Loader2 className="inline size-3 animate-spin" />
+                                ) : (
+                                  label
+                                )}
+                                {condition.value.length > 1 &&
+                                  idx < condition.value.length - 1 &&
+                                  ", "}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      }
+                      className="cursor-pointer"
+                      onClick={() => {
+                        setConfiguratorData(idx, action);
+                        openSidepanel(ConditionConfigurator.Id);
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
             </FormControl>
           </FormItem>
