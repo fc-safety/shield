@@ -1,4 +1,6 @@
+import JSON5 from "json5";
 import qs from "qs";
+import { isNil } from "./utils";
 
 type ExtractPathParams<TPath extends string> =
   TPath extends `${string}:${infer Param}/${infer Rest}`
@@ -67,7 +69,7 @@ export const buildUrl = <TPath extends string>(
 
 // Custom function to update query parameters without navigation
 export function updateQueryParams(
-  updates: URLSearchParams | string | ((prev: URLSearchParams) => URLSearchParams),
+  updates: URLSearchParams | string | ((prev: URLSearchParams) => URLSearchParams | string),
   options: { replace?: boolean } = {}
 ) {
   if (typeof window === "undefined") {
@@ -117,7 +119,11 @@ export function updateQueryParams(
 export const getQueryStatePersistor = (key: string) => (value: object) => {
   updateQueryParams(
     (prev) => {
-      prev.set(key, JSON.stringify(value));
+      if (isNil(value) || (Array.isArray(value) && value.length === 0)) {
+        prev.delete(key);
+        return prev;
+      }
+      prev.set(key, JSON5.stringify(value));
       return prev;
     },
     {
@@ -129,7 +135,7 @@ export const getQueryStatePersistor = (key: string) => (value: object) => {
 export const getQueryPersistedState = (key: string, searchParams: URLSearchParams) => {
   if (searchParams.has(key)) {
     try {
-      return JSON.parse(searchParams.get(key)!);
+      return JSON5.parse(searchParams.get(key)!);
     } catch {
       return undefined;
     }
