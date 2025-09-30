@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Fuse from "fuse.js";
 import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { cn } from "~/lib/utils";
@@ -38,19 +38,24 @@ export default function MetadataValueCombobox({
   const [optionsSearchQuery, setOptionsSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
+  const queryClient = useQueryClient();
   const { data: valueOptionsRaw, isLoading } = useQuery({
     queryKey: ["metadata-values", metadataKey] as const,
     queryFn: () => getMetadataValues(fetchOrThrow, metadataKey),
     enabled: !!metadataKey,
+    staleTime: 0,
   });
 
   const [newOrCustomValueOptions, setNewOrCustomValueOptions] = useImmer(new Set<string>());
 
-  // Reset new or custom value options when the value options change.
+  // Reset new or custom value options when the metadata key changes.
+  const initialMetadataKey = useRef(metadataKey).current;
   useEffect(() => {
-    setNewOrCustomValueOptions(new Set<string>());
-    onValueChange("");
-  }, [valueOptionsRaw]);
+    if (initialMetadataKey !== metadataKey) {
+      setNewOrCustomValueOptions(new Set<string>());
+      onValueChange("");
+    }
+  }, [metadataKey]);
 
   const options = useMemo(() => {
     let options = valueOptionsRaw ? [...valueOptionsRaw] : [];
@@ -75,6 +80,7 @@ export default function MetadataValueCombobox({
         onValueChange(cleanedNewValue);
         setOptionsSearchQuery("");
         setIsOpen(false);
+        queryClient.invalidateQueries({ queryKey: ["metadata-values", metadataKey] as const });
       };
       return {
         fn,
