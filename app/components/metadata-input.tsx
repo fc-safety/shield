@@ -5,6 +5,7 @@ import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import MetadataKeyCombobox from "./metadata-key-combobox";
+import MetadataValueCombobox from "./metadata-value-combobox";
 
 type TMetadataForm = { metadata: Record<string, string> };
 export default function MetadataInput() {
@@ -121,8 +122,9 @@ const MetadataInputItem = ({
           }
         }}
       />
-      <MetadataKeyCombobox
+      <MetadataValueCombobox
         autoFocus={false}
+        metadataKey={metadataKey}
         value={metadataValue}
         onValueChange={(e) => onValueChange(e)}
         onBlur={() => {
