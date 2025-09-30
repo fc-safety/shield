@@ -6,6 +6,7 @@ import { useFormContext } from "react-hook-form";
 import type z from "zod";
 import { conditionTypeVariants } from "~/components/assets/condition-pill";
 import MetadataKeyCombobox from "~/components/metadata-key-combobox";
+import MetadataValueCombobox from "~/components/metadata-value-combobox";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -16,7 +17,6 @@ import {
   CommandList,
 } from "~/components/ui/command";
 import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import {
   Select,
@@ -182,9 +182,10 @@ export const ConditionConfigurator = () => {
                     }}
                     onBlur={onBlur}
                     renderSingularInput={({ value, onValueChange, onBlur, className }) => (
-                      <Input
+                      <MetadataValueCombobox
+                        metadataKey={values.at(0)?.split(":")?.at(0) ?? ""}
                         value={value}
-                        onChange={(e) => onValueChange(e.target.value)}
+                        onValueChange={onValueChange}
                         onBlur={onBlur}
                         className={className}
                       />

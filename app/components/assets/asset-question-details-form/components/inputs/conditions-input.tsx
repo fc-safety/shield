@@ -150,7 +150,7 @@ export default function ConditionsInput() {
                             const isValueLoading = isLoading(condition.conditionType, v);
 
                             return (
-                              <span key={v}>
+                              <span key={`{${idx}}${v}`}>
                                 {isValueLoading ? (
                                   <Loader2 className="inline size-3 animate-spin" />
                                 ) : (
