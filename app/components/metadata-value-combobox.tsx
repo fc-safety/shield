@@ -71,7 +71,7 @@ export default function MetadataValueCombobox({
   }, [valueOptionsRaw, optionsSearchQuery, newOrCustomValueOptions]);
 
   const addOption = useMemo<{ fn: () => void; label: React.ReactNode } | undefined>(() => {
-    if (optionsSearchQuery.length > 1) {
+    if (optionsSearchQuery.length > 0) {
       const cleanedNewValue = optionsSearchQuery.replace(/[:,]/g, "");
       const fn = () => {
         setNewOrCustomValueOptions((draft) => {
