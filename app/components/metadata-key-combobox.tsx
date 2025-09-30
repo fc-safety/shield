@@ -24,12 +24,14 @@ export default function MetadataKeyCombobox({
   onBlur,
   className,
   placeholder,
+  autoFocus,
 }: {
   value: string | undefined;
   onValueChange: (value: string) => void;
   onBlur?: () => void;
   className?: string;
   placeholder?: string;
+  autoFocus?: boolean;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
 
@@ -82,6 +84,7 @@ export default function MetadataKeyCombobox({
     <Popover open={isOpen} onOpenChange={setIsOpen} modal>
       <PopoverTrigger asChild>
         <Button
+          autoFocus={autoFocus}
           type="button"
           variant="outline"
           className={cn("flex-1 justify-between text-start", className)}
