@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
-import { Input } from "~/components/ui/input";
+import MetadataKeyCombobox from "./metadata-key-combobox";
 
 type TMetadataForm = { metadata: Record<string, string> };
 export default function MetadataInput() {
@@ -111,20 +111,20 @@ const MetadataInputItem = ({
   const [valueBlurred, setValueBlurred] = useState(false);
   return (
     <>
-      <Input
+      <MetadataKeyCombobox
         autoFocus={false}
         value={metadataKey}
-        onChange={(e) => onKeyChange(e.target.value)}
+        onValueChange={(e) => onKeyChange(e)}
         onBlur={() => {
           if (valueBlurred) {
             onBlur();
           }
         }}
       />
-      <Input
+      <MetadataKeyCombobox
         autoFocus={false}
         value={metadataValue}
-        onChange={(e) => onValueChange(e.target.value)}
+        onValueChange={(e) => onValueChange(e)}
         onBlur={() => {
           onBlur();
           setValueBlurred(true);
