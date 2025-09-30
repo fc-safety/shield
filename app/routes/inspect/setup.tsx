@@ -49,25 +49,25 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const tag = await api.tags.getForAssetSetup(request, tagExternalId);
 
   if (tag.asset?.id) {
-    const [routeContext, setupQuestions, configurationQuestions] = await Promise.all([
+    const [routeContext, setupQuestions, configurationCheckResults] = await Promise.all([
       fetchActiveInspectionRouteContext(request, tag.asset.id),
       api.assetQuestions.findByAsset(request, tag.asset.id, "SETUP"),
-      tag.asset.configured
-        ? Promise.resolve([])
-        : api.assetQuestions.findByAsset(request, tag.asset.id, "CONFIGURATION"),
+      api.assetQuestions.checkConfigurationByAsset(request, tag.asset.id),
     ]);
 
-    if (!tag.asset.configured && configurationQuestions.length === 0) {
+    if (!tag.asset.configured && configurationCheckResults.isConfigurationMet) {
       await api.assets.configure(request, tag.asset.id, {
         responses: [],
       });
     }
 
+    console.log(configurationCheckResults);
+
     return {
       tag: tag,
       ...routeContext,
       setupQuestions,
-      configurationQuestions,
+      configurationCheckResults,
       processedProductImageUrl:
         tag.asset?.product.imageUrl &&
         buildImageProxyUrl(tag.asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
@@ -79,7 +79,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     activeSessions: null,
     matchingRoutes: null,
     setupQuestions: [],
-    configurationQuestions: [],
+    configurationCheckResults: {
+      checkResults: [],
+      isConfigurationMet: false,
+    },
     processedProductImageUrl: null,
   };
 };
@@ -103,7 +106,7 @@ export default function InspectSetup({
     tag,
     matchingRoutes,
     setupQuestions,
-    configurationQuestions,
+    configurationCheckResults,
     processedProductImageUrl,
   },
 }: Route.ComponentProps) {
@@ -268,10 +271,14 @@ export default function InspectSetup({
           </CardHeader>
           <CardContent className="flex flex-col gap-6 sm:gap-8">
             {tag.asset ? (
-              !tag.asset.configured && configurationQuestions.length > 0 ? (
+              configurationCheckResults && !configurationCheckResults.isConfigurationMet ? (
                 <ConfigureAssetForm
                   assetId={tag.asset.id}
-                  questions={configurationQuestions}
+                  questions={configurationCheckResults.checkResults.map((c) => c.assetQuestion)}
+                  responses={configurationCheckResults.checkResults.map((c) => ({
+                    questionId: c.assetQuestion.id,
+                    value: c.assetValue ?? "",
+                  }))}
                   showSubmitButton
                   submitButtonText="Next"
                 />

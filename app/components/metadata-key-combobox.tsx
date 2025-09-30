@@ -26,7 +26,7 @@ export default function MetadataKeyCombobox({
   placeholder,
 }: {
   value: string | undefined;
-  onValueChange: (value: string | undefined) => void;
+  onValueChange: (value: string) => void;
   onBlur?: () => void;
   className?: string;
   placeholder?: string;
@@ -87,11 +87,12 @@ export default function MetadataKeyCombobox({
 
   const addOption = useMemo<{ fn: () => void; label: React.ReactNode } | undefined>(() => {
     if (optionsSearchQuery.length > 1) {
+      const cleanedNewValue = optionsSearchQuery.replace(/[:,]/g, "");
       const fn = () => {
         setNewOrCustomValueOptions((draft) => {
-          draft.set(optionsSearchQuery, { label: optionsSearchQuery, value: optionsSearchQuery });
+          draft.set(cleanedNewValue, { label: cleanedNewValue, value: cleanedNewValue });
         });
-        onValueChange(optionsSearchQuery);
+        onValueChange(cleanedNewValue);
         setOptionsSearchQuery("");
         setIsOpen(false);
       };
@@ -99,7 +100,7 @@ export default function MetadataKeyCombobox({
         fn,
         label: (
           <div>
-            Add <span className="font-semibold italic">{optionsSearchQuery}</span>
+            Add <span className="font-semibold italic">{cleanedNewValue}</span>
           </div>
         ),
       };

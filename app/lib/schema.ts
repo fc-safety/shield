@@ -12,6 +12,8 @@ import {
   VaultAccessTypes,
   type AssetQuestion,
   type AssetQuestionResponse,
+  type AssetQuestionResponseType,
+  type AssetQuestionType,
 } from "./models";
 import type { ResponseValueImage } from "./types";
 import { isNil } from "./utils";
@@ -475,38 +477,149 @@ export const createSetAssetMetadataConfigSchema = z.object({
   ),
 });
 
-export const baseCreateAssetQuestionSchema = z
-  .object({
-    legacyQuestionId: z.string().nullable().optional(),
-    active: z.boolean().default(true),
-    type: z.enum(AssetQuestionTypes),
-    required: z.boolean().default(false),
-    order: z.coerce.number<number>().optional(),
-    prompt: z.string().nonempty(),
-    valueType: z.enum(AssetQuestionResponseTypes),
-    selectOptions: z
-      .array(
-        z.object({
-          value: z.string(),
-          order: z.number().optional(),
-          label: z.string().optional(),
-        })
-      )
+export const baseCreateAssetQuestionSchema = z.object({
+  legacyQuestionId: z.string().nullable().optional(),
+  active: z.boolean().default(true),
+  type: z.enum(AssetQuestionTypes),
+  required: z.boolean().default(false),
+  order: z.coerce.number<number>().optional(),
+  prompt: z.string().nonempty(),
+  valueType: z.enum(AssetQuestionResponseTypes),
+  selectOptions: z
+    .array(
+      z.object({
+        value: z.string(),
+        order: z.number().optional(),
+        label: z.string().optional(),
+      })
+    )
+    .optional(),
+  helpText: z.string().optional(),
+  placeholder: z.string().optional(),
+  tone: z.string().optional(),
+  assetAlertCriteria: z
+    .object({
+      createMany: z.object({
+        data: z.array(createAssetAlertCriterionSchema),
+      }),
+    })
+    .partial()
+    .optional(),
+  consumableConfig: z
+    .object({
+      create: createConsumableConfigSchema,
+    })
+    .partial()
+    .optional(),
+  conditions: z.object({
+    createMany: z.object({
+      data: z
+        .array(createAssetQuestionConditionSchema)
+        .min(1, "At least one condition is required"),
+    }),
+  }),
+  files: z
+    .object({
+      createMany: z.object({
+        data: z.array(createFileSchema),
+      }),
+    })
+    .optional(),
+  setAssetMetadataConfig: z
+    .object({
+      create: createSetAssetMetadataConfigSchema,
+    })
+    .optional(),
+  regulatoryCodes: z
+    .object({
+      create: z.array(createRegulatoryCodeSchema),
+    })
+    .optional(),
+});
+
+const refineAssetQuestionSchema = (
+  question: {
+    valueType?: AssetQuestionResponseType;
+    selectOptions?: {
+      value: string;
+      order?: number;
+      label?: string;
+    }[];
+    setAssetMetadataConfig?: {
+      create?: z.infer<typeof createSetAssetMetadataConfigSchema>;
+      update?: z.infer<typeof createSetAssetMetadataConfigSchema>;
+      delete?: boolean;
+    };
+    type?: AssetQuestionType;
+  },
+  ctx: z.RefinementCtx
+) => {
+  if (
+    question.valueType === "SELECT" &&
+    (!question.selectOptions ||
+      question.selectOptions.length === 0 ||
+      !question.selectOptions.every((option) => option.value))
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Select options are required for select questions",
+      path: ["selectOptions"],
+    });
+  }
+
+  if (question.type === "CONFIGURATION") {
+    const metadataConfig = {
+      metadata: [
+        ...(question.setAssetMetadataConfig?.create?.metadata ?? []),
+        ...(question.setAssetMetadataConfig?.update?.metadata ?? []),
+      ],
+    };
+    if (metadataConfig.metadata.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "At least one metadata setter is required for configuration questions",
+        path: ["setAssetMetadataConfig.create.metadata"],
+      });
+    }
+  }
+};
+
+export const createAssetQuestionSchema = baseCreateAssetQuestionSchema
+  .extend({
+    variants: z
+      .object({
+        createMany: z.object({
+          data: z.array(baseCreateAssetQuestionSchema),
+        }),
+      })
       .optional(),
-    helpText: z.string().optional(),
-    placeholder: z.string().optional(),
-    tone: z.string().optional(),
+  })
+  .superRefine(refineAssetQuestionSchema);
+
+export const updateAssetQuestionSchema = baseCreateAssetQuestionSchema
+  .partial()
+  .extend({
+    id: z.string(),
     assetAlertCriteria: z
       .object({
         createMany: z.object({
           data: z.array(createAssetAlertCriterionSchema),
         }),
+        updateMany: z.array(
+          z.object({
+            where: z.object({ id: z.string() }),
+            data: updateAssetAlertCriterionSchema,
+          })
+        ),
+        deleteMany: z.array(z.object({ id: z.string() })),
       })
       .partial()
       .optional(),
     consumableConfig: z
       .object({
         create: createConsumableConfigSchema,
+        update: createConsumableConfigSchema.partial(),
+        delete: z.boolean().default(false),
       })
       .partial()
       .optional(),
@@ -515,133 +628,65 @@ export const baseCreateAssetQuestionSchema = z
         createMany: z.object({
           data: z.array(createAssetQuestionConditionSchema),
         }),
+        updateMany: z.array(
+          z.object({
+            where: z.object({ id: z.string() }),
+            data: updateAssetQuestionConditionSchema,
+          })
+        ),
+        deleteMany: z.array(z.object({ id: z.string() })),
       })
       .partial()
+      .optional(),
+    variants: z
+      .object({
+        createMany: z.object({
+          data: z.array(baseCreateAssetQuestionSchema),
+        }),
+        updateMany: z.array(
+          z.object({
+            where: z.object({ id: z.string() }),
+            data: baseCreateAssetQuestionSchema.partial(),
+          })
+        ),
+        deleteMany: z.array(z.object({ id: z.string() })),
+      })
       .optional(),
     files: z
       .object({
         createMany: z.object({
           data: z.array(createFileSchema),
         }),
+        updateMany: z.array(
+          z.object({ where: z.object({ id: z.string() }), data: updateFileSchema })
+        ),
+        deleteMany: z.array(z.object({ id: z.string() })),
       })
-      .optional(),
-    setAssetMetadataConfig: z
-      .object({
-        create: createSetAssetMetadataConfigSchema,
-      })
+      .partial()
       .optional(),
     regulatoryCodes: z
       .object({
         create: z.array(createRegulatoryCodeSchema),
+        update: z.array(
+          z.object({
+            where: z.object({ id: z.string() }),
+            data: updateRegulatoryCodeSchema,
+          })
+        ),
+        delete: z.array(z.object({ id: z.string() })),
       })
+      .partial()
+      .optional(),
+    setAssetMetadataConfig: z
+      .object({
+        create: createSetAssetMetadataConfigSchema,
+        update: createSetAssetMetadataConfigSchema,
+        delete: z.boolean().default(false),
+      })
+      .partial()
       .optional(),
   })
-  .refine(
-    (data) =>
-      data.valueType === "SELECT" ? !!data.selectOptions && data.selectOptions.length > 0 : true,
-    {
-      message: "Select options are required for select questions",
-    }
-  );
-
-export const createAssetQuestionSchema = baseCreateAssetQuestionSchema.extend({
-  variants: z
-    .object({
-      createMany: z.object({
-        data: z.array(baseCreateAssetQuestionSchema),
-      }),
-    })
-    .optional(),
-});
-
-export const updateAssetQuestionSchema = baseCreateAssetQuestionSchema.partial().extend({
-  id: z.string(),
-  assetAlertCriteria: z
-    .object({
-      createMany: z.object({
-        data: z.array(createAssetAlertCriterionSchema),
-      }),
-      updateMany: z.array(
-        z.object({
-          where: z.object({ id: z.string() }),
-          data: updateAssetAlertCriterionSchema,
-        })
-      ),
-      deleteMany: z.array(z.object({ id: z.string() })),
-    })
-    .partial()
-    .optional(),
-  consumableConfig: z
-    .object({
-      create: createConsumableConfigSchema,
-      update: createConsumableConfigSchema.partial(),
-      delete: z.boolean().default(false),
-    })
-    .partial()
-    .optional(),
-  conditions: z
-    .object({
-      createMany: z.object({
-        data: z.array(createAssetQuestionConditionSchema),
-      }),
-      updateMany: z.array(
-        z.object({
-          where: z.object({ id: z.string() }),
-          data: updateAssetQuestionConditionSchema,
-        })
-      ),
-      deleteMany: z.array(z.object({ id: z.string() })),
-    })
-    .partial()
-    .optional(),
-  variants: z
-    .object({
-      createMany: z.object({
-        data: z.array(baseCreateAssetQuestionSchema),
-      }),
-      updateMany: z.array(
-        z.object({
-          where: z.object({ id: z.string() }),
-          data: baseCreateAssetQuestionSchema.partial(),
-        })
-      ),
-      deleteMany: z.array(z.object({ id: z.string() })),
-    })
-    .optional(),
-  files: z
-    .object({
-      createMany: z.object({
-        data: z.array(createFileSchema),
-      }),
-      updateMany: z.array(
-        z.object({ where: z.object({ id: z.string() }), data: updateFileSchema })
-      ),
-      deleteMany: z.array(z.object({ id: z.string() })),
-    })
-    .partial()
-    .optional(),
-  regulatoryCodes: z
-    .object({
-      create: z.array(createRegulatoryCodeSchema),
-      update: z.array(
-        z.object({
-          where: z.object({ id: z.string() }),
-          data: updateRegulatoryCodeSchema,
-        })
-      ),
-      delete: z.array(z.object({ id: z.string() })),
-    })
-    .partial()
-    .optional(),
-  setAssetMetadataConfig: z
-    .object({
-      create: createSetAssetMetadataConfigSchema,
-      update: createSetAssetMetadataConfigSchema.partial(),
-      delete: z.boolean().default(false),
-    })
-    .partial()
-    .optional(),
-});
+  .superRefine(refineAssetQuestionSchema);
 
 export const responseValueImageSchema = z.object({
   urls: z.array(z.string()),

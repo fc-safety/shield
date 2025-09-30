@@ -11,7 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { isAfter } from "date-fns";
-import { Copy, MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { Copy, Loader2, MoreHorizontal, Pencil, Trash } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type z from "zod";
 import type { ViewContext } from "~/.server/api-utils";
@@ -298,21 +298,31 @@ export default function AssetQuestionsDataTable({
           }
           return (
             <div className="flex flex-wrap gap-1">
-              {conditions.flatMap((condition) =>
-                condition.value.map((value, valueIndex) => {
-                  const label = getLabel(condition.conditionType, value, "–");
-                  const isValueLoading = isLoading(condition.conditionType, value);
+              {conditions.flatMap((condition, idx) => (
+                <ConditionPill
+                  key={`${condition.id}-${idx}`}
+                  condition={condition}
+                  label={
+                    <div>
+                      {condition.value.map((v, idx) => {
+                        const label = getLabel(condition.conditionType, v, "–");
+                        const isValueLoading = isLoading(condition.conditionType, v);
 
-                  return (
-                    <ConditionPill
-                      key={`${condition.id}-${valueIndex}`}
-                      condition={{ ...condition, value: [value] }}
-                      label={label}
-                      isLoading={isValueLoading}
-                    />
-                  );
-                })
-              )}
+                        return (
+                          <span key={v}>
+                            {isValueLoading ? (
+                              <Loader2 className="inline size-3 animate-spin" />
+                            ) : (
+                              label
+                            )}
+                            {condition.value.length > 1 && idx < condition.value.length - 1 && ", "}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  }
+                />
+              ))}
             </div>
           );
         },
@@ -403,32 +413,28 @@ export default function AssetQuestionsDataTable({
                             },
                           }
                         : undefined,
-                      conditions: question.conditions
-                        ? {
-                            createMany: {
-                              data: question.conditions.map((c) => ({
-                                conditionType: c.conditionType,
-                                value: c.value,
-                                description: c.description ?? undefined,
-                              })),
-                            },
-                          }
-                        : undefined,
+                      conditions: {
+                        createMany: {
+                          data: (question.conditions ?? []).map((c) => ({
+                            conditionType: c.conditionType,
+                            value: c.value,
+                            description: c.description ?? undefined,
+                          })),
+                        },
+                      },
                       variants: question.variants
                         ? {
                             createMany: {
                               data: question.variants.map((v) => ({
-                                conditions: v.conditions
-                                  ? {
-                                      createMany: {
-                                        data: v.conditions.map((c) => ({
-                                          conditionType: c.conditionType,
-                                          value: c.value,
-                                          description: c.description ?? undefined,
-                                        })),
-                                      },
-                                    }
-                                  : undefined,
+                                conditions: {
+                                  createMany: {
+                                    data: (v.conditions ?? []).map((c) => ({
+                                      conditionType: c.conditionType,
+                                      value: c.value,
+                                      description: c.description ?? undefined,
+                                    })),
+                                  },
+                                },
                                 prompt: v.prompt,
                                 order: v.order ?? undefined,
                                 valueType: v.valueType,

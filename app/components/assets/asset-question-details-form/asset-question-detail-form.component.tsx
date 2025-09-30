@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import {
+  extractErrorMessage,
   FormControl,
   FormField,
   FormItem,
@@ -22,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import ActiveToggleFormInput from "~/components/active-toggle-form-input";
@@ -69,6 +71,11 @@ const FORM_DEFAULTS = {
   prompt: "",
   valueType: "BINARY",
   tone: ASSET_QUESTION_TONES.POSITIVE,
+  conditions: {
+    createMany: {
+      data: [],
+    },
+  },
 } satisfies TForm;
 
 export default function AssetQuestionDetailForm({
@@ -139,7 +146,7 @@ function AssetQuestionDetailsFormContent({
   });
 
   const {
-    formState: { isDirty, isValid },
+    formState: { isDirty },
     watch,
     getFieldState,
     setValue,
@@ -248,7 +255,10 @@ function AssetQuestionDetailsFormContent({
       <form
         className="flex"
         onSubmit={form.handleSubmit(handleSubmit, (e) => {
-          console.error("Form is invalid:", e);
+          toast.error("Please fix the errors in the form.", {
+            description: extractErrorMessage(e),
+            duration: 10000,
+          });
         })}
       >
         <div className="flex-1 space-y-4 p-4">
@@ -478,7 +488,7 @@ function AssetQuestionDetailsFormContent({
             description="Question ID from the legacy Shield system"
           />
 
-          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
+          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
             {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </div>

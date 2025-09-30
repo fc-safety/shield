@@ -6,7 +6,7 @@ import HelpPopover from "~/components/help-popover";
 import MetadataKeyCombobox from "~/components/metadata-key-combobox";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
-import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
@@ -19,21 +19,23 @@ export default function SetMetadataInput({ requireDynamic = false }: { requireDy
   const createSetAssetMetadataConfigs = watch("setAssetMetadataConfig.create.metadata");
   const updateSetAssetMetadataConfigs = watch("setAssetMetadataConfig.update.metadata");
 
+  const isUpdate = watch("setAssetMetadataConfig.update") !== undefined;
+
   const setMetadataConfigs = useMemo(() => {
-    return [
-      ...(createSetAssetMetadataConfigs ?? []).map((metadata, idx) => ({
-        idx,
-        key: `create-${idx}`,
-        action: "create" as const,
-        data: metadata,
-      })),
-      ...(updateSetAssetMetadataConfigs ?? []).map((metadata, idx) => ({
+    if (isUpdate) {
+      return updateSetAssetMetadataConfigs.map((metadata, idx) => ({
         idx,
         key: `update-${idx}`,
         action: "update" as const,
         data: metadata,
-      })),
-    ];
+      }));
+    }
+    return (createSetAssetMetadataConfigs ?? []).map((metadata, idx) => ({
+      idx,
+      key: `create-${idx}`,
+      action: "create" as const,
+      data: metadata,
+    }));
   }, [createSetAssetMetadataConfigs, updateSetAssetMetadataConfigs]);
 
   const handleAddMetadataConfig = () => {
@@ -43,9 +45,13 @@ export default function SetMetadataInput({ requireDynamic = false }: { requireDy
       value: "",
     };
 
+    const existingMetadata = isUpdate
+      ? updateSetAssetMetadataConfigs
+      : createSetAssetMetadataConfigs;
+
     setValue(
-      "setAssetMetadataConfig.create.metadata",
-      [...(createSetAssetMetadataConfigs ?? []), DEFAULT_METADATA],
+      `setAssetMetadataConfig.${isUpdate ? "update" : "create"}.metadata`,
+      [...(existingMetadata ?? []), DEFAULT_METADATA],
       { shouldDirty: true }
     );
   };
@@ -142,6 +148,7 @@ export default function SetMetadataInput({ requireDynamic = false }: { requireDy
                 ))}
               </div>
             </FormControl>
+            <FormMessage />
           </FormItem>
         );
       }}

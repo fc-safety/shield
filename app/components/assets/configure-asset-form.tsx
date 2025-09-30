@@ -19,6 +19,7 @@ export type ConfigureAssetFormRef = {
 export default function ConfigureAssetForm({
   assetId,
   questions,
+  responses,
   viewContext,
   onSubmitted,
   setIsValid,
@@ -29,6 +30,7 @@ export default function ConfigureAssetForm({
 }: {
   assetId: string;
   questions: AssetQuestion[];
+  responses?: { questionId: string; value: string }[];
   viewContext?: ViewContext;
   onSubmitted?: () => void;
   setIsValid?: (isValid: boolean) => void;
@@ -41,11 +43,17 @@ export default function ConfigureAssetForm({
     return buildConfigureAssetSchema(questions);
   }, [questions]);
 
+  const responsesMap = useMemo(() => {
+    return responses
+      ? new Map(responses.map((response) => [response.questionId, response.value]))
+      : new Map<string, string>();
+  }, [responses]);
+
   const form = useForm({
     resolver: zodResolver(narrowedConfigureAssetSchema),
     values: {
       responses: questions.map((question) => ({
-        value: "",
+        value: responsesMap.get(question.id) ?? "",
         assetQuestionId: question.id,
         originalPrompt: question.prompt,
       })),
