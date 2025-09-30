@@ -206,7 +206,7 @@ export default function AssetQuestionsDataTable({
           const prompt = getValue() as string;
 
           return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
-            <span className="line-clamp-2">{prompt}</span>
+            <span className="line-clamp-3 min-w-56">{prompt}</span>
           ) : (
             <SubmittingTextarea
               value={prompt}
@@ -216,6 +216,7 @@ export default function AssetQuestionsDataTable({
               onEditingChange={(editing) => setEditingPromptId(editing ? question.id : null)}
               className="w-full"
               viewContext={viewContext}
+              displayClassName="line-clamp-3 min-w-56"
             />
           );
         },
