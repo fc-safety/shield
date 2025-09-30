@@ -138,9 +138,9 @@ const FormDescription = React.forwardRef<
 FormDescription.displayName = "FormDescription";
 
 export const extractErrorMessage = (fieldError: FieldError | FieldErrors) => {
-  const doExtractMessage = (errorInput: FieldError | FieldErrors): React.ReactNode => {
+  const doExtractMessage = (errorInput: FieldError | FieldErrors): string[] => {
     if ("message" in errorInput && typeof errorInput.message === "string") {
-      return [<span>{errorInput.message}</span>];
+      return [errorInput.message];
     } else {
       return Object.values(errorInput)
         .filter((prop): prop is object => !isNil(prop) && typeof prop === "object")
@@ -148,7 +148,13 @@ export const extractErrorMessage = (fieldError: FieldError | FieldErrors) => {
     }
   };
 
-  return <span className="flex flex-col gap-1">{doExtractMessage(fieldError)}</span>;
+  return (
+    <span className="flex flex-col gap-1">
+      {doExtractMessage(fieldError).map((m, idx) => (
+        <span key={`${idx}-${m}`}>{m}</span>
+      ))}
+    </span>
+  );
 };
 
 const FormMessage = React.forwardRef<
