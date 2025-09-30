@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
 import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { cn } from "~/lib/utils";
@@ -18,13 +18,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 const fuse = new Fuse([] as { label: string; value: string }[], { keys: ["label"] });
 
-export default function MetadataKeyCombobox({
+export default function MetadataValueCombobox({
+  metadataKey,
   value,
   onValueChange,
   onBlur,
   className,
   placeholder,
 }: {
+  metadataKey: string;
   value: string | undefined;
   onValueChange: (value: string) => void;
   onBlur?: () => void;
@@ -37,11 +39,18 @@ export default function MetadataKeyCombobox({
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: valueOptionsRaw, isLoading } = useQuery({
-    queryKey: ["metadata-keys"] as const,
-    queryFn: () => getMetadataKeys(fetchOrThrow),
+    queryKey: ["metadata-values", metadataKey] as const,
+    queryFn: () => getMetadataValues(fetchOrThrow, metadataKey),
+    enabled: !!metadataKey,
   });
 
   const [newOrCustomValueOptions, setNewOrCustomValueOptions] = useImmer(new Set<string>());
+
+  // Reset new or custom value options when the value options change.
+  useEffect(() => {
+    setNewOrCustomValueOptions(new Set<string>());
+    onValueChange("");
+  }, [valueOptionsRaw]);
 
   const options = useMemo(() => {
     let options = valueOptionsRaw ? [...valueOptionsRaw] : [];
@@ -90,7 +99,7 @@ export default function MetadataKeyCombobox({
             {isLoading ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
-              value || placeholder || `Select metadata key...`
+              value || placeholder || `Select metadata value...`
             )}
           </div>
           <ChevronsUpDown className="opacity-50" />
@@ -99,7 +108,7 @@ export default function MetadataKeyCombobox({
       <PopoverContent className="w-[300px] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Search for or add a key..."
+            placeholder="Search for or add a value..."
             value={optionsSearchQuery}
             onValueChange={setOptionsSearchQuery}
             onBlur={onBlur}
@@ -143,6 +152,8 @@ export default function MetadataKeyCombobox({
   );
 }
 
-const getMetadataKeys = async (fetcher: typeof fetch): Promise<string[]> => {
-  return await fetcher(`/assets/metadata-keys`).then((r) => r.json() as Promise<string[]>);
+const getMetadataValues = async (fetcher: typeof fetch, metadataKey: string): Promise<string[]> => {
+  return await fetcher(`/assets/metadata-values/${metadataKey}`).then(
+    (r) => r.json() as Promise<string[]>
+  );
 };
