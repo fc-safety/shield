@@ -3,7 +3,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter } from "date-fns";
-import { Loader2, Nfc } from "lucide-react";
+import { AlertCircle, Loader2, Nfc } from "lucide-react";
 import { isIPv4, isIPv6 } from "net";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray } from "react-hook-form";
@@ -22,6 +22,7 @@ import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionFormInputLabel from "~/components/assets/asset-question-form-input-label";
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
+import ConfigureAssetForm from "~/components/assets/configure-asset-form";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
@@ -42,6 +43,7 @@ import { useAuth } from "~/contexts/auth-context";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import type { Asset, AssetQuestion, InspectionRoute, InspectionSession, Tag } from "~/lib/models";
 import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
+import type { CheckConfigurationByAssetResult } from "~/lib/types";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { can, getUserDisplayName } from "~/lib/users";
 import { buildTitle, getSearchParams, isNil } from "~/lib/utils";
@@ -153,12 +155,13 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const sessionId = qp.get("sessionId");
 
   // Load inspection route and session data, if present.
-  const [routeContext, inspectionQuestions] = await Promise.all([
+  const [routeContext, inspectionQuestions, configurationCheckResults] = await Promise.all([
     fetchActiveInspectionRouteContext(request, tag.asset.id, {
       sessionId: sessionId ?? undefined,
       resetSession: action === "reset-session",
     }),
     api.assetQuestions.findByAsset(request, tag.asset.id, "INSPECTION"),
+    api.assetQuestions.checkConfigurationByAsset(request, tag.asset.id),
   ]);
 
   return {
@@ -167,6 +170,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       tag.asset?.product.imageUrl &&
       buildImageProxyUrl(tag.asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
     inspectionQuestions,
+    configurationCheckResults,
     ...routeContext,
   };
 };
@@ -192,6 +196,7 @@ export default function InspectIndex({
     inspectionQuestions,
     activeOrRecentlyExpiredSessions,
     matchingRoutes,
+    configurationCheckResults,
   },
 }: Route.ComponentProps) {
   if (tag.asset) {
@@ -203,6 +208,7 @@ export default function InspectIndex({
         activeOrRecentlyExpiredSessions={activeOrRecentlyExpiredSessions}
         matchingRoutes={matchingRoutes}
         processedProductImageUrl={processedProductImageUrl}
+        configurationCheckResults={configurationCheckResults}
       />
     );
   }
@@ -224,6 +230,7 @@ function InspectionPage({
   activeOrRecentlyExpiredSessions,
   matchingRoutes,
   processedProductImageUrl,
+  configurationCheckResults,
 }: {
   tag: Tag;
   asset: NonNullable<Tag["asset"]>;
@@ -231,6 +238,7 @@ function InspectionPage({
   activeOrRecentlyExpiredSessions: InspectionSession[] | null | undefined;
   matchingRoutes: InspectionRoute[] | null | undefined;
   processedProductImageUrl: string | null | undefined;
+  configurationCheckResults?: CheckConfigurationByAssetResult | null | undefined;
 }) {
   const questions = useMemo(
     () =>
@@ -341,6 +349,9 @@ function InspectionPage({
 
   const [actionQueryParams, setActionQueryParams] = useState<QueryParams | null>(null);
 
+  const configurationRequired =
+    configurationCheckResults && !configurationCheckResults.isConfigurationMet;
+
   return (
     <>
       <div className="grid max-w-md gap-4 self-center">
@@ -365,73 +376,98 @@ function InspectionPage({
               <Nfc className="text-primary size-8" />
             </CardTitle>
             <CardDescription>
-              Please answer the following questions to complete the inspection.
+              {configurationRequired ? (
+                <Alert variant="warning" className="mt-2">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Configuration Required</AlertTitle>
+                  <AlertDescription>
+                    Additional configuration is needed before you can begin inspecting.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                "Please answer the following questions to complete the inspection."
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6 sm:gap-8">
-            <RemixFormProvider {...form}>
-              <Form
-                className="space-y-4"
-                method={"post"}
-                action={
-                  actionQueryParams ? `?index&${stringifyQuery(actionQueryParams)}` : undefined
-                }
-                onSubmit={form.handleSubmit}
-              >
-                {questions.filter((q) => q.required).length > 0 && (
-                  <p className="text-muted-foreground mb-4 text-sm">* indicates a required field</p>
-                )}
-                <Input type="hidden" {...form.register("asset.connect.id")} hidden />
-                {questionFields.map((questionField, index) => {
-                  const question = questions[index];
-                  return (
-                    <FormField
-                      key={questionField.id}
-                      control={form.control}
-                      name={`responses.createMany.data.${index}.value`}
-                      render={({ field: { value, onChange, onBlur } }) => (
-                        <FormItem>
-                          <AssetQuestionFormInputLabel question={question} />
-                          <FormControl>
-                            <AssetQuestionResponseField
-                              value={value ?? ""}
-                              onValueChange={onChange}
-                              onBlur={onBlur}
-                              question={question}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  );
-                })}
-                {questionFields.length === 0 && (
-                  <p className="mb-6 text-center text-xs font-bold">
-                    No questions available for this asset. Please contact your administrator.
-                    <br />
-                    <br />
-                    You can still leave comments and submit the inspection.
-                  </p>
-                )}
-                <FormField
-                  control={form.control}
-                  name="comments"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Additional comments</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+            {configurationCheckResults && !configurationCheckResults.isConfigurationMet ? (
+              <ConfigureAssetForm
+                assetId={asset.id}
+                questions={configurationCheckResults.checkResults.map((c) => c.assetQuestion)}
+                responses={configurationCheckResults.checkResults.map((c) => ({
+                  questionId: c.assetQuestion.id,
+                  value: c.assetValue ?? "",
+                }))}
+                showSubmitButton
+                submitButtonText="Update Configuration"
+              />
+            ) : (
+              <RemixFormProvider {...form}>
+                <Form
+                  className="space-y-4"
+                  method={"post"}
+                  action={
+                    actionQueryParams ? `?index&${stringifyQuery(actionQueryParams)}` : undefined
+                  }
+                  onSubmit={form.handleSubmit}
+                >
+                  {questions.filter((q) => q.required).length > 0 && (
+                    <p className="text-muted-foreground mb-4 text-sm">
+                      * indicates a required field
+                    </p>
                   )}
-                />
-                <Button type="submit" disabled={!!isSubmitting || !isValid} className="w-full">
-                  {isSubmitting ? "Sending data..." : "Complete Inspection"}
-                </Button>
-              </Form>
-            </RemixFormProvider>
+                  <Input type="hidden" {...form.register("asset.connect.id")} hidden />
+                  {questionFields.map((questionField, index) => {
+                    const question = questions[index];
+                    return (
+                      <FormField
+                        key={questionField.id}
+                        control={form.control}
+                        name={`responses.createMany.data.${index}.value`}
+                        render={({ field: { value, onChange, onBlur } }) => (
+                          <FormItem>
+                            <AssetQuestionFormInputLabel question={question} />
+                            <FormControl>
+                              <AssetQuestionResponseField
+                                value={value ?? ""}
+                                onValueChange={onChange}
+                                onBlur={onBlur}
+                                question={question}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    );
+                  })}
+                  {questionFields.length === 0 && (
+                    <p className="mb-6 text-center text-xs font-bold">
+                      No questions available for this asset. Please contact your administrator.
+                      <br />
+                      <br />
+                      You can still leave comments and submit the inspection.
+                    </p>
+                  )}
+                  <FormField
+                    control={form.control}
+                    name="comments"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Additional comments</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={!!isSubmitting || !isValid} className="w-full">
+                    {isSubmitting ? "Sending data..." : "Complete Inspection"}
+                  </Button>
+                </Form>
+              </RemixFormProvider>
+            )}
           </CardContent>
         </Card>
       </div>

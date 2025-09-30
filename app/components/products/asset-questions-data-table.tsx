@@ -413,32 +413,28 @@ export default function AssetQuestionsDataTable({
                             },
                           }
                         : undefined,
-                      conditions: question.conditions
-                        ? {
-                            createMany: {
-                              data: question.conditions.map((c) => ({
-                                conditionType: c.conditionType,
-                                value: c.value,
-                                description: c.description ?? undefined,
-                              })),
-                            },
-                          }
-                        : undefined,
+                      conditions: {
+                        createMany: {
+                          data: (question.conditions ?? []).map((c) => ({
+                            conditionType: c.conditionType,
+                            value: c.value,
+                            description: c.description ?? undefined,
+                          })),
+                        },
+                      },
                       variants: question.variants
                         ? {
                             createMany: {
                               data: question.variants.map((v) => ({
-                                conditions: v.conditions
-                                  ? {
-                                      createMany: {
-                                        data: v.conditions.map((c) => ({
-                                          conditionType: c.conditionType,
-                                          value: c.value,
-                                          description: c.description ?? undefined,
-                                        })),
-                                      },
-                                    }
-                                  : undefined,
+                                conditions: {
+                                  createMany: {
+                                    data: (v.conditions ?? []).map((c) => ({
+                                      conditionType: c.conditionType,
+                                      value: c.value,
+                                      description: c.description ?? undefined,
+                                    })),
+                                  },
+                                },
                                 prompt: v.prompt,
                                 order: v.order ?? undefined,
                                 valueType: v.valueType,

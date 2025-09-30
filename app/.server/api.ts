@@ -26,7 +26,13 @@ import {
   resolveAlertSchema,
   type setupAssetSchema,
 } from "~/lib/schema";
-import type { ClientUser, GetReportResult, ListReportsResult, Role } from "~/lib/types";
+import type {
+  CheckConfigurationByAssetResult,
+  ClientUser,
+  GetReportResult,
+  ListReportsResult,
+  Role,
+} from "~/lib/types";
 import type { QueryParams } from "~/lib/urls";
 import { INSPECTION_TOKEN_HEADER } from "~/routes/inspect/constants/headers";
 import { ApiFetcher, CRUD, type FetchBuildOptions } from "./api-utils";
@@ -164,6 +170,10 @@ export const api = {
         assetId,
         ...(type && { type }),
       }).get<AssetQuestion[]>(),
+    checkConfigurationByAsset: (request: Request, assetId: string) =>
+      ApiFetcher.create(request, "/asset-questions/check-configuration-by-asset/:assetId", {
+        assetId,
+      }).get<CheckConfigurationByAssetResult>(),
   },
   // CLIENTS & SITES
   clients: {

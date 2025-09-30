@@ -1,6 +1,7 @@
 import type { SortingState } from "@tanstack/react-table";
 
 import type { QuickRangeId } from "~/components/date-range-select";
+import type { AssetQuestion } from "./models";
 import type { QueryParams } from "./urls";
 
 export type BaseUIComponentProps = {
@@ -184,4 +185,17 @@ export interface ListReportsResult {
 export interface GetReportResult extends ListReportsResult {
   columns: string[];
   data: unknown[];
+}
+
+export interface AssetQuestionCheckResult {
+  key: string;
+  staticValue?: string;
+  assetValue: string | null;
+  isMet: boolean;
+  assetQuestion: AssetQuestion;
+}
+
+export interface CheckConfigurationByAssetResult {
+  checkResults: AssetQuestionCheckResult[];
+  isConfigurationMet: boolean;
 }

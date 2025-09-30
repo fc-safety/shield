@@ -5,7 +5,7 @@ import { useFormContext } from "react-hook-form";
 import type z from "zod";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Product, ResultsPage } from "~/lib/models";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
@@ -188,6 +188,7 @@ export default function AutomaticSupplySetupInput() {
                 )}
               </div>
             </FormControl>
+            <FormMessage />
           </FormItem>
         );
       }}
