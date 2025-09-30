@@ -212,6 +212,10 @@ export function DataTableHead<TData, TValue>({
               : null,
         className
       )}
+      style={{
+        width: `${header.getSize()}px`,
+        ...props.style,
+      }}
       {...props}
     >
       {header.isPlaceholder
@@ -247,6 +251,10 @@ export function DataTableCell<TData, TValue>({
               : null,
         className
       )}
+      style={{
+        width: `${cell.column.getSize()}px`,
+        ...props.style,
+      }}
       {...props}
     >
       {flexRender(cell.column.columnDef.cell, cell.getContext())}

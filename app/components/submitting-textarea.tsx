@@ -111,7 +111,7 @@ export default function SubmittingTextarea({
     <div className="group relative">
       <span
         className={cn(
-          "hover:bg-muted/50 -mx-1 line-clamp-2 cursor-pointer rounded px-1 py-0.5 pr-6",
+          "hover:bg-muted/50 -mx-1 cursor-pointer rounded px-1 py-0.5 pr-6",
           displayClassName
         )}
         onClick={() => handleClickToEdit()}
