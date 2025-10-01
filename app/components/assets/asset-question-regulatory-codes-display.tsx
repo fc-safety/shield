@@ -13,7 +13,7 @@ export default function AssetQuestionRegulatoryCodesDisplay({
     <div className="flex flex-wrap items-center gap-1.5 py-1">
       <ScrollText className="text-muted-foreground size-4 shrink-0" />
       {regulatoryCodes.map((rc, idx) => (
-        <div key={rc.id} title={rc.title}>
+        <div key={rc.id} title={rc.title} className="inline-flex items-center">
           <RegulatoryCodeDisplay regulatoryCode={rc} />
           {idx < regulatoryCodes.length - 1 && (
             <span className="text-muted-foreground text-xs">;</span>
@@ -30,10 +30,10 @@ function RegulatoryCodeDisplay({
   regulatoryCode: NonNullable<AssetQuestion["regulatoryCodes"]>[number];
 }) {
   const displayText = (
-    <div className="text-muted-foreground inline-block text-xs">
+    <div className="text-muted-foreground inline-flex items-center gap-1 text-xs">
       <span className="border-border text-2xs rounded-sm border px-1 py-0.5 font-bold">
         {regulatoryCode.governingBody}
-      </span>{" "}
+      </span>
       {regulatoryCode.codeIdentifier}
       {regulatoryCode.section && (
         <span className="text-muted-foreground ml-1">({regulatoryCode.section})</span>
