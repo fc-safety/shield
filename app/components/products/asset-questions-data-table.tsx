@@ -561,17 +561,19 @@ export default function AssetQuestionsDataTable({
           {
             column: table.getColumn("conditions"),
             title: "Metadata",
-            options: sortedQuestions
-              .flatMap(
-                (q) =>
-                  q.conditions
-                    ?.filter((c) => c.conditionType === "METADATA")
-                    .flatMap((c) => c.value) ?? []
-              )
-              .map((value) => ({
-                value: `{metadata}:${value}`,
-                label: value.split(":").join(" = "),
-              })),
+            options: [
+              ...new Set(
+                sortedQuestions.flatMap(
+                  (q) =>
+                    q.conditions
+                      ?.filter((c) => c.conditionType === "METADATA")
+                      .flatMap((c) => c.value) ?? []
+                )
+              ),
+            ].map((value) => ({
+              value: `{metadata}:${value}`,
+              label: value.split(":").join(" = "),
+            })),
             multiple: true,
             key: "metadata",
           },
