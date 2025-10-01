@@ -60,7 +60,7 @@ export default function MetadataInput() {
               </Button>
             </FormLabel>
             <FormControl>
-              <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+              <div className="grid w-full grid-cols-[1fr_1fr_auto] gap-2">
                 {metadataArray.length > 0 && (
                   <>
                     <span className="text-xs font-medium">Key</span>
@@ -121,6 +121,7 @@ const MetadataInputItem = ({
             onBlur();
           }
         }}
+        className="min-w-0 flex-1"
       />
       <MetadataValueCombobox
         autoFocus={false}
@@ -131,6 +132,7 @@ const MetadataInputItem = ({
           onBlur();
           setValueBlurred(true);
         }}
+        className="min-w-0 flex-1"
       />
       <Button variant="ghost" size="iconSm" type="button" onClick={() => onDelete()}>
         <Eraser className="size-4" />

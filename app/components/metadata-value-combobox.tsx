@@ -4,6 +4,7 @@ import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { cn } from "~/lib/utils";
 import { Button } from "./ui/button";
 import {
@@ -39,6 +40,11 @@ export default function MetadataValueCombobox({
 
   const [optionsSearchQuery, setOptionsSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+
+  useBlurOnClose({
+    onBlur,
+    open: isOpen,
+  });
 
   const queryClient = useQueryClient();
   const { data: valueOptionsRaw, isLoading } = useQuery({
@@ -120,7 +126,6 @@ export default function MetadataValueCombobox({
             placeholder="Search for or add a value..."
             value={optionsSearchQuery}
             onValueChange={setOptionsSearchQuery}
-            onBlur={onBlur}
           />
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
