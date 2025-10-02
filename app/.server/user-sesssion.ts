@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { redirect } from "react-router";
 import { isTokenExpired } from "~/lib/users";
-import type { Tokens } from "./authenticator";
+import type { Tokens, User } from "./authenticator";
 import { buildUser, strategy } from "./authenticator";
 import { logger } from "./logger";
 import { requestContext } from "./request-context";
@@ -11,8 +11,7 @@ declare global {
   var REFRESH_SESSION_TOKEN_MAP: Map<string, Promise<Tokens>>;
 }
 
-globalThis.REFRESH_SESSION_TOKEN_MAP =
-  globalThis.REFRESH_SESSION_TOKEN_MAP ?? new Map();
+globalThis.REFRESH_SESSION_TOKEN_MAP = globalThis.REFRESH_SESSION_TOKEN_MAP ?? new Map();
 
 export interface LoginRedirectOptions {
   returnTo?: string;
@@ -28,10 +27,7 @@ export const getLoginRedirect = async (
 
   if (session) {
     session.set("returnTo", options.returnTo ?? request.url);
-    resHeaders.append(
-      "Set-Cookie",
-      await userSessionStorage.commitSession(session)
-    );
+    resHeaders.append("Set-Cookie", await userSessionStorage.commitSession(session));
   }
 
   // Clear any existing middleware set cookie values.
@@ -46,15 +42,40 @@ export const getLoginRedirect = async (
   });
 };
 
-export const requireUserSession = async (
-  request: Request,
-  options: LoginRedirectOptions = {}
-) => {
+export const getActiveUserSession = async (
+  request: Request
+): Promise<{
+  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>> | null;
+  user: User | null;
+}> => {
   let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
   try {
-    session = await userSessionStorage.getSession(
-      request.headers.get("cookie")
-    );
+    session = await userSessionStorage.getSession(request.headers.get("cookie"));
+  } catch (e) {
+    return {
+      session: null,
+      user: null,
+    };
+  }
+
+  const tokens = session.get("tokens");
+  if (!tokens || isTokenExpired(tokens.accessToken)) {
+    return {
+      session: null,
+      user: null,
+    };
+  }
+
+  return {
+    user: buildUser(tokens),
+    session,
+  };
+};
+
+export const requireUserSession = async (request: Request, options: LoginRedirectOptions = {}) => {
+  let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
+  try {
+    session = await userSessionStorage.getSession(request.headers.get("cookie"));
   } catch (e) {
     throw redirect("/logout");
   }
@@ -153,9 +174,7 @@ export const refreshTokensOrRelogin = async (
 };
 
 const doRefreshToken = async (refreshToken: string): Promise<Tokens> => {
-  const refreshedTokens = await strategy.then((s) =>
-    s.refreshToken(refreshToken)
-  );
+  const refreshedTokens = await strategy.then((s) => s.refreshToken(refreshToken));
 
   return {
     accessToken: refreshedTokens.accessToken(),

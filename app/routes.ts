@@ -23,6 +23,7 @@ export default [
     route("routes", "./routes/inspect/routes.tsx"),
     route("register", "./routes/inspect/register/index.tsx"),
     route("clear-demo-inspections", "./routes/inspect/clear-demo-inspections.tsx"),
+    route("reset-demo-inspections", "./routes/inspect/reset-demo-inspections.tsx"),
 
     // User routes
     route("account", "./routes/inspect/account.tsx"),

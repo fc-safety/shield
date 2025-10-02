@@ -2,6 +2,7 @@ import {
   endOfDay,
   format,
   formatDistanceToNow,
+  isSameDay,
   parseISO,
   startOfDay,
   startOfMonth,
@@ -10,11 +11,12 @@ import {
   subMinutes,
 } from "date-fns";
 import { Loader2, Nfc } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import { api } from "~/.server/api";
+import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import Icon from "~/components/icons/icon";
@@ -33,6 +35,7 @@ import {
 import { Input } from "~/components/ui/input";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { getMyOrganizationFn } from "~/lib/services/clients.service";
 import { getUserDisplayName } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/clear-demo-inspections";
@@ -46,15 +49,12 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { user } = await requireUserSession(request);
-  const client = await api.clients
-    .list(request, {
-      limit: 1,
-      externalId: user.clientId,
-    })
-    .then((client) => client.results.filter((c) => c.demoMode).at(0));
+  await requireUserSession(request);
 
-  if (!client) {
+  const fetcher = getAuthenticatedFetcher(request);
+  const { client } = await getMyOrganizationFn(fetcher)();
+
+  if (!client || !client.demoMode) {
     throw new Response("No demo client found for current user.", {
       status: 404,
     });
@@ -196,12 +196,30 @@ const useDeleteInspectionsButton = ({
     );
   }, [submitJson, clientId, startDate, endDate]);
 
+  const durationMessage = useMemo(() => {
+    const formatStr = "PPP @ p";
+    const bold = (str: string) => <span className="font-semibold">{str}</span>;
+    if (!endDate || isSameDay(endDate, new Date())) {
+      return <>since {bold(format(startDate, formatStr))}</>;
+    }
+
+    return (
+      <>
+        from {bold(format(startDate, formatStr))} to {bold(format(endDate, formatStr))}
+      </>
+    );
+  }, [startDate, endDate]);
+
   const handleClear = useCallback(async () => {
     setConfirm((d) => {
       d.open = true;
       d.title = `Demo Inspections – ${label}`;
-      d.message =
-        "Are you sure you want to clear all inspections for the current demo client for this time period?";
+      d.message = (
+        <>
+          Are you sure you want to clear all inspections for the current demo client{" "}
+          {durationMessage}?
+        </>
+      );
       d.onConfirm = handleConfirm;
     });
   }, [submitJson, label, clientId, startDate, endDate]);
@@ -266,7 +284,7 @@ function ClearInspectionsByDateRangeButton({ clientId }: { clientId: string }) {
 
   const { DeleteButton, ConfirmDeleteDialog } = useDeleteInspectionsButton({
     clientId,
-    label: "Custom",
+    label: "Clear",
     startDate: form.watch("startDate"),
     endDate: form.watch("endDate"),
     onSuccess: () => setDialogOpen(false),

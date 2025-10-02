@@ -1,4 +1,4 @@
-import type { ResultsPage, Site } from "../models";
+import type { Client, ResultsPage, Site } from "../models";
 import { buildPath } from "../urls";
 
 interface GetSitesOptions {
@@ -26,4 +26,22 @@ export const getSitesFn =
 export const getSitesQueryOptions = (fetcher: typeof fetch, options?: GetSitesOptions) => ({
   queryKey: getSitesQueryKey(options),
   queryFn: getSitesFn(fetcher),
+});
+
+export interface GetMyOrganizationResult {
+  site: Pick<Site, "id" | "name" | "externalId" | "address" | "phoneNumber" | "primary">;
+  client: Pick<Client, "id" | "name" | "externalId" | "address" | "phoneNumber" | "demoMode">;
+}
+
+export const getMyOrganizationQueryKey = () => ["my-organization"] as const;
+
+export const getMyOrganizationFn = (fetcher: typeof fetch) => async () => {
+  return fetcher(buildPath("/clients/my-organization")).then(
+    (r) => r.json() as Promise<GetMyOrganizationResult>
+  );
+};
+
+export const getMyOrganizationQueryOptions = (fetcher: typeof fetch) => ({
+  queryKey: getMyOrganizationQueryKey(),
+  queryFn: getMyOrganizationFn(fetcher),
 });

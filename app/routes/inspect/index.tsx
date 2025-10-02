@@ -184,7 +184,12 @@ export const meta: Route.MetaFunction = ({ data, matches }) => {
 };
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  return <InspectErrorBoundary error={error} />;
+  const { user } = useAuth();
+  return (
+    <main className="grid grow place-items-center px-6 py-24 sm:py-32 lg:px-8">
+      <InspectErrorBoundary error={error} user={user} />
+    </main>
+  );
 }
 
 type TForm = z.infer<typeof createInspectionSchema>;
@@ -615,8 +620,9 @@ function InspectionRouteCard({
             userInteractionReady &&
             !routeDisabled &&
             !!activeSession.completedInspectionRoutePoints &&
+            !!asset &&
             activeSession.completedInspectionRoutePoints.some(
-              (p) => p.inspectionRoutePoint?.assetId === asset?.id
+              (p) => !!p.inspectionRoutePoint && p.inspectionRoutePoint.assetId === asset.id
             )
           }
           activeSession={activeSession}
