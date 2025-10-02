@@ -8,8 +8,6 @@ import { useTheme } from "remix-themes";
 import { useAppStateValue } from "~/contexts/app-state-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
-import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
-import type { AssetInspectionsStatus } from "~/lib/enums";
 import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
@@ -40,70 +38,58 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
 
   useRefreshByNumericKey(refreshKey, refetch);
 
-  const rowsGroupedByStatus = React.useMemo(() => {
+  const compliancePercentages = React.useMemo(() => {
     if (!complianceHistory || !complianceHistory.length) {
       return null;
     }
 
-    const newGrouping: Record<
-      Exclude<AssetInspectionsStatus, "COMPLIANT_DUE_SOON">,
-      Record<string, number>
-    > = {
-      COMPLIANT_DUE_LATER: {},
-      NON_COMPLIANT_INSPECTED: {},
-      NON_COMPLIANT_NEVER_INSPECTED: {},
-    };
+    const percentages: Record<string, number> = {};
 
-    complianceHistory?.forEach(({ endDate, assetsByComplianceStatus }, idx) => {
+    complianceHistory?.forEach(({ endDate, assetsByComplianceStatus }) => {
+      const month = getMonthLabel(endDate);
+      let compliantCount = 0;
+      let totalCount = 0;
+
       Object.entries(assetsByComplianceStatus).forEach(([rawStatus, assets]) => {
-        const month = getMonthLabel(endDate);
-        // Treat Due Soon as simply Compliant since "Due Soon" doesn't make
-        // sense for historical data.
-        const status = (
-          rawStatus === "COMPLIANT_DUE_SOON" ? "COMPLIANT_DUE_LATER" : rawStatus
-        ) as Exclude<AssetInspectionsStatus, "COMPLIANT_DUE_SOON">;
-        if (!newGrouping[status][month]) {
-          newGrouping[status][month] = 0;
+        totalCount += assets.length;
+        // Count both COMPLIANT_DUE_LATER and COMPLIANT_DUE_SOON as compliant
+        if (rawStatus === "COMPLIANT_DUE_LATER" || rawStatus === "COMPLIANT_DUE_SOON") {
+          compliantCount += assets.length;
         }
-        newGrouping[status][month] += assets.length;
       });
+
+      percentages[month] = totalCount > 0 ? (compliantCount / totalCount) * 100 : 0;
     });
 
-    return newGrouping;
+    return percentages;
   }, [complianceHistory]);
 
   const series = React.useMemo(() => {
-    if (rowsGroupedByStatus === null || themeValues === null) {
+    if (compliancePercentages === null || themeValues === null) {
       return;
     }
 
-    return (
-      Object.entries(rowsGroupedByStatus) as [AssetInspectionsStatus, Record<string, number>][]
-    )
-      .sort(([statusA], [statusB]) => sortByStatus()(statusA, statusB))
-      .map(([status, statusMonthlyCounts]) => {
-        return {
-          id: status,
-          name: getStatusLabel(status),
-          type: "bar",
-          stack: "total",
-          // areaStyle: {},
-          emphasis: {
-            focus: "series",
-          },
-          itemStyle: {
-            color: themeValues[status],
-          },
-          data: Object.entries(statusMonthlyCounts)
-            .map(([month, count]) => ({
-              id: month,
-              name: month,
-              value: count,
-            }))
-            .reverse(),
-        } satisfies NonNullable<EChartsOption["series"]>;
-      });
-  }, [complianceHistory, rowsGroupedByStatus, themeValues]);
+    return [
+      {
+        id: "compliant",
+        name: "Compliance Score",
+        type: "bar",
+        emphasis: {
+          focus: "series",
+        },
+        itemStyle: {
+          color: themeValues["COMPLIANT_DUE_LATER"],
+        },
+        data: Object.entries(compliancePercentages)
+          .map(([month, percentage]) => ({
+            id: month,
+            name: month,
+            value: percentage,
+          }))
+          .reverse(),
+      } satisfies NonNullable<EChartsOption["series"]>,
+    ];
+  }, [complianceHistory, compliancePercentages, themeValues]);
 
   const totalAssets = React.useMemo(
     () => complianceHistory?.[0]?.totalAssets ?? 0,
@@ -123,6 +109,7 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
           // Use axis to trigger tooltip
           type: "shadow", // 'shadow' as default; can also be 'line' or 'shadow'
         },
+        valueFormatter: (value) => `${Number(value).toFixed(1)}%`,
       },
       // Legend at the bottom of the chart
       legend: {
@@ -153,6 +140,11 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
       },
       yAxis: {
         type: "value",
+        min: 0,
+        max: 100,
+        axisLabel: {
+          formatter: "{value}%",
+        },
       },
       series,
     }),

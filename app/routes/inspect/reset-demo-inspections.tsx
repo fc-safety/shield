@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -49,56 +50,110 @@ export default function ResetDemoInspections({ loaderData: { client } }: Route.C
           Utilities for resetting inspections for the current demo client.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
         <RenewNoncompliantDemoAssetsButton />
+        <RegenerateInspectionHistoryButton client={client} />
       </CardContent>
     </Card>
   );
 }
 
 const RenewNoncompliantDemoAssetsButton = () => {
+  return (
+    <ResetAction
+      confirmTitle="Are you sure you want to continue?"
+      confirmMessage="This action will renew (i.e. automatially inspect and make compliant) all non-compliant and untagged assets for the current demo client."
+      mutationPath="/clients/renew-noncompliant-demo-assets"
+      buttonLabel="Renew Non-Compliant & Untagged Assets"
+      actionDescription={
+        <>
+          This is used for keeping "presentation-only" assets (those used to improve the appearance
+          of the dashboard but generally are not tagged) up to date.{" "}
+          <span className="mt-2 block italic">
+            Note: This process runs automatically every morning.
+          </span>
+        </>
+      }
+    />
+  );
+};
+
+const RegenerateInspectionHistoryButton = ({ client }: { client: { id: string } }) => {
+  return (
+    <ResetAction
+      confirmTitle="Are you sure you want to continue?"
+      confirmMessage="This action will erase all inspections for the last 13 months and regenerate them."
+      mutationPath="/clients/generate-demo-inspections"
+      mutationMethod="POST"
+      mutationBody={{
+        clientId: client.id,
+        monthsBack: 13,
+        resetInspections: true,
+      }}
+      buttonLabel="Regenerate Inspection History"
+      actionDescription={
+        <>
+          This is used for regenerating the inspection history for the last 13 months, which
+          involves deleting those inspections and generating new ones.
+        </>
+      }
+    />
+  );
+};
+
+const ResetAction = ({
+  confirmTitle,
+  confirmMessage,
+  mutationPath,
+  mutationMethod = "POST",
+  mutationBody,
+  buttonLabel,
+  actionDescription,
+}: {
+  confirmTitle: string;
+  confirmMessage: string;
+  mutationPath: string;
+  mutationMethod?: "POST" | "PUT" | "DELETE";
+  mutationBody?: Record<string, any>;
+  buttonLabel: string;
+  actionDescription: ReactNode;
+}) => {
   const { fetchOrThrow } = useAuthenticatedFetch();
 
   const [confirm, setConfirm] = useConfirmAction({
     defaultProps: {
-      title: "Renew Non-Compliant Untagged Assets",
-      message:
-        "Are you sure you want to renew all non-compliant and untagged assets for the current demo client?",
+      title: confirmTitle,
+      message: confirmMessage,
     },
   });
 
-  const {
-    mutate: renewNoncompliantDemoAssetsMutation,
-    isPending: renewNoncompliantDemoAssetsLoading,
-  } = useMutation({
+  const { mutate: doMutate, isPending } = useMutation({
     mutationFn: async () => {
-      const response = await fetchOrThrow(`/clients/renew-noncompliant-demo-assets`, {
-        method: "POST",
+      const response = await fetchOrThrow(mutationPath, {
+        method: mutationMethod,
+        body: mutationBody ? JSON.stringify(mutationBody) : undefined,
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
       return response.json();
     },
   });
 
-  const handleRenew = () => {
+  const handleAction = () => {
     setConfirm((d) => {
       d.open = true;
-      d.onConfirm = renewNoncompliantDemoAssetsMutation;
+      d.onConfirm = doMutate;
     });
   };
 
   return (
     <div className="flex w-full flex-col gap-1">
-      <Button type="button" onClick={handleRenew} disabled={renewNoncompliantDemoAssetsLoading}>
-        {renewNoncompliantDemoAssetsLoading && <Loader2 className="animate-spin" />}
-        Renew Non-Compliant & Untagged Assets
+      <Button type="button" onClick={handleAction} disabled={isPending}>
+        {isPending && <Loader2 className="animate-spin" />}
+        {buttonLabel}
       </Button>
-      <p className="text-muted-foreground text-xs">
-        This is used for keeping "presentation-only" assets (those used to improve the appearance of
-        the dashboard but generally are not tagged) up to date.{" "}
-        <span className="mt-2 block italic">
-          Note: This process runs automatically every morning.
-        </span>
-      </p>
+      <p className="text-muted-foreground text-xs">{actionDescription}</p>
       <ConfirmationDialog {...confirm} />
     </div>
   );

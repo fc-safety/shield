@@ -40,7 +40,7 @@ export default function Header({
         className
       )}
     >
-      <div className="flex items-center gap-x-1 sm:gap-x-2">
+      <div className="@container flex items-center gap-x-1 sm:gap-x-2">
         {leftSlot}
         {showBannerLogo && (
           <Link to={homeTo}>
@@ -57,7 +57,7 @@ export default function Header({
           </Link>
         )}
         <DemoLabel />
-        <div className="flex-1" />
+        <ClientLabel className="flex-1 px-4 opacity-0 @2xl:opacity-100" />
         <div className="flex items-center gap-x-1 sm:gap-x-2">
           {rightSlot}
           {user && (
@@ -107,4 +107,23 @@ const DemoLabel = ({ className }: { className?: string }) => {
       Demo
     </div>
   ) : null;
+};
+
+const ClientLabel = ({ className }: { className?: string }) => {
+  let client: GetMyOrganizationResult["client"] | undefined;
+  try {
+    ({ client } = useMyOrganization());
+  } catch (e) {}
+  return client?.name ? (
+    <div
+      className={cn(
+        "min-w-0 flex-1 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
+        className
+      )}
+    >
+      {client.name}
+    </div>
+  ) : (
+    <div className={cn(className)}></div>
+  );
 };
