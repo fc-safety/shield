@@ -1,45 +1,36 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
 import {
-  Check,
   CircleAlert,
-  ClipboardCheck,
-  CornerDownRight,
   MoreHorizontal,
+  Nfc,
   Package,
   Pencil,
   Plus,
-  Route as RouteIcon,
-  SearchCheck,
+  RouteIcon,
   Shield,
-  ShieldAlert,
   SquareStack,
-  Thermometer,
   Trash,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
-import { Link, type UIMatch } from "react-router";
+import { Link, useNavigate, type ShouldRevalidateFunctionArgs, type UIMatch } from "react-router";
 import { toast } from "sonner";
 import { ApiFetcher } from "~/.server/api-utils";
 import { buildImageProxyUrl } from "~/.server/images";
-import ActiveIndicator from "~/components/active-indicator";
-import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
-import AssetInspections from "~/components/assets/asset-inspections";
 import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
-import DisplayInspectionValue from "~/components/assets/display-inspection-value";
 import EditAssetButton from "~/components/assets/edit-asset-button";
 import EditConsumableButton from "~/components/assets/edit-consumable-button";
+import EditableTagDisplay from "~/components/assets/editable-tag-display";
 import ProductRequests, { NewSupplyRequestButton } from "~/components/assets/product-requests";
-import { TagCard } from "~/components/assets/tag-selector";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import Icon from "~/components/icons/icon";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
-import ProductCard from "~/components/products/product-card";
+import { ProductImage } from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
@@ -50,16 +41,26 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { getAssetAlertsStatus, getAssetInspectionStatus } from "~/lib/model-utils";
-import type { Alert, Asset, Consumable } from "~/lib/models";
+import type { Asset, Consumable } from "~/lib/models";
 import { can } from "~/lib/users";
-import { buildTitleFromBreadcrumb, dateSort, getSearchParam, validateParam } from "~/lib/utils";
+import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
+import AlertsCard from "./components/alerts-card";
+import InspectionsCard from "./components/inspections-card";
+
+// When deleting an asset, we don't want to revalidate the page. This would
+// cause a 404 before the page could navigate back.
+export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
+  if (arg.formMethod === "DELETE") {
+    return false;
+  }
+  return arg.defaultShouldRevalidate;
+};
 
 export const handle = {
   breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
@@ -78,244 +79,244 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   }).get<Asset>();
   return {
     asset,
-    defaultTab: getSearchParam(request, "tab") ?? "consumables",
     processedProductImageUrl:
-      asset.product.imageUrl && buildImageProxyUrl(asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
+      asset.product.imageUrl && buildImageProxyUrl(asset.product.imageUrl, ["rs:fit:250:250:1:1"]),
   };
 };
 
 export default function AssetDetails({
-  loaderData: { asset, defaultTab, processedProductImageUrl },
+  loaderData: { asset, processedProductImageUrl },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canUpdate = can(user, "update", "assets");
+  const canDelete = can(user, "delete", "assets");
   const canReadInspections = can(user, "read", "inspections");
   const canUpdateRoutes = can(user, "update", "inspection-routes");
   const canCreateProductRequests = can(user, "create", "product-requests");
 
+  const navigate = useNavigate();
+
+  const { submitJson: submitDelete } = useModalFetcher({
+    onSubmitted: () => {
+      navigate(`../`);
+    },
+  });
+  const [deleteAssetAction, setDeleteAssetAction] = useConfirmAction({
+    variant: "destructive",
+    defaultProps: {
+      title: "Delete Asset",
+    },
+  });
+
+  const handleDeleteAsset = (asset: Asset) => {
+    setDeleteAssetAction((draft) => {
+      draft.open = true;
+      draft.message = `Are you sure you want to delete ${asset.name ? `"${asset.name}"` : `this asset`}?`;
+      draft.requiredUserInput = asset.name ?? asset.serialNumber;
+      draft.onConfirm = () => {
+        submitDelete(
+          {},
+          {
+            method: "delete",
+            path: `/api/proxy/assets/${asset.id}`,
+          }
+        );
+      };
+    });
+  };
+
   return (
-    <div className="grid gap-x-2 gap-y-4 sm:gap-x-4">
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-x-2 gap-y-4 sm:gap-x-4">
-        <StatusCard asset={asset} />
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <RouteIcon />
-              Inspection Route
-              <div className="flex-1"></div>
-              {canUpdateRoutes && (
-                <EditRoutePointButton
-                  asset={asset}
-                  filterRoute={(r) =>
-                    !asset.inspectionRoutePoints?.some((p) => p.inspectionRouteId === r.id)
-                  }
-                  trigger={
-                    <Button variant="default" size="sm" className="shrink-0">
-                      <Plus />
-                      Add to Route
-                    </Button>
-                  }
-                />
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {asset.inspectionRoutePoints && asset.inspectionRoutePoints.length > 1 && (
-              <p className="text-muted-foreground flex items-center gap-1 text-xs italic">
-                <CircleAlert className="size-4" />
-                This asset belongs to multiple routes.
-              </p>
-            )}
-            {asset.inspectionRoutePoints?.length ? (
-              <div className="divide-border grid divide-y">
-                {asset.inspectionRoutePoints.map((point) => (
-                  <div key={point.id} className="flex items-center gap-3 py-2">
-                    <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-                      {point.order + 1}
+    <div className="@container">
+      <div className="grid w-full grid-cols-1 gap-x-2 gap-y-4 @4xl:grid-cols-[1fr_400px]">
+        <div className="grid gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex-wrap gap-x-4">
+                <div className="flex items-center gap-2">
+                  <Shield />
+                  {asset.name || `Asset: ${asset.product.name}`}
+                  {asset.product.productCategory.icon && (
+                    <Icon
+                      iconId={asset.product.productCategory.icon}
+                      color={asset.product.productCategory.color}
+                      className="text-base"
+                    />
+                  )}
+                </div>
+                <div className="flex-1"></div>
+                <div className="flex items-center gap-2">
+                  <InspectionStatusBadge
+                    className="shrink-0"
+                    status={
+                      asset.inspections &&
+                      getAssetInspectionStatus(
+                        asset.inspections,
+                        asset.inspectionCycle ?? asset.client?.defaultInspectionCycle
+                      )
+                    }
+                  />
+                  <AlertsStatusBadge
+                    className="shrink-0"
+                    status={getAssetAlertsStatus(asset.alerts ?? [])}
+                  />
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="@container">
+              <div className="flex flex-col gap-5 @md:grid @md:grid-cols-[1fr_auto]">
+                <div className="grid h-max grid-cols-[auto_1fr] gap-5">
+                  <DataList
+                    title="Properties"
+                    classNames={{
+                      container: "grid-cols-subgrid col-span-2 gap-3",
+                      details: "grid-cols-subgrid col-span-2 gap-y-1.5",
+                    }}
+                    details={[
+                      {
+                        label: "Nickname",
+                        value: asset.name,
+                      },
+                      {
+                        label: "Serial No.",
+                        value: asset.serialNumber,
+                      },
+                      {
+                        label: "Metadata",
+                        value:
+                          asset.metadata && Object.keys(asset.metadata).length > 0 ? (
+                            <div className="flex flex-col flex-wrap gap-2">
+                              {Object.entries(asset.metadata ?? {}).map(([key, value]) => (
+                                <div
+                                  key={key}
+                                  className="flex w-max overflow-hidden rounded-full border border-gray-500 text-xs dark:border-gray-400"
+                                >
+                                  <div className="bg-gray-500 px-2 py-1 font-medium text-white dark:bg-gray-400 dark:text-gray-900">
+                                    {key}
+                                  </div>
+                                  <div className="px-2 py-1">{value}</div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">No metadata.</span>
+                          ),
+                      },
+                      {
+                        label: "Inspection Cycle",
+                        value: asset.inspectionCycle
+                          ? `${asset.inspectionCycle} days`
+                          : asset.client?.defaultInspectionCycle
+                            ? `${asset.client?.defaultInspectionCycle} days (client default)`
+                            : null,
+                      },
+                      {
+                        label: "Setup Completed",
+                        value: asset.setupOn && format(asset.setupOn, "PPpp"),
+                      },
+                    ]}
+                    defaultValue={<>&mdash;</>}
+                  />
+                  <DataList
+                    title="Location"
+                    classNames={{
+                      container: "grid-cols-subgrid col-span-2 gap-3",
+                      details: "grid-cols-subgrid col-span-2 gap-y-1.5",
+                    }}
+                    details={[
+                      {
+                        label: "Site",
+                        value: asset.site?.name,
+                      },
+                      {
+                        label: "Room / Area",
+                        value: asset.location,
+                      },
+                      {
+                        label: "Placement",
+                        value: asset.placement,
+                      },
+                    ]}
+                  />
+
+                  <DataList
+                    title="Other"
+                    classNames={{
+                      container: "grid-cols-subgrid col-span-2 gap-3",
+                      details: "grid-cols-subgrid col-span-2 gap-y-1.5",
+                    }}
+                    details={[
+                      {
+                        label: "Created",
+                        value: format(asset.createdOn, "PPpp"),
+                      },
+                      {
+                        label: "Last Updated",
+                        value: format(asset.modifiedOn, "PPpp"),
+                      },
+                    ]}
+                    defaultValue={<>&mdash;</>}
+                  />
+                </div>
+
+                <div>
+                  <Label className="mb-3 block @md:hidden">Product</Label>
+                  <Card className="flex @md:w-52 @md:flex-col @xl:w-56">
+                    <ProductImage
+                      name="Product Image"
+                      imageUrl={processedProductImageUrl}
+                      className="min-h-24 @md:min-h-36 @md:w-full @md:rounded-tr-xl @md:rounded-bl-none @md:border-r-0 @md:border-b @md:sm:w-full"
+                    />
+                    <div className="flex grow flex-col self-stretch">
+                      <CardHeader className="grow p-2 sm:p-4">
+                        <CardTitle className="flex h-full flex-col items-start gap-1">
+                          <span className="text-muted-foreground text-xs">
+                            {asset.product.manufacturer.name}
+                          </span>
+
+                          <span>{asset.product.name}</span>
+                          {asset.product.sku && (
+                            <span className="text-muted-foreground text-xs font-light">
+                              SKU: {asset.product.sku}
+                            </span>
+                          )}
+                          <div className="flex-1"></div>
+                          <div className="bg-secondary border-border mt-2 flex w-max items-center gap-2 rounded-md border p-1.5 text-sm">
+                            <Nfc className="text-primary size-4" />
+                            <EditableTagDisplay asset={asset} tag={asset.tag} />
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground text-xs font-semibold">Name</span>
-                      <Link
-                        to={`/inspection-routes/#route-id-${point.inspectionRouteId}`}
-                        className="text-sm hover:underline"
-                      >
-                        {point.inspectionRoute?.name ?? "Unknown Route"}
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-xs">
-                No route has been configured yet for this asset.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-x-2 gap-y-4 sm:gap-x-4">
-        <Card className="h-max">
-          <CardHeader>
-            <CardTitle>
-              <Shield />
-              <div className="inline-flex items-center gap-4">
-                Asset Details
-                <div className="flex gap-2">
+                  </Card>
+                </div>
+
+                <div className="col-span-2 flex gap-2">
                   {canUpdate && (
                     <EditAssetButton
                       asset={asset}
                       trigger={
-                        <Button variant="secondary" size="icon" type="button">
-                          <Pencil />
+                        <Button variant="outline" size="sm" type="button">
+                          <Pencil /> Edit
                         </Button>
                       }
                     />
                   )}
+                  {canDelete && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      type="button"
+                      onClick={() => handleDeleteAsset(asset)}
+                    >
+                      <Trash /> Delete
+                    </Button>
+                  )}
                 </div>
               </div>
-              <div className="flex-1"></div>
-              <ActiveIndicator active={asset.active} />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-8">
-            <div className="grid gap-4">
-              <Label>Properties</Label>
-              <DataList
-                details={[
-                  {
-                    label: "Friendly Name",
-                    value: asset.name,
-                  },
-                  {
-                    label: "Serial No.",
-                    value: asset.serialNumber,
-                  },
-                  {
-                    label: "Metadata",
-                    value:
-                      asset.metadata && Object.keys(asset.metadata).length > 0 ? (
-                        <div className="flex flex-col flex-wrap gap-2">
-                          {Object.entries(asset.metadata ?? {}).map(([key, value]) => (
-                            <div
-                              key={key}
-                              className="flex w-max overflow-hidden rounded-full border border-gray-500 text-xs dark:border-gray-400"
-                            >
-                              <div className="bg-gray-500 px-2 py-1 font-medium text-white dark:bg-gray-400 dark:text-gray-900">
-                                {key}
-                              </div>
-                              <div className="px-2 py-1">{value}</div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">No metadata.</span>
-                      ),
-                  },
-                  {
-                    label: "Inspection Cycle",
-                    value: asset.inspectionCycle
-                      ? `${asset.inspectionCycle} days`
-                      : asset.client?.defaultInspectionCycle
-                        ? `${asset.client?.defaultInspectionCycle} days (client default)`
-                        : null,
-                  },
-                  {
-                    label: "Setup Completed",
-                    value: asset.setupOn && format(asset.setupOn, "PPpp"),
-                  },
-                ]}
-                defaultValue={<>&mdash;</>}
-                variant="thirds"
-              />
-            </div>
-            <div className="grid gap-4">
-              <Label>Location</Label>
-              <DataList
-                details={[
-                  {
-                    label: "Site",
-                    value: asset.site?.name,
-                  },
-                  {
-                    label: "Room / Area",
-                    value: asset.location,
-                  },
-                  {
-                    label: "Placement",
-                    value: asset.placement,
-                  },
-                ]}
-                variant="thirds"
-              />
-            </div>
-            <div className="grid gap-4">
-              <Label>Setup Questions</Label>
-              {asset.setupOn ? (
-                asset.setupQuestionResponses?.length ? (
-                  <DataList
-                    details={
-                      asset.setupQuestionResponses?.map((r) => ({
-                        label: r.assetQuestion?.prompt ?? (
-                          <span className="italic">
-                            Prompt for this question has been removed or is not available.
-                          </span>
-                        ),
-                        value: <DisplayInspectionValue value={r.value} />,
-                      })) ?? []
-                    }
-                    variant="thirds"
-                  />
-                ) : (
-                  <span className="text-muted-foreground text-sm">
-                    The setup process is complete for this asset, but there are no setup questions
-                    to display.
-                  </span>
-                )
-              ) : (
-                <span className="text-muted-foreground text-sm">
-                  The setup process has not been completed yet for this asset.
-                </span>
-              )}
-            </div>
-            <div className="grid gap-4">
-              <Label>Product</Label>
-              <ProductCard product={asset.product} optimizedImageUrl={processedProductImageUrl} />
-            </div>
-            <div className="grid gap-4">
-              <Label>Tag</Label>
-              <TagCard tag={asset.tag} asset={asset} />
-            </div>
-            <div className="grid gap-4">
-              <Label>Other</Label>
-              <DataList
-                details={[
-                  {
-                    label: "Created",
-                    value: format(asset.createdOn, "PPpp"),
-                  },
-                  {
-                    label: "Last Updated",
-                    value: format(asset.modifiedOn, "PPpp"),
-                  },
-                ]}
-                defaultValue={<>&mdash;</>}
-              />
-            </div>
-          </CardContent>
-        </Card>
-        <Tabs defaultValue={defaultTab} id="tabs">
-          <TabsList className="grid w-full grid-cols-[1fr_1fr]">
-            <TabsTrigger value="consumables">Supplies</TabsTrigger>
-            <TabsTrigger value="alerts">
-              Alerts
-              {!!asset.alerts?.filter((a) => !a.resolved).length && (
-                <span className="bg-urgent text-urgent-foreground ml-2 flex size-5 items-center justify-center rounded-full text-xs">
-                  {asset.alerts?.filter((a) => !a.resolved).length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="consumables">
+            </CardContent>
+          </Card>
+
+          <div>
             <Card className="rounded-b-none">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -354,29 +355,75 @@ export default function AssetDetails({
                 <ProductRequests productRequests={asset.productRequests ?? []} />
               </CardContent>
             </Card>
-            <BasicCard title="Supplies" className="rounded-t-none" icon={SquareStack}>
+            <BasicCard title="Supplies" className="rounded-t-none border-t-0" icon={SquareStack}>
               <ConsumablesTable consumables={asset.consumables ?? []} asset={asset} />
             </BasicCard>
-          </TabsContent>
-          <TabsContent value="alerts">
-            <BasicCard title="Alert History" icon={ShieldAlert}>
-              <AlertsTable alerts={asset.alerts ?? []} />
-            </BasicCard>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
+        <div className="grid gap-4">
+          <AlertsCard alerts={asset.alerts ?? []} assetId={asset.id} />
+
+          <Card>
+            <CardHeader className="pb-2 sm:pb-2">
+              <CardTitle className="flex items-center">
+                <RouteIcon />
+                Routes
+                <div className="flex-1"></div>
+                {canUpdateRoutes && (
+                  <EditRoutePointButton
+                    asset={asset}
+                    filterRoute={(r) =>
+                      !asset.inspectionRoutePoints?.some((p) => p.inspectionRouteId === r.id)
+                    }
+                    trigger={
+                      <Button variant="default" size="sm" className="shrink-0">
+                        <Plus />
+                        Add to Route
+                      </Button>
+                    }
+                  />
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {asset.inspectionRoutePoints && asset.inspectionRoutePoints.length > 1 && (
+                <p className="text-muted-foreground flex items-center gap-1 text-xs italic">
+                  <CircleAlert className="size-4" />
+                  This asset belongs to multiple routes.
+                </p>
+              )}
+              {asset.inspectionRoutePoints?.length ? (
+                <div className="divide-border grid divide-y">
+                  {asset.inspectionRoutePoints.map((point) => (
+                    <div key={point.id} className="flex items-center gap-3 py-2">
+                      <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                        {point.order + 1}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-muted-foreground text-xs font-semibold">Name</span>
+                        <Link
+                          to={`/inspection-routes/#route-id-${point.inspectionRouteId}`}
+                          className="text-sm hover:underline"
+                        >
+                          {point.inspectionRoute?.name ?? "Unknown Route"}
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-xs">
+                  No route has been configured yet for this asset.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+          {canReadInspections && (
+            <InspectionsCard inspections={asset.inspections ?? []} asset={asset} />
+          )}
+        </div>
       </div>
-      {canReadInspections && (
-        <Card id="inspections" className="w-full overflow-x-auto">
-          <CardHeader>
-            <CardTitle>
-              <SearchCheck /> Inspection History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AssetInspections asset={asset} inspections={asset.inspections ?? []} />
-          </CardContent>
-        </Card>
-      )}
+      <ConfirmationDialog {...deleteAssetAction} />
     </div>
   );
 }
@@ -403,37 +450,6 @@ function BasicCard({
       </CardHeader>
       <CardContent>{children}</CardContent>
     </Card>
-  );
-}
-
-function StatusCard({ asset }: { asset: Asset }) {
-  return (
-    <BasicCard title="Status" icon={Thermometer}>
-      <div className="grid gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <ClipboardCheck className="text-muted-foreground h-5 w-5" />
-            <span className="text-sm font-medium">Inspection Status</span>
-          </div>
-          <InspectionStatusBadge
-            status={
-              asset.inspections &&
-              getAssetInspectionStatus(
-                asset.inspections,
-                asset.inspectionCycle ?? asset.client?.defaultInspectionCycle
-              )
-            }
-          />
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <ShieldAlert className="text-muted-foreground h-5 w-5" />
-            <span className="text-sm font-medium">Alerts</span>
-          </div>
-          <AlertsStatusBadge status={getAssetAlertsStatus(asset.alerts ?? [])} />
-        </div>
-      </div>
-    </BasicCard>
   );
 }
 
@@ -581,71 +597,6 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
         />
       )}
       <ConfirmationDialog {...deleteAction} />
-    </>
-  );
-}
-
-function AlertsTable({ alerts }: { alerts: Alert[] }) {
-  const columns = useMemo<ColumnDef<Alert>[]>(
-    () => [
-      {
-        accessorKey: "createdOn",
-        id: "date",
-        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ getValue }) => {
-          const value = getValue() as string;
-          return (
-            <span title={format(value, "PPpp")}>
-              {formatDistanceToNow(value, {
-                addSuffix: true,
-                includeSeconds: true,
-              })}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "alertLevel",
-        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-      },
-      {
-        accessorKey: "resolved",
-        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ getValue }) => {
-          const value = getValue() as boolean;
-          return value ? (
-            <Check className="size-5 text-green-500" />
-          ) : (
-            <X className="size-5 text-red-500" />
-          );
-        },
-      },
-      {
-        id: "view",
-        cell: ({ row }) => (
-          <AssetInspectionAlert
-            assetId={row.original.assetId}
-            alertId={row.original.id}
-            trigger={
-              <Button variant="secondary" size="sm">
-                <CornerDownRight />
-                Details
-              </Button>
-            }
-          />
-        ),
-      },
-    ],
-    []
-  );
-
-  return (
-    <>
-      <DataTable
-        columns={columns}
-        data={alerts.sort(dateSort("createdOn"))}
-        searchPlaceholder="Search alerts..."
-      />
     </>
   );
 }

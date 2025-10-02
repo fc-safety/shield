@@ -41,44 +41,46 @@ export default function EditableTagDisplay({
   });
 
   return (
-    <div className="flex items-center gap-2">
-      {tag ? (
-        <div className="group flex items-center gap-2">
-          <CopyableText text={tag.serialNumber} compact={size === "compact"} />
-          {canProgramTags && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    size="iconSm"
-                    className={cn("text-muted-foreground h-7 w-7")}
-                    onClick={() =>
-                      handleCopyTagUrl({
-                        serialNumber: tag.serialNumber,
-                        externalId: tag.externalId,
-                      })
-                    }
-                    disabled={isCopyingTagUrl}
-                  >
-                    {isCopyingTagUrl ? <Loader2 className="animate-spin" /> : <Link />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Copy Tag URL</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-      ) : canCreateTags && canProgramTags && asset ? (
-        <Button type="button" size="xs" onClick={() => setModelOpen(true)}>
-          <CirclePlus /> Register
-        </Button>
-      ) : (
-        <>&mdash;</>
-      )}
+    <div className="flex items-center">
+      <div className="flex items-center gap-2">
+        {tag ? (
+          <div className="group flex items-center gap-2">
+            <CopyableText text={tag.serialNumber} compact={size === "compact"} />
+            {canProgramTags && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      size="iconSm"
+                      className={cn("text-muted-foreground h-7 w-7")}
+                      onClick={() =>
+                        handleCopyTagUrl({
+                          serialNumber: tag.serialNumber,
+                          externalId: tag.externalId,
+                        })
+                      }
+                      disabled={isCopyingTagUrl}
+                    >
+                      {isCopyingTagUrl ? <Loader2 className="animate-spin" /> : <Link />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy Tag URL</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        ) : canCreateTags && canProgramTags && asset ? (
+          <Button type="button" size="xs" onClick={() => setModelOpen(true)}>
+            <CirclePlus /> Register
+          </Button>
+        ) : (
+          <>&mdash;</>
+        )}
+      </div>
       <ResponsiveDialog
         open={modelOpen}
         onOpenChange={setModelOpen}

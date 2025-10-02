@@ -214,7 +214,7 @@ export function AssetDetailFormFields({
         render={({ field }) => (
           <FormItem>
             <FormLabel className="inline-flex items-center gap-1">
-              Friendly Name (Optional){" "}
+              Nickname (Optional){" "}
               <HelpPopover>Optional name for easier identification.</HelpPopover>
             </FormLabel>
             <FormControl>
