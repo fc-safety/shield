@@ -5,7 +5,7 @@ import { cn } from "~/lib/utils";
 import HelpPopover from "./help-popover";
 
 interface DataListProps {
-  title?: string;
+  title?: ReactNode;
   details: {
     label: ReactNode;
     value: ReactNode | undefined | null;
@@ -42,18 +42,11 @@ export default function DataList({
   emptyListMessage = "No data available.",
 }: DataListProps) {
   return (
-    <div
-      className={cn(
-        "grid gap-4",
-        fluid && "w-full",
-        className,
-        classNames?.container
-      )}
-    >
-      {title && <Label>{title}</Label>}
+    <div className={cn("grid gap-4", fluid && "w-full", className, classNames?.container)}>
+      {title && <Label className="col-span-full">{title}</Label>}
       <dl
         className={cn(
-          "grid items-start gap-y-2 gap-x-4 sm:gap-x-8",
+          "grid items-start gap-x-4 gap-y-2 sm:gap-x-8",
           variant === "fluid" || fluid ? "grid-cols-[auto_1fr]" : "grid-cols-2",
           variant === "thirds" && "grid-cols-3",
           classNames?.details
@@ -65,7 +58,7 @@ export default function DataList({
             <Fragment key={String(label)}>
               <dt
                 className={cn(
-                  "text-muted-foreground text-sm flex items-center gap-1",
+                  "text-muted-foreground flex items-center gap-1 text-sm font-light",
                   classNames?.detailLabel
                 )}
               >
@@ -83,7 +76,7 @@ export default function DataList({
             </Fragment>
           ))}
         {details.length === 0 && (
-          <dd className="text-xs italic text-muted-foreground col-span-full text-center">
+          <dd className="text-muted-foreground col-span-full text-center text-xs italic">
             {emptyListMessage}
           </dd>
         )}

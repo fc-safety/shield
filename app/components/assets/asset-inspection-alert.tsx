@@ -127,7 +127,7 @@ function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: b
           },
           {
             label: "Question",
-            value: alert.assetQuestionResponse?.assetQuestion?.prompt,
+            value: alert.assetQuestionResponse?.originalPrompt,
           },
           {
             label: "Answer",
