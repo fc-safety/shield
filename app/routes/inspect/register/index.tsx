@@ -3,6 +3,7 @@ import type { z } from "zod";
 import { api } from "~/.server/api";
 import { catchResponse } from "~/.server/api-utils";
 import { validateInspectionSession } from "~/.server/inspections";
+import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { AssetQuestion } from "~/lib/models";
@@ -19,6 +20,15 @@ export const handle = {
 export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const { user } = useAuth();
+  return (
+    <main className="grid grow place-items-center px-6 py-24 sm:py-32 lg:px-8">
+      <InspectErrorBoundary error={error} user={user} />
+    </main>
+  );
+}
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { inspectionToken } = await validateInspectionSession(request);

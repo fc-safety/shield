@@ -1,10 +1,11 @@
 import type { ComponentProps } from "react";
 import { Link, useMatches } from "react-router";
 import { useOptimizedImageUrls } from "~/contexts/optimized-image-context";
+import useMyOrganization from "~/hooks/use-my-organization";
+import type { GetMyOrganizationResult } from "~/lib/services/clients.service";
 import { cn, validateBreadcrumb } from "~/lib/utils";
 import { BreadcrumbResponsive } from "./breadcrumb-responsive";
 import { ModeToggle } from "./mode-toggle";
-import { Separator } from "./ui/separator";
 import { UserDropdownMenu } from "./user-dropdown-menu";
 
 export default function Header({
@@ -39,7 +40,7 @@ export default function Header({
         className
       )}
     >
-      <div className="flex items-center gap-x-2">
+      <div className="flex items-center gap-x-1 sm:gap-x-2">
         {leftSlot}
         {showBannerLogo && (
           <Link to={homeTo}>
@@ -55,8 +56,9 @@ export default function Header({
             />
           </Link>
         )}
+        <DemoLabel />
         <div className="flex-1" />
-        <div className="flex items-center gap-x-2">
+        <div className="flex items-center gap-x-1 sm:gap-x-2">
           {rightSlot}
           {user && (
             <>
@@ -65,7 +67,6 @@ export default function Header({
                 userRoutes={userRoutes}
                 logoutReturnTo={logoutReturnTo}
               />
-              <Separator orientation="vertical" className="h-5" />
             </>
           )}
           <ModeToggle />
@@ -90,3 +91,20 @@ export default function Header({
     </header>
   );
 }
+
+const DemoLabel = ({ className }: { className?: string }) => {
+  let client: GetMyOrganizationResult["client"] | undefined;
+  try {
+    ({ client } = useMyOrganization());
+  } catch (e) {}
+  return client?.demoMode ? (
+    <div
+      className={cn(
+        "bg-primary/20 text-primary text-2xs w-min rounded-md p-1 text-center leading-2.5 font-bold tracking-tight uppercase",
+        className
+      )}
+    >
+      Demo
+    </div>
+  ) : null;
+};

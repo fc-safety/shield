@@ -3,21 +3,24 @@ import {
   CircleHelp,
   FileSpreadsheet,
   MessageCircleMore,
+  RotateCcw,
   Route as RouteIcon,
+  Trash,
 } from "lucide-react";
 import { data, Link, Outlet } from "react-router";
 import { config } from "~/.server/config";
 import { AppSidebar, type SidebarGroup } from "~/components/app-sidebar";
-import DefaultErrorBoundary from "~/components/default-error-boundary";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
+import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { DEFAULT_USER_ROUTES } from "~/components/user-dropdown-menu";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
+import useMyOrganization from "~/hooks/use-my-organization";
 import { can } from "~/lib/users";
 import type { Route } from "./+types/layout";
 import { getUserOrHandleInspectLoginRedirect } from "./.server/inspect-auth";
@@ -48,7 +51,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         }
       />
       <main className="grid grow place-items-center px-6 py-24 sm:py-32 lg:px-8">
-        <DefaultErrorBoundary error={error} homeTo="/inspect" />
+        <InspectErrorBoundary error={error} />
       </main>
       <Footer />
     </div>
@@ -58,6 +61,49 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 export default function Layout({
   loaderData: { user, apiUrl, appHost, googleMapsApiKey, clientId },
 }: Route.ComponentProps) {
+  return (
+    <AuthProvider
+      user={user}
+      apiUrl={apiUrl}
+      appHost={appHost}
+      googleMapsApiKey={googleMapsApiKey}
+      clientId={clientId}
+    >
+      <SidebarProvider defaultOpenState={{ help: false }}>
+        <HelpSidebarProvider>
+          <InspectionSidebar />
+          <SidebarInset>
+            <Header
+              homeTo="/inspect"
+              showBreadcrumb={false}
+              user={user}
+              userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
+                ...r,
+                url: `/inspect${r.url}`,
+              }))}
+              logoutReturnTo="/inspect"
+              leftSlot={
+                <>
+                  <SidebarTrigger className="-ml-1.5" />
+                  <Separator orientation="vertical" className="mr-1 h-5 sm:mr-2" />
+                </>
+              }
+            />
+            <section className="flex w-full max-w-(--breakpoint-lg) grow flex-col self-center p-2 pt-2 pb-6 sm:p-4 sm:pb-12">
+              <Outlet />
+            </section>
+            <Footer />
+          </SidebarInset>
+          <HelpSidebar />
+        </HelpSidebarProvider>
+      </SidebarProvider>
+    </AuthProvider>
+  );
+}
+
+const InspectionSidebar = () => {
+  const { user, client } = useMyOrganization();
+
   const groups: SidebarGroup[] = [
     {
       groupTitle: "Inspections",
@@ -74,6 +120,22 @@ export default function Layout({
           icon: RouteIcon,
           exact: true,
           hide: !can(user, "read", "inspection-routes"),
+        },
+      ],
+    },
+    {
+      groupTitle: "Demo Utilities",
+      hide: !client?.demoMode,
+      items: [
+        {
+          title: "Clear Inspections",
+          url: "/inspect/clear-demo-inspections",
+          icon: Trash,
+        },
+        {
+          title: "Reset Inspections",
+          url: "/inspect/reset-demo-inspections",
+          icon: RotateCcw,
         },
       ],
     },
@@ -102,42 +164,5 @@ export default function Layout({
     },
   ];
 
-  return (
-    <AuthProvider
-      user={user}
-      apiUrl={apiUrl}
-      appHost={appHost}
-      googleMapsApiKey={googleMapsApiKey}
-      clientId={clientId}
-    >
-      <SidebarProvider defaultOpenState={{ help: false }}>
-        <HelpSidebarProvider>
-          <AppSidebar groups={groups} />
-          <SidebarInset>
-            <Header
-              homeTo="/inspect"
-              showBreadcrumb={false}
-              user={user}
-              userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
-                ...r,
-                url: `/inspect${r.url}`,
-              }))}
-              logoutReturnTo="/inspect"
-              leftSlot={
-                <>
-                  <SidebarTrigger className="-ml-1.5 [&_svg]:size-5" />
-                  <Separator orientation="vertical" className="mr-2 h-5" />
-                </>
-              }
-            />
-            <section className="flex w-full max-w-(--breakpoint-lg) grow flex-col self-center p-2 pt-0 pb-6 sm:p-4 sm:pb-12">
-              <Outlet />
-            </section>
-            <Footer />
-          </SidebarInset>
-          <HelpSidebar />
-        </HelpSidebarProvider>
-      </SidebarProvider>
-    </AuthProvider>
-  );
-}
+  return <AppSidebar groups={groups} />;
+};

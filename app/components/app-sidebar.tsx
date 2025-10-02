@@ -17,7 +17,6 @@ import {
   SidebarRail,
   useSidebar,
 } from "~/components/ui/sidebar";
-import { useAuth } from "~/contexts/auth-context";
 
 export interface SidebarGroup {
   groupTitle: string;
@@ -44,7 +43,6 @@ export interface SidebarMenuSubItem {
 }
 
 export function AppSidebar({ groups }: { groups: SidebarGroup[] }) {
-  const { user } = useAuth();
   const { setOpenMobile } = useSidebar();
 
   const matches = useMatches();

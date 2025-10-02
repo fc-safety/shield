@@ -7,7 +7,7 @@ import type { Route } from "./+types/index";
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
-    <div className="bg-background w-full h-full min-h-svh flex flex-col">
+    <div className="bg-background flex h-full min-h-svh w-full flex-col">
       <Header showBreadcrumb={false} />
       <main className="grid grow place-items-center px-6 py-24 sm:py-32 lg:px-8">
         <DefaultErrorBoundary error={error} homeTo="/inspect" />

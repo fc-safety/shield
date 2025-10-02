@@ -1,8 +1,5 @@
 import { redirect } from "react-router";
-import {
-  appStateSessionStorage,
-  inspectionSessionStorage,
-} from "~/.server/sessions";
+import { appStateSessionStorage, inspectionSessionStorage } from "~/.server/sessions";
 import type { InspectionRoute, InspectionSession } from "~/lib/models";
 import { dateSort, getSearchParams } from "../lib/utils";
 import { api } from "./api";
@@ -12,8 +9,7 @@ export const validateInspectionSession = async (
   session?: Awaited<ReturnType<typeof inspectionSessionStorage.getSession>>
 ) => {
   const inspectionSession =
-    session ??
-    (await inspectionSessionStorage.getSession(request.headers.get("cookie")));
+    session ?? (await inspectionSessionStorage.getSession(request.headers.get("cookie")));
 
   const inspectionToken = inspectionSession.get("inspectionToken");
 
@@ -23,11 +19,10 @@ export const validateInspectionSession = async (
     });
   }
 
-  const validateInspectionTokenResult =
-    await api.inspectionsPublic.validateInspectionToken(
-      request,
-      inspectionToken
-    );
+  const validateInspectionTokenResult = await api.inspectionsPublic.validateInspectionToken(
+    request,
+    inspectionToken
+  );
 
   if (!validateInspectionTokenResult.isValid) {
     throw new Response(
@@ -42,10 +37,7 @@ export const validateInspectionSession = async (
   return { inspectionToken, ...validateInspectionTokenResult };
 };
 
-export const validateTagRequestAndBuildSession = async (
-  request: Request,
-  redirectTo: string
-) => {
+export const validateTagRequestAndBuildSession = async (request: Request, redirectTo: string) => {
   const requestQuery = getSearchParams(request);
 
   // Step 1: Get the tag ID from the request query. This should only be present when initially scanning a tag.
@@ -67,10 +59,8 @@ export const validateTagRequestAndBuildSession = async (
   // Step 2: Validate the tag signature if present. Again, this should only be present when initially scanning a tag.
   // This is validation method #1.
   if (requestQuery.has("sig")) {
-    const {
-      isValid: isValidSignature,
-      inspectionToken: inspectionTokenFromSignature,
-    } = await api.inspectionsPublic.isValidTagUrl(request, request.url);
+    const { isValid: isValidSignature, inspectionToken: inspectionTokenFromSignature } =
+      await api.inspectionsPublic.isValidTagUrl(request, request.url);
 
     if (!isValidSignature) {
       throw new Response("Invalid tag signature.", {
@@ -90,10 +80,8 @@ export const validateTagRequestAndBuildSession = async (
     // Step 3 (part A): If there is no valid signature, but the tag ID is present, validate the tag ID.
     // This is validation method #2.
     if (!isValidNewTagUrl) {
-      const {
-        isValid: isValidTagId,
-        inspectionToken: inspectionTokenFromTagId,
-      } = await api.inspectionsPublic.isValidTagId(request, { extId });
+      const { isValid: isValidTagId, inspectionToken: inspectionTokenFromTagId } =
+        await api.inspectionsPublic.isValidTagId(request, { extId });
 
       isValidNewTagUrl = isValidTagId;
       inspectionToken = inspectionTokenFromTagId;
@@ -120,16 +108,10 @@ export const validateTagRequestAndBuildSession = async (
       if (appStateSession.get("show_legacy_redirect") !== false) {
         appStateSession.set("show_legacy_redirect", true);
       }
-      headers.append(
-        "Set-Cookie",
-        await appStateSessionStorage.commitSession(appStateSession)
-      );
+      headers.append("Set-Cookie", await appStateSessionStorage.commitSession(appStateSession));
     }
 
-    headers.append(
-      "Set-Cookie",
-      await inspectionSessionStorage.commitSession(inspectionSession)
-    );
+    headers.append("Set-Cookie", await inspectionSessionStorage.commitSession(inspectionSession));
 
     // Redirect to remove the tag params from the URL. This prevents users from bookmarking or
     // sharing the tag URL.
@@ -148,44 +130,34 @@ export const validateTagRequestAndBuildSession = async (
   return validatedInspectionSessionContext;
 };
 
-export const getNextPointFromSession = (
-  session: InspectionSession,
-  route?: InspectionRoute
-) => {
+export const getNextPointFromSession = (session: InspectionSession, route?: InspectionRoute) => {
   let thisRoute = route;
 
   if (!thisRoute?.inspectionRoutePoints) {
     thisRoute = session.inspectionRoute;
   }
 
-  if (
-    !thisRoute?.inspectionRoutePoints ||
-    !session.completedInspectionRoutePoints
-  ) {
+  if (!thisRoute?.inspectionRoutePoints || !session.completedInspectionRoutePoints) {
     return { nextPoint: null, routeCompleted: false };
   }
 
   // Get all points sorted by order.
-  const sortedPoints =
-    thisRoute.inspectionRoutePoints.sort((a, b) => a.order - b.order) ?? [];
+  const sortedPoints = thisRoute.inspectionRoutePoints.sort((a, b) => a.order - b.order) ?? [];
 
   const sortedCompletedPoints =
     session.completedInspectionRoutePoints.sort(dateSort("createdOn")) ?? [];
 
   // Create a set of completed point assetIds for quick lookup.
   const completedPointAssetIds = new Set(
-    sortedCompletedPoints.map(
-      (completedPoint) => completedPoint.inspectionRoutePoint?.assetId
-    ) ?? []
+    sortedCompletedPoints.map((completedPoint) => completedPoint.inspectionRoutePoint?.assetId) ??
+      []
   );
 
   const lastCompletedPoint = sortedCompletedPoints.at(0);
 
   // Find the index of the last completed point.
   const lastCompletedIndex = lastCompletedPoint
-    ? sortedPoints.findIndex(
-        (point) => point.id === lastCompletedPoint.inspectionRoutePoint?.id
-      )
+    ? sortedPoints.findIndex((point) => point.id === lastCompletedPoint.inspectionRoutePoint?.id)
     : -1;
 
   // Find the next incomplete point after the last completed point, starting
@@ -226,14 +198,12 @@ export const fetchActiveInspectionRouteContext = async (
   } = {}
 ) => {
   // Get all sessions for this asset that are not marked as complete.
-  let activeOrRecentlyExpiredSessions =
-    await api.inspections.getActiveOrRecentlyExpiredSessionsForAsset(
-      request,
-      assetId
-    );
+  const activeOrRecentlyExpiredSessionsInitial =
+    await api.inspections.getActiveOrRecentlyExpiredSessionsForAsset(request, assetId);
+  let activeOrRecentlyExpiredSessions = activeOrRecentlyExpiredSessionsInitial;
 
   if (options.sessionId) {
-    activeOrRecentlyExpiredSessions = activeOrRecentlyExpiredSessions.filter(
+    activeOrRecentlyExpiredSessions = activeOrRecentlyExpiredSessionsInitial.filter(
       (session) => session.id === options.sessionId
     );
 
