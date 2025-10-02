@@ -5,10 +5,8 @@ import {
   isSameDay,
   parseISO,
   startOfDay,
-  startOfMonth,
-  startOfWeek,
+  subDays,
   subHours,
-  subMinutes,
 } from "date-fns";
 import { Loader2, Nfc } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -364,10 +362,6 @@ interface QuickInterval {
 
 const QUICK_INTERVALS: QuickInterval[] = [
   {
-    label: "Clear Last 5 Minutes",
-    startDate: subMinutes(new Date(), 5).toISOString(),
-  },
-  {
     label: "Clear Last Hour",
     startDate: subHours(new Date(), 1).toISOString(),
   },
@@ -376,11 +370,11 @@ const QUICK_INTERVALS: QuickInterval[] = [
     startDate: startOfDay(new Date()).toISOString(),
   },
   {
-    label: "Clear This Week",
-    startDate: startOfWeek(new Date()).toISOString(),
+    label: "Clear Last 7 Days",
+    startDate: startOfDay(subDays(new Date(), 7)).toISOString(),
   },
   {
-    label: "Clear This Month",
-    startDate: startOfMonth(new Date()).toISOString(),
+    label: "Clear Last 30 Days",
+    startDate: startOfDay(subDays(new Date(), 30)).toISOString(),
   },
 ];
