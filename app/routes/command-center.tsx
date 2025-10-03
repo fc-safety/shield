@@ -1,5 +1,6 @@
 import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useDebounceCallback } from "usehooks-ts";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { getAppState } from "~/.server/sessions";
 import { ComplianceByCategoryChart } from "~/components/dashboard/compliance-by-category-chart";
@@ -83,11 +84,21 @@ export default function Dashboard() {
   const canViewMultipleSites = hasMultiSiteVisibility(user);
 
   const [overallComplianceRefreshKey, setOverallComplianceRefreshKey] = useState(0);
+  const debouncedSetOverallComplianceRefreshKey = useThrottleRefresh(
+    setOverallComplianceRefreshKey
+  );
   const [complianceBySiteRefreshKey, setComplianceBySiteRefreshKey] = useState(0);
+  const debouncedSetComplianceBySiteRefreshKey = useThrottleRefresh(setComplianceBySiteRefreshKey);
   const [complianceByCategoryRefreshKey, setComplianceByCategoryRefreshKey] = useState(0);
+  const debouncedSetComplianceByCategoryRefreshKey = useThrottleRefresh(
+    setComplianceByCategoryRefreshKey
+  );
   const [productRequestsRefreshKey, setProductRequestsRefreshKey] = useState(0);
+  const debouncedSetProductRequestsRefreshKey = useThrottleRefresh(setProductRequestsRefreshKey);
   const [complianceHistoryKey, setComplianceHistoryKey] = useState(0);
+  const debouncedSetComplianceHistoryKey = useThrottleRefresh(setComplianceHistoryKey);
   const [inspectionAlertsRefreshKey, setInspectionAlertsRefreshKey] = useState(0);
+  const debouncedSetInspectionAlertsRefreshKey = useThrottleRefresh(setInspectionAlertsRefreshKey);
 
   useServerSentEvents({
     key: "command-center",
@@ -95,16 +106,16 @@ export default function Dashboard() {
     onEvent: (event) => {
       const payload = JSON.parse(event.data) as Record<string, string>;
       if (payload.model === "Asset" || payload.model === "Inspection") {
-        setOverallComplianceRefreshKey((prev) => prev + 1);
-        setComplianceBySiteRefreshKey((prev) => prev + 1);
-        setComplianceByCategoryRefreshKey((prev) => prev + 1);
-        setComplianceHistoryKey((prev) => prev + 1);
+        debouncedSetOverallComplianceRefreshKey((prev) => prev + 1);
+        debouncedSetComplianceBySiteRefreshKey((prev) => prev + 1);
+        debouncedSetComplianceByCategoryRefreshKey((prev) => prev + 1);
+        debouncedSetComplianceHistoryKey((prev) => prev + 1);
       }
       if (payload.model === "ProductRequest") {
-        setProductRequestsRefreshKey((prev) => prev + 1);
+        debouncedSetProductRequestsRefreshKey((prev) => prev + 1);
       }
       if (payload.model === "Alert") {
-        setInspectionAlertsRefreshKey((prev) => prev + 1);
+        debouncedSetInspectionAlertsRefreshKey((prev) => prev + 1);
       }
     },
   });
@@ -139,3 +150,7 @@ export default function Dashboard() {
     </div>
   );
 }
+
+const useThrottleRefresh = <T extends (...args: any) => ReturnType<T>>(func: T) => {
+  return useDebounceCallback(func, 1000, { trailing: true });
+};

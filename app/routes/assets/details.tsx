@@ -128,7 +128,7 @@ export default function AssetDetails({
   return (
     <div className="@container">
       <div className="grid w-full grid-cols-1 gap-x-2 gap-y-4 @4xl:grid-cols-[1fr_400px]">
-        <div className="grid gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex-wrap gap-x-4">
@@ -360,7 +360,7 @@ export default function AssetDetails({
             </BasicCard>
           </div>
         </div>
-        <div className="grid gap-4">
+        <div className="flex flex-col gap-4">
           <AlertsCard alerts={asset.alerts ?? []} assetId={asset.id} />
 
           <Card>
@@ -412,7 +412,7 @@ export default function AssetDetails({
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground h-full py-2 text-center text-xs">
                   No route has been configured yet for this asset.
                 </p>
               )}
@@ -572,6 +572,9 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
           columnVisibility: {
             actions: canUpdate || canDelete,
           },
+        }}
+        classNames={{
+          container: "max-w-full min-w-0",
         }}
         searchPlaceholder="Search supplies..."
         actions={
