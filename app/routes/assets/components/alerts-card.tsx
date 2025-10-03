@@ -46,14 +46,21 @@ export default function AlertsCard({ assetId, alerts }: { assetId: string; alert
           </div>
         ) : (
           <div className="text-muted-foreground text-center text-sm">
-            You have no unresolved alerts.
+            You have no {alerts.length > 0 ? "unresolved " : ""}alerts.
           </div>
         )}
 
         <ResponsiveDialog
           title="Alert History"
           trigger={
-            <button className="text-primary self-center text-sm">View alert history &rarr;</button>
+            <button
+              className={cn(
+                "text-primary self-center text-sm",
+                alerts.length === 0 ? "hidden" : "block"
+              )}
+            >
+              View alert history &rarr;
+            </button>
           }
         >
           <div>
