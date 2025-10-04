@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useBeforeUnload } from "react-router";
-import { useDebounceCallback } from "usehooks-ts";
 import { useAuth } from "~/contexts/auth-context";
 import { buildUrl } from "~/lib/urls";
 import { useAuthenticatedFetch } from "./use-authenticated-fetch";
 
-const eventSourceMap = new Map<string, EventSource>();
-const listeners = new Map<string, Set<(event: MessageEvent) => void>>();
+const eventSourceMap = new Map<string, { eventSource: EventSource; url: string }>();
+const listenerRefs = new Map<string, Set<{ current: (event: MessageEvent) => void }>>();
 
 interface Props {
   key: string;
@@ -19,6 +18,14 @@ export const useServerSentEvents = ({ key, models, operations, onEvent }: Props)
   const { apiUrl } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
   const [token, setToken] = useState<string | null>(null);
+  const onEventRef = useRef<(event: MessageEvent) => void>(onEvent);
+  const tokenRefreshAttempts = useRef(0);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
+  // Keep the ref up to date with the latest callback
+  useEffect(() => {
+    onEventRef.current = onEvent;
+  }, [onEvent]);
 
   useEffect(() => {
     if (token) {
@@ -32,16 +39,14 @@ export const useServerSentEvents = ({ key, models, operations, onEvent }: Props)
       });
   }, [fetchOrThrow, token]);
 
-  const tokenRefreshAttempts = useRef(0);
-  const refreshToken = useDebounceCallback(() => {
-    tokenRefreshAttempts.current++;
-    setToken(null);
-    if (tokenRefreshAttempts.current > 10) {
-      console.error("Token refresh attempts exceeded");
+  const refreshToken = () => {
+    if (tokenRefreshAttempts.current >= 10) {
+      console.error("Reconnection limit exceeded");
       return;
     }
-    refreshToken();
-  }, 3000);
+    tokenRefreshAttempts.current++;
+    setToken(null);
+  };
 
   const url = useMemo(
     () =>
@@ -59,48 +64,91 @@ export const useServerSentEvents = ({ key, models, operations, onEvent }: Props)
       return;
     }
 
-    if (eventSourceMap.has(key)) {
-      listeners.get(key)?.add(onEvent);
-    } else {
-      const eventSource = new EventSource(url);
-      eventSourceMap.set(key, eventSource);
+    const existingConnection = eventSourceMap.get(key);
 
-      listeners.set(key, new Set([onEvent]));
+    // If URL changed, close existing connection and recreate
+    if (existingConnection && existingConnection.url !== url) {
+      existingConnection.eventSource.close();
+      eventSourceMap.delete(key);
+      listenerRefs.delete(key);
+    }
+
+    if (eventSourceMap.has(key)) {
+      // Add this listener to existing EventSource
+      listenerRefs.get(key)?.add(onEventRef);
+    } else {
+      // Create new EventSource
+      const eventSource = new EventSource(url);
+      eventSourceMap.set(key, { eventSource, url });
+
+      const newListenerSet = new Set([onEventRef]);
+      listenerRefs.set(key, newListenerSet);
 
       eventSource.onmessage = (event) => {
-        listeners.get(key)?.forEach((listener) => listener(event));
+        listenerRefs.get(key)?.forEach((listenerRef) => {
+          listenerRef.current(event);
+        });
       };
 
       eventSource.onerror = (event) => {
-        refreshToken();
-        console.error("Event source error", event);
+        const readyState = eventSource.readyState;
+        console.error("Event source error", { event, readyState, key });
+
+        // EventSource will auto-reconnect if in CONNECTING state
+        // If CLOSED, we need to refresh the token and recreate
+        if (readyState === EventSource.CLOSED) {
+          eventSourceMap.delete(key);
+          listenerRefs.delete(key);
+
+          // Debounce token refresh to avoid rapid retries
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+          }
+          reconnectTimeoutRef.current = setTimeout(() => {
+            refreshToken();
+          }, 3000);
+        }
+      };
+
+      eventSource.onopen = () => {
+        console.debug("Event source connected", { key });
+        tokenRefreshAttempts.current = 0;
       };
     }
 
     return () => {
-      const listenersForKey = listeners.get(key);
+      const listenersForKey = listenerRefs.get(key);
       if (listenersForKey) {
-        if (listenersForKey.size <= 1) {
-          eventSourceMap.get(key)?.close();
+        listenersForKey.delete(onEventRef);
+
+        // If no more listeners, close the EventSource
+        if (listenersForKey.size === 0) {
+          const connection = eventSourceMap.get(key);
+          if (connection) {
+            connection.eventSource.close();
+            console.debug("Closed event source (no listeners)", { key });
+          }
           eventSourceMap.delete(key);
-          listeners.delete(key);
-          return;
-        } else {
-          listenersForKey.delete(onEvent);
+          listenerRefs.delete(key);
         }
       }
-    };
-  }, [url]);
 
-  useBeforeUnload((e) => {
-    eventSourceMap.forEach((eventSource, key) => {
-      eventSource.close();
+      // Clean up reconnect timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [url, key]);
+
+  useBeforeUnload(() => {
+    eventSourceMap.forEach((connection, key) => {
+      connection.eventSource.close();
       console.debug("closed event source", {
         key,
-        closed: eventSource.readyState === eventSource.CLOSED,
+        closed: connection.eventSource.readyState === EventSource.CLOSED,
       });
     });
     eventSourceMap.clear();
-    listeners.clear();
+    listenerRefs.clear();
   });
 };
