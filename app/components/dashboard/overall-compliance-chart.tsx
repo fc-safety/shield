@@ -23,10 +23,9 @@ import {
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
-import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 import type { AssetRow } from "./types/stats";
 
-export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
+export function OverallComplianceChart() {
   const [theme] = useTheme();
   const themeValues = useThemeValues();
   const [siteId, setSiteId] = useAppStateValue("dash_sum_site_id");
@@ -39,7 +38,6 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
     data: complianceHistory,
     error,
     isLoading,
-    refetch,
   } = useQuery(
     getComplianceHistoryQueryOptions(fetch, {
       months: 1,
@@ -56,8 +54,6 @@ export function OverallComplianceChart({ refreshKey }: { refreshKey: number }) {
       setSiteId("all");
     }
   }, [siteId, mySites, setSiteId]);
-
-  useRefreshByNumericKey(refreshKey, refetch);
 
   const data = React.useMemo(() => {
     if (!complianceHistory || !complianceHistory.length) {

@@ -1,5 +1,5 @@
-import { dehydrate, QueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { dehydrate, QueryClient, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { getAppState } from "~/.server/sessions";
@@ -13,9 +13,12 @@ import { useAuth } from "~/contexts/auth-context";
 import { useServerSentEvents } from "~/hooks/use-server-sent-events";
 import { getSitesQueryOptions } from "~/lib/services/clients.service";
 import {
+  COMPLIANCE_HISTORY_QUERY_KEY_PREFIX,
   getComplianceHistoryQueryOptions,
   getInspectionAlertsQueryOptions,
   getProductRequestsQueryOptions,
+  INSPECTION_ALERTS_QUERY_KEY_PREFIX,
+  PRODUCT_REQUESTS_QUERY_KEY_PREFIX,
 } from "~/lib/services/dashboard.service";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
@@ -83,22 +86,24 @@ export default function Dashboard() {
   const canReadSites = can(user, "read", "sites");
   const canViewMultipleSites = hasMultiSiteVisibility(user);
 
-  const [overallComplianceRefreshKey, setOverallComplianceRefreshKey] = useState(0);
-  const debouncedSetOverallComplianceRefreshKey = useThrottleRefresh(
-    setOverallComplianceRefreshKey
-  );
-  const [complianceBySiteRefreshKey, setComplianceBySiteRefreshKey] = useState(0);
-  const debouncedSetComplianceBySiteRefreshKey = useThrottleRefresh(setComplianceBySiteRefreshKey);
-  const [complianceByCategoryRefreshKey, setComplianceByCategoryRefreshKey] = useState(0);
-  const debouncedSetComplianceByCategoryRefreshKey = useThrottleRefresh(
-    setComplianceByCategoryRefreshKey
-  );
-  const [productRequestsRefreshKey, setProductRequestsRefreshKey] = useState(0);
-  const debouncedSetProductRequestsRefreshKey = useThrottleRefresh(setProductRequestsRefreshKey);
-  const [complianceHistoryKey, setComplianceHistoryKey] = useState(0);
-  const debouncedSetComplianceHistoryKey = useThrottleRefresh(setComplianceHistoryKey);
-  const [inspectionAlertsRefreshKey, setInspectionAlertsRefreshKey] = useState(0);
-  const debouncedSetInspectionAlertsRefreshKey = useThrottleRefresh(setInspectionAlertsRefreshKey);
+  const queryClient = useQueryClient();
+
+  const invalidateComplianceHistory = useCallback(() => {
+    queryClient.invalidateQueries({
+      predicate: ({ queryKey }) => queryKey[0] === COMPLIANCE_HISTORY_QUERY_KEY_PREFIX,
+    });
+  }, [queryClient]);
+  const debouncedInvalidateComplianceHistory = useDebouncedRefresh(invalidateComplianceHistory);
+
+  const invalidateProductRequests = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [PRODUCT_REQUESTS_QUERY_KEY_PREFIX] });
+  }, [queryClient]);
+  const debouncedInvalidateProductRequests = useDebouncedRefresh(invalidateProductRequests);
+
+  const invalidateInspectionAlerts = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [INSPECTION_ALERTS_QUERY_KEY_PREFIX] });
+  }, [queryClient]);
+  const debouncedInvalidateInspectionAlerts = useDebouncedRefresh(invalidateInspectionAlerts);
 
   useServerSentEvents({
     key: "command-center",
@@ -106,16 +111,13 @@ export default function Dashboard() {
     onEvent: (event) => {
       const payload = JSON.parse(event.data) as Record<string, string>;
       if (payload.model === "Asset" || payload.model === "Inspection") {
-        debouncedSetOverallComplianceRefreshKey((prev) => prev + 1);
-        debouncedSetComplianceBySiteRefreshKey((prev) => prev + 1);
-        debouncedSetComplianceByCategoryRefreshKey((prev) => prev + 1);
-        debouncedSetComplianceHistoryKey((prev) => prev + 1);
+        debouncedInvalidateComplianceHistory();
       }
       if (payload.model === "ProductRequest") {
-        debouncedSetProductRequestsRefreshKey((prev) => prev + 1);
+        debouncedInvalidateProductRequests();
       }
       if (payload.model === "Alert") {
-        debouncedSetInspectionAlertsRefreshKey((prev) => prev + 1);
+        debouncedInvalidateInspectionAlerts();
       }
     },
   });
@@ -126,19 +128,15 @@ export default function Dashboard() {
   return (
     <div className="h-[calc(100vh-110px)] overflow-y-auto">
       <div className="grid h-full auto-rows-[minmax(400px,1fr)] grid-cols-1 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(375px,1fr))] sm:gap-4 2xl:grid-cols-3">
-        {canReadAssets && <OverallComplianceChart refreshKey={overallComplianceRefreshKey} />}
-        {canReadAssets && canViewMultipleSites && canReadSites && (
-          <ComplianceBySiteChart refreshKey={complianceBySiteRefreshKey} />
-        )}
-        {canReadAssets && <ComplianceByCategoryChart refreshKey={complianceByCategoryRefreshKey} />}
-        {canReadProductRequests && (
-          <ProductRequestsOverview refreshKey={productRequestsRefreshKey} />
-        )}
-        {canReadAssets && <ComplianceHistoryChart refreshKey={complianceHistoryKey} />}
+        {canReadAssets && <OverallComplianceChart />}
+        {canReadAssets && canViewMultipleSites && canReadSites && <ComplianceBySiteChart />}
+        {canReadAssets && <ComplianceByCategoryChart />}
+        {canReadProductRequests && <ProductRequestsOverview />}
+        {canReadAssets && <ComplianceHistoryChart />}
         {/* {canReadInspections && (
         <InspectionsOverview refreshKey={inspectionsRefreshKey} />
       )} */}
-        {canReadAlerts && <InspectionAlertsOverview refreshKey={inspectionAlertsRefreshKey} />}
+        {canReadAlerts && <InspectionAlertsOverview />}
         {!canReadDashboard && (
           <div className="col-span-full flex h-full flex-col items-center justify-center">
             <div className="text-muted-foreground">
@@ -151,6 +149,6 @@ export default function Dashboard() {
   );
 }
 
-const useThrottleRefresh = <T extends (...args: any) => ReturnType<T>>(func: T) => {
-  return useDebounceCallback(func, 350, { trailing: true });
+const useDebouncedRefresh = <T extends (...args: any) => ReturnType<T>>(func: T) => {
+  return useDebounceCallback(func, 250, { trailing: true });
 };

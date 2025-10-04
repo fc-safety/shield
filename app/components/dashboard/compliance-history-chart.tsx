@@ -20,9 +20,8 @@ import {
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
-import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
-export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
+export function ComplianceHistoryChart() {
   const [theme] = useTheme();
   const themeValues = useThemeValues();
   const [months, setMonths] = useAppStateValue("dash_comp_hist_months", 6);
@@ -33,10 +32,7 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
     data: complianceHistory,
     error,
     isLoading,
-    refetch,
   } = useQuery(getComplianceHistoryQueryOptions(fetch, { months }));
-
-  useRefreshByNumericKey(refreshKey, refetch);
 
   const compliancePercentages = React.useMemo(() => {
     if (!complianceHistory || !complianceHistory.length) {

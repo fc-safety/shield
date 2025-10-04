@@ -59,9 +59,8 @@ import {
 } from "./components/dashboard-card";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
-import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
-export default function InspectionAlertsOverview({ refreshKey }: { refreshKey: number }) {
+export default function InspectionAlertsOverview() {
   const { appState, setAppState } = useAppState();
   const [sorting, setSorting] = useAppStateValue("dash_alert_sort", [{ id: "date", desc: true }]);
   const [view, setView] = useAppStateValue("dash_alert_view", "summary");
@@ -189,14 +188,12 @@ export default function InspectionAlertsOverview({ refreshKey }: { refreshKey: n
 
         {view === "summary" ? (
           <AlertsSummary
-            refreshKey={refreshKey}
             queryParams={queryParams}
             setIsLoading={setIsLoading}
             setError={setError}
           />
         ) : (
           <AlertsDetails
-            refreshKey={refreshKey}
             queryParams={queryParams}
             sorting={sorting}
             setSorting={setSorting}
@@ -215,23 +212,17 @@ export default function InspectionAlertsOverview({ refreshKey }: { refreshKey: n
 }
 
 function AlertsSummary({
-  refreshKey,
   queryParams,
   setIsLoading,
   setError,
 }: {
-  refreshKey: number;
   queryParams: QueryParams;
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: Error | null) => void;
 }) {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error, isLoading, refetch } = useQuery(
-    getInspectionAlertsQueryOptions(fetch, queryParams)
-  );
-
-  useRefreshByNumericKey(refreshKey, refetch);
+  const { data, error, isLoading } = useQuery(getInspectionAlertsQueryOptions(fetch, queryParams));
 
   useEffect(() => {
     setIsLoading(isLoading);
@@ -391,14 +382,12 @@ function AlertsSummary({
 }
 
 function AlertsDetails({
-  refreshKey,
   queryParams,
   sorting,
   setSorting,
   setIsLoading,
   setError,
 }: {
-  refreshKey: number;
   queryParams: QueryParams;
   sorting: SortingState;
   setSorting: OnChangeFn<SortingState>;
@@ -408,11 +397,7 @@ function AlertsDetails({
   const { user } = useAuth();
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error, isLoading, refetch } = useQuery(
-    getInspectionAlertsQueryOptions(fetch, queryParams)
-  );
-
-  useRefreshByNumericKey(refreshKey, refetch);
+  const { data, error, isLoading } = useQuery(getInspectionAlertsQueryOptions(fetch, queryParams));
 
   useEffect(() => {
     setIsLoading(isLoading);
