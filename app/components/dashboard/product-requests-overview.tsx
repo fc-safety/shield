@@ -60,9 +60,8 @@ import {
 } from "./components/dashboard-card";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
-import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
-export default function ProductRequestsOverview({ refreshKey }: { refreshKey: number }) {
+export default function ProductRequestsOverview() {
   const { appState, setAppState } = useAppState();
   const [sorting, setSorting] = useAppStateValue("dash_pr_sort", [{ id: "orderedOn", desc: true }]);
   const [view, setView] = useAppStateValue("dash_pr_view", "summary");
@@ -204,14 +203,12 @@ export default function ProductRequestsOverview({ refreshKey }: { refreshKey: nu
 
         {view === "summary" ? (
           <ProductRequestsSummary
-            refreshKey={refreshKey}
             queryParams={productRequestsQuery}
             setIsLoading={setIsLoading}
             setError={setError}
           />
         ) : (
           <ProductRequestsDetails
-            refreshKey={refreshKey}
             queryParams={productRequestsQuery}
             sorting={sorting}
             setSorting={setSorting}
@@ -230,23 +227,17 @@ export default function ProductRequestsOverview({ refreshKey }: { refreshKey: nu
 }
 
 function ProductRequestsSummary({
-  refreshKey,
   queryParams,
   setIsLoading,
   setError,
 }: {
-  refreshKey: number;
   queryParams: QueryParams;
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: Error | null) => void;
 }) {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
-  const { data, error, isLoading, refetch } = useQuery(
-    getProductRequestsQueryOptions(fetch, queryParams)
-  );
-
-  useRefreshByNumericKey(refreshKey, refetch);
+  const { data, error, isLoading } = useQuery(getProductRequestsQueryOptions(fetch, queryParams));
 
   useEffect(() => {
     setIsLoading(isLoading);
@@ -312,14 +303,12 @@ function ProductRequestsSummary({
 }
 
 function ProductRequestsDetails({
-  refreshKey,
   queryParams,
   sorting,
   setSorting,
   setIsLoading,
   setError,
 }: {
-  refreshKey: number;
   queryParams: QueryParams;
   sorting: SortingState;
   setSorting: OnChangeFn<SortingState>;
@@ -332,8 +321,6 @@ function ProductRequestsDetails({
   const { data, error, isLoading, refetch } = useQuery(
     getProductRequestsQueryOptions(fetch, queryParams)
   );
-
-  useRefreshByNumericKey(refreshKey, refetch);
 
   useEffect(() => {
     setIsLoading(isLoading);

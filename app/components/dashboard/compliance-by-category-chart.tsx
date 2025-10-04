@@ -20,19 +20,15 @@ import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 import MiniStatusProgressBar from "./components/mini-status-progress-bar";
-import useRefreshByNumericKey from "./hooks/use-refresh-by-numeric-key";
 
-export function ComplianceByCategoryChart({ refreshKey }: { refreshKey: number }) {
+export function ComplianceByCategoryChart() {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
   const {
     data: complianceHistory,
     error,
     isLoading,
-    refetch,
   } = useQuery(getComplianceHistoryQueryOptions(fetch, { months: 1 }));
-
-  useRefreshByNumericKey(refreshKey, refetch);
 
   const { data: productCategories } = useQuery(
     getProductCategoriesQueryOptions(fetch, { limit: 200 })
