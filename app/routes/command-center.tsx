@@ -152,5 +152,5 @@ export default function Dashboard() {
 }
 
 const useThrottleRefresh = <T extends (...args: any) => ReturnType<T>>(func: T) => {
-  return useDebounceCallback(func, 1000, { trailing: true });
+  return useDebounceCallback(func, 350, { trailing: true });
 };

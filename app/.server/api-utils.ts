@@ -440,15 +440,19 @@ export class ApiFetcher {
 }
 
 export const getAuthenticatedFetcher =
-  <T>(request: Request) =>
-  (...args: Parameters<typeof fetch>) => {
+  <T>(request: Request, { throwOnError = true }: { throwOnError?: boolean } = {}) =>
+  async (...args: Parameters<typeof fetch>) => {
     const [urlOrPath, options] = args;
 
     let url = urlOrPath;
     if (typeof urlOrPath === "string" && !isAbsoluteUrl(urlOrPath)) {
       url = buildUrl(urlOrPath, config.API_BASE_URL);
     }
-    return fetchAuthenticated(request, url, options);
+    const response = await fetchAuthenticated(request, url, options);
+    if (throwOnError && !response.ok) {
+      throw response;
+    }
+    return response;
   };
 
 interface AllCrudActions<T> {
