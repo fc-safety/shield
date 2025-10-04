@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useBeforeUnload } from "react-router";
+import { useDebounceCallback } from "usehooks-ts";
 import { useAuth } from "~/contexts/auth-context";
 import { buildUrl } from "~/lib/urls";
 import { useAuthenticatedFetch } from "./use-authenticated-fetch";
@@ -14,12 +15,7 @@ interface Props {
   onEvent: (event: MessageEvent) => void;
 }
 
-export const useServerSentEvents = ({
-  key,
-  models,
-  operations,
-  onEvent,
-}: Props) => {
+export const useServerSentEvents = ({ key, models, operations, onEvent }: Props) => {
   const { apiUrl } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
   const [token, setToken] = useState<string | null>(null);
@@ -35,6 +31,17 @@ export const useServerSentEvents = ({
         setToken(data.token);
       });
   }, [fetchOrThrow, token]);
+
+  const tokenRefreshAttempts = useRef(0);
+  const refreshToken = useDebounceCallback(() => {
+    tokenRefreshAttempts.current++;
+    setToken(null);
+    if (tokenRefreshAttempts.current > 10) {
+      console.error("Token refresh attempts exceeded");
+      return;
+    }
+    refreshToken();
+  }, 3000);
 
   const url = useMemo(
     () =>
@@ -62,6 +69,11 @@ export const useServerSentEvents = ({
 
       eventSource.onmessage = (event) => {
         listeners.get(key)?.forEach((listener) => listener(event));
+      };
+
+      eventSource.onerror = (event) => {
+        refreshToken();
+        console.error("Event source error", event);
       };
     }
 

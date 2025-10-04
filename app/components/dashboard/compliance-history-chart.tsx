@@ -163,7 +163,12 @@ export function ComplianceHistoryChart({ refreshKey }: { refreshKey: number }) {
             size="sm"
             value={String(months)}
             onValueChange={(value) => {
-              setMonths(Number(value));
+              const months = Number(value);
+              if (Number.isNaN(months) || months < 1 || months > 13) {
+                setMonths(6);
+                return;
+              }
+              setMonths(months);
             }}
           >
             <ToggleGroupItem value="3">3m</ToggleGroupItem>
