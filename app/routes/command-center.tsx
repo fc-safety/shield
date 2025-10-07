@@ -89,6 +89,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   const invalidateComplianceHistory = useCallback(() => {
+    console.debug("Invalidating compliance history");
     queryClient.invalidateQueries({
       predicate: ({ queryKey }) => queryKey[0] === COMPLIANCE_HISTORY_QUERY_KEY_PREFIX,
     });
@@ -96,11 +97,13 @@ export default function Dashboard() {
   const debouncedInvalidateComplianceHistory = useDebouncedRefresh(invalidateComplianceHistory);
 
   const invalidateProductRequests = useCallback(() => {
+    console.debug("Invalidating product requests");
     queryClient.invalidateQueries({ queryKey: [PRODUCT_REQUESTS_QUERY_KEY_PREFIX] });
   }, [queryClient]);
   const debouncedInvalidateProductRequests = useDebouncedRefresh(invalidateProductRequests);
 
   const invalidateInspectionAlerts = useCallback(() => {
+    console.debug("Invalidating inspection alerts");
     queryClient.invalidateQueries({ queryKey: [INSPECTION_ALERTS_QUERY_KEY_PREFIX] });
   }, [queryClient]);
   const debouncedInvalidateInspectionAlerts = useDebouncedRefresh(invalidateInspectionAlerts);
@@ -110,6 +113,7 @@ export default function Dashboard() {
     models: ["Asset", "Inspection", "Alert", "ProductRequest"],
     onEvent: (event) => {
       const payload = JSON.parse(event.data) as Record<string, string>;
+      console.debug("Received event", { payload });
       if (payload.model === "Asset" || payload.model === "Inspection") {
         debouncedInvalidateComplianceHistory();
       }
@@ -150,5 +154,5 @@ export default function Dashboard() {
 }
 
 const useDebouncedRefresh = <T extends (...args: any) => ReturnType<T>>(func: T) => {
-  return useDebounceCallback(func, 250, { trailing: true });
+  return useDebounceCallback(func, 250, { leading: true, trailing: true });
 };
