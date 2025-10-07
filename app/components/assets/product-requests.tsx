@@ -426,12 +426,15 @@ function ConsumableSelectTabs({
       <Tabs
         value={selectedTab}
         onValueChange={setSelectedTab}
-        className={cn("mt-2 hidden max-w-[calc(100vw-2rem)]", {
-          block: showTabs,
-        })}
+        className={cn("mt-2 max-w-[calc(100vw-2rem)]")}
       >
         {/* <GradientScrollArea> */}
-        <TabsList className="grid h-auto w-full min-w-fit grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-x-1.5 gap-y-1.5">
+        <TabsList
+          className={cn(
+            "hidden h-auto w-full min-w-fit grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-x-1.5 gap-y-1.5",
+            { grid: showTabs }
+          )}
+        >
           {(ansiCategories ?? []).map((category) => (
             <TabsTrigger
               key={category.id}

@@ -26,11 +26,11 @@ function RenderDefault({
   renderAddButtonIcon?: LucideIcon;
 }) {
   return (
-    <div className="flex items-center gap-2 w-full">
+    <div className="flex w-full items-center gap-2">
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="flex-1"
         disabled={disabled || isUploadingImage}
         onClick={(e) => {
           e.preventDefault();
@@ -38,11 +38,7 @@ function RenderDefault({
           (e.target as HTMLElement).parentElement?.click();
         }}
       >
-        {isUploadingImage ? (
-          <Loader2 className="animate-spin" />
-        ) : (
-          <AddButtonIcon />
-        )}
+        {isUploadingImage ? <Loader2 className="animate-spin" /> : <AddButtonIcon />}
         {renderAddButtonText}
       </Button>
       <Button
@@ -108,6 +104,7 @@ export default function VaultUploadInput({
   const originalValue = useRef(valueProp);
   const [value, setValueInternal] = useState<string | undefined>(valueProp);
   const previewImage = useOpenData<string>();
+  const [previewImageLoading, setPreviewImageLoading] = useState(true);
 
   useEffect(() => {
     if (valueProp) setValueInternal(valueProp);
@@ -119,13 +116,17 @@ export default function VaultUploadInput({
   };
 
   const { mutate: uploadImage, isPending: isUploadingImage } = useMutation({
-    mutationFn: (file: File | undefined | null) =>
-      handleVaultUpload(file, buildKey),
+    mutationFn: (file: File | undefined | null) => handleVaultUpload(file, buildKey),
     onSuccess: setValue,
   });
 
+  const handleOpenImagePreview = (value: string) => {
+    setPreviewImageLoading(true);
+    previewImage.openData(value);
+  };
+
   return (
-    <>
+    <div>
       <Input
         id={`vault-upload-input-${inputId}`}
         accept={accept}
@@ -136,16 +137,13 @@ export default function VaultUploadInput({
         className="hidden"
         hidden
       />
-      <Label htmlFor={`vault-upload-input-${inputId}`} className="w-full flex">
+      <Label htmlFor={`vault-upload-input-${inputId}`} className="flex w-full">
         {render({
           disabled: !!disabled,
           value,
           isUploadingImage,
-          openPreview: value ? () => previewImage.openData(value) : undefined,
-          clearValue:
-            showClearButton && !originalValue.current
-              ? () => setValue("")
-              : undefined,
+          openPreview: value ? () => handleOpenImagePreview(value) : undefined,
+          clearValue: showClearButton && !originalValue.current ? () => setValue("") : undefined,
           renderAddButtonText,
           renderAddButtonIcon,
         })}
@@ -155,14 +153,20 @@ export default function VaultUploadInput({
           <DialogHeader>
             <DialogTitle>Preview</DialogTitle>
           </DialogHeader>
+          {previewImageLoading && (
+            <div className="flex w-full items-center justify-center py-4">
+              <Loader2 className="size-12 animate-spin" />
+            </div>
+          )}
           <img
             src={previewImage.data ?? ""}
             alt="Preview"
+            onLoad={() => setPreviewImageLoading(false)}
             className="w-full rounded-lg"
           />
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
 
@@ -177,9 +181,7 @@ const handleVaultUpload = async (
   const ext = file.type.split("/").pop();
 
   const key = buildKey({ file, ext });
-  const getUrlResponse = await fetch(
-    buildPath("/api/image-upload-url", { key })
-  );
+  const getUrlResponse = await fetch(buildPath("/api/image-upload-url", { key }));
   if (getUrlResponse.ok) {
     const { getUrl, putUrl } = await getUrlResponse.json();
     const uploadResponse = await fetch(putUrl, {

@@ -12,12 +12,13 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
-import { Check, Image, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { Check, Image, Loader2, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useFetcher } from "react-router";
 import { z } from "zod";
+import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Alert } from "~/lib/models";
 import { resolveAlertSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
@@ -39,19 +40,17 @@ export default function AssetInspectionAlert({
   trigger,
 }: AssetInspectionAlertProps) {
   const [alert, setAlert] = useState<Alert | undefined>();
-  const fetcher = useFetcher<Alert>();
+  const { load, isLoading } = useModalFetcher<DataOrError<Alert>>({
+    onData: (data) => setAlert(data.data),
+  });
 
   const handlePreloadAlerts = useCallback(() => {
-    if (fetcher.state === "idle" && !fetcher.data) {
-      fetcher.load(`/api/proxy/alerts/${alertId}?assetId=${assetId}`);
+    if (alert === undefined) {
+      load({
+        path: `/api/proxy/alerts/${alertId}?assetId=${assetId}`,
+      });
     }
-  }, [fetcher, assetId, alertId]);
-
-  useEffect(() => {
-    if (fetcher.data) {
-      setAlert(fetcher.data);
-    }
-  }, [fetcher.data]);
+  }, [alert, assetId, alertId, load]);
 
   return (
     <ResponsiveDialog
@@ -64,7 +63,7 @@ export default function AssetInspectionAlert({
       dialogClassName="sm:max-w-lg"
     >
       {alert ? (
-        <InspectionAlert alert={alert} loading={fetcher.state === "loading"} />
+        <InspectionAlert alert={alert} loading={isLoading} />
       ) : (
         <Skeleton className="h-64 w-full rounded" />
       )}
@@ -78,7 +77,7 @@ function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: b
   const { user } = useAuth();
   const canResolve = can(user, "resolve", "alerts");
 
-  const fetcher = useFetcher();
+  const { submitJson: submit, isSubmitting } = useModalFetcher();
 
   const form = useForm<TForm>({
     resolver: zodResolver(resolveAlertSchema),
@@ -90,6 +89,12 @@ function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: b
   const {
     formState: { isValid },
   } = form;
+
+  const handleSubmit = (data: TForm) => {
+    submit(data, {
+      path: `/api/proxy/alerts/${alert.id}/resolve`,
+    });
+  };
 
   return (
     <div className="grid gap-8">
@@ -177,11 +182,7 @@ function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: b
         defaultValue={<>&mdash;</>}
       />
       <FormProvider {...form}>
-        <fetcher.Form
-          className="space-y-4"
-          method="post"
-          action={`/api/proxy/alerts/${alert.id}/resolve`}
-        >
+        <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
           <FormField
             control={form.control}
             name="resolutionNote"
@@ -207,8 +208,9 @@ function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: b
             <Button
               type="submit"
               className="w-full"
-              disabled={fetcher.state === "submitting" || loading || !isValid || alert.resolved}
+              disabled={isSubmitting || loading || !isValid || alert.resolved}
             >
+              {isSubmitting && <Loader2 className="animate-spin" />}
               {alert.resolved ? (
                 <>
                   <Check /> Resolved
@@ -218,7 +220,7 @@ function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: b
               )}
             </Button>
           )}
-        </fetcher.Form>
+        </form>
       </FormProvider>
     </div>
   );

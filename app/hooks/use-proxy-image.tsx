@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { useFetcher } from "react-router";
-import { buildPath } from "~/lib/urls";
-import type { ImageProxyUrlOptions } from "~/routes/api/image-proxy-url";
+import type {
+  ImageProxyUrlGetResponse,
+  ImageProxyUrlOptions,
+  ImageProxyUrlPostResponse,
+} from "~/routes/api/image-proxy-url";
+import { useModalFetcher } from "./use-modal-fetcher";
 
-export const useProxyImage = (
-  options: ImageProxyUrlOptions | ImageProxyUrlOptions[]
-) => {
+export const useProxyImage = (options: ImageProxyUrlOptions | ImageProxyUrlOptions[]) => {
   const [proxyImageUrl, setProxyImageUrl] = useState<string | null>(null);
   const [proxyImageUrls, setProxyImageUrls] = useState<
     | {
@@ -14,44 +15,42 @@ export const useProxyImage = (
       }[]
     | null
   >(null);
-  const fetcher = useFetcher();
   const lastOptionsRef = useRef<string | null>(null);
+
+  const { load, submitJson, isLoading } = useModalFetcher<
+    ImageProxyUrlPostResponse | ImageProxyUrlGetResponse
+  >({
+    onData: (data) => {
+      if ("results" in data) {
+        setProxyImageUrls(data.results);
+      }
+      if ("imageUrl" in data) {
+        setProxyImageUrl(data.imageUrl);
+      }
+    },
+  });
 
   useEffect(() => {
     // Deep comparison to prevent redundant requests
     const currentOptionsString = JSON.stringify(options);
 
-    if (
-      fetcher.state === "idle" &&
-      lastOptionsRef.current !== currentOptionsString
-    ) {
+    if (!isLoading && lastOptionsRef.current !== currentOptionsString) {
       lastOptionsRef.current = currentOptionsString;
 
       if (Array.isArray(options)) {
-        fetcher.submit(options, {
+        submitJson(options, {
           method: "POST",
-          action: "/api/image-proxy-url",
-          encType: "application/json",
+          path: "/api/image-proxy-url",
         });
       } else {
-        fetcher.load(buildPath("/api/image-proxy-url", options));
+        load({ path: "/api/image-proxy-url", query: options });
       }
     }
-  }, [options]);
-
-  useEffect(() => {
-    if (fetcher.data) {
-      if (fetcher.data.imageUrl) {
-        setProxyImageUrl(fetcher.data.imageUrl);
-      }
-      if (fetcher.data.results) {
-        setProxyImageUrls(fetcher.data.results);
-      }
-    }
-  }, [fetcher.data]);
+  }, [options, isLoading]);
 
   return {
     proxyImageUrl,
     proxyImageUrls,
+    isLoading,
   };
 };

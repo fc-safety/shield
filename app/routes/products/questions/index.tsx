@@ -42,6 +42,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         order: {
           createdOn: "desc",
         },
+        ...(!isGlobalAdmin ? { client: { externalId: user.clientId } } : { clientId: "_NULL" }),
       },
       { context: isGlobalAdmin ? "admin" : "user" }
     )

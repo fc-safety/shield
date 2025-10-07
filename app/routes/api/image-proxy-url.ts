@@ -19,6 +19,15 @@ const imageProxyUrlOptionsSchema = z.intersection(
 );
 
 export type ImageProxyUrlOptions = z.infer<typeof imageProxyUrlOptionsSchema>;
+export interface ImageProxyUrlPostResponse {
+  results: {
+    sourceUrl: string;
+    imageUrl: string;
+  }[];
+}
+export interface ImageProxyUrlGetResponse {
+  imageUrl: string;
+}
 
 const bulkImageProxyUrlOptionsSchema = z.union([
   imageProxyUrlOptionsSchema,
@@ -33,24 +42,20 @@ export const action = async ({ request }: Route.ActionArgs) => {
     throw new Response(parseResult.error.message, { status: 400 });
   }
 
-  const payload = Array.isArray(parseResult.data)
-    ? parseResult.data
-    : [parseResult.data];
+  const payload = Array.isArray(parseResult.data) ? parseResult.data : [parseResult.data];
 
   return Response.json({
     results: payload.map((p) => ({
       sourceUrl: p.src,
       imageUrl: buildImageProxyUrl(p.src, buildProcessingOptions(p)),
     })),
-  });
+  } satisfies ImageProxyUrlPostResponse);
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const query = getSearchParams(request);
 
-  const queryParseResult = imageProxyUrlOptionsSchema.safeParse(
-    Object.fromEntries(query)
-  );
+  const queryParseResult = imageProxyUrlOptionsSchema.safeParse(Object.fromEntries(query));
 
   if (queryParseResult.error) {
     throw new Response(queryParseResult.error.message, { status: 400 });
@@ -63,7 +68,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return Response.json({
     imageUrl: buildImageProxyUrl(sourceUrl, processingOptions),
-  });
+  } satisfies ImageProxyUrlGetResponse);
 };
 
 const buildProcessingOptions = (payload: ImageProxyUrlOptions) => {

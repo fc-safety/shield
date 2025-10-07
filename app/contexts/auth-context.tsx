@@ -7,9 +7,9 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
-import { useFetcher } from "react-router";
 import { useEventListener, useInterval } from "usehooks-ts";
 import type { User } from "~/.server/authenticator";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { buildUrl } from "~/lib/urls";
 import { isTokenExpired } from "~/lib/users";
 
@@ -57,8 +57,20 @@ export const AuthProvider = ({
 }>) => {
   const [user, setUser] = useState(userProp);
 
-  const fetcher = useFetcher();
   const resolveAuthRefresh = useRef<((user: User) => void) | null>(null);
+  const { submitJson: submitRefreshAuth } = useModalFetcher<User>({
+    onSubmitted: (user) => {
+      if (resolveAuthRefresh.current) {
+        resolveAuthRefresh.current(user);
+        resolveAuthRefresh.current = null;
+        // Clear the pending refresh after it's complete
+        pendingRefresh = null;
+
+        // Set new user data;
+        setUser(user);
+      }
+    },
+  });
 
   const documentRef = useRef<Document>(getDocument());
 
@@ -73,25 +85,13 @@ export const AuthProvider = ({
       resolveAuthRefresh.current = resolve;
     });
 
-    fetcher.submit(null, {
+    submitRefreshAuth(null, {
       method: "POST",
-      action: getRefreshAuthAction(),
+      path: getRefreshAuthAction(),
     });
 
     return pendingRefresh;
-  }, [fetcher.submit]);
-
-  useEffect(() => {
-    if (resolveAuthRefresh.current && fetcher.state === "idle" && fetcher.data) {
-      resolveAuthRefresh.current(fetcher.data);
-      resolveAuthRefresh.current = null;
-      // Clear the pending refresh after it's complete
-      pendingRefresh = null;
-
-      // Set new user data;
-      setUser(fetcher.data);
-    }
-  }, [fetcher.state, fetcher.data]);
+  }, [submitRefreshAuth]);
 
   const refreshAuthIfNeeded = useCallback(() => {
     if (documentRef.current.visibilityState === "hidden") {
