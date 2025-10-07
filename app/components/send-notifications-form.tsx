@@ -1,8 +1,8 @@
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useFetcher } from "react-router";
 import { toast } from "sonner";
+import type { DataOrError } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
 import {
   Command,
@@ -20,15 +20,10 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ResultsPage } from "~/lib/models";
 import type { ClientUser } from "~/lib/types";
-import { buildPath } from "~/lib/urls";
 import { cn } from "~/lib/utils";
 
 type TForm = {
@@ -48,25 +43,22 @@ export function SendNotificationsForm({
 }: SendNotificationsFormProps) {
   const [open, setOpen] = useState(false);
 
-  const fetcher = useFetcher<ResultsPage<ClientUser>>();
+  const [users, setUsers] = useState<ClientUser[] | undefined>();
+  const { load, isLoading } = useModalFetcher<DataOrError<ResultsPage<ClientUser>>>({
+    onData: (data) => setUsers(data.data?.results ?? []),
+  });
 
   const preloadUsers = useCallback(() => {
-    if (fetcher.state === "idle" && !fetcher.data) {
-      const url = buildPath("/api/proxy/users", {
-        limit: 10000,
-        siteExternalId,
+    if (users === undefined) {
+      load({
+        path: "/api/proxy/users",
+        query: {
+          limit: 10000,
+          siteExternalId,
+        },
       });
-      fetcher.load(url);
     }
-  }, [fetcher, siteExternalId]);
-
-  const [users, setUsers] = useState<ClientUser[]>([]);
-
-  useEffect(() => {
-    if (fetcher.data) {
-      setUsers(fetcher.data.results);
-    }
-  }, [fetcher.data]);
+  }, [load, users, siteExternalId]);
 
   const notificationsForm = useForm<TForm>({
     defaultValues: {
@@ -136,9 +128,7 @@ export function SendNotificationsForm({
           name="recipients"
           render={({ field: { value } }) => (
             <FormItem>
-              <FormLabel>
-                Recipients {value.length > 0 && <span>({value.length})</span>}
-              </FormLabel>
+              <FormLabel>Recipients {value.length > 0 && <span>({value.length})</span>}</FormLabel>
               <FormControl>
                 <Popover open={open} onOpenChange={setOpen}>
                   <PopoverTrigger asChild>
@@ -150,7 +140,7 @@ export function SendNotificationsForm({
                       onMouseOver={() => preloadUsers()}
                       onTouchStart={() => preloadUsers()}
                     >
-                      <span className="overflow-hidden whitespace-nowrap text-ellipsis">
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                         {value.length > 0
                           ? value.map((v) => v.name).join(", ")
                           : "Select recipients..."}
@@ -164,15 +154,13 @@ export function SendNotificationsForm({
                       <CommandList>
                         <CommandEmpty>No results found.</CommandEmpty>
                         <CommandGroup>
-                          {fetcher.state === "loading" && (
+                          {isLoading && (
                             <CommandItem disabled>
                               <Loader2 className="animate-spin" />
                             </CommandItem>
                           )}
                           {value.map((v) => {
-                            const inQueue =
-                              deselectionQueue.findIndex((q) => q.id === v.id) >
-                              -1;
+                            const inQueue = deselectionQueue.findIndex((q) => q.id === v.id) > -1;
                             return (
                               <CommandItem
                                 key={v.id}
@@ -192,25 +180,20 @@ export function SendNotificationsForm({
                             );
                           })}
                           {[
-                            ...users.filter(
+                            ...(users ?? []).filter(
                               (user) =>
                                 !value.some((u) => user.id === u.id) ||
                                 selectionQueue.some((q) => user.id === q.id)
                             ),
                           ].map((user) => {
-                            const inQueue =
-                              selectionQueue.findIndex(
-                                (q) => q.id === user.id
-                              ) > -1;
+                            const inQueue = selectionQueue.findIndex((q) => q.id === user.id) > -1;
                             return (
                               <CommandItem
                                 key={user.id}
                                 onSelect={() => {
                                   setSelectionQueue((prev) => {
                                     if (inQueue) {
-                                      return prev.filter(
-                                        (q) => q.id !== user.id
-                                      );
+                                      return prev.filter((q) => q.id !== user.id);
                                     } else {
                                       return [...prev, user];
                                     }
@@ -241,11 +224,7 @@ export function SendNotificationsForm({
             {isSubmitting ? "Sending..." : "Send"}
           </Button>
           {recipients.length > 0 && (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setValue("recipients", [])}
-            >
+            <Button type="button" variant="secondary" onClick={() => setValue("recipients", [])}>
               Clear
             </Button>
           )}
@@ -259,10 +238,8 @@ const SelectCheckbox = ({ selected }: { selected: boolean }) => {
   return (
     <div
       className={cn(
-        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
-        selected
-          ? "bg-primary text-primary-foreground"
-          : "opacity-50 [&_svg]:invisible"
+        "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+        selected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible"
       )}
     >
       <Check />

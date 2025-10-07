@@ -89,6 +89,17 @@ export default function InspectionAlertsOverview() {
     });
   };
 
+  const selectedSortByOptionId = useMemo(() => {
+    const optionsSortedBySortParameterLength = SORT_BY_OPTIONS.slice().sort(
+      (a, b) => getArrayishLength(b.sort) - getArrayishLength(a.sort)
+    );
+    return optionsSortedBySortParameterLength.find((option) =>
+      (Array.isArray(option.sort) ? option.sort : [option.sort]).every((sort) =>
+        sorting.some((s) => s.id === sort.id && s.desc === sort.desc)
+      )
+    )?.id;
+  }, [sorting]);
+
   return (
     <DashboardCard>
       <DashboardCardHeader>
@@ -155,29 +166,15 @@ export default function InspectionAlertsOverview() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {[
-                {
-                  id: "newestFirst",
-                  sort: { id: "date", desc: true },
-                  label: "Newest first",
-                },
-                {
-                  id: "oldestFirst",
-                  sort: { id: "date", desc: false },
-                  label: "Oldest first",
-                },
-              ].map(({ id, sort, label }) => (
+              {SORT_BY_OPTIONS.map(({ id, sort, label }) => (
                 <DropdownMenuItem
                   key={id}
                   onSelect={() => {
-                    setSorting([sort]);
+                    setSorting(Array.isArray(sort) ? sort : [sort]);
                   }}
                 >
                   <Check
-                    className={cn(
-                      "opacity-0",
-                      sorting.some((s) => s.id === sort.id && s.desc === sort.desc) && "opacity-100"
-                    )}
+                    className={cn("opacity-0", id === selectedSortByOptionId && "opacity-100")}
                   />
                   {label}
                 </DropdownMenuItem>
@@ -191,6 +188,20 @@ export default function InspectionAlertsOverview() {
             queryParams={queryParams}
             setIsLoading={setIsLoading}
             setError={setError}
+            onClickUnresolved={() => {
+              setSorting([
+                { id: "resolved", desc: false },
+                { id: "date", desc: true },
+              ]);
+              setView("details");
+            }}
+            onClickResolved={() => {
+              setSorting([
+                { id: "resolved", desc: true },
+                { id: "date", desc: true },
+              ]);
+              setView("details");
+            }}
           />
         ) : (
           <AlertsDetails
@@ -215,10 +226,14 @@ function AlertsSummary({
   queryParams,
   setIsLoading,
   setError,
+  onClickUnresolved,
+  onClickResolved,
 }: {
   queryParams: QueryParams;
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: Error | null) => void;
+  onClickUnresolved: () => void;
+  onClickResolved: () => void;
 }) {
   const { fetchOrThrow: fetch } = useAuthenticatedFetch();
 
@@ -267,6 +282,7 @@ function AlertsSummary({
               coloring:
                 "bg-urgent/10 dark:bg-urgent/20 border border-urgent/20 dark:border-urgent/30",
               iconColoring: "bg-urgent/20 text-urgent",
+              onClick: onClickUnresolved,
             },
             {
               label: "Resolved",
@@ -275,14 +291,16 @@ function AlertsSummary({
               coloring:
                 "bg-primary/10 dark:bg-primary/20 border border-primary/20 dark:border-primary/30",
               iconColoring: "bg-primary/20 text-primary",
+              onClick: onClickResolved,
             },
           ].map((options) => (
-            <div
+            <button
               key={options.label}
               className={cn(
                 "flex items-center justify-between gap-2 rounded-lg p-2 shadow-sm sm:p-4",
                 options.coloring
               )}
+              onClick={options.onClick}
             >
               <div>
                 <h3 className="text-sm font-semibold">{options.label}</h3>
@@ -295,7 +313,7 @@ function AlertsSummary({
               <div className={cn("rounded-full p-2 xl:p-3", options.iconColoring)}>
                 <options.icon className="size-5 xl:size-6" />
               </div>
-            </div>
+            </button>
           ))}
         </div>
         {unresolvedAlerts.length === 0 ? (
@@ -546,3 +564,39 @@ function AlertsDetails({
 
 const renderCell = (cell: Cell<Alert, unknown> | undefined | null) =>
   cell ? flexRender(cell.column.columnDef.cell, cell.getContext()) : null;
+
+const getArrayishLength = <T,>(arrayish: T | T[]) => {
+  if (Array.isArray(arrayish)) {
+    return arrayish.length;
+  }
+  return 1;
+};
+
+const SORT_BY_OPTIONS = [
+  {
+    id: "newestFirst",
+    sort: { id: "date", desc: true },
+    label: "Newest first",
+  },
+  {
+    id: "oldestFirst",
+    sort: { id: "date", desc: false },
+    label: "Oldest first",
+  },
+  {
+    id: "resolvedFirst",
+    sort: [
+      { id: "resolved", desc: true },
+      { id: "date", desc: true },
+    ],
+    label: "Resolved first",
+  },
+  {
+    id: "unresolvedFirst",
+    sort: [
+      { id: "resolved", desc: false },
+      { id: "date", desc: true },
+    ],
+    label: "Unresolved first",
+  },
+];

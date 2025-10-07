@@ -264,7 +264,7 @@ export default function AssetDetails({
                     <ProductImage
                       name="Product Image"
                       imageUrl={processedProductImageUrl}
-                      className="min-h-24 @md:min-h-36 @md:w-full @md:rounded-tr-xl @md:rounded-bl-none @md:border-r-0 @md:border-b @md:sm:w-full"
+                      className="min-h-24 @md:h-36 @md:min-h-36 @md:w-full @md:rounded-tr-xl @md:rounded-bl-none @md:border-r-0 @md:border-b @md:sm:w-full"
                     />
                     <div className="flex grow flex-col self-stretch">
                       <CardHeader className="grow p-2 sm:p-4">

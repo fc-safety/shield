@@ -96,12 +96,16 @@ export default function Dashboard() {
   const debouncedInvalidateComplianceHistory = useDebouncedRefresh(invalidateComplianceHistory);
 
   const invalidateProductRequests = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [PRODUCT_REQUESTS_QUERY_KEY_PREFIX] });
+    queryClient.invalidateQueries({
+      predicate: ({ queryKey }) => queryKey[0] === PRODUCT_REQUESTS_QUERY_KEY_PREFIX,
+    });
   }, [queryClient]);
   const debouncedInvalidateProductRequests = useDebouncedRefresh(invalidateProductRequests);
 
   const invalidateInspectionAlerts = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [INSPECTION_ALERTS_QUERY_KEY_PREFIX] });
+    queryClient.invalidateQueries({
+      predicate: ({ queryKey }) => queryKey[0] === INSPECTION_ALERTS_QUERY_KEY_PREFIX,
+    });
   }, [queryClient]);
   const debouncedInvalidateInspectionAlerts = useDebouncedRefresh(invalidateInspectionAlerts);
 
@@ -150,5 +154,5 @@ export default function Dashboard() {
 }
 
 const useDebouncedRefresh = <T extends (...args: any) => ReturnType<T>>(func: T) => {
-  return useDebounceCallback(func, 250, { trailing: true });
+  return useDebounceCallback(func, 250, { leading: true, trailing: true });
 };
