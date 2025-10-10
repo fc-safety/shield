@@ -125,11 +125,11 @@ export const ConditionConfigurator = () => {
               <FormControl>
                 {conditionDataInput?.conditionType === "METADATA" ? (
                   <MatchingValueInput
-                    value={parseMatchingValueInput(values.at(0), "metadata-key")}
+                    value={parseMatchingValueInput(values?.at(0), "metadata-key")}
                     onValueChange={handleMatchingValueInputChange(
                       (v) => onChange([v]),
                       "metadata-key",
-                      values.at(0)
+                      values?.at(0)
                     )}
                     onBlur={onBlur}
                     conditionType={"METADATA"}
@@ -137,7 +137,7 @@ export const ConditionConfigurator = () => {
                   />
                 ) : (
                   <MultivaluesInput
-                    values={values}
+                    values={values ?? []}
                     onValuesChange={onChange}
                     onBlur={onBlur}
                     renderSingularInput={({ value, onValueChange, onBlur, className }) => (
@@ -168,14 +168,16 @@ export const ConditionConfigurator = () => {
                 <FormLabel>is equal to...</FormLabel>
                 <FormControl>
                   <MultivaluesInput
-                    values={values.map((v) => parseMatchingValueInput(v, "metadata-value") ?? "")}
+                    values={
+                      values?.map((v) => parseMatchingValueInput(v, "metadata-value") ?? "") ?? []
+                    }
                     onValuesChange={(newMetadataValues) => {
                       const newValues: string[] = [];
                       newMetadataValues.forEach(
                         handleMatchingValueInputChange(
                           (v) => newValues.push(v),
                           "metadata-value",
-                          values.at(0)
+                          values?.at(0)
                         )
                       );
                       onChange(newValues);
@@ -183,7 +185,7 @@ export const ConditionConfigurator = () => {
                     onBlur={onBlur}
                     renderSingularInput={({ value, onValueChange, onBlur, className }) => (
                       <MetadataValueCombobox
-                        metadataKey={values.at(0)?.split(":")?.at(0) ?? ""}
+                        metadataKey={values?.at(0)?.split(":")?.at(0) ?? ""}
                         value={value}
                         onValueChange={onValueChange}
                         onBlur={onBlur}

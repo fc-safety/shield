@@ -13,11 +13,7 @@ import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { enableMapSet } from "immer";
 import { type PropsWithChildren } from "react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
-import {
-  appStateSessionStorage,
-  setCookieResponseHeaders,
-  themeSessionResolver,
-} from "~/.server/sessions";
+import { appStateSessionStorage, themeSessionResolver } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import { getAuthenticatedFetcher } from "./.server/api-utils";
@@ -42,8 +38,19 @@ import styles from "./tailwind.css?url";
 
 enableMapSet();
 
-export const unstable_middleware = [
-  requestContext.create,
+const setCookieResponseHeaders: Route.MiddlewareFunction = async ({}, next) => {
+  const response = await next();
+
+  const setCookieHeaderValues = requestContext.get("setCookieHeaderValues");
+
+  for (const value of Object.values(setCookieHeaderValues)) {
+    response.headers.append("Set-Cookie", value);
+  }
+
+  return response;
+};
+export const middleware: Route.MiddlewareFunction[] = [
+  ({}, next) => requestContext.create(next),
   // `setCookieResponseHeaders` requires `requestContext.create` to be run first.
   setCookieResponseHeaders,
 ];

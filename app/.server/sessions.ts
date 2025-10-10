@@ -1,24 +1,16 @@
 import { deflate, inflate } from "pako";
-import {
-  createCookieSessionStorage,
-  type SessionData,
-  type SessionStorage,
-  type unstable_MiddlewareFunction,
-} from "react-router";
+import { createCookieSessionStorage, type SessionData, type SessionStorage } from "react-router";
 import { createThemeSessionResolver } from "remix-themes";
 import type { AppState } from "~/lib/types";
 import { type Tokens } from "./authenticator";
 import { config } from "./config";
-import { requestContext } from "./request-context";
 
 const isProduction = process.env.NODE_ENV === "production";
 const domain = process.env.APP_DOMAIN;
 
-export const compress = (data: string) =>
-  Buffer.from(deflate(data)).toString("base64");
+export const compress = (data: string) => Buffer.from(deflate(data)).toString("base64");
 
-export const decompress = (data: string) =>
-  inflate(Buffer.from(data, "base64"), { to: "string" });
+export const decompress = (data: string) => inflate(Buffer.from(data, "base64"), { to: "string" });
 
 export const getSession = async <T = SessionData>(
   request: Request,
@@ -36,23 +28,6 @@ export const getSessionValue = async <T = SessionData>(
   return session.get(key);
 };
 
-// SESSION MIDDLEWARE
-
-export const setCookieResponseHeaders: unstable_MiddlewareFunction = async (
-  { request, params, context },
-  next
-) => {
-  const response = (await next()) as Response;
-
-  const setCookieHeaderValues = requestContext.get("setCookieHeaderValues");
-
-  for (const [key, value] of Object.entries(setCookieHeaderValues)) {
-    response.headers.append("Set-Cookie", value);
-  }
-
-  return response;
-};
-
 // THEME MANAGEMENT
 
 const themeSessionStorage = createCookieSessionStorage({
@@ -66,8 +41,7 @@ const themeSessionStorage = createCookieSessionStorage({
   },
 });
 
-export const themeSessionResolver =
-  createThemeSessionResolver(themeSessionStorage);
+export const themeSessionResolver = createThemeSessionResolver(themeSessionStorage);
 
 // APP STATE STORAGE
 export const appStateSessionStorage = createCookieSessionStorage<AppState>({
@@ -81,9 +55,7 @@ export const appStateSessionStorage = createCookieSessionStorage<AppState>({
 });
 
 export const getAppState = async (request: Request) => {
-  const session = await appStateSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const session = await appStateSessionStorage.getSession(request.headers.get("cookie"));
   return session.data;
 };
 
@@ -97,17 +69,16 @@ export interface InspectionCookieValue {
   inspectionToken?: string;
 }
 
-export const inspectionSessionStorage =
-  createCookieSessionStorage<InspectionCookieValue>({
-    cookie: {
-      name: "__inspection",
-      path: "/",
-      httpOnly: true,
-      sameSite: "lax",
-      secrets: [config.COOKIE_SECRET],
-      ...(isProduction ? { domain, secure: true } : {}),
-    },
-  });
+export const inspectionSessionStorage = createCookieSessionStorage<InspectionCookieValue>({
+  cookie: {
+    name: "__inspection",
+    path: "/",
+    httpOnly: true,
+    sameSite: "lax",
+    secrets: [config.COOKIE_SECRET],
+    ...(isProduction ? { domain, secure: true } : {}),
+  },
+});
 
 // USER SESSION MANAGEMENT
 

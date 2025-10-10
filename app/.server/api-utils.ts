@@ -9,7 +9,7 @@ import {
 } from "~/lib/urls";
 import { config } from "./config";
 import { logger } from "./logger";
-import { requestContext } from "./request-context";
+import { setCookieHeaderValue } from "./request-context";
 import {
   refreshTokensOrRelogin,
   requireUserSession,
@@ -290,10 +290,7 @@ export const fetchAuthenticated = async (
 
     // Update session using request context middleware.
     const sessionToken = await getSessionToken(session);
-    requestContext.set("setCookieHeaderValues", (values) => ({
-      ...values,
-      authSession: sessionToken,
-    }));
+    setCookieHeaderValue("authSession", sessionToken);
 
     response = await getResponse(user.tokens.accessToken);
   }

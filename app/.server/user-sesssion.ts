@@ -4,7 +4,7 @@ import { isTokenExpired } from "~/lib/users";
 import type { Tokens, User } from "./authenticator";
 import { buildUser, strategy } from "./authenticator";
 import { logger } from "./logger";
-import { requestContext } from "./request-context";
+import { clearCookieHeaderValue, setCookieHeaderValue } from "./request-context";
 import { userSessionStorage } from "./sessions";
 
 declare global {
@@ -31,11 +31,7 @@ export const getLoginRedirect = async (
   }
 
   // Clear any existing middleware set cookie values.
-  requestContext.set("setCookieHeaderValues", (values) => {
-    const newValues = { ...values };
-    delete newValues.authSession;
-    return newValues;
-  });
+  clearCookieHeaderValue("authSession");
 
   return redirect(options.loginRoute ?? "/login", {
     headers: resHeaders,
@@ -100,10 +96,7 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
 
     // Update session cookie.
     const sessionToken = await getSessionToken(session);
-    requestContext.set("setCookieHeaderValues", (values) => ({
-      ...values,
-      authSession: sessionToken,
-    }));
+    setCookieHeaderValue("authSession", sessionToken);
   }
 
   // Get user, refreshing tokens if needed.
