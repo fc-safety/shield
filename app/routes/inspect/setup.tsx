@@ -21,6 +21,7 @@ import AssetQuestionResponseField from "~/components/assets/asset-question-respo
 import ConfigureAssetForm from "~/components/assets/configure-asset-form";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
+import { RequiredFieldsNotice } from "~/components/required-fields";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -288,11 +289,7 @@ export default function InspectSetup({
               ) : (
                 <RemixFormProvider {...form}>
                   <Form className="space-y-4" method={"post"} onSubmit={form.handleSubmit}>
-                    {questions.filter((q) => q.required).length > 0 && (
-                      <p className="text-muted-foreground mb-4 text-sm">
-                        * indicates a required field
-                      </p>
-                    )}
+                    {questions.filter((q) => q.required).length > 0 && <RequiredFieldsNotice />}
                     <Input type="hidden" {...form.register("id")} hidden />
                     {isSetup && <Input type="hidden" {...form.register("setupOn")} hidden />}
                     {allQuestionFields.map(({ key, data }, index) => {

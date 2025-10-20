@@ -5,7 +5,6 @@ import useMyOrganization from "~/hooks/use-my-organization";
 import type { GetMyOrganizationResult } from "~/lib/services/clients.service";
 import { cn, validateBreadcrumb } from "~/lib/utils";
 import { BreadcrumbResponsive } from "./breadcrumb-responsive";
-import { ModeToggle } from "./mode-toggle";
 import { UserDropdownMenu } from "./user-dropdown-menu";
 
 export default function Header({
@@ -69,7 +68,6 @@ export default function Header({
               />
             </>
           )}
-          <ModeToggle />
         </div>
       </div>
       {showBreadcrumb && (

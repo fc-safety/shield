@@ -22,6 +22,10 @@ export default [
     route("next", "./routes/inspect/next.tsx"),
     route("routes", "./routes/inspect/routes.tsx"),
     route("register", "./routes/inspect/register/index.tsx"),
+    ...prefix("reorder-supplies", [
+      index("./routes/inspect/reorder-supplies/index.tsx"),
+      route("confirmation", "./routes/inspect/reorder-supplies/confirmation.tsx"),
+    ]),
     route("clear-demo-inspections", "./routes/inspect/clear-demo-inspections.tsx"),
     route("reset-demo-inspections", "./routes/inspect/reset-demo-inspections.tsx"),
 

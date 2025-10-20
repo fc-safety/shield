@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import {
   CheckCircle,
@@ -86,28 +86,12 @@ export function NewSupplyRequestButton({ ...props }: ComponentProps<typeof Produ
       render={({ isDesktop }) => (
         <ProductRequestForm
           {...props}
-          renderSubmitButton={({ isSubmitting, disabled }) => {
-            const btn = (
-              <div
-                className={cn("flex flex-col gap-2", {
-                  "items-end": isDesktop,
-                })}
-              >
-                <p
-                  className={cn("text-muted-foreground w-full text-xs font-semibold", {
-                    "text-end": isDesktop,
-                  })}
-                >
-                  Submitting this request will notify our team to contact your organization to
-                  finalize payment and delivery details.
-                </p>
-                <Button type="submit" disabled={disabled || isSubmitting}>
-                  {isSubmitting ? "Submitting..." : "Submit Request"}
-                </Button>
-              </div>
+          renderFormFooter={({ renderDefault }) => {
+            return isDesktop ? (
+              <DialogFooter>{renderDefault({ align: "end" })}</DialogFooter>
+            ) : (
+              renderDefault()
             );
-
-            return isDesktop ? <DialogFooter>{btn}</DialogFooter> : btn;
           }}
           onSubmitted={() => {
             setOpen(false);
@@ -121,20 +105,20 @@ export function NewSupplyRequestButton({ ...props }: ComponentProps<typeof Produ
 type TForm = z.infer<typeof createProductRequestSchema>;
 const resolver = zodResolver(createProductRequestSchema);
 
-function ProductRequestForm({
+export function ProductRequestForm({
   assetId,
   parentProductId,
-  renderSubmitButton = ({ isSubmitting, disabled }) => (
-    <Button type="submit" disabled={disabled || isSubmitting}>
-      {isSubmitting ? "Submitting..." : "Submit"}
-    </Button>
-  ),
+  renderFormFooter = ({ renderDefault }) => renderDefault(),
   onSubmitted = () => {},
   onSuccess = () => {},
 }: {
   assetId: string;
   parentProductId: string;
-  renderSubmitButton?: (options: { isSubmitting: boolean; disabled: boolean }) => React.ReactNode;
+  renderFormFooter?: (options: {
+    isSubmitting: boolean;
+    disabled: boolean;
+    renderDefault: (options?: { align?: "start" | "center" | "end" }) => React.ReactNode;
+  }) => React.ReactNode;
   onSubmitted?: () => void;
   onSuccess?: (data: ProductRequest) => void;
 }) {
@@ -145,14 +129,9 @@ function ProductRequestForm({
   const [orderItemsIsOverflowingY, setOrderItemsIsOverflowingY] = useState(false);
   const [orderItemsIsScrollMaxedY, setOrderItemsIsScrollMaxedY] = useState(false);
 
-  const { queryKey: suppliesQueryKey, queryFn: suppliesQueryFn } = getSuppliesForProductQuery(
-    fetchOrThrow,
-    parentProductId
+  const { data: supplies, isLoading: suppliesLoading } = useQuery(
+    getSuppliesForProductQuery(fetchOrThrow, parentProductId)
   );
-  const { data: supplies, isLoading: suppliesLoading } = useQuery({
-    queryKey: suppliesQueryKey,
-    queryFn: suppliesQueryFn,
-  });
 
   const supplyMap = useMemo(() => {
     return new Map((supplies ?? []).map((product) => [product.id, product]));
@@ -368,7 +347,31 @@ function ProductRequestForm({
               <ScrollHint show={orderItemsIsOverflowingY && !orderItemsIsScrollMaxedY} />
             </ScrollArea>
           </div>
-          {renderSubmitButton({ isSubmitting, disabled: !isDirty || !isValid })}
+          {renderFormFooter({
+            isSubmitting,
+            disabled: !isDirty || !isValid,
+            renderDefault: ({ align = "start" } = {}) => (
+              <div
+                className={cn("flex flex-col gap-2", {
+                  "items-end": align === "end",
+                  "items-center": align === "center",
+                })}
+              >
+                <p
+                  className={cn("text-muted-foreground w-full text-xs font-semibold", {
+                    "text-end": align === "end",
+                    "text-center": align === "center",
+                  })}
+                >
+                  Submitting this request will notify our team to contact your organization to
+                  finalize payment and delivery details.
+                </p>
+                <Button type="submit" disabled={!isDirty || !isValid || isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
+                </Button>
+              </div>
+            ),
+          })}
         </form>
       </Form>
       <Dialog open={previewImage.open} onOpenChange={previewImage.setOpen}>
@@ -426,12 +429,12 @@ function ConsumableSelectTabs({
       <Tabs
         value={selectedTab}
         onValueChange={setSelectedTab}
-        className={cn("mt-2 max-w-[calc(100vw-2rem)]")}
+        className={cn("mt-2 w-full sm:max-w-[calc(100vw-2rem)]")}
       >
         {/* <GradientScrollArea> */}
         <TabsList
           className={cn(
-            "hidden h-auto w-full min-w-fit grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-x-1.5 gap-y-1.5",
+            "hidden h-auto w-full min-w-fit grid-cols-[repeat(auto-fit,minmax(100px,1fr))] gap-x-1.5 gap-y-1.5",
             { grid: showTabs }
           )}
         >
@@ -448,7 +451,7 @@ function ConsumableSelectTabs({
                   "--tab-inactive-color": category.color ?? "hsl(var(--muted-foreground))",
                 } as React.CSSProperties
               }
-              className="flex shrink-0 grow flex-col items-center justify-center bg-[var(--tab-active-bg)] py-1 font-bold text-[var(--tab-active-color)] data-[state=active]:scale-105 data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] sm:py-1.5"
+              className="flex shrink-0 grow flex-col items-center justify-center bg-[var(--tab-active-bg)] py-1 font-bold text-[var(--tab-active-color)] data-[state=active]:mx-1 data-[state=active]:scale-105 data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] sm:py-1.5"
             >
               {category.icon && <Icon iconId={category.icon} className="text-base sm:text-lg" />}
               <div className="text-2xs w-min whitespace-nowrap">{category.name}</div>
@@ -646,20 +649,28 @@ export function ProductRequestCard({ request }: { request: ProductRequest }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="divide-border grid grid-cols-[auto_auto_1fr] gap-x-4 divide-y text-sm">
-          <div className="text-muted-foreground col-span-full grid grid-cols-subgrid items-center py-2 text-xs font-medium">
-            <div>Qty</div>
-            <div>Consumable</div>
-          </div>
-          {request.productRequestItems.map((item) => (
-            <div key={item.id} className="col-span-full grid grid-cols-subgrid items-center py-2">
-              <div className="text-end">{item.quantity}</div>
-              <div>{item.product.name}</div>
-            </div>
-          ))}
-        </div>
+        <ProductRequestItemsDisplay request={request} />
       </CardContent>
     </Card>
+  );
+}
+
+export function ProductRequestItemsDisplay({ request }: { request: ProductRequest }) {
+  return (
+    <div className="divide-border grid grid-cols-[auto_auto_1fr] gap-x-4 divide-y text-sm">
+      <div className="text-muted-foreground col-span-full grid grid-cols-subgrid items-center py-2 text-xs font-medium">
+        <div>Qty</div>
+        <div>SKU</div>
+        <div>Name</div>
+      </div>
+      {request.productRequestItems.map((item) => (
+        <div key={item.id} className="col-span-full grid grid-cols-subgrid items-center py-2">
+          <div className="text-end font-bold">{item.quantity}</div>
+          <div>{item.product.sku || <>&mdash;</>}</div>
+          <div>{item.product.name}</div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -694,34 +705,20 @@ const ScrollHint = ({ show }: { show: boolean }) => {
 };
 
 export const getSuppliesForProductQuery = (fetcher: typeof fetch, parentProductId: string) => {
-  const queryFn = () =>
-    fetcher(
-      buildPath(
-        "/products/",
-        // OR: [
-        {
-          parentProduct: {
-            id: parentProductId,
-          },
-          limit: 1000,
-        }
-        // {
-        //   manufacturer: {
-        //     name: GENERIC_MANUFACTURER_NAME,
-        //     parentProductId: "_NULL",
-        //   },
-        //   productCategory: {
-        //     id: productCategoryId,
-        //   },
-        // },
-        // ],
-      )
-    )
-      .then((r) => r.json() as Promise<ResultsPage<Product>>)
-      .then((r) => r.results);
-
-  return {
-    queryKey: ["supplies", parentProductId],
-    queryFn,
-  };
+  return queryOptions({
+    queryKey: [
+      "supplies",
+      {
+        type: "CONSUMABLE",
+        parentProduct: {
+          id: parentProductId,
+        },
+        limit: 1000,
+      },
+    ] as const,
+    queryFn: ({ queryKey }) =>
+      fetcher(buildPath("/products", queryKey[1]))
+        .then((r) => r.json() as Promise<ResultsPage<Product>>)
+        .then((r) => r.results),
+  });
 };

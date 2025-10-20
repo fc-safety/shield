@@ -66,12 +66,14 @@ export default function AssetQuestionResponseTypeInput<T extends AssetQuestionRe
           <ToggleGroupItem
             key={operand}
             value={operand}
-            className={cn(
-              showNegative &&
-                "data-[state=on]:bg-destructive data-[state=on]:text-destructive-foreground",
-              (showPositive || hasNoTone) &&
-                "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-            )}
+            className={cn({
+              "data-[state=off]:text-primary": showPositive,
+              "data-[state=off]:text-destructive": showNegative,
+              "data-[state=on]:bg-destructive data-[state=on]:text-destructive-foreground":
+                showNegative,
+              "data-[state=on]:bg-primary data-[state=on]:text-primary-foreground":
+                showPositive || hasNoTone,
+            })}
           >
             {(showPositive || (isSelected && hasNoTone)) && <Check />}
             {showNegative && <X />}
