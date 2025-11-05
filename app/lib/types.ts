@@ -84,6 +84,12 @@ export interface Role {
   clientAssignable: boolean;
 }
 
+export interface UserRole {
+  id: string;
+  name: string;
+  permissions: string[];
+}
+
 export interface Permission {
   id: string;
   name: string;
@@ -129,7 +135,8 @@ export interface ClientUser {
   username?: string;
   siteExternalId: string;
   clientExternalId: string;
-  roleName?: string;
+  roleName?: string; // Deprecated: Use roles array instead. Kept for backward compatibility.
+  roles?: UserRole[]; // Array of roles assigned to the user
   position?: string;
 }
 

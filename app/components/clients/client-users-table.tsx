@@ -29,6 +29,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../ui/hover-card";
 import ClientUserDetailsForm from "./client-user-details-form";
 import EditUserButton from "./edit-client-user-button";
 import ResetPasswordForm from "./reset-password-form";
@@ -109,12 +114,50 @@ export default function ClientUsersTable({
         cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
       },
       {
-        accessorKey: "roleName",
+        accessorKey: "roles",
         id: "role",
         header: ({ column, table }) => (
           <DataTableColumnHeader column={column} table={table} />
         ),
-        cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
+        cell: ({ row }) => {
+          const user = row.original;
+          // Support both new roles array and legacy roleName
+          const roles = user.roles && user.roles.length > 0
+            ? user.roles
+            : user.roleName
+              ? [{ id: "", name: user.roleName, permissions: [] }]
+              : [];
+
+          if (roles.length === 0) {
+            return <>&mdash;</>;
+          }
+
+          if (roles.length === 1) {
+            return <span>{roles[0].name}</span>;
+          }
+
+          // Multiple roles - show primary + count with hover card
+          return (
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <span className="cursor-help">
+                  {roles[0].name}{" "}
+                  <span className="text-muted-foreground">+{roles.length - 1}</span>
+                </span>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-auto">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">All Roles:</p>
+                  {roles.map((role, index) => (
+                    <div key={role.id || index} className="text-sm">
+                      {role.name}
+                    </div>
+                  ))}
+                </div>
+              </HoverCardContent>
+            </HoverCard>
+          );
+        },
       },
       {
         accessorFn: (datat) =>
@@ -150,17 +193,8 @@ export default function ClientUsersTable({
                   onSelect={() => updateRole.openData(user)}
                   disabled={!canUpdateUser}
                 >
-                  {user.roleName ? (
-                    <>
-                      <UserPen />
-                      Change Role
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus />
-                      Assign Role
-                    </>
-                  )}
+                  <UserPen />
+                  Manage Roles
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => resetPassword.openData(user)}
@@ -233,7 +267,7 @@ export default function ClientUsersTable({
       </ResponsiveDialog>
       {canUpdateUser && updateRole.data && (
         <ResponsiveDialog
-          title={updateRole.data?.roleName ? "Change Role" : "Assign Role"}
+          title="Manage Roles"
           open={updateRole.open}
           onOpenChange={updateRole.setOpen}
         >

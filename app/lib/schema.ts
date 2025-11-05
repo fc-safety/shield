@@ -226,6 +226,16 @@ export const assignUserRoleSchema = z.object({
   roleId: z.string().nonempty(),
 });
 
+// Add a role to a user (multi-role support)
+export const addUserRoleSchema = z.object({
+  roleId: z.string().nonempty(),
+});
+
+// Remove a role from a user (multi-role support)
+export const removeUserRoleSchema = z.object({
+  roleId: z.string().nonempty(),
+});
+
 export const createProductCategorySchema = z.object({
   id: z.string().optional(),
   legacyCategoryId: z.string().nullable().optional(),
