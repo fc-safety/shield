@@ -372,6 +372,7 @@ export interface Alert extends BaseModel {
 }
 
 export const AlertLevels = ["CRITICAL", "URGENT", "WARNING", "INFO", "AUDIT"] as const;
+export const ActiveAlertLevels = ["CRITICAL", "WARNING", "INFO", "AUDIT"] as const;
 export type AlertLevel = (typeof AlertLevels)[number];
 
 interface RuleMatch {

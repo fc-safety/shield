@@ -14,7 +14,7 @@ import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-r
 import HelpPopover from "~/components/help-popover";
 import { Checkbox } from "~/components/ui/checkbox";
 import { Input } from "~/components/ui/input";
-import { AlertLevels, type AssetQuestionResponseType } from "~/lib/models";
+import { ActiveAlertLevels, type AssetQuestionResponseType } from "~/lib/models";
 import type {
   CreateAssetAlertCriterionRule,
   ruleOperatorsSchema,
@@ -78,7 +78,7 @@ export const AlertTriggerConfigurator = () => {
                       </div>
                     </SelectTrigger>
                     <SelectContent side="top">
-                      {AlertLevels.map((level) => (
+                      {ActiveAlertLevels.map((level) => (
                         <SelectItem
                           key={level}
                           value={level}
