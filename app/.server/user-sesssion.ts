@@ -136,7 +136,7 @@ export const refreshTokensOrRelogin = async (
         } catch (e) {
           reject(e);
         } finally {
-          // Keep promise for 5 secondsd to allow near-simultaneous requests to reuse
+          // Keep promise for 5 seconds to allow near-simultaneous requests to reuse
           // the same promise.
           setTimeout(
             () => globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId),

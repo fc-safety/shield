@@ -6,7 +6,6 @@ import {
   ShieldOff,
   SquareAsterisk,
   UserPen,
-  UserPlus,
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { z } from "zod";
@@ -29,11 +28,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "../ui/hover-card";
 import ClientUserDetailsForm from "./client-user-details-form";
 import EditUserButton from "./edit-client-user-button";
 import ResetPasswordForm from "./reset-password-form";
@@ -77,30 +71,20 @@ export default function ClientUsersTable({
     () => [
       {
         accessorKey: "active",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ getValue }) => (
-          <ActiveIndicator2 active={getValue() as boolean} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => <ActiveIndicator2 active={getValue() as boolean} />,
       },
       {
         accessorKey: "name",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "email",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "phoneNumber",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
           const phoneNumber = getValue() as string;
           return phoneNumber ? beautifyPhone(phoneNumber) : <>&mdash;</>;
@@ -108,64 +92,28 @@ export default function ClientUsersTable({
       },
       {
         accessorKey: "position",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
       },
       {
-        accessorKey: "roles",
-        id: "role",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ row }) => {
-          const user = row.original;
-          // Support both new roles array and legacy roleName
-          const roles = user.roles && user.roles.length > 0
-            ? user.roles
-            : user.roleName
-              ? [{ id: "", name: user.roleName, permissions: [] }]
-              : [];
+        accessorFn: (user) =>
+          user.roles ? user.roles.map((r) => r.name) : user.roleName ? [user.roleName] : [],
+        id: "roles",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => {
+          const roleNames = getValue() as string[];
 
-          if (roles.length === 0) {
+          if (roleNames.length === 0) {
             return <>&mdash;</>;
           }
 
-          if (roles.length === 1) {
-            return <span>{roles[0].name}</span>;
-          }
-
-          // Multiple roles - show primary + count with hover card
-          return (
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <span className="cursor-help">
-                  {roles[0].name}{" "}
-                  <span className="text-muted-foreground">+{roles.length - 1}</span>
-                </span>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-auto">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">All Roles:</p>
-                  {roles.map((role, index) => (
-                    <div key={role.id || index} className="text-sm">
-                      {role.name}
-                    </div>
-                  ))}
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-          );
+          return <span>{roleNames.join(", ")}</span>;
         },
       },
       {
-        accessorFn: (datat) =>
-          getSiteByExternalId?.(datat.siteExternalId)?.name,
+        accessorFn: (datat) => getSiteByExternalId?.(datat.siteExternalId)?.name,
         id: "site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
       },
       {
@@ -204,9 +152,7 @@ export default function ClientUsersTable({
                   Reset Password
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() =>
-                    setUserActive(user.id, { active: !user.active })
-                  }
+                  onSelect={() => setUserActive(user.id, { active: !user.active })}
                   disabled={!canUpdateUser}
                 >
                   {user.active ? (
@@ -252,11 +198,7 @@ export default function ClientUsersTable({
           ) : null,
         ]}
       />
-      <ResponsiveDialog
-        title="Edit User"
-        open={editUser.open}
-        onOpenChange={editUser.setOpen}
-      >
+      <ResponsiveDialog title="Edit User" open={editUser.open} onOpenChange={editUser.setOpen}>
         <ClientUserDetailsForm
           clientId={clientId}
           siteExternalId={siteExternalId}
@@ -271,12 +213,12 @@ export default function ClientUsersTable({
           open={updateRole.open}
           onOpenChange={updateRole.setOpen}
         >
-          <UpdateUserRoleForm
-            user={updateRole.data}
-            clientId={clientId}
-            onSubmitted={() => updateRole.setOpen(false)}
-            viewContext="admin"
-          />
+          <UpdateUserRoleForm user={updateRole.data} clientId={clientId} viewContext="admin" />
+          <div className="flex justify-end pt-4">
+            <Button type="button" variant="outline" onClick={() => updateRole.setOpen(false)}>
+              Close
+            </Button>
+          </div>
         </ResponsiveDialog>
       )}
       {canUpdateUser && resetPassword.data && (
