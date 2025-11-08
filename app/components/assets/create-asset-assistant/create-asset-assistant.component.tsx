@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
 import type { ViewContext } from "~/.server/api-utils";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
@@ -48,6 +48,14 @@ export const useCreateAssetAssistant = ({
   const { user } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
   const userHasMultiSiteVisibility = useMemo(() => hasMultiSiteVisibility(user), [user]);
+
+  // Keep refs to latest initialState and state to avoid stale closures in onReset
+  const initialStateRef = useRef(initialState);
+  const stateRef = useRef(state);
+  useEffect(() => {
+    initialStateRef.current = initialState;
+    stateRef.current = state;
+  }, [initialState, state]);
 
   // Keep stable reference to initial state that only changes when the assistant is reset.
   // This is used to maintain a non-stale version of the initial state for use by the combined
@@ -109,8 +117,8 @@ export const useCreateAssetAssistant = ({
     firstStepId,
     onReset: () => {
       const newInitialExternalState = {
-        ...initialState,
-        ...state,
+        ...initialStateRef.current,
+        ...stateRef.current,
       } as const;
       setInitialExternalState(newInitialExternalState);
       setCreateAssetAssistantState(newInitialExternalState);

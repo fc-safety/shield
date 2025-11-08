@@ -16,4 +16,4 @@ export default function SuccessCircle({ className }: { className?: string }) {
   );
 }
 
-const MotionCheckCircle = motion(CheckCircle);
+const MotionCheckCircle = motion.create(CheckCircle);
