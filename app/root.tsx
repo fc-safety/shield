@@ -22,6 +22,7 @@ import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
+import { NavigationIndicator } from "./components/navigation-indicator";
 import SplashScreen from "./components/splash-screen";
 import { Button } from "./components/ui/button";
 import { Toaster } from "./components/ui/sonner";
@@ -201,6 +202,7 @@ function BaseLayout({ children }: PropsWithChildren) {
         <Links />
       </head>
       <body className="bg-background">
+        <NavigationIndicator />
         {children}
         <ScrollRestoration />
         <Scripts />
