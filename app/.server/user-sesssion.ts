@@ -110,7 +110,10 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
   };
 };
 
-const REFRESH_TOKEN_PROMISE_TIMEOUT_MS = 5000;
+// Increased timeout to 10 seconds to better handle parallel requests and
+// account for network latency. This ensures that multiple simultaneous
+// requests can share the same refresh promise.
+const REFRESH_TOKEN_PROMISE_TIMEOUT_MS = 10000;
 
 export const refreshTokensOrRelogin = async (
   request: Request,
@@ -127,24 +130,42 @@ export const refreshTokensOrRelogin = async (
   }
 
   try {
+    // Check if there's already a refresh in progress for this session
     let tokenPromise = globalThis.REFRESH_SESSION_TOKEN_MAP.get(sessionId);
+
     if (!tokenPromise) {
-      tokenPromise = new Promise(async (resolve, reject) => {
-        try {
-          const tokens = await doRefreshToken(refreshToken);
-          resolve(tokens);
-        } catch (e) {
-          reject(e);
-        } finally {
-          // Keep promise for 5 secondsd to allow near-simultaneous requests to reuse
-          // the same promise.
+      // Create a placeholder promise that we'll set immediately to prevent
+      // race conditions where multiple calls check and create promises simultaneously.
+      // We'll resolve/reject it in the async operation below.
+      let resolvePromise: (tokens: Tokens) => void = () => {};
+      let rejectPromise: (error: unknown) => void = () => {};
+
+      tokenPromise = new Promise<Tokens>((resolve, reject) => {
+        resolvePromise = resolve;
+        rejectPromise = reject;
+      });
+
+      // Set the promise in the map BEFORE starting the async operation
+      // to ensure other concurrent calls will see it and reuse it.
+      globalThis.REFRESH_SESSION_TOKEN_MAP.set(sessionId, tokenPromise);
+
+      // Now perform the actual refresh operation
+      doRefreshToken(refreshToken)
+        .then((refreshedTokens) => {
+          resolvePromise(refreshedTokens);
+          // Keep promise for REFRESH_TOKEN_PROMISE_TIMEOUT_MS to allow near-simultaneous requests to reuse
+          // the same promise. This is especially important for parallel loaders.
           setTimeout(
             () => globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId),
             REFRESH_TOKEN_PROMISE_TIMEOUT_MS
           );
-        }
-      });
-      globalThis.REFRESH_SESSION_TOKEN_MAP.set(sessionId, tokenPromise);
+        })
+        .catch((e) => {
+          logger.warn({ details: e, sessionId, url: request.url }, "Token refresh failed");
+          // Remove from map on error so subsequent calls can retry
+          globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId);
+          rejectPromise(e);
+        });
     }
 
     const tokensResponse = await tokenPromise;
@@ -161,7 +182,6 @@ export const refreshTokensOrRelogin = async (
     if (globalThis.REFRESH_SESSION_TOKEN_MAP.has(sessionId)) {
       globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId);
     }
-    logger.warn({ details: e }, "Token refresh failed");
     throw await getLoginRedirect(request, session, options);
   }
 };

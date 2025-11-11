@@ -16,7 +16,13 @@ import type { Route } from "./+types/index";
 // When deleting a client, we don't want to revalidate the page. This would
 // cause a 404 before the page could navigate back.
 export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
-  if (arg.formMethod === "DELETE") {
+  // Don't revalidate if deleting the current client.
+  if (
+    arg.formMethod === "DELETE" &&
+    arg.formAction &&
+    arg.formAction.split("?").at(0)?.replace(/\/$/, "") ===
+      `/api/proxy/clients/${arg.currentParams.id}`
+  ) {
     return false;
   }
   return arg.defaultShouldRevalidate;

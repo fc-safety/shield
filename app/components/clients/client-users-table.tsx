@@ -6,7 +6,6 @@ import {
   ShieldOff,
   SquareAsterisk,
   UserPen,
-  UserPlus,
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { z } from "zod";
@@ -72,30 +71,20 @@ export default function ClientUsersTable({
     () => [
       {
         accessorKey: "active",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ getValue }) => (
-          <ActiveIndicator2 active={getValue() as boolean} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => <ActiveIndicator2 active={getValue() as boolean} />,
       },
       {
         accessorKey: "name",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "email",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "phoneNumber",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
           const phoneNumber = getValue() as string;
           return phoneNumber ? beautifyPhone(phoneNumber) : <>&mdash;</>;
@@ -103,26 +92,27 @@ export default function ClientUsersTable({
       },
       {
         accessorKey: "position",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
       },
       {
-        accessorKey: "roleName",
-        id: "role",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
+        accessorFn: (user) => user.roles.map((r) => r.name),
+        id: "roles",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => {
+          const roleNames = getValue() as string[];
+
+          if (roleNames.length === 0) {
+            return <>&mdash;</>;
+          }
+
+          return <span>{roleNames.join(", ")}</span>;
+        },
       },
       {
-        accessorFn: (datat) =>
-          getSiteByExternalId?.(datat.siteExternalId)?.name,
+        accessorFn: (datat) => getSiteByExternalId?.(datat.siteExternalId)?.name,
         id: "site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
       },
       {
@@ -150,17 +140,8 @@ export default function ClientUsersTable({
                   onSelect={() => updateRole.openData(user)}
                   disabled={!canUpdateUser}
                 >
-                  {user.roleName ? (
-                    <>
-                      <UserPen />
-                      Change Role
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus />
-                      Assign Role
-                    </>
-                  )}
+                  <UserPen />
+                  Manage Roles
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => resetPassword.openData(user)}
@@ -170,9 +151,7 @@ export default function ClientUsersTable({
                   Reset Password
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  onSelect={() =>
-                    setUserActive(user.id, { active: !user.active })
-                  }
+                  onSelect={() => setUserActive(user.id, { active: !user.active })}
                   disabled={!canUpdateUser}
                 >
                   {user.active ? (
@@ -218,11 +197,7 @@ export default function ClientUsersTable({
           ) : null,
         ]}
       />
-      <ResponsiveDialog
-        title="Edit User"
-        open={editUser.open}
-        onOpenChange={editUser.setOpen}
-      >
+      <ResponsiveDialog title="Edit User" open={editUser.open} onOpenChange={editUser.setOpen}>
         <ClientUserDetailsForm
           clientId={clientId}
           siteExternalId={siteExternalId}
@@ -233,16 +208,16 @@ export default function ClientUsersTable({
       </ResponsiveDialog>
       {canUpdateUser && updateRole.data && (
         <ResponsiveDialog
-          title={updateRole.data?.roleName ? "Change Role" : "Assign Role"}
+          title="Manage Roles"
           open={updateRole.open}
           onOpenChange={updateRole.setOpen}
         >
-          <UpdateUserRoleForm
-            user={updateRole.data}
-            clientId={clientId}
-            onSubmitted={() => updateRole.setOpen(false)}
-            viewContext="admin"
-          />
+          <UpdateUserRoleForm user={updateRole.data} clientId={clientId} viewContext="admin" />
+          <div className="flex justify-end pt-4">
+            <Button type="button" variant="outline" onClick={() => updateRole.setOpen(false)}>
+              Close
+            </Button>
+          </div>
         </ResponsiveDialog>
       )}
       {canUpdateUser && resetPassword.data && (

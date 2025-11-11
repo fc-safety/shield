@@ -13,6 +13,7 @@ interface RoleComboboxProps {
   showClear?: boolean;
   disabled?: boolean;
   onRoleChange?: (role: Role | undefined) => void;
+  excludeRoles?: string[]; // Filter out these role IDs from the options
 }
 
 const fuse = new Fuse([] as Role[], {
@@ -28,6 +29,7 @@ export default function RoleCombobox({
   showClear = false,
   disabled,
   onRoleChange,
+  excludeRoles = [],
 }: RoleComboboxProps) {
   const fetcher = useFetcher<Role[]>();
 
@@ -52,15 +54,23 @@ export default function RoleCombobox({
 
   const options = useMemo(() => {
     let filteredRoles = roles;
+
+    // Filter out excluded roles
+    if (excludeRoles.length > 0) {
+      filteredRoles = filteredRoles.filter(
+        (role) => !excludeRoles.includes(role.id)
+      );
+    }
+
     if (search) {
-      fuse.setCollection(roles);
+      fuse.setCollection(filteredRoles);
       filteredRoles = fuse.search(search).map((result) => result.item);
     }
     return filteredRoles.map((role) => ({
       label: role.name,
       value: role.id,
     }));
-  }, [roles, search]);
+  }, [roles, search, excludeRoles]);
 
   const value = useMemo(() => {
     if (valueProp) {
