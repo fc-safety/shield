@@ -96,8 +96,7 @@ export default function ClientUsersTable({
         cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
       },
       {
-        accessorFn: (user) =>
-          user.roles ? user.roles.map((r) => r.name) : user.roleName ? [user.roleName] : [],
+        accessorFn: (user) => user.roles.map((r) => r.name),
         id: "roles",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {

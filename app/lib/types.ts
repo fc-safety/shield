@@ -136,7 +136,7 @@ export interface ClientUser {
   siteExternalId: string;
   clientExternalId: string;
   roleName?: string; // Deprecated: Use roles array instead. Kept for backward compatibility.
-  roles?: UserRole[]; // Array of roles assigned to the user
+  roles: UserRole[]; // Array of roles assigned to the user
   position?: string;
 }
 

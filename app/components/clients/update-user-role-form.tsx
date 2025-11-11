@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import type { DataOrError, ViewContext } from "~/.server/api-utils";
@@ -49,25 +49,13 @@ export default function UpdateUserRoleForm({
     formState: { isValid, isDirty },
   } = form;
 
-  // Get current roles from user, fallback to roleName for backward compatibility
-  const initialRoles = useMemo(() => {
-    if (user.roles && user.roles.length > 0) {
-      return user.roles;
-    }
-    if (user.roleName) {
-      // Create a dummy role from the legacy roleName
-      return [{ id: "", name: user.roleName, permissions: [] }] as UserRole[];
-    }
-    return [] as UserRole[];
-  }, [user.roles, user.roleName]);
-
-  const [assignedRoles, setAssignedRoles] = useState<UserRole[]>(initialRoles);
+  const [assignedRoles, setAssignedRoles] = useState<UserRole[]>(user.roles);
   const [selectedRoleForAdd, setSelectedRoleForAdd] = useState<Role | undefined>();
   const [assignGlobalAdminAction, setAssignGlobalAdminAction] = useConfirmAction({});
 
   // Update assigned roles when user prop changes
   useEffect(() => {
-    if (user.roles && user.roles.length > 0) {
+    if (user.roles.length > 0) {
       setAssignedRoles(user.roles);
     }
   }, [user.roles]);
