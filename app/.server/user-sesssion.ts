@@ -1,10 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { redirect } from "react-router";
-import { isTokenExpired } from "~/lib/users";
+import { isTokenExpired, keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import type { Tokens, User } from "./authenticator";
 import { buildUser, strategy } from "./authenticator";
+import { cookieStore } from "./cookie-store";
 import { logger } from "./logger";
-import { clearCookieHeaderValue, setCookieHeaderValue } from "./request-context";
 import { userSessionStorage } from "./sessions";
 
 declare global {
@@ -23,19 +23,16 @@ export const getLoginRedirect = async (
   session?: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
   options: LoginRedirectOptions = {}
 ) => {
-  const resHeaders = new Headers({});
-
   if (session) {
+    // If auth session exists, set return to and commit session.
     session.set("returnTo", options.returnTo ?? request.url);
-    resHeaders.append("Set-Cookie", await userSessionStorage.commitSession(session));
+    await commitUserSession(session);
+  } else {
+    // Otherwise, reset the auth session.
+    cookieStore.unset("authSession");
   }
 
-  // Clear any existing middleware set cookie values.
-  clearCookieHeaderValue("authSession");
-
-  return redirect(options.loginRoute ?? "/login", {
-    headers: resHeaders,
-  });
+  return redirect(options.loginRoute ?? "/login");
 };
 
 export const getActiveUserSession = async (
@@ -68,6 +65,25 @@ export const getActiveUserSession = async (
   };
 };
 
+export const commitUserSession = async (
+  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>
+) => {
+  const tokens = session.get("tokens");
+  let expiresAt = new Date();
+  if (tokens) {
+    const parsedAccessToken = parseToken(
+      tokens.accessToken,
+      keycloakTokenPayloadSchema.pick({ exp: true, iat: true })
+    );
+    const expiresInSeconds = parsedAccessToken.exp - parsedAccessToken.iat;
+    expiresAt.setSeconds(expiresAt.getSeconds() + expiresInSeconds + 60); // Add 60 seconds to allow for clock skew.
+  }
+
+  const sessionCookie = await userSessionStorage.commitSession(session, { expires: expiresAt });
+  cookieStore.set("authSession", sessionCookie);
+  return sessionCookie;
+};
+
 export const requireUserSession = async (request: Request, options: LoginRedirectOptions = {}) => {
   let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
   try {
@@ -75,9 +91,6 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
   } catch (e) {
     throw redirect("/logout");
   }
-
-  const getSessionToken = (thisSession: typeof session) =>
-    userSessionStorage.commitSession(thisSession);
 
   let tokens = session.get("tokens");
   if (!tokens) {
@@ -95,8 +108,7 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
     session.set("tokens", tokens);
 
     // Update session cookie.
-    const sessionToken = await getSessionToken(session);
-    setCookieHeaderValue("authSession", sessionToken);
+    await commitUserSession(session);
   }
 
   // Get user, refreshing tokens if needed.
@@ -106,7 +118,6 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
   return {
     user,
     session,
-    getSessionToken,
   };
 };
 

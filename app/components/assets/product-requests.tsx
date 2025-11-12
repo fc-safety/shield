@@ -9,7 +9,9 @@ import {
   ListPlus,
   Minus,
   NotepadText,
+  PackageOpen,
   Plus,
+  SearchX,
   Trash,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ComponentProps } from "react";
@@ -220,6 +222,20 @@ export function ProductRequestForm({
     });
   };
 
+  if (!suppliesLoading && ansiCategories && ansiCategories.length === 0) {
+    return (
+      <div className="border-border bg-card flex flex-col items-center gap-2 self-center rounded-md border p-4">
+        <SearchX className="size-10" />
+        <div className="text-center">
+          <h4 className="text-sm leading-6 font-medium">No supplies found.</h4>
+          <p className="text-muted-foreground text-xs">
+            This asset does not have any supplies available for reorder.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Form {...form}>
@@ -238,11 +254,6 @@ export function ProductRequestForm({
               append={(item) => append(item, { shouldFocus: false })}
               onPreviewImage={previewImage.openData}
             />
-            {ansiCategories && ansiCategories.length === 0 && (
-              <p className="text-muted-foreground col-span-full flex h-12 items-center justify-center text-xs">
-                No consumables available for this product.
-              </p>
-            )}
           </div>
 
           <div>
@@ -340,9 +351,17 @@ export function ProductRequestForm({
                 })}
               </div>
               {productRequestItems.length === 0 && (
-                <p className="text-muted-foreground flex w-full items-center justify-center p-4 text-xs sm:p-6">
-                  No order items.
-                </p>
+                <div className="flex flex-col items-center justify-center py-4">
+                  <div className="border-border flex w-full max-w-sm flex-col items-center justify-center gap-2 self-center rounded-md border border-dashed p-4">
+                    <PackageOpen className="size-8" />
+                    <div className="text-center">
+                      <h4 className="text-sm font-medium">This order is empty!</h4>
+                      <p className="text-muted-foreground text-xs">
+                        Add some supplies to get started.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               )}
               <ScrollHint show={orderItemsIsOverflowingY && !orderItemsIsScrollMaxedY} />
             </ScrollArea>
@@ -557,7 +576,7 @@ function AvailableConsumables({
         ))}
         {consumables.length === 0 && (
           <p className="text-muted-foreground col-span-full flex h-12 items-center justify-center text-xs">
-            No consumables available.
+            No supplies available.
           </p>
         )}
       </div>

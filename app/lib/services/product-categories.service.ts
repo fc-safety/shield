@@ -24,9 +24,5 @@ export const getProductCategoriesQueryOptions = (
     queryFn: ({ queryKey }) =>
       fetcher(buildPath("/product-categories", queryKey[1]))
         .then((r) => r.json() as Promise<ResultsPage<ProductCategory>>)
-        .then((r) => r.results)
-        .catch((e) => {
-          console.error("Error fetching product categories", e);
-          return [];
-        }),
+        .then((r) => r.results),
   });

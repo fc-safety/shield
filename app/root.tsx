@@ -17,8 +17,8 @@ import { appStateSessionStorage, themeSessionResolver } from "~/.server/sessions
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import { getAuthenticatedFetcher } from "./.server/api-utils";
+import { cookieStore } from "./.server/cookie-store";
 import { buildImageProxyUrl } from "./.server/images";
-import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
@@ -39,22 +39,7 @@ import styles from "./tailwind.css?url";
 
 enableMapSet();
 
-const setCookieResponseHeaders: Route.MiddlewareFunction = async ({}, next) => {
-  const response = await next();
-
-  const setCookieHeaderValues = requestContext.get("setCookieHeaderValues");
-
-  for (const value of Object.values(setCookieHeaderValues)) {
-    response.headers.append("Set-Cookie", value);
-  }
-
-  return response;
-};
-export const middleware: Route.MiddlewareFunction[] = [
-  ({}, next) => requestContext.create(next),
-  // `setCookieResponseHeaders` requires `requestContext.create` to be run first.
-  setCookieResponseHeaders,
-];
+export const middleware: Route.MiddlewareFunction[] = [cookieStore.createMiddleware()];
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
