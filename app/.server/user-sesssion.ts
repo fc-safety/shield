@@ -23,19 +23,16 @@ export const getLoginRedirect = async (
   session?: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
   options: LoginRedirectOptions = {}
 ) => {
-  const resHeaders = new Headers({});
-
   if (session) {
+    // If auth session exists, set return to and commit session.
     session.set("returnTo", options.returnTo ?? request.url);
-    resHeaders.append("Set-Cookie", await getSessionToken(session));
+    await commitUserSession(session);
+  } else {
+    // Otherwise, reset the auth session.
+    cookieStore.unset("authSession");
   }
 
-  // Clear any existing middleware set cookie values.
-  cookieStore.unset("authSession");
-
-  return redirect(options.loginRoute ?? "/login", {
-    headers: resHeaders,
-  });
+  return redirect(options.loginRoute ?? "/login");
 };
 
 export const getActiveUserSession = async (
@@ -68,7 +65,7 @@ export const getActiveUserSession = async (
   };
 };
 
-export const getSessionToken = (
+export const commitUserSession = async (
   session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>
 ) => {
   const tokens = session.get("tokens");
@@ -81,7 +78,10 @@ export const getSessionToken = (
     const expiresInSeconds = parsedAccessToken.exp - parsedAccessToken.iat;
     expiresAt.setSeconds(expiresAt.getSeconds() + expiresInSeconds + 60); // Add 60 seconds to allow for clock skew.
   }
-  return userSessionStorage.commitSession(session, { expires: expiresAt });
+
+  const sessionCookie = await userSessionStorage.commitSession(session, { expires: expiresAt });
+  cookieStore.set("authSession", sessionCookie);
+  return sessionCookie;
 };
 
 export const requireUserSession = async (request: Request, options: LoginRedirectOptions = {}) => {
@@ -108,8 +108,7 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
     session.set("tokens", tokens);
 
     // Update session cookie.
-    const sessionToken = await getSessionToken(session);
-    cookieStore.set("authSession", sessionToken);
+    await commitUserSession(session);
   }
 
   // Get user, refreshing tokens if needed.
@@ -119,7 +118,6 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
   return {
     user,
     session,
-    getSessionToken,
   };
 };
 

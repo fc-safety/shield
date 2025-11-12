@@ -2,26 +2,23 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { UNSAFE_ErrorResponseImpl, type MiddlewareFunction } from "react-router";
 
 interface CookieStore {
+  requestId: number;
   cookieHeader: string;
   outgoingCookies: Record<string, string>;
 }
 
-declare global {
-  var COOKIE_STORE: AsyncLocalStorage<CookieStore>;
-}
-
-// Initialize the AsyncLocalStorage if it doesn't exist
-globalThis.COOKIE_STORE = globalThis.COOKIE_STORE ?? new AsyncLocalStorage<CookieStore>();
+let idSeq = 0;
+const cookieStorage = new AsyncLocalStorage<CookieStore>();
 
 const createCookieStoreMiddleware =
   (): MiddlewareFunction<Response> =>
   async ({ request }, next) => {
-    const cookieStorage = globalThis.COOKIE_STORE;
     if (!cookieStorage.getStore()) {
+      const requestId = ++idSeq;
       const cookieHeader = request.headers.get("cookie") ?? "";
 
       return await new Promise<Awaited<ReturnType<typeof next>>>((resolve, reject) =>
-        cookieStorage.run({ cookieHeader, outgoingCookies: {} }, async () => {
+        cookieStorage.run({ requestId, cookieHeader, outgoingCookies: {} }, async () => {
           try {
             const res = await next();
 
@@ -48,7 +45,6 @@ const createCookieStoreMiddleware =
   };
 
 const getStoreOrThrow = () => {
-  const cookieStorage = globalThis.COOKIE_STORE;
   const store = cookieStorage.getStore();
   if (!store) {
     throw new Error("Cookie store not found. Make sure to call createCookieStore() first.");

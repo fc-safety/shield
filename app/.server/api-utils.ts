@@ -8,9 +8,9 @@ import {
   type QueryParams,
 } from "~/lib/urls";
 import { config } from "./config";
-import { cookieStore } from "./cookie-store";
 import { logger } from "./logger";
 import {
+  commitUserSession,
   refreshTokensOrRelogin,
   requireUserSession,
   type LoginRedirectOptions,
@@ -269,7 +269,7 @@ export const fetchAuthenticated = async (
   fetchOptions: Parameters<typeof fetch>[1] = {},
   authOptions: LoginRedirectOptions = {}
 ) => {
-  const { user, session, getSessionToken } = await requireUserSession(request, authOptions);
+  const { user, session } = await requireUserSession(request, authOptions);
 
   const getResponse = (accessToken: string) => {
     fetchOptions.headers = new Headers(fetchOptions?.headers);
@@ -289,8 +289,7 @@ export const fetchAuthenticated = async (
     user.tokens = await refreshTokensOrRelogin(request, session, user.tokens);
 
     // Update session using request context middleware.
-    const sessionToken = await getSessionToken(session);
-    cookieStore.set("authSession", sessionToken);
+    await commitUserSession(session);
 
     response = await getResponse(user.tokens.accessToken);
   }
