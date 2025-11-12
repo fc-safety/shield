@@ -13,19 +13,16 @@ import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { enableMapSet } from "immer";
 import { type PropsWithChildren } from "react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
-import {
-  appStateSessionStorage,
-  setCookieResponseHeaders,
-  themeSessionResolver,
-} from "~/.server/sessions";
+import { appStateSessionStorage, themeSessionResolver } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import { getAuthenticatedFetcher } from "./.server/api-utils";
+import { cookieStore } from "./.server/cookie-store";
 import { buildImageProxyUrl } from "./.server/images";
-import { requestContext } from "./.server/request-context";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
+import { NavigationIndicator } from "./components/navigation-indicator";
 import SplashScreen from "./components/splash-screen";
 import { Button } from "./components/ui/button";
 import { Toaster } from "./components/ui/sonner";
@@ -42,11 +39,7 @@ import styles from "./tailwind.css?url";
 
 enableMapSet();
 
-export const unstable_middleware = [
-  requestContext.create,
-  // `setCookieResponseHeaders` requires `requestContext.create` to be run first.
-  setCookieResponseHeaders,
-];
+export const middleware: Route.MiddlewareFunction[] = [cookieStore.createMiddleware()];
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
@@ -194,6 +187,7 @@ function BaseLayout({ children }: PropsWithChildren) {
         <Links />
       </head>
       <body className="bg-background">
+        <NavigationIndicator />
         {children}
         <ScrollRestoration />
         <Scripts />

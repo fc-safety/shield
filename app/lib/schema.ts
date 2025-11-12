@@ -226,6 +226,11 @@ export const assignUserRoleSchema = z.object({
   roleId: z.string().nonempty(),
 });
 
+// Add a role to a user (multi-role support)
+export const addUserRoleSchema = z.object({
+  roleId: z.string().nonempty(),
+});
+
 export const createProductCategorySchema = z.object({
   id: z.string().optional(),
   legacyCategoryId: z.string().nullable().optional(),
@@ -724,7 +729,7 @@ export const createInspectionSchema = z.object({
 const buildZodTypeFromQuestion = (question: AssetQuestion) => {
   if (question.required) {
     return z.union([
-      z.string().nonempty("This question is required"),
+      z.string().nonempty("This question is required."),
       z.number().int(),
       z.object({
         urls: z.array(z.string()).min(1),

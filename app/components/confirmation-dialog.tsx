@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useMemo, useState } from "react";
+import { useDialogState } from "~/hooks/use-dialog-state";
 
 export interface ConfirmationDialogProps {
   open?: boolean;
@@ -30,7 +31,7 @@ export interface ConfirmationDialogProps {
 }
 
 export default function ConfirmationDialog({
-  open,
+  open: openProp,
   onOpenChange,
   trigger,
   message,
@@ -45,6 +46,10 @@ export default function ConfirmationDialog({
   requiredUserInputPlaceholder,
 }: ConfirmationDialogProps) {
   const [userInput, setUserInput] = useState("");
+  const { open, setOpen } = useDialogState({
+    open: openProp,
+    onOpenChange,
+  });
 
   const confirmEnabled = useMemo(() => {
     if (!requiredUserInput) {
@@ -72,14 +77,19 @@ export default function ConfirmationDialog({
         {requiredUserInput && (
           <div className="grid gap-2">
             <Label className="font-bold" htmlFor="userInput">
-              {requiredUserInputPrompt ??
-                `Please type "${requiredUserInput}" to confirm:`}
+              {requiredUserInputPrompt ?? `Please type "${requiredUserInput}" to confirm:`}
             </Label>
             <Input
               id="userInput"
               type="text"
               placeholder={requiredUserInputPlaceholder ?? requiredUserInput}
               onChange={(e) => setUserInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && confirmEnabled) {
+                  onConfirm?.();
+                  setOpen(false);
+                }
+              }}
             />
           </div>
         )}

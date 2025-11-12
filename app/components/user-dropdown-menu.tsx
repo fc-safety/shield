@@ -1,5 +1,6 @@
-import { ChevronDown, LogOut, UserCog, UserRound } from "lucide-react";
+import { ChevronDown, LogOut, Moon, Sun, UserCog, UserRound } from "lucide-react";
 import { Link } from "react-router";
+import { Theme, useTheme } from "remix-themes";
 import type { User } from "~/.server/authenticator";
 import useMyOrganization from "~/hooks/use-my-organization";
 import type { GetMyOrganizationResult } from "~/lib/services/clients.service";
@@ -11,6 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
@@ -37,6 +41,8 @@ export function UserDropdownMenu({
     ({ client } = useMyOrganization());
   } catch (e) {}
 
+  const [, setTheme] = useTheme();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -62,7 +68,21 @@ export function UserDropdownMenu({
             </Link>
           </DropdownMenuItem>
         ))}
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem asChild key="theme">
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+              <Sun className="scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+              <Moon className="absolute scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+              <span>Theme</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem onClick={() => setTheme(Theme.LIGHT)}>Light</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme(Theme.DARK)}>Dark</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme(null)}>System</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild key="logout">
           <Link to={`/logout${logoutReturnTo ? `?returnTo=${logoutReturnTo}` : ""}`}>
             <LogOut />
             <span>Sign out</span>

@@ -3,7 +3,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/comp
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter } from "date-fns";
-import { AlertCircle, Loader2, Nfc } from "lucide-react";
+import { AlertCircle, Info, Loader2, Nfc, Sidebar } from "lucide-react";
 import { isIPv4, isIPv6 } from "net";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray } from "react-hook-form";
@@ -24,6 +24,7 @@ import AssetQuestionFormInputLabel from "~/components/assets/asset-question-form
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
 import ConfigureAssetForm from "~/components/assets/configure-asset-form";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
+import { RequiredFieldsNotice } from "~/components/required-fields";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   AlertDialog,
@@ -284,6 +285,7 @@ function InspectionPage({
       latitude: -999,
       comments: "",
     } satisfies TForm,
+    mode: "onChange",
   });
 
   const {
@@ -367,6 +369,14 @@ function InspectionPage({
           userInteractionReady={!geolocationPending}
           setActionQueryParams={setActionQueryParams}
         />
+        <div className="text-muted-foreground flex items-center justify-center gap-1 text-center text-xs leading-tight">
+          <Info className="inline-block size-3.5" />
+          <span className="font-bold">Hint:</span> Clicking{" "}
+          <div className="bg-secondary text-secondary-foreground inline-flex items-center justify-center rounded-md p-1 align-middle">
+            <Sidebar className="size-3.5" />
+          </div>{" "}
+          in the &#8598; top left opens the menu.
+        </div>
         <AssetCard
           asset={{
             ...asset,
@@ -416,11 +426,7 @@ function InspectionPage({
                   }
                   onSubmit={form.handleSubmit}
                 >
-                  {questions.filter((q) => q.required).length > 0 && (
-                    <p className="text-muted-foreground mb-4 text-sm">
-                      * indicates a required field
-                    </p>
-                  )}
+                  {questions.filter((q) => q.required).length > 0 && <RequiredFieldsNotice />}
                   <Input type="hidden" {...form.register("asset.connect.id")} hidden />
                   {questionFields.map((questionField, index) => {
                     const question = questions[index];
@@ -431,7 +437,7 @@ function InspectionPage({
                         name={`responses.createMany.data.${index}.value`}
                         render={({ field: { value, onChange, onBlur } }) => (
                           <FormItem>
-                            <AssetQuestionFormInputLabel question={question} />
+                            <AssetQuestionFormInputLabel index={index} question={question} />
                             <FormControl>
                               <AssetQuestionResponseField
                                 value={value ?? ""}
@@ -467,9 +473,17 @@ function InspectionPage({
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" disabled={!!isSubmitting || !isValid} className="w-full">
-                    {isSubmitting ? "Sending data..." : "Complete Inspection"}
-                  </Button>
+                  <div
+                    onClick={() => {
+                      if (!isValid) {
+                        form.trigger();
+                      }
+                    }}
+                  >
+                    <Button type="submit" disabled={!!isSubmitting || !isValid} className="w-full">
+                      {isSubmitting ? "Sending data..." : "Complete Inspection"}
+                    </Button>
+                  </div>
                 </Form>
               </RemixFormProvider>
             )}

@@ -21,6 +21,7 @@ import AssetQuestionResponseField from "~/components/assets/asset-question-respo
 import ConfigureAssetForm from "~/components/assets/configure-asset-form";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
+import { RequiredFieldsNotice } from "~/components/required-fields";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -175,6 +176,7 @@ export default function InspectSetup({
             updateMany: [],
           },
     } satisfies TForm,
+    mode: "onChange",
   });
 
   const {
@@ -288,11 +290,7 @@ export default function InspectSetup({
               ) : (
                 <RemixFormProvider {...form}>
                   <Form className="space-y-4" method={"post"} onSubmit={form.handleSubmit}>
-                    {questions.filter((q) => q.required).length > 0 && (
-                      <p className="text-muted-foreground mb-4 text-sm">
-                        * indicates a required field
-                      </p>
-                    )}
+                    {questions.filter((q) => q.required).length > 0 && <RequiredFieldsNotice />}
                     <Input type="hidden" {...form.register("id")} hidden />
                     {isSetup && <Input type="hidden" {...form.register("setupOn")} hidden />}
                     {allQuestionFields.map(({ key, data }, index) => {
@@ -308,7 +306,7 @@ export default function InspectSetup({
                           }
                           render={({ field: { value, onChange, onBlur } }) => (
                             <FormItem>
-                              <AssetQuestionFormInputLabel question={question} />
+                              <AssetQuestionFormInputLabel index={index} question={question} />
                               <FormControl>
                                 <AssetQuestionResponseField
                                   value={value}
@@ -333,20 +331,28 @@ export default function InspectSetup({
                         )}
                       </p>
                     )}
-                    <Button
-                      type="submit"
-                      // TODO: Not sure if questions should be able to be updated after setup.
-                      // Disabling for now.
-                      disabled={isSetup || isSubmitting || (isSetup && !isDirty) || !isValid}
-                      variant={isSetup ? "secondary" : "default"}
-                      className={cn("w-full", isSubmitting && "animate-pulse")}
+                    <div
+                      onClick={() => {
+                        if (!isSetup && !isValid) {
+                          form.trigger();
+                        }
+                      }}
                     >
-                      {isSubmitting
-                        ? "Processing..."
-                        : isSetup
-                          ? "Setup Complete"
-                          : "Complete Setup"}
-                    </Button>
+                      <Button
+                        type="submit"
+                        // TODO: Not sure if questions should be able to be updated after setup.
+                        // Disabling for now.
+                        disabled={isSetup || isSubmitting || (isSetup && !isDirty) || !isValid}
+                        variant={isSetup ? "secondary" : "default"}
+                        className={cn("w-full", isSubmitting && "animate-pulse")}
+                      >
+                        {isSubmitting
+                          ? "Processing..."
+                          : isSetup
+                            ? "Setup Complete"
+                            : "Complete Setup"}
+                      </Button>
+                    </div>
                     {isSetup && (
                       <Button variant="default" asChild type="button" className="w-full">
                         <Link to={`/inspect/`}>Begin Inspection</Link>

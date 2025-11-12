@@ -1,26 +1,20 @@
 import { redirect } from "react-router";
-import { requestContext } from "~/.server/request-context";
-import {
-  refreshTokensOrRelogin,
-  requireUserSession,
-} from "~/.server/user-sesssion";
+import { commitUserSession, requireUserSession } from "~/.server/user-sesssion";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/refresh-auth";
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const { user, session, getSessionToken } = await requireUserSession(request);
-
-  user.tokens = await refreshTokensOrRelogin(request, session, user.tokens, {
+  const { user, session } = await requireUserSession(request, {
     returnTo: getSearchParam(request, "returnTo") ?? undefined,
   });
 
-  // Update session via request context, which will be picked up by the
-  // session cookie middleware.
-  const sessionToken = await getSessionToken(session);
-  requestContext.set("setCookieHeaderValues", (values) => ({
-    ...values,
-    authSession: sessionToken,
-  }));
+  // requireUserSession already refreshes tokens if expired, so we can just
+  // return the user with the updated tokens. The deduplication in
+  // refreshTokensOrRelogin ensures that even if multiple parallel requests
+  // call this action simultaneously, only one token refresh will occur.
+
+  // Commit user session by setting the auth session cookie.
+  await commitUserSession(session);
 
   return user;
 };

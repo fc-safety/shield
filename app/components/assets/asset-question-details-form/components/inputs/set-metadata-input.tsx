@@ -23,7 +23,7 @@ export default function SetMetadataInput({ requireDynamic = false }: { requireDy
 
   const setMetadataConfigs = useMemo(() => {
     if (isUpdate) {
-      return updateSetAssetMetadataConfigs.map((metadata, idx) => ({
+      return (updateSetAssetMetadataConfigs ?? []).map((metadata, idx) => ({
         idx,
         key: `update-${idx}`,
         action: "update" as const,

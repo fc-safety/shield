@@ -10,6 +10,7 @@ import AssetQuestionFilesDisplay from "~/components/assets/asset-question-files-
 import AssetQuestionRegulatoryCodesDisplay from "~/components/assets/asset-question-regulatory-codes-display";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import Step from "~/components/assistant/components/step";
+import { RequiredFieldIndicator, RequiredFieldsNotice } from "~/components/required-fields";
 import { Button } from "~/components/ui/button";
 import {
   Form,
@@ -100,9 +101,7 @@ export default function StepCompleteAssetSetup({
           className="flex flex-col gap-4"
           onSubmit={form.handleSubmit((data) => setupAsset(data))}
         >
-          {setupQuestions.filter((q) => q.required).length > 0 && (
-            <p className="text-muted-foreground text-sm">* indicates a required field</p>
-          )}
+          {setupQuestions.filter((q) => q.required).length > 0 && <RequiredFieldsNotice />}
           {questionFields.map(({ id: key, ...data }, index) => {
             const question = setupQuestions.find((q) => q.id === data.assetQuestionId);
             return (
@@ -119,7 +118,7 @@ export default function StepCompleteAssetSetup({
                             Prompt for this question has been removed or is not available.
                           </span>
                         )}
-                        {question?.required && " *"}
+                        {question?.required && <RequiredFieldIndicator />}
                       </FormLabel>
                       {question?.helpText && (
                         <FormDescription>{question?.helpText}</FormDescription>

@@ -9,8 +9,8 @@ import {
 } from "~/lib/urls";
 import { config } from "./config";
 import { logger } from "./logger";
-import { requestContext } from "./request-context";
 import {
+  commitUserSession,
   refreshTokensOrRelogin,
   requireUserSession,
   type LoginRedirectOptions,
@@ -269,7 +269,7 @@ export const fetchAuthenticated = async (
   fetchOptions: Parameters<typeof fetch>[1] = {},
   authOptions: LoginRedirectOptions = {}
 ) => {
-  const { user, session, getSessionToken } = await requireUserSession(request, authOptions);
+  const { user, session } = await requireUserSession(request, authOptions);
 
   const getResponse = (accessToken: string) => {
     fetchOptions.headers = new Headers(fetchOptions?.headers);
@@ -289,11 +289,7 @@ export const fetchAuthenticated = async (
     user.tokens = await refreshTokensOrRelogin(request, session, user.tokens);
 
     // Update session using request context middleware.
-    const sessionToken = await getSessionToken(session);
-    requestContext.set("setCookieHeaderValues", (values) => ({
-      ...values,
-      authSession: sessionToken,
-    }));
+    await commitUserSession(session);
 
     response = await getResponse(user.tokens.accessToken);
   }

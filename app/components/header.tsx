@@ -5,7 +5,6 @@ import useMyOrganization from "~/hooks/use-my-organization";
 import type { GetMyOrganizationResult } from "~/lib/services/clients.service";
 import { cn, validateBreadcrumb } from "~/lib/utils";
 import { BreadcrumbResponsive } from "./breadcrumb-responsive";
-import { ModeToggle } from "./mode-toggle";
 import { UserDropdownMenu } from "./user-dropdown-menu";
 
 export default function Header({
@@ -47,12 +46,12 @@ export default function Header({
             <img
               src={bannerLogoLightUrl}
               alt=""
-              className="h-4 w-auto object-contain sm:h-5 dark:hidden"
+              className="h-4 w-auto object-contain sm:h-4.5 dark:hidden"
             />
             <img
               src={bannerLogoDarkUrl}
               alt=""
-              className="hidden h-4 w-auto object-contain sm:h-5 dark:block"
+              className="hidden h-4 w-auto object-contain sm:h-4.5 dark:block"
             />
           </Link>
         )}
@@ -69,7 +68,6 @@ export default function Header({
               />
             </>
           )}
-          <ModeToggle />
         </div>
       </div>
       {showBreadcrumb && (

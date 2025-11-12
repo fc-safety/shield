@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import { redirect } from "react-router";
 import { authenticator, type Tokens } from "~/.server/authenticator";
-import { requestContext } from "~/.server/request-context";
 import { getSession, userSessionStorage } from "~/.server/sessions";
+import { commitUserSession } from "~/.server/user-sesssion";
 import type { Route } from "./+types/callback";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -22,16 +22,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const returnTo = session.get("returnTo") ?? "/";
   session.unset("returnTo");
 
-  // Clear any existing middleware set cookie values.
-  requestContext.set("setCookieHeaderValues", (values) => {
-    const newValues = { ...values };
-    delete newValues.authSession;
-    return newValues;
-  });
+  await commitUserSession(session);
 
-  const headers = new Headers({
-    "Set-Cookie": await userSessionStorage.commitSession(session),
-  });
-
-  return redirect(returnTo, { headers });
+  return redirect(returnTo);
 }

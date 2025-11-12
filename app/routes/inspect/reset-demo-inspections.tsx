@@ -25,7 +25,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   await requireUserSession(request);
 
   const fetcher = getAuthenticatedFetcher(request);
-  const { client } = await getMyOrganizationFn(fetcher)();
+  const { client } = await getMyOrganizationFn(fetcher);
 
   if (!client || !client.demoMode) {
     throw new Response("No demo client found for current user.", {

@@ -58,6 +58,7 @@ export default function ConfigureAssetForm({
         originalPrompt: question.prompt,
       })),
     },
+    mode: "onChange",
   });
 
   const {
@@ -120,7 +121,7 @@ export default function ConfigureAssetForm({
               name={`responses.${index}.value`}
               render={({ field: { value, onChange, onBlur } }) => (
                 <FormItem>
-                  <AssetQuestionFormInputLabel question={question} />
+                  <AssetQuestionFormInputLabel index={index} question={question} />
                   <FormControl>
                     <AssetQuestionResponseField
                       value={value ?? ""}
@@ -136,10 +137,18 @@ export default function ConfigureAssetForm({
           );
         })}
         {showSubmitButton && (
-          <Button type="submit" disabled={isSubmitting || !isValid} className="w-full">
-            {isSubmitting && <Loader2 className="animate-spin" />}
-            {isSubmitting ? "Processing..." : submitButtonText}
-          </Button>
+          <div
+            onClick={() => {
+              if (!isValid) {
+                form.trigger();
+              }
+            }}
+          >
+            <Button type="submit" disabled={isSubmitting || !isValid} className="w-full">
+              {isSubmitting && <Loader2 className="animate-spin" />}
+              {isSubmitting ? "Processing..." : submitButtonText}
+            </Button>
+          </div>
         )}
       </form>
     </Form>
