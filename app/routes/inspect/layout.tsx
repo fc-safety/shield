@@ -1,3 +1,4 @@
+import { dehydrate, QueryClient } from "@tanstack/react-query";
 import {
   BookOpenText,
   CircleHelp,
@@ -9,6 +10,7 @@ import {
   Trash,
 } from "lucide-react";
 import { data, Link, Outlet } from "react-router";
+import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { AppSidebar, type SidebarGroup } from "~/components/app-sidebar";
 import Footer from "~/components/footer";
@@ -22,6 +24,7 @@ import { DEFAULT_USER_ROUTES } from "~/components/user-dropdown-menu";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import useMyOrganization from "~/hooks/use-my-organization";
+import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
 import { can } from "~/lib/users";
 import type { Route } from "./+types/layout";
 import { getUserOrHandleInspectLoginRedirect } from "./.server/inspect-auth";
@@ -29,12 +32,19 @@ import { getUserOrHandleInspectLoginRedirect } from "./.server/inspect-auth";
 export async function loader({ request }: Route.LoaderArgs) {
   const user = await getUserOrHandleInspectLoginRedirect(request);
 
+  const queryClient = new QueryClient();
+  const fetcher = getAuthenticatedFetcher(request);
+  const prefetchPromises = [queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher))];
+
+  await Promise.all(prefetchPromises);
+
   return data({
     user,
     apiUrl: config.API_BASE_URL,
     appHost: config.APP_HOST,
     googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
     clientId: config.CLIENT_ID,
+    dehydratedState: dehydrate(queryClient),
   });
 }
 

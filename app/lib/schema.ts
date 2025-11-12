@@ -211,7 +211,7 @@ export const createUserSchema = z.object({
   active: z.boolean().optional(),
   firstName: z.string().nonempty(),
   lastName: z.string().nonempty(),
-  email: z.string().email(),
+  email: z.email(),
   phoneNumber: z
     .string()
     .regex(/^(\+1)?\d{10}$/, "Phone must include 10 digit number.")
@@ -926,8 +926,8 @@ export const updatePermissionMappingSchema = z.object({
 
 export const globalSettingsSchema = z.object({
   systemEmailFromAddress: fromAddressSchema,
-  productRequestToAddress: z.string().email(),
-  landingFormLeadToAddress: z.string().email(),
+  productRequestToAddress: z.email(),
+  landingFormLeadToAddress: z.email(),
 });
 
 export const createVaultOwnershipSchema = z.object({

@@ -9,14 +9,12 @@ import {
   useRouteLoaderData,
 } from "react-router";
 
-import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { enableMapSet } from "immer";
 import { type PropsWithChildren } from "react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
 import { appStateSessionStorage, themeSessionResolver } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
-import { getAuthenticatedFetcher } from "./.server/api-utils";
 import { cookieStore } from "./.server/cookie-store";
 import { buildImageProxyUrl } from "./.server/images";
 import DefaultErrorBoundary from "./components/default-error-boundary";
@@ -34,7 +32,6 @@ import {
 import QueryContext from "./contexts/query-context";
 import globalStyles from "./global.css?url";
 import { BANNER_LOGO_DARK_URL, BANNER_LOGO_LIGHT_URL } from "./lib/constants";
-import { getMyOrganizationQueryOptions } from "./lib/services/clients.service";
 import styles from "./tailwind.css?url";
 
 enableMapSet();
@@ -55,17 +52,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     },
   };
 
-  const queryClient = new QueryClient();
-  const fetcher = getAuthenticatedFetcher(request);
-  const prefetchPromises = [queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher))];
-
-  await Promise.all(prefetchPromises);
-
   return data({
     theme: getTheme(),
     appState: appStateSession.data,
     optimizedImageUrls,
-    dehydratedState: dehydrate(queryClient),
   });
 }
 

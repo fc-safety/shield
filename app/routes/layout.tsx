@@ -1,5 +1,6 @@
 import { AppSidebar, type SidebarGroup } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator";
+import { dehydrate, QueryClient } from "@tanstack/react-query";
 import {
   BookOpenText,
   Building,
@@ -21,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { Outlet } from "react-router";
+import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { requireUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
@@ -29,11 +31,18 @@ import HelpSidebar from "~/components/help-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
+import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
 import { can, isSuperAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUserSession(request);
+
+  const queryClient = new QueryClient();
+  const fetcher = getAuthenticatedFetcher(request);
+  const prefetchPromises = [queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher))];
+
+  await Promise.all(prefetchPromises);
 
   return {
     user,
@@ -41,6 +50,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     appHost: config.APP_HOST,
     googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
     authClientId: config.CLIENT_ID,
+    dehydratedState: dehydrate(queryClient),
   };
 }
 
