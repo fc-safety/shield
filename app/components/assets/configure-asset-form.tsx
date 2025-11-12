@@ -58,6 +58,7 @@ export default function ConfigureAssetForm({
         originalPrompt: question.prompt,
       })),
     },
+    mode: "onChange",
   });
 
   const {

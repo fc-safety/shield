@@ -176,6 +176,7 @@ export default function InspectSetup({
             updateMany: [],
           },
     } satisfies TForm,
+    mode: "onChange",
   });
 
   const {
