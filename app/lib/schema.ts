@@ -729,7 +729,7 @@ export const createInspectionSchema = z.object({
 const buildZodTypeFromQuestion = (question: AssetQuestion) => {
   if (question.required) {
     return z.union([
-      z.string().nonempty("This question is required"),
+      z.string().nonempty("This question is required."),
       z.number().int(),
       z.object({
         urls: z.array(z.string()).min(1),

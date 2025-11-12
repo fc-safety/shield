@@ -305,7 +305,7 @@ export default function InspectSetup({
                           }
                           render={({ field: { value, onChange, onBlur } }) => (
                             <FormItem>
-                              <AssetQuestionFormInputLabel question={question} />
+                              <AssetQuestionFormInputLabel index={index} question={question} />
                               <FormControl>
                                 <AssetQuestionResponseField
                                   value={value}
@@ -330,20 +330,28 @@ export default function InspectSetup({
                         )}
                       </p>
                     )}
-                    <Button
-                      type="submit"
-                      // TODO: Not sure if questions should be able to be updated after setup.
-                      // Disabling for now.
-                      disabled={isSetup || isSubmitting || (isSetup && !isDirty) || !isValid}
-                      variant={isSetup ? "secondary" : "default"}
-                      className={cn("w-full", isSubmitting && "animate-pulse")}
+                    <div
+                      onClick={() => {
+                        if (!isSetup && !isValid) {
+                          form.trigger();
+                        }
+                      }}
                     >
-                      {isSubmitting
-                        ? "Processing..."
-                        : isSetup
-                          ? "Setup Complete"
-                          : "Complete Setup"}
-                    </Button>
+                      <Button
+                        type="submit"
+                        // TODO: Not sure if questions should be able to be updated after setup.
+                        // Disabling for now.
+                        disabled={isSetup || isSubmitting || (isSetup && !isDirty) || !isValid}
+                        variant={isSetup ? "secondary" : "default"}
+                        className={cn("w-full", isSubmitting && "animate-pulse")}
+                      >
+                        {isSubmitting
+                          ? "Processing..."
+                          : isSetup
+                            ? "Setup Complete"
+                            : "Complete Setup"}
+                      </Button>
+                    </div>
                     {isSetup && (
                       <Button variant="default" asChild type="button" className="w-full">
                         <Link to={`/inspect/`}>Begin Inspection</Link>
