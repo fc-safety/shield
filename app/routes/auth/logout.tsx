@@ -1,8 +1,8 @@
 import { redirect, type Session } from "react-router";
 import { strategy } from "~/.server/authenticator";
 import { config } from "~/.server/config";
+import { cookieStore } from "~/.server/cookie-store";
 import { logger } from "~/.server/logger";
-import { clearCookieHeaderValue } from "~/.server/request-context";
 import { userSessionStorage } from "~/.server/sessions";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/logout";
@@ -17,7 +17,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     "";
 
   // Clear any existing middleware set cookie values.
-  clearCookieHeaderValue("authSession");
+  cookieStore.unset("authSession");
 
   let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
   try {

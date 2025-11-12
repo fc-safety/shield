@@ -8,8 +8,8 @@ import {
   type QueryParams,
 } from "~/lib/urls";
 import { config } from "./config";
+import { cookieStore } from "./cookie-store";
 import { logger } from "./logger";
-import { setCookieHeaderValue } from "./request-context";
 import {
   refreshTokensOrRelogin,
   requireUserSession,
@@ -290,7 +290,7 @@ export const fetchAuthenticated = async (
 
     // Update session using request context middleware.
     const sessionToken = await getSessionToken(session);
-    setCookieHeaderValue("authSession", sessionToken);
+    cookieStore.set("authSession", sessionToken);
 
     response = await getResponse(user.tokens.accessToken);
   }

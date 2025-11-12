@@ -1,5 +1,5 @@
 import { redirect } from "react-router";
-import { setCookieHeaderValue } from "~/.server/request-context";
+import { cookieStore } from "~/.server/cookie-store";
 import { requireUserSession } from "~/.server/user-sesssion";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/refresh-auth";
@@ -17,7 +17,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   // Update session via request context, which will be picked up by the
   // session cookie middleware.
   const sessionToken = await getSessionToken(session);
-  setCookieHeaderValue("authSession", sessionToken);
+  cookieStore.set("authSession", sessionToken);
 
   return user;
 };

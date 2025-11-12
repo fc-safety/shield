@@ -1,10 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { redirect } from "react-router";
-import { isTokenExpired } from "~/lib/users";
+import { isTokenExpired, keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import type { Tokens, User } from "./authenticator";
 import { buildUser, strategy } from "./authenticator";
+import { cookieStore } from "./cookie-store";
 import { logger } from "./logger";
-import { clearCookieHeaderValue, setCookieHeaderValue } from "./request-context";
 import { userSessionStorage } from "./sessions";
 
 declare global {
@@ -27,11 +27,11 @@ export const getLoginRedirect = async (
 
   if (session) {
     session.set("returnTo", options.returnTo ?? request.url);
-    resHeaders.append("Set-Cookie", await userSessionStorage.commitSession(session));
+    resHeaders.append("Set-Cookie", await getSessionToken(session));
   }
 
   // Clear any existing middleware set cookie values.
-  clearCookieHeaderValue("authSession");
+  cookieStore.unset("authSession");
 
   return redirect(options.loginRoute ?? "/login", {
     headers: resHeaders,
@@ -68,6 +68,22 @@ export const getActiveUserSession = async (
   };
 };
 
+export const getSessionToken = (
+  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>
+) => {
+  const tokens = session.get("tokens");
+  let expiresAt = new Date();
+  if (tokens) {
+    const parsedAccessToken = parseToken(
+      tokens.accessToken,
+      keycloakTokenPayloadSchema.pick({ exp: true, iat: true })
+    );
+    const expiresInSeconds = parsedAccessToken.exp - parsedAccessToken.iat;
+    expiresAt.setSeconds(expiresAt.getSeconds() + expiresInSeconds + 60); // Add 60 seconds to allow for clock skew.
+  }
+  return userSessionStorage.commitSession(session, { expires: expiresAt });
+};
+
 export const requireUserSession = async (request: Request, options: LoginRedirectOptions = {}) => {
   let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
   try {
@@ -75,9 +91,6 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
   } catch (e) {
     throw redirect("/logout");
   }
-
-  const getSessionToken = (thisSession: typeof session) =>
-    userSessionStorage.commitSession(thisSession);
 
   let tokens = session.get("tokens");
   if (!tokens) {
@@ -96,7 +109,7 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
 
     // Update session cookie.
     const sessionToken = await getSessionToken(session);
-    setCookieHeaderValue("authSession", sessionToken);
+    cookieStore.set("authSession", sessionToken);
   }
 
   // Get user, refreshing tokens if needed.
