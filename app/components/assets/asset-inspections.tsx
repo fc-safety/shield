@@ -1,5 +1,4 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import { format, formatDistanceToNow } from "date-fns";
 import { BellRing } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuth } from "~/contexts/auth-context";
@@ -7,6 +6,7 @@ import type { Asset, Inspection } from "~/lib/models";
 import { can } from "~/lib/users";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
+import DisplayRelativeDate from "../display-relative-date";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { SendNotificationsForm } from "../send-notifications-form";
 import { Button } from "../ui/button";
@@ -17,51 +17,31 @@ interface AssetHistoryLogsProps {
   asset: Asset;
 }
 
-export default function AssetInspections({
-  inspections,
-  asset,
-}: AssetHistoryLogsProps) {
+export default function AssetInspections({ inspections, asset }: AssetHistoryLogsProps) {
   const { user } = useAuth();
-  const canSendNotificationsToTeam =
-    can(user, "read", "users") && can(user, "notify", "users");
+  const canSendNotificationsToTeam = can(user, "read", "users") && can(user, "notify", "users");
 
   const columns = useMemo(
     (): ColumnDef<Inspection>[] => [
       {
         accessorKey: "createdOn",
         id: "date",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ getValue }) => (
-          <span title={format(getValue() as string, "PPpp")}>
-            {formatDistanceToNow(getValue() as string, {
-              addSuffix: true,
-              includeSeconds: true,
-            })}
-          </span>
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => <DisplayRelativeDate date={getValue() as string} />,
       },
       {
         id: "inspector",
-        accessorFn: (row) =>
-          `${row.inspector?.firstName} ${row.inspector?.lastName}`,
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        accessorFn: (row) => `${row.inspector?.firstName} ${row.inspector?.lastName}`,
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "comments",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => getValue() || <>&mdash;</>,
       },
       {
         id: "details",
-        cell: ({ row }) => (
-          <AssetInspectionDialog inspectionId={row.original.id} />
-        ),
+        cell: ({ row }) => <AssetInspectionDialog inspectionId={row.original.id} />,
       },
     ],
     []

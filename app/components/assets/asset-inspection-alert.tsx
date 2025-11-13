@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
 import { Check, Image, Loader2, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -23,6 +22,7 @@ import type { Alert } from "~/lib/models";
 import { resolveAlertSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
 import { isNil } from "~/lib/utils";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import DataList from "../data-list";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Skeleton } from "../ui/skeleton";
@@ -113,7 +113,9 @@ function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: b
           <ShieldAlert className="fill-audit text-audit-foreground size-10" />
         )}
         <div>
-          <p className="text-muted-foreground text-xs">{format(alert.createdOn, "PPpp")}</p>
+          <p className="text-muted-foreground text-xs">
+            <HydrationSafeFormattedDate date={alert.createdOn} formatStr="PPpp" />
+          </p>
           <h3 className="text-base font-semibold uppercase">
             {alert.resolved ? "Resolved" : alert.alertLevel}
           </h3>

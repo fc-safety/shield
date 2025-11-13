@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, isAfter, startOfDay } from "date-fns";
+import { isAfter, startOfDay } from "date-fns";
 import { Building2, CopyPlus, Loader2, Pencil } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
@@ -13,6 +13,7 @@ import type { Client } from "~/lib/models";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import ConfirmationDialog from "../confirmation-dialog";
 import { CopyableText } from "../copyable-text";
 import DataList from "../data-list";
@@ -127,7 +128,7 @@ export default function ClientDetailsCard({
                     label: isAfter(client.startedOn, startOfDay(new Date()))
                       ? "Starting On"
                       : "Started On",
-                    value: format(client.startedOn, "PP"),
+                    value: <HydrationSafeFormattedDate date={client.startedOn} formatStr="PP" />,
                   },
                   {
                     label: "Default Inspection Cycle",
@@ -161,11 +162,11 @@ export default function ClientDetailsCard({
                 details={[
                   {
                     label: "Created",
-                    value: format(client.createdOn, "PPpp"),
+                    value: <HydrationSafeFormattedDate date={client.createdOn} formatStr="PPpp" />,
                   },
                   {
                     label: "Last Updated",
-                    value: format(client.modifiedOn, "PPpp"),
+                    value: <HydrationSafeFormattedDate date={client.modifiedOn} formatStr="PPpp" />,
                   },
                 ]}
                 defaultValue={<>&mdash;</>}

@@ -1,5 +1,4 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
 import { FireExtinguisher, MoreHorizontal, Pencil, SquareStack, Trash } from "lucide-react";
 import { useNavigate, type ShouldRevalidateFunctionArgs, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
@@ -7,6 +6,7 @@ import { buildImageProxyUrl } from "~/.server/images";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator from "~/components/active-indicator";
 import ActiveIndicator2 from "~/components/active-indicator-2";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
@@ -223,11 +223,11 @@ export default function ProductDetails({
               details={[
                 {
                   label: "Created",
-                  value: format(product.createdOn, "PPpp"),
+                  value: <HydrationSafeFormattedDate date={product.createdOn} formatStr="PPpp" />,
                 },
                 {
                   label: "Last Updated",
-                  value: format(product.modifiedOn, "PPpp"),
+                  value: <HydrationSafeFormattedDate date={product.modifiedOn} formatStr="PPpp" />,
                 },
               ]}
               defaultValue={<>&mdash;</>}

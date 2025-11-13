@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
 import { Factory, FireExtinguisher, Pencil } from "lucide-react";
 import { type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator from "~/components/active-indicator";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import DataList from "~/components/data-list";
 import LinkPreview from "~/components/link-preview";
 import CustomTag from "~/components/products/custom-tag";
@@ -118,11 +118,15 @@ export default function ProductManufacturerDetails({
               details={[
                 {
                   label: "Created",
-                  value: format(manufacturer.createdOn, "PPpp"),
+                  value: (
+                    <HydrationSafeFormattedDate date={manufacturer.createdOn} formatStr="PPpp" />
+                  ),
                 },
                 {
                   label: "Last Updated",
-                  value: format(manufacturer.modifiedOn, "PPpp"),
+                  value: (
+                    <HydrationSafeFormattedDate date={manufacturer.modifiedOn} formatStr="PPpp" />
+                  ),
                 },
               ]}
               defaultValue={<>&mdash;</>}

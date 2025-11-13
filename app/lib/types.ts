@@ -11,6 +11,9 @@ export type BaseUIComponentProps = {
 // Use flat structure to ease data access and updates. This should be kept relatively
 // small to avoid reaching cookie size limits.
 export interface AppState {
+  timeZone?: string;
+  locale?: string;
+
   sidebarState?: Record<string, boolean>;
 
   // Dashboard

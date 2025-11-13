@@ -17,6 +17,8 @@ import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import { cookieStore } from "./.server/cookie-store";
 import { buildImageProxyUrl } from "./.server/images";
+import DetectLocale from "./components/common/detect-locale";
+import DetectTimezone from "./components/common/detect-timezone";
 import DefaultErrorBoundary from "./components/default-error-boundary";
 import Footer from "./components/footer";
 import Header from "./components/header";
@@ -179,6 +181,8 @@ function BaseLayout({ children }: PropsWithChildren) {
       <body className="bg-background">
         <NavigationIndicator />
         {children}
+        <DetectLocale />
+        <DetectTimezone />
         <ScrollRestoration />
         <Scripts />
         <div id="dialog-portal"></div>

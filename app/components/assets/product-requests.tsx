@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle,
   CirclePlus,
@@ -35,6 +35,7 @@ import type {
 import { createProductRequestSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
 import { cn, dateSort, dedupById } from "~/lib/utils";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import Icon from "../icons/icon";
 import { AnsiCategoryDisplay } from "../products/ansi-category-combobox";
 import { ResponsiveDialog } from "../responsive-dialog";
@@ -84,6 +85,9 @@ export function NewSupplyRequestButton({ ...props }: ComponentProps<typeof Produ
       title="Building Supply Request"
       description="Please select which supplies and the quantities you would like to order."
       dialogClassName="sm:max-w-3xl"
+      classNames={{
+        header: "mb-4",
+      }}
       disableDisplayTable
       render={({ isDesktop }) => (
         <ProductRequestForm
@@ -660,7 +664,9 @@ export function ProductRequestCard({ request }: { request: ProductRequest }) {
             {/* <Badge variant="default">{request.status}</Badge> */}
             <div className="text-foreground">{formatDistanceToNow(request.createdOn)}</div>
             <div>&mdash;</div>
-            <div>{format(request.createdOn, "PPpp")}</div>
+            <div>
+              <HydrationSafeFormattedDate date={request.createdOn} formatStr="PPpp" />
+            </div>
           </div>
           {/* <ProductRequestApprovalsDisplay
             approvals={request.productRequestApprovals ?? []}

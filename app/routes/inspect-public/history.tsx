@@ -7,20 +7,15 @@ import {
   type Cell,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { format, formatDistanceToNow } from "date-fns";
-import {
-  CircleAlert,
-  CircleCheck,
-  CircleSlash,
-  CircleX,
-  LogIn,
-} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { CircleAlert, CircleCheck, CircleSlash, CircleX, LogIn } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { defaultDataGetter, FetchOptions } from "~/.server/api-utils";
 import { buildImageProxyUrl } from "~/.server/images";
 import { validateInspectionSession } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Alert, Asset, Inspection } from "~/lib/models";
@@ -53,25 +48,18 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     ...results,
     processedProductImageUrl:
       results.asset?.product.imageUrl &&
-      buildImageProxyUrl(results.asset.product.imageUrl, [
-        "rs:fit:160:160:1:1",
-      ]),
+      buildImageProxyUrl(results.asset.product.imageUrl, ["rs:fit:160:160:1:1"]),
   }));
 };
 
 export default function PublicInspectHistoryView({
-  loaderData: {
-    asset,
-    inspections,
-    unresolvedAlerts,
-    processedProductImageUrl,
-  },
+  loaderData: { asset, inspections, unresolvedAlerts, processedProductImageUrl },
 }: Route.ComponentProps) {
   if (!asset) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 h-full grow w-full max-w-sm">
-        <CircleSlash className="size-16 text-destructive" />
-        <h2 className="text-lg font-semibold text-center">
+      <div className="flex h-full w-full max-w-sm grow flex-col items-center justify-center gap-2">
+        <CircleSlash className="text-destructive size-16" />
+        <h2 className="text-center text-lg font-semibold">
           This tag has not yet been registered to an asset.
         </h2>
         <Button asChild>
@@ -109,7 +97,9 @@ function PublicInspectHistory({
       {
         header: "Inspection Date",
         accessorKey: "createdOn",
-        cell: ({ getValue }) => format(getValue() as string, "PPpp"),
+        cell: ({ getValue }) => (
+          <HydrationSafeFormattedDate date={getValue() as string} formatStr="PPpp" />
+        ),
       },
       {
         header: "Inspector",
@@ -179,11 +169,8 @@ function PublicInspectHistory({
   const isEmpty = !rows.length;
 
   return (
-    <div className="w-full max-w-md flex flex-col items-stretch gap-4">
-      <AssetCard
-        asset={asset}
-        processedProductImageUrl={processedProductImageUrl}
-      />
+    <div className="flex w-full max-w-md flex-col items-stretch gap-4">
+      <AssetCard asset={asset} processedProductImageUrl={processedProductImageUrl} />
 
       {unresolvedAlerts.length > 0 && (
         <Card>
@@ -196,14 +183,11 @@ function PublicInspectHistory({
           <CardContent>
             <div className="divide-border divide-y">
               {unresolvedAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex gap-1 items-center py-1.5 text-sm"
-                >
+                <div key={alert.id} className="flex items-center gap-1 py-1.5 text-sm">
                   {alert.alertLevel === "URGENT" ? (
-                    <CircleX className="size-4 text-urgent shrink-0" />
+                    <CircleX className="text-urgent size-4 shrink-0" />
                   ) : (
-                    <CircleAlert className="size-4 text-important shrink-0" />
+                    <CircleAlert className="text-important size-4 shrink-0" />
                   )}
                   <p className="font-semibold">{alert.alertLevel}</p>
                   &mdash;
@@ -227,25 +211,25 @@ function PublicInspectHistory({
         <CardContent>
           <div className="flex flex-col gap-4">
             {isEmpty && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 This asset has no inspection logs yet.
               </p>
             )}
             {rows.map((row) => {
               const inspection = row.original;
-              const cells = row.getVisibleCells().reduce((acc, cell) => {
-                acc[String(cell.column.id)] = cell;
-                return acc;
-              }, {} as Record<string, Cell<Inspection, unknown>>);
+              const cells = row.getVisibleCells().reduce(
+                (acc, cell) => {
+                  acc[String(cell.column.id)] = cell;
+                  return acc;
+                },
+                {} as Record<string, Cell<Inspection, unknown>>
+              );
 
               return (
-                <Card
-                  key={inspection.id}
-                  className="bg-background text-foreground"
-                >
-                  <CardContent className="pt-4 sm:pt-6 flex flex-col gap-2">
+                <Card key={inspection.id} className="bg-background text-foreground">
+                  <CardContent className="flex flex-col gap-2 pt-4 sm:pt-6">
                     <div>
-                      <p className="text-xs text-muted-foreground mb-0.5">
+                      <p className="text-muted-foreground mb-0.5 text-xs">
                         {renderCell(cells.createdOn)}
                       </p>
                       <p className="text-sm">
@@ -282,9 +266,9 @@ const renderAlerts = (alerts: Inspection["alerts"]) => {
   return (
     <div className="flex gap-1">
       {unresolvedAlerts.length === 0 ? (
-        <CircleCheck className="size-4 text-primary shrink-0" />
+        <CircleCheck className="text-primary size-4 shrink-0" />
       ) : (
-        <CircleAlert className="size-4 text-important shrink-0" />
+        <CircleAlert className="text-important size-4 shrink-0" />
       )}
       <p className="text-xs italic">
         This inspection triggered <strong>{alerts.length}</strong> alert

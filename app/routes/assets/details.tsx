@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import {
   CircleAlert,
   MoreHorizontal,
@@ -23,10 +23,12 @@ import EditAssetButton from "~/components/assets/edit-asset-button";
 import EditConsumableButton from "~/components/assets/edit-consumable-button";
 import EditableTagDisplay from "~/components/assets/editable-tag-display";
 import ProductRequests, { NewSupplyRequestButton } from "~/components/assets/product-requests";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import DisplayRelativeDate from "~/components/display-relative-date";
 import Icon from "~/components/icons/icon";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
@@ -128,7 +130,7 @@ export default function AssetDetails({
   return (
     <div className="@container">
       <div className="grid w-full grid-cols-1 gap-x-2 gap-y-4 @4xl:grid-cols-[1fr_400px]">
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex-wrap gap-x-4">
@@ -211,7 +213,9 @@ export default function AssetDetails({
                       },
                       {
                         label: "Setup Completed",
-                        value: asset.setupOn && format(asset.setupOn, "PPpp"),
+                        value: asset.setupOn && (
+                          <HydrationSafeFormattedDate date={asset.setupOn} formatStr="PPpp" />
+                        ),
                       },
                     ]}
                     defaultValue={<>&mdash;</>}
@@ -247,11 +251,15 @@ export default function AssetDetails({
                     details={[
                       {
                         label: "Created",
-                        value: format(asset.createdOn, "PPpp"),
+                        value: (
+                          <HydrationSafeFormattedDate date={asset.createdOn} formatStr="PPpp" />
+                        ),
                       },
                       {
                         label: "Last Updated",
-                        value: format(asset.modifiedOn, "PPpp"),
+                        value: (
+                          <HydrationSafeFormattedDate date={asset.modifiedOn} formatStr="PPpp" />
+                        ),
                       },
                     ]}
                     defaultValue={<>&mdash;</>}
@@ -360,7 +368,7 @@ export default function AssetDetails({
             </BasicCard>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           <AlertsCard alerts={asset.alerts ?? []} assetId={asset.id} />
 
           <Card>
@@ -482,12 +490,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
         cell: ({ getValue }) => {
           const value = getValue() as string;
           return value && isValid(parseISO(value)) ? (
-            <span title={format(value, "PPpp")}>
-              {formatDistanceToNow(value, {
-                addSuffix: true,
-                includeSeconds: true,
-              })}
-            </span>
+            <DisplayRelativeDate date={value} />
           ) : (
             <>&mdash;</>
           );

@@ -1,13 +1,4 @@
-import {
-  endOfDay,
-  format,
-  formatDistanceToNow,
-  isSameDay,
-  parseISO,
-  startOfDay,
-  subDays,
-  subHours,
-} from "date-fns";
+import { endOfDay, format, isSameDay, parseISO, startOfDay, subDays, subHours } from "date-fns";
 import { Loader2, Nfc } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -16,7 +7,9 @@ import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/user-sesssion";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import ConfirmationDialog from "~/components/confirmation-dialog";
+import DisplayRelativeDate from "~/components/display-relative-date";
 import Icon from "~/components/icons/icon";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Badge } from "~/components/ui/badge";
@@ -135,7 +128,7 @@ export default function ClearDemoInspections({
                     )}
                   </Link>
                 </div>
-                {format(inspection.createdOn, "PPpp")}
+                <HydrationSafeFormattedDate date={inspection.createdOn} formatStr="PPpp" />
               </div>
               <div>
                 <p className="text-sm">
@@ -148,10 +141,7 @@ export default function ClearDemoInspections({
                     ? getUserDisplayName(inspection.inspector)
                     : "Unknown Inspector"}{" "}
                   inspected {inspection.asset.name}{" "}
-                  {formatDistanceToNow(inspection.createdOn, {
-                    addSuffix: true,
-                  })}
-                  .
+                  <DisplayRelativeDate date={inspection.createdOn} />.
                 </p>
               </div>
             </div>

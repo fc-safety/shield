@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { Copy, Nfc, Pencil, Trash } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Link } from "react-router";
@@ -8,6 +7,7 @@ import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { config } from "~/.server/config";
 import EditTagButton from "~/components/assets/edit-tag-button";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -106,7 +106,11 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => {
           const value = getValue() as Date;
-          return value ? format(value, "PPpp") : <>&mdash;</>;
+          return value ? (
+            <HydrationSafeFormattedDate date={value} formatStr="PPpp" />
+          ) : (
+            <>&mdash;</>
+          );
         },
       },
       {

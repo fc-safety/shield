@@ -1,10 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
 import { FireExtinguisher, Pencil, Shapes, type LucideIcon } from "lucide-react";
 import { type To, type UIMatch } from "react-router";
 import { ApiFetcher } from "~/.server/api-utils";
 import { buildImageProxyUrl } from "~/.server/images";
 import ActiveIndicator from "~/components/active-indicator";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import DataList from "~/components/data-list";
 import GradientScrollArea from "~/components/gradient-scroll-area";
 import Icon from "~/components/icons/icon";
@@ -141,11 +141,21 @@ export default function ProductCategoryDetails({
                 details={[
                   {
                     label: "Created",
-                    value: format(productCategory.createdOn, "PPpp"),
+                    value: (
+                      <HydrationSafeFormattedDate
+                        date={productCategory.createdOn}
+                        formatStr="PPpp"
+                      />
+                    ),
                   },
                   {
                     label: "Last Updated",
-                    value: format(productCategory.modifiedOn, "PPpp"),
+                    value: (
+                      <HydrationSafeFormattedDate
+                        date={productCategory.modifiedOn}
+                        formatStr="PPpp"
+                      />
+                    ),
                   },
                 ]}
                 defaultValue={<>&mdash;</>}

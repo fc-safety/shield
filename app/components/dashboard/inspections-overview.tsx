@@ -9,7 +9,7 @@ import {
   type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { Check, ChevronsUpDown, SearchCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -22,6 +22,7 @@ import { stringifyQuery, type QueryParams } from "~/lib/urls";
 import { getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import AssetInspectionDialog from "../assets/asset-inspection-dialog";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
@@ -38,11 +39,7 @@ import {
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 
-export default function InspectionsOverview({
-  refreshKey,
-}: {
-  refreshKey: number;
-}) {
+export default function InspectionsOverview({ refreshKey }: { refreshKey: number }) {
   const { appState, setAppState } = useAppState();
 
   const { user } = useAuth();
@@ -82,25 +79,19 @@ export default function InspectionsOverview({
       {
         accessorKey: "createdOn",
         id: "date",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
-        cell: ({ getValue }) => (
-          <DisplayRelativeDate date={getValue() as string} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ getValue }) => <DisplayRelativeDate date={getValue() as string} />,
       },
       {
         accessorKey: "asset.name",
         id: "asset",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ row, getValue }) => {
           const assetName = getValue() as string;
           return (
             <Link
               to={row.original.asset ? `/assets/${row.original.asset.id}` : "#"}
-              className="inline-flex items-center gap-2 group"
+              className="group inline-flex items-center gap-2"
             >
               <span className="group-hover:underline">{assetName}</span>
               {row.original.asset.product.productCategory.icon && (
@@ -117,24 +108,18 @@ export default function InspectionsOverview({
       {
         accessorKey: "site.name",
         id: "site",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorFn: (inspection) =>
           inspection.inspector && getUserDisplayName(inspection.inspector),
         id: "inspector",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorKey: "comments",
         id: "comments",
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         cell: ({ getValue }) => getValue() || <>&mdash;</>,
       },
       {
@@ -145,10 +130,7 @@ export default function InspectionsOverview({
             trigger={(isLoading, preloadInspection, setOpen) => (
               <button
                 type="button"
-                className={cn(
-                  "underline text-xs font-semibold",
-                  isLoading && "animate-pulse"
-                )}
+                className={cn("text-xs font-semibold underline", isLoading && "animate-pulse")}
                 onMouseEnter={() => preloadInspection(row.original.id)}
                 onTouchStart={() => preloadInspection(row.original.id)}
                 onClick={() => setOpen(true)}
@@ -197,14 +179,14 @@ export default function InspectionsOverview({
   const isEmpty = !rows.length;
 
   return (
-    <Card className="h-full relative">
+    <Card className="relative h-full">
       <CardHeader>
         <CardTitle>
           <SearchCheck /> Recent Inspections
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-[calc(100%-64px)] flex flex-col bg-inherit space-y-4 rounded-[inherit]">
-        <div className="flex gap-2 flex-wrap items-center justify-between">
+      <CardContent className="flex h-[calc(100%-64px)] flex-col space-y-4 rounded-[inherit] bg-inherit">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <DateRangeSelect
             value={
               queryParams.createdOn?.gte
@@ -230,9 +212,7 @@ export default function InspectionsOverview({
                 : queryParams;
               handleSetQueryParams(newQueryParams, quickRangeId);
             }}
-            defaultQuickRangeId={
-              appState.dash_insp_quickRangeId ?? "last-30-days"
-            }
+            defaultQuickRangeId={appState.dash_insp_quickRangeId ?? "last-30-days"}
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -263,9 +243,7 @@ export default function InspectionsOverview({
                   <Check
                     className={cn(
                       "opacity-0",
-                      sorting.some(
-                        (s) => s.id === sort.id && s.desc === sort.desc
-                      ) && "opacity-100"
+                      sorting.some((s) => s.id === sort.id && s.desc === sort.desc) && "opacity-100"
                     )}
                   />
                   {label}
@@ -276,37 +254,35 @@ export default function InspectionsOverview({
         </div>
         <GradientScrollArea className="flex-1" variant="card">
           {!isLoading && isEmpty ? (
-            <p className="text-center text-sm text-muted-foreground py-4 border-t border-border">
+            <p className="text-muted-foreground border-border border-t py-4 text-center text-sm">
               No inspections to display.
             </p>
           ) : null}
           {rows.map((row) => {
             const inspection = row.original;
-            const cells = row.getVisibleCells().reduce((acc, cell) => {
-              acc[String(cell.column.id)] = cell;
-              return acc;
-            }, {} as Record<string, Cell<Inspection, unknown>>);
+            const cells = row.getVisibleCells().reduce(
+              (acc, cell) => {
+                acc[String(cell.column.id)] = cell;
+                return acc;
+              },
+              {} as Record<string, Cell<Inspection, unknown>>
+            );
 
             return (
-              <div
-                key={inspection.id}
-                className="py-2 flex flex-col gap-2 border-t border-border"
-              >
-                <div className="flex items-center gap-2 justify-between text-xs text-muted-foreground">
-                  {format(inspection.createdOn, "PPpp")}
+              <div key={inspection.id} className="border-border flex flex-col gap-2 border-t py-2">
+                <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
+                  <HydrationSafeFormattedDate date={inspection.createdOn} formatStr="PPpp" />
                   {renderCell(cells.asset)}
                 </div>
                 <div>
                   <p className="text-sm">
                     {cells.site ? (
-                      <span className="font-semibold">
-                        [{renderCell(cells.site)}]
-                      </span>
+                      <span className="font-semibold">[{renderCell(cells.site)}]</span>
                     ) : (
                       ""
                     )}{" "}
-                    {renderCell(cells.inspector)} inspected{" "}
-                    {inspection.asset.name} {renderCell(cells.date)}.
+                    {renderCell(cells.inspector)} inspected {inspection.asset.name}{" "}
+                    {renderCell(cells.date)}.
                   </p>
                 </div>
                 <div className="flex">{renderCell(cells.details)}</div>

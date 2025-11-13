@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
 import { Nfc, Pencil } from "lucide-react";
 import { type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import EditTagButton from "~/components/assets/edit-tag-button";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import { CopyableText } from "~/components/copyable-text";
 import DataList from "~/components/data-list";
 import { Button } from "~/components/ui/button";
@@ -72,7 +72,9 @@ export default function ProductDetails({ loaderData: tag }: Route.ComponentProps
                 },
                 {
                   label: "Setup On",
-                  value: tag.asset?.setupOn && format(tag.asset.setupOn, "PPpp"),
+                  value: tag.asset?.setupOn && (
+                    <HydrationSafeFormattedDate date={tag.asset.setupOn} formatStr="PPpp" />
+                  ),
                 },
                 {
                   label: "Assigned Client",
@@ -92,11 +94,11 @@ export default function ProductDetails({ loaderData: tag }: Route.ComponentProps
               details={[
                 {
                   label: "Created",
-                  value: format(tag.createdOn, "PPpp"),
+                  value: <HydrationSafeFormattedDate date={tag.createdOn} formatStr="PPpp" />,
                 },
                 {
                   label: "Last Updated",
-                  value: format(tag.modifiedOn, "PPpp"),
+                  value: <HydrationSafeFormattedDate date={tag.modifiedOn} formatStr="PPpp" />,
                 },
               ]}
               defaultValue={<>&mdash;</>}
