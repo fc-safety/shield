@@ -1,14 +1,19 @@
 import { enAU, enCA, enGB, enUS } from "date-fns/locale";
 import { useAppState } from "~/contexts/app-state-context";
 
+/**
+ * Returns the locale object if it is supported, otherwise undefined.
+ *
+ * @returns The locale object if it is supported, otherwise undefined.
+ */
 export function useHydrationSafeLocale() {
   const {
     appState: { locale },
   } = useAppState();
-  return locale ? detectLocale(locale) : undefined;
+  return locale ? findLocale(locale) : undefined;
 }
 
-const detectLocale = (localeStr: string) => {
+const findLocale = (localeStr: string) => {
   switch (localeStr) {
     case "en-US":
       return enUS;
@@ -19,4 +24,6 @@ const detectLocale = (localeStr: string) => {
     case "en-AU":
       return enAU;
   }
+
+  // Return undefined if no supported locale is found.
 };

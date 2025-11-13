@@ -16,7 +16,7 @@ export default function DisplayRelativeDate({
 
   const hydrationSafeDateFormatted = useMemo(
     () => (hydrationSafeDate ? fromNow(hydrationSafeDate, locale) : null),
-    [hydrationSafeDate, date, locale]
+    [hydrationSafeDate, locale]
   );
   const unsafeDateFormatted = useMemo(() => fromNow(date, locale), [date, locale]);
 

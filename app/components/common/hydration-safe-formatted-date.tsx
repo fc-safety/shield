@@ -16,7 +16,7 @@ export default function HydrationSafeFormattedDate({
 
   const hydrationSafeDateFormatted = useMemo(
     () => (hydrationSafeDate ? format(hydrationSafeDate, formatStr, { locale }) : null),
-    [hydrationSafeDate, date, formatStr, locale]
+    [hydrationSafeDate, formatStr, locale]
   );
   const unsafeDateFormatted = useMemo(
     () => format(date, formatStr, { locale }),
