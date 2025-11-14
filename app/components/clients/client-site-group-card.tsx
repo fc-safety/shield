@@ -8,9 +8,11 @@ import ClientSiteGroupsTable from "./client-site-groups-table";
 export default function ClientSiteGroupCard({
   siteGroups,
   clientId,
+  buildToSiteGroup = (id: string) => "sites/" + id,
 }: {
   siteGroups: Site[];
   clientId: string;
+  buildToSiteGroup?: (id: string) => string;
 }) {
   return (
     <Card>
@@ -20,7 +22,11 @@ export default function ClientSiteGroupCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ClientSiteGroupsTable siteGroups={siteGroups} clientId={clientId} />
+        <ClientSiteGroupsTable
+          siteGroups={siteGroups}
+          clientId={clientId}
+          buildToSiteGroup={buildToSiteGroup}
+        />
       </CardContent>
     </Card>
   );

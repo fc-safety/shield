@@ -1,6 +1,7 @@
 import {
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
@@ -11,6 +12,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type ColumnOrderState,
+  type ExpandedState,
   type Header,
   type InitialTableState,
   type OnChangeFn,
@@ -62,6 +64,7 @@ export interface DataTableProps<TData, TValue> extends Omit<DataTableToolbarProp
   onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
   onColumnOrderChange?: OnChangeFn<ColumnOrderState>;
   onPaginationChange?: OnChangeFn<PaginationState>;
+  getSubRows?: (originalRow: TData, index: number) => TData[] | undefined;
 }
 
 export function DataTable<TData, TValue>({
@@ -77,6 +80,7 @@ export function DataTable<TData, TValue>({
   onColumnVisibilityChange,
   onColumnOrderChange,
   onPaginationChange,
+  getSubRows,
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
@@ -95,6 +99,8 @@ export function DataTable<TData, TValue>({
     pageIndex: initialState?.pagination?.pageIndex ?? 0,
     pageSize: initialState?.pagination?.pageSize ?? 10,
   });
+
+  const [expanded, setExpanded] = React.useState<ExpandedState>(initialState?.expanded ?? {});
 
   useEffect(() => {
     onSortingChange?.(sorting);
@@ -137,6 +143,8 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getSubRows,
     getRowId,
     filterFns: {
       defaultIncludes: customArrayIncludesFilterFn,

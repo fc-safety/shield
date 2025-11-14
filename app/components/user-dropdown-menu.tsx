@@ -20,11 +20,12 @@ import {
 
 export const DEFAULT_USER_ROUTES = [
   {
+    type: "link",
     title: "Account",
     url: "/account",
     icon: UserCog,
   },
-];
+] satisfies (SidebarMenuItem & { type: "link" })[];
 
 export function UserDropdownMenu({
   user,
@@ -32,7 +33,7 @@ export function UserDropdownMenu({
   logoutReturnTo,
 }: {
   user: User;
-  userRoutes?: (Omit<SidebarMenuItem, "children" | "url"> & { url: string })[];
+  userRoutes?: (SidebarMenuItem & { type: "link" })[];
   logoutReturnTo?: string;
 }) {
   const accountLabel = user?.name ?? user?.email ?? "My Account";

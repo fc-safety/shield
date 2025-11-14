@@ -11,11 +11,13 @@ import EditSiteButton from "./edit-site-button";
 interface ClientSiteGroupsTableProps {
   clientId: string;
   siteGroups: Site[];
+  buildToSiteGroup?: (id: string) => string;
 }
 
 export default function ClientSiteGroupsTable({
   siteGroups,
   clientId,
+  buildToSiteGroup,
 }: ClientSiteGroupsTableProps) {
   const { user } = useAuth();
   const canCreateSiteGroup = can(user, "create", "sites");
@@ -23,28 +25,22 @@ export default function ClientSiteGroupsTable({
   const columns: ColumnDef<Exclude<Client["sites"], undefined>[number]>[] = [
     {
       accessorKey: "name",
-      header: ({ column, table }) => (
-        <DataTableColumnHeader column={column} table={table} />
-      ),
+      header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
 
       cell: ({ row, getValue }) => (
         <Link
-          to={"sites/" + row.original.id}
+          to={buildToSiteGroup?.(row.original.id) ?? ""}
           className="inline-flex items-center gap-1 hover:underline"
         >
           {getValue() as string}
-          {row.original.primary && (
-            <Star size={14} fill="currentColor" className="text-primary" />
-          )}
+          {row.original.primary && <Star size={14} fill="currentColor" className="text-primary" />}
         </Link>
       ),
     },
     {
       accessorFn: (data) => data._count?.subsites ?? 0,
       id: "subsites",
-      header: ({ column, table }) => (
-        <DataTableColumnHeader column={column} table={table} />
-      ),
+      header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
     },
   ];
   return (
@@ -55,12 +51,7 @@ export default function ClientSiteGroupsTable({
         searchPlaceholder="Search site groups..."
         actions={[
           canCreateSiteGroup ? (
-            <EditSiteButton
-              key="add"
-              clientId={clientId}
-              isSiteGroup
-              viewContext="admin"
-            />
+            <EditSiteButton key="add" clientId={clientId} isSiteGroup viewContext="admin" />
           ) : null,
         ]}
       />

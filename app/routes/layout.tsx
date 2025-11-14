@@ -62,28 +62,33 @@ export default function Layout({
       groupTitle: "My Shield",
       items: [
         {
+          type: "link",
           title: "Command Center",
           url: "command-center",
           icon: LayoutDashboard,
         },
         {
+          type: "link",
           title: "Assets",
           url: "assets",
           icon: Shield,
           hide: !can(user, "read", "assets"),
         },
         {
+          type: "link",
           title: "Inspection Routes",
           url: "inspection-routes",
           icon: RouteIcon,
           hide: !can(user, "read", "inspection-routes"),
         },
         {
+          type: "link",
           title: "Reports",
           url: "reports",
           icon: FileSpreadsheet,
         },
         {
+          type: "link",
           title: "My Organization",
           url: "my-organization",
           icon: Building,
@@ -96,23 +101,27 @@ export default function Layout({
       hide: !can(user, "read", "products"),
       items: [
         {
+          type: "link",
           title: "All Products",
           url: "products/all",
           icon: FireExtinguisher,
         },
         {
+          type: "link",
           title: "Categories",
           url: "products/categories",
           icon: Shapes,
           hide: !can(user, "read", "product-categories"),
         },
         {
+          type: "link",
           title: "Manufacturers",
           url: "products/manufacturers",
           icon: Factory,
           hide: !can(user, "read", "manufacturers"),
         },
         {
+          type: "link",
           title: "Questions",
           url: "products/questions",
           icon: ShieldQuestion,
@@ -124,36 +133,41 @@ export default function Layout({
       groupTitle: "Admin",
       items: [
         {
+          type: "link",
           title: "Clients",
           url: "admin/clients",
           icon: Building2,
           hide: !can(user, "read", "clients"),
         },
         {
+          type: "link",
           title: "Supply Requests",
           url: "admin/product-requests",
           icon: Package,
           hide: !can(user, "read", "product-requests"),
         },
         {
+          type: "link",
           title: "Tags",
           url: "admin/tags",
           icon: Nfc,
           hide: !can(user, "read", "tags"),
         },
         {
+          type: "link",
           title: "Roles",
           url: "admin/roles",
           icon: Users,
         },
         {
+          type: "link",
           title: "Settings",
           url: "admin/settings",
           icon: Settings,
         },
         {
+          type: "group",
           title: "Advanced",
-          url: "admin/advanced",
           icon: Terminal,
           children: [
             {
@@ -169,16 +183,19 @@ export default function Layout({
       groupTitle: "Support",
       items: [
         {
+          type: "link",
           title: "Contact Us",
           url: "contact-us",
           icon: MessageCircleMore,
         },
         {
+          type: "link",
           title: "FAQs",
           url: "faqs",
           icon: CircleHelp,
         },
         {
+          type: "link",
           title: "Docs",
           url: "docs",
           icon: BookOpenText,

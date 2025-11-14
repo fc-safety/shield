@@ -120,12 +120,14 @@ const InspectionSidebar = () => {
       groupTitle: "Inspections",
       items: [
         {
+          type: "link",
           title: "Inspect Asset",
           url: "/inspect",
           icon: FileSpreadsheet,
           exact: true,
         },
         {
+          type: "link",
           title: "Routes",
           url: "/inspect/routes",
           icon: RouteIcon,
@@ -133,6 +135,7 @@ const InspectionSidebar = () => {
           hide: !can(user, "read", "inspection-routes"),
         },
         {
+          type: "link",
           title: "Reorder Supplies",
           url: "/inspect/reorder-supplies",
           icon: Package,
@@ -144,11 +147,13 @@ const InspectionSidebar = () => {
       hide: !client?.demoMode,
       items: [
         {
+          type: "link",
           title: "Clear Inspections",
           url: "/inspect/clear-demo-inspections",
           icon: Trash,
         },
         {
+          type: "link",
           title: "Reset Inspections",
           url: "/inspect/reset-demo-inspections",
           icon: RotateCcw,
@@ -159,18 +164,21 @@ const InspectionSidebar = () => {
       groupTitle: "Support",
       items: [
         {
+          type: "link",
           title: "Contact Us",
           url: "/contact-us",
           icon: MessageCircleMore,
           external: true,
         },
         {
+          type: "link",
           title: "FAQs",
           url: "/faqs",
           icon: CircleHelp,
           external: true,
         },
         {
+          type: "link",
           title: "Docs",
           url: "/docs",
           icon: BookOpenText,

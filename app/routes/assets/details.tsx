@@ -65,8 +65,10 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 };
 
 export const handle = {
-  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
-    label: data?.asset.name || "Details",
+  breadcrumb: ({
+    loaderData,
+  }: Route.MetaArgs | UIMatch<Route.MetaArgs["loaderData"] | undefined>) => ({
+    label: loaderData?.asset.name || "Details",
   }),
 };
 

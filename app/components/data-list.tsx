@@ -42,11 +42,11 @@ export default function DataList({
   emptyListMessage = "No data available.",
 }: DataListProps) {
   return (
-    <div className={cn("grid gap-4", fluid && "w-full", className, classNames?.container)}>
+    <div className={cn("grid gap-2", fluid && "w-full", className, classNames?.container)}>
       {title && <Label className="col-span-full">{title}</Label>}
       <dl
         className={cn(
-          "grid items-start gap-x-4 gap-y-2 sm:gap-x-8",
+          "grid items-start gap-x-4 gap-y-1 sm:gap-x-8",
           variant === "fluid" || fluid ? "grid-cols-[auto_1fr]" : "grid-cols-2",
           variant === "thirds" && "grid-cols-3",
           classNames?.details

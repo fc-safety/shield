@@ -8,10 +8,12 @@ export const CopyableText = ({
   text,
   hoverOnly = false,
   compact = false,
+  className,
 }: {
   text: string;
   hoverOnly?: boolean;
   compact?: boolean;
+  className?: string;
 }) => {
   const handleCopy = () => {
     navigator.clipboard.writeText(text).then(() => {
@@ -20,8 +22,10 @@ export const CopyableText = ({
   };
 
   return (
-    <div className="group flex items-center gap-2">
-      {text && !compact && text}
+    <div className={cn("group flex items-center gap-2", className)}>
+      {text && !compact && (
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{text}</span>
+      )}
       {text && (
         <TooltipProvider>
           <Tooltip>

@@ -5,7 +5,7 @@ import ClientSitesCard from "~/components/clients/client-sites-card";
 import ClientUsersCard from "~/components/clients/client-users-card";
 import SiteDetailsCard from "~/components/clients/site-details-card";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
-import type { Route } from "./+types/site-details";
+import type { Route } from "./+types/details.site.tsx";
 
 // When deleting a site, we don't want to revalidate the page. This would
 // cause a 404 before the page could navigate back.
@@ -17,8 +17,10 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 };
 
 export const handle = {
-  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
-    label: data?.site.name || "Site Details",
+  breadcrumb: ({
+    loaderData,
+  }: Route.MetaArgs | UIMatch<Route.MetaArgs["loaderData"] | undefined>) => ({
+    label: loaderData?.site.name || "Site Details",
   }),
 };
 

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { z } from "zod";
+import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -38,6 +39,7 @@ interface ClientUsersTableProps {
   siteExternalId?: string;
   users: ClientUser[];
   getSiteByExternalId?: (externalId: string) => Site | undefined;
+  viewContext?: ViewContext;
 }
 
 export default function ClientUsersTable({
@@ -45,6 +47,7 @@ export default function ClientUsersTable({
   siteExternalId,
   users,
   getSiteByExternalId,
+  viewContext,
 }: ClientUsersTableProps) {
   const { user } = useAuth();
   const canCreateUser = can(user, "create", "users");
@@ -62,9 +65,10 @@ export default function ClientUsersTable({
         query: {
           clientId,
         },
+        viewContext,
       });
     },
-    [clientId, submit]
+    [clientId, submit, viewContext]
   );
 
   const clientUserColumns: ColumnDef<ClientUser>[] = useMemo(
@@ -178,6 +182,9 @@ export default function ClientUsersTable({
   return (
     <>
       <DataTable
+        classNames={{
+          container: "max-w-full min-w-0",
+        }}
         data={users}
         columns={clientUserColumns}
         initialState={{

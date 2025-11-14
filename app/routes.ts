@@ -109,8 +109,9 @@ export default [
         index("./routes/admin/clients/index.tsx"),
         route(":id", "./routes/admin/clients/details/layout.tsx", [
           index("./routes/admin/clients/details/index.tsx"),
-          route("sites/:siteId", "./routes/admin/clients/details/site-details.tsx"),
+          route(":tab", "./routes/admin/clients/details/tab.tsx"),
         ]),
+        route(":id/sites/:siteId", "./routes/admin/clients/details/details.site.tsx"),
       ]),
       route("product-requests", "./routes/admin/product-requests/layout.tsx", [
         index("./routes/admin/product-requests/index.tsx"),

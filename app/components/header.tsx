@@ -35,7 +35,7 @@ export default function Header({
   return (
     <header
       className={cn(
-        "flex shrink-0 flex-col gap-y-1 px-2 pt-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2 sm:px-4",
+        "flex shrink-0 flex-col gap-y-1 px-2 pt-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2 sm:px-4 sm:pt-4",
         className
       )}
     >
