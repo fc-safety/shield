@@ -3,7 +3,7 @@ import { CopyPlus, Loader2, Pencil } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
-import type { DataOrError } from "~/.server/api-utils";
+import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import ActiveIndicatorBadge from "~/components/active-indicator-badge";
 import EditClientButton from "~/components/clients/edit-client-button";
 import DisplayAddress from "~/components/display-address";
@@ -19,7 +19,13 @@ import { ResponsiveDialog } from "../responsive-dialog";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../ui/form";
 import { Input } from "../ui/input";
 
-export default function ClientDetailsHeader({ client }: { client: Client }) {
+export default function ClientDetailsHeader({
+  client,
+  viewContext = "user",
+}: {
+  client: Client;
+  viewContext?: ViewContext;
+}) {
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const canEditClient = can(user, "update", "clients");
@@ -39,11 +45,13 @@ export default function ClientDetailsHeader({ client }: { client: Client }) {
             />
           </div>
           <div className="flex items-center gap-2">
-            <ActiveIndicatorBadge
-              active={client.status.toLowerCase() as Lowercase<Client["status"]>}
-            />
+            {viewContext === "admin" && (
+              <ActiveIndicatorBadge
+                active={client.status.toLowerCase() as Lowercase<Client["status"]>}
+              />
+            )}
             <ButtonGroup>
-              {canEditClient && (
+              {viewContext === "admin" && canEditClient && (
                 <EditClientButton
                   client={client}
                   trigger={

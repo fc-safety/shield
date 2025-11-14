@@ -4,7 +4,6 @@ import {
   CornerDownRight,
   Globe2,
   HardHat,
-  MoreHorizontal,
   Pencil,
   Plus,
   Shapes,
@@ -18,6 +17,7 @@ import type { ViewContext } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ActiveToggle from "~/components/active-toggle";
+import ResponsiveActions from "~/components/common/responsive-actions";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -28,13 +28,6 @@ import EditAnsiCategoryButton from "~/components/products/edit-ansi-category-but
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -236,50 +229,51 @@ function ProductCategoriesCard({
           const category = row.original;
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
-                <DropdownMenuItem asChild>
-                  <Link to={category.id}>
-                    <CornerDownRight />
-                    Details
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={!canDelete}
-                  onSelect={() =>
-                    setDeleteAction((draft) => {
-                      draft.open = true;
-                      draft.title = "Delete Product Category";
-                      draft.message = `Are you sure you want to delete ${
-                        category.name || category.id
-                      }?`;
-                      draft.requiredUserInput = category.name || category.id;
-                      draft.onConfirm = () => {
-                        submitDelete(
-                          {},
-                          {
-                            method: "delete",
-                            path: `/api/proxy/product-categories/${category.id}`,
-                            viewContext,
-                          }
-                        );
-                      };
-                    })
-                  }
-                >
-                  <Trash />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "details",
+                      text: "Details",
+                      Icon: CornerDownRight,
+                      linkTo: category.id,
+                    },
+                  ],
+                },
+                {
+                  key: "destructive-actions",
+                  variant: "destructive",
+                  actions: [
+                    {
+                      key: "delete",
+                      text: "Delete",
+                      Icon: Trash,
+                      disabled: !canDelete,
+                      onAction: () => {
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete Product Category";
+                          draft.message = `Are you sure you want to delete ${category.name || category.id}?`;
+                          draft.requiredUserInput = category.name || category.id;
+                          draft.onConfirm = () => {
+                            submitDelete(
+                              {},
+                              {
+                                method: "delete",
+                                path: `/api/proxy/product-categories/${category.id}`,
+                                viewContext,
+                              }
+                            );
+                          };
+                        });
+                      },
+                    },
+                  ],
+                },
+              ]}
+            />
           );
         },
       },

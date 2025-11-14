@@ -1,16 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  MoreHorizontal,
-  Pencil,
-  ShieldCheck,
-  ShieldOff,
-  SquareAsterisk,
-  UserPen,
-} from "lucide-react";
+import { Pencil, Shield, ShieldOff, SquareAsterisk, UserPen } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Site } from "~/lib/models";
@@ -19,23 +13,19 @@ import type { ClientUser } from "~/lib/types";
 import { can } from "~/lib/users";
 import { beautifyPhone } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
+import ResponsiveActions from "../common/responsive-actions";
+import ConfirmationDialog from "../confirmation-dialog";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
 import ClientUserDetailsForm from "./client-user-details-form";
 import EditUserButton from "./edit-client-user-button";
 import ResetPasswordForm from "./reset-password-form";
 import UpdateUserRoleForm from "./update-user-role-form";
 
 interface ClientUsersTableProps {
-  clientId: string;
+  clientId?: string;
   siteExternalId?: string;
   users: ClientUser[];
   getSiteByExternalId?: (externalId: string) => Site | undefined;
@@ -70,6 +60,8 @@ export default function ClientUsersTable({
     },
     [clientId, submit, viewContext]
   );
+
+  const [confirmAction, setConfirmAction] = useConfirmAction();
 
   const clientUserColumns: ColumnDef<ClientUser>[] = useMemo(
     () => [
@@ -125,53 +117,66 @@ export default function ClientUsersTable({
           const user = row.original;
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={() => editUser.openData(user)}
-                  disabled={!canUpdateUser}
-                >
-                  <Pencil />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => updateRole.openData(user)}
-                  disabled={!canUpdateUser}
-                >
-                  <UserPen />
-                  Manage Roles
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => resetPassword.openData(user)}
-                  disabled={!canUpdateUser}
-                >
-                  <SquareAsterisk />
-                  Reset Password
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => setUserActive(user.id, { active: !user.active })}
-                  disabled={!canUpdateUser}
-                >
-                  {user.active ? (
-                    <>
-                      <ShieldOff />
-                      Deactivate
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck />
-                      Reactivate
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "edit",
+                      text: "Edit",
+                      Icon: Pencil,
+                      onAction: () => editUser.openData(user),
+                      disabled: !canUpdateUser,
+                    },
+                    {
+                      key: "manage-roles",
+                      text: "Manage Roles",
+                      Icon: UserPen,
+                      onAction: () => updateRole.openData(user),
+                      disabled: !canUpdateUser,
+                    },
+                    {
+                      key: "reset-password",
+                      text: "Reset Password",
+                      Icon: SquareAsterisk,
+                      onAction: () => resetPassword.openData(user),
+                      disabled: !canUpdateUser,
+                    },
+                  ],
+                },
+                {
+                  key: "destructive-actions",
+                  actions: [
+                    {
+                      key: "set-active",
+                      text: user.active ? "Deactivate" : "Reactivate",
+                      Icon: user.active ? ShieldOff : Shield,
+                      variant: user.active ? "destructive" : "default",
+                      onAction: () =>
+                        setConfirmAction((draft) => {
+                          draft.open = true;
+                          draft.title = user.active ? "Deactivate User" : "Reactivate User";
+                          draft.message = (
+                            <>
+                              Are you sure you want to {user.active ? "deactivate" : "reactivate"}{" "}
+                              <span className="font-bold">
+                                {user.name} ({user.email})
+                              </span>
+                              ?
+                            </>
+                          );
+                          draft.destructive = !!user.active;
+                          draft.confirmText = user.active ? "Deactivate" : "Reactivate";
+                          // draft.cancelText = user.active ? "Cancel" : "Close";
+                          draft.onConfirm = () => setUserActive(user.id, { active: !user.active });
+                        }),
+                      disabled: !canUpdateUser,
+                    },
+                  ],
+                },
+              ]}
+            />
           );
         },
       },
@@ -199,7 +204,7 @@ export default function ClientUsersTable({
               key="add"
               clientId={clientId}
               siteExternalId={siteExternalId}
-              viewContext="admin"
+              viewContext={viewContext}
             />
           ) : null,
         ]}
@@ -210,7 +215,7 @@ export default function ClientUsersTable({
           siteExternalId={siteExternalId}
           user={editUser.data ?? undefined}
           onSubmitted={() => editUser.setOpen(false)}
-          viewContext="admin"
+          viewContext={viewContext}
         />
       </ResponsiveDialog>
       {canUpdateUser && updateRole.data && (
@@ -219,7 +224,11 @@ export default function ClientUsersTable({
           open={updateRole.open}
           onOpenChange={updateRole.setOpen}
         >
-          <UpdateUserRoleForm user={updateRole.data} clientId={clientId} viewContext="admin" />
+          <UpdateUserRoleForm
+            user={updateRole.data}
+            clientId={clientId}
+            viewContext={viewContext}
+          />
           <div className="flex justify-end pt-4">
             <Button type="button" variant="outline" onClick={() => updateRole.setOpen(false)}>
               Close
@@ -240,6 +249,7 @@ export default function ClientUsersTable({
           />
         </ResponsiveDialog>
       )}
+      <ConfirmationDialog {...confirmAction} />
     </>
   );
 }

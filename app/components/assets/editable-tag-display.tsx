@@ -93,7 +93,7 @@ export default function EditableTagDisplay({
         trigger={null}
         dialogClassName="sm:max-w-2xl"
         children={
-          <div className="h-[32rem]">
+          <div className="h-128">
             {asset ? (
               <TagAssistant assetToRegister={asset} onClose={() => setModelOpen(false)} />
             ) : (

@@ -1,14 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronRight, MoreHorizontal, Pencil, PhoneCall, Star, Trash } from "lucide-react";
-import { Link, type To } from "react-router";
+import { ChevronRight, Pencil, PhoneCall, Star, Trash } from "lucide-react";
+import { type To } from "react-router";
 import type { ViewContext } from "~/.server/api-utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -16,6 +9,7 @@ import { useOpenData } from "~/hooks/use-open-data";
 import type { Site } from "~/lib/models";
 import { can } from "~/lib/users";
 import { beautifyPhone, cn } from "~/lib/utils";
+import ResponsiveActions from "../common/responsive-actions";
 import ConfirmationDialog from "../confirmation-dialog";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
@@ -24,7 +18,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card"
 import EditSiteButton from "./edit-site-button";
 
 interface SitesTableProps {
-  clientId: string;
+  clientId?: string;
   sites: Site[];
   parentSiteId?: string;
   buildToSite: (id: string) => To;
@@ -73,19 +67,16 @@ export default function SitesTable({
             {depth > 0 && (
               <div>
                 {Array.from({ length: depth }).map((_, index) => (
-                  <div className="w-4"></div>
+                  <div className="w-4" key={index}></div>
                 ))}
               </div>
             )}
-            <Link
-              to={buildToSite(row.original.id)}
-              className="inline-flex items-center gap-1 hover:underline"
-            >
+            <span className="inline-flex items-center gap-1">
               {getValue() as string}
               {row.original.primary && (
                 <Star size={14} fill="currentColor" className="text-primary" />
               )}
-            </Link>
+            </span>
           </div>
         );
       },
@@ -120,45 +111,51 @@ export default function SitesTable({
         const site = row.original;
 
         return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled={!canUpdateSite} onSelect={() => editSite.openData(site)}>
-                <Pencil />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                disabled={!canDeleteSite}
-                onSelect={() =>
-                  setDeleteAction((draft) => {
-                    draft.open = true;
-                    draft.title = "Delete Site";
-                    draft.message = `Are you sure you want to delete ${site.name || site.id}?`;
-                    draft.requiredUserInput = site.name || site.id;
-                    draft.onConfirm = () => {
-                      submitDelete(
-                        {},
-                        {
-                          method: "delete",
-                          path: `/api/proxy/sites/${site.id}`,
-                          viewContext,
-                        }
-                      );
-                    };
-                  })
-                }
-              >
-                <Trash />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ResponsiveActions
+            actionGroups={[
+              {
+                key: "actions",
+                actions: [
+                  {
+                    key: "edit",
+                    text: "Edit",
+                    Icon: Pencil,
+                    onAction: () => editSite.openData(site),
+                    disabled: !canUpdateSite,
+                  },
+                ],
+              },
+              {
+                key: "destructive-actions",
+                variant: "destructive",
+                actions: [
+                  {
+                    key: "delete",
+                    text: "Delete",
+                    Icon: Trash,
+                    onAction: () =>
+                      setDeleteAction((draft) => {
+                        draft.open = true;
+                        draft.title = "Delete Site";
+                        draft.message = `Are you sure you want to delete ${site.name || site.id}?`;
+                        draft.requiredUserInput = site.name || site.id;
+                        draft.onConfirm = () => {
+                          submitDelete(
+                            {},
+                            {
+                              method: "delete",
+                              path: `/api/proxy/sites/${site.id}`,
+                              viewContext,
+                            }
+                          );
+                        };
+                      }),
+                    disabled: !canDeleteSite,
+                  },
+                ],
+              },
+            ]}
+          />
         );
       },
     },

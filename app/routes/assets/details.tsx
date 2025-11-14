@@ -34,6 +34,7 @@ import EditRoutePointButton from "~/components/inspections/edit-route-point-butt
 import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
 import { ProductImage } from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
+import { ButtonGroup } from "~/components/ui/button-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
@@ -300,28 +301,32 @@ export default function AssetDetails({
                   </Card>
                 </div>
 
-                <div className="col-span-2 flex gap-2">
+                <ButtonGroup className="col-span-2">
                   {canUpdate && (
-                    <EditAssetButton
-                      asset={asset}
-                      trigger={
-                        <Button variant="outline" size="sm" type="button">
-                          <Pencil /> Edit
-                        </Button>
-                      }
-                    />
+                    <ButtonGroup>
+                      <EditAssetButton
+                        asset={asset}
+                        trigger={
+                          <Button variant="outline" size="sm" type="button">
+                            <Pencil /> Edit
+                          </Button>
+                        }
+                      />
+                    </ButtonGroup>
                   )}
                   {canDelete && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      type="button"
-                      onClick={() => handleDeleteAsset(asset)}
-                    >
-                      <Trash /> Delete
-                    </Button>
+                    <ButtonGroup>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        type="button"
+                        onClick={() => handleDeleteAsset(asset)}
+                      >
+                        <Trash /> Delete
+                      </Button>
+                    </ButtonGroup>
                   )}
-                </div>
+                </ButtonGroup>
               </div>
             </CardContent>
           </Card>

@@ -79,7 +79,10 @@ export default [
     ]),
     route("my-organization", "./routes/my-organization/layout.tsx", [
       index("./routes/my-organization/index.tsx"),
-      route("sites/:id", "./routes/my-organization/site-details.tsx"),
+      route("sites", "./routes/my-organization/tabs/sites-tab.tsx"),
+      route("users", "./routes/my-organization/tabs/users-tab.tsx"),
+      route("assets", "./routes/my-organization/tabs/assets-tab.tsx"),
+      route("products-questions", "./routes/my-organization/tabs/products-questions-tab.tsx"),
     ]),
 
     // Product Routes
@@ -109,9 +112,14 @@ export default [
         index("./routes/admin/clients/index.tsx"),
         route(":id", "./routes/admin/clients/details/layout.tsx", [
           index("./routes/admin/clients/details/index.tsx"),
-          route(":tab", "./routes/admin/clients/details/tab.tsx"),
+          route("sites", "./routes/admin/clients/details/tabs/sites-tab.tsx"),
+          route("users", "./routes/admin/clients/details/tabs/users-tab.tsx"),
+          route("assets", "./routes/admin/clients/details/tabs/assets-tab.tsx"),
+          route(
+            "products-questions",
+            "./routes/admin/clients/details/tabs/products-questions-tab.tsx"
+          ),
         ]),
-        route(":id/sites/:siteId", "./routes/admin/clients/details/details.site.tsx"),
       ]),
       route("product-requests", "./routes/admin/product-requests/layout.tsx", [
         index("./routes/admin/product-requests/index.tsx"),

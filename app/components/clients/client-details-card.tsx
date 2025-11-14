@@ -50,7 +50,7 @@ export default function ClientDetailsCard({
   });
 
   return (
-    <Card className="h-max">
+    <Card>
       <CardHeader>
         <CardTitle>
           <Building2 />

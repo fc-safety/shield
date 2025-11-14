@@ -62,9 +62,9 @@ export default function StepSelectCategoryOrExistingAsset({
                 key={category.id}
                 className={cn(
                   "relative cursor-pointer rounded-2xl transition-all",
-                  "bg-linear-to-b from-[var(--category-color)]/20 to-[var(--category-color)]/30",
-                  "[&:has([data-state=checked])]:bg-[var(--category-color)]/20 [&:has([data-state=checked])]:shadow-md",
-                  "hover:bg-[var(--category-color)]/20 hover:shadow-xl"
+                  "bg-linear-to-b from-(--category-color)/20 to-(--category-color)/30",
+                  "[&:has([data-state=checked])]:bg-(--category-color)/20 [&:has([data-state=checked])]:shadow-md",
+                  "hover:bg-(--category-color)/20 hover:shadow-xl"
                 )}
                 style={
                   {

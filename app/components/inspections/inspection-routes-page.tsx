@@ -44,6 +44,7 @@ import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import DataList from "../data-list";
+import { ButtonGroup, ButtonGroupSeparator } from "../ui/button-group";
 import { Skeleton } from "../ui/skeleton";
 
 export default function InspectionRoutesPage({ routes }: { routes: InspectionRoute[] }) {
@@ -216,21 +217,27 @@ function RouteCard({ route }: { route: InspectionRoute }) {
             <CardDescription>{route.description || <>&mdash;</>}</CardDescription>
           </CardHeader>
           <div className="flex-1"></div>
-          {canUpdate && (
-            <EditRouteButton
-              route={route}
-              trigger={
-                <Button size="icon" variant="secondary">
-                  <Pencil />
+          <ButtonGroup>
+            {canUpdate && (
+              <ButtonGroup>
+                <EditRouteButton
+                  route={route}
+                  trigger={
+                    <Button size="icon" variant="secondary">
+                      <Pencil />
+                    </Button>
+                  }
+                />
+              </ButtonGroup>
+            )}
+            {canDelete && (
+              <ButtonGroup>
+                <Button size="icon" variant="destructive" onClick={() => handleDeleteRoute(route)}>
+                  <Trash />
                 </Button>
-              }
-            />
-          )}
-          {canDelete && (
-            <Button size="icon" variant="destructive" onClick={() => handleDeleteRoute(route)}>
-              <Trash />
-            </Button>
-          )}
+              </ButtonGroup>
+            )}
+          </ButtonGroup>
         </CardHeader>
         <CardContent className="flex flex-col gap-8">
           <DataList
@@ -467,8 +474,8 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
         </div>
         <div className="flex-1"></div>
         {canUpdate && (
-          <>
-            <div className="flex gap-0.5">
+          <ButtonGroup>
+            <ButtonGroup>
               <Button
                 size="icon"
                 variant="secondary"
@@ -479,6 +486,7 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
               >
                 <ArrowDown />
               </Button>
+              <ButtonGroupSeparator />
               <Button
                 size="icon"
                 variant="secondary"
@@ -487,17 +495,19 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
               >
                 <ArrowUp />
               </Button>
-            </div>
-            <Button
-              size="icon"
-              variant="destructive"
-              disabled={deleteFetcher.state !== "idle"}
-              onClick={() => handleDelete(point)}
-              className="shrink-0"
-            >
-              <Trash />
-            </Button>
-          </>
+            </ButtonGroup>
+            <ButtonGroup>
+              <Button
+                size="icon"
+                variant="destructive"
+                disabled={deleteFetcher.state !== "idle"}
+                onClick={() => handleDelete(point)}
+                className="shrink-0"
+              >
+                <Trash />
+              </Button>
+            </ButtonGroup>
+          </ButtonGroup>
         )}
       </div>
     );

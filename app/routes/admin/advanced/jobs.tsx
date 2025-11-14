@@ -8,6 +8,7 @@ import { DataTableColumnHeader } from "~/components/data-table/data-table-column
 import VirtualizedTable from "~/components/data-table/virtualized-data-table";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
+import { ButtonGroup } from "~/components/ui/button-group";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Job, JobQueue } from "~/lib/types";
@@ -145,27 +146,31 @@ export default function AdminAdvancedJobs() {
             removeJobVariables?.queueName === queueName;
 
           return (
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="icon"
-                title="Retry job"
-                onClick={() => retryJob({ jobId: job.id, queueName })}
-                disabled={isRetrying}
-              >
-                <RotateCw className={cn(isRetrying ? "animate-spin" : "")} />
-              </Button>
-              <Button
-                variant="destructive"
-                size="icon"
-                title="Remove job"
-                onClick={() => removeJob({ jobId: job.id, queueName })}
-                disabled={isRemoving}
-                className={cn(isRemoving ? "animate-pulse" : "")}
-              >
-                <X />
-              </Button>
-            </div>
+            <ButtonGroup>
+              <ButtonGroup>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  title="Retry job"
+                  onClick={() => retryJob({ jobId: job.id, queueName })}
+                  disabled={isRetrying}
+                >
+                  <RotateCw className={cn(isRetrying ? "animate-spin" : "")} />
+                </Button>
+              </ButtonGroup>
+              <ButtonGroup>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  title="Remove job"
+                  onClick={() => removeJob({ jobId: job.id, queueName })}
+                  disabled={isRemoving}
+                  className={cn(isRemoving ? "animate-pulse" : "")}
+                >
+                  <X />
+                </Button>
+              </ButtonGroup>
+            </ButtonGroup>
           );
         },
       },

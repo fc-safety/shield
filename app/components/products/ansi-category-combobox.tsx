@@ -118,7 +118,7 @@ export function AnsiCategoryDisplay({
               } as React.CSSProperties
             }
             className={cn(
-              "flex items-center justify-center rounded-sm bg-[var(--ansi-bg)] text-[var(--ansi-icon-color)]",
+              "flex items-center justify-center rounded-sm bg-(--ansi-bg) text-(--ansi-icon-color)",
               size === "sm" ? "size-5 text-xs" : "size-6 text-sm"
             )}
           >

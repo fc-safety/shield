@@ -1,5 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table";
-import { CornerDownRight, MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { CornerDownRight, Pencil, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { ViewContext } from "~/.server/api-utils";
@@ -9,14 +9,6 @@ import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable, type DataTableProps } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
-import { Button } from "~/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -27,6 +19,7 @@ import type { Asset, ProductCategory } from "~/lib/models";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
 import ActiveToggle from "../active-toggle";
+import ResponsiveActions from "../common/responsive-actions";
 import { ResponsiveDialog } from "../responsive-dialog";
 import AssetDetailsForm from "./asset-details-form";
 import CreateAssetButton from "./create-asset-assistant/create-asset-button";
@@ -246,54 +239,60 @@ export default function AssetsTable({
           const asset = row.original;
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {toDetailsRoute ? (
-                  <DropdownMenuItem asChild>
-                    <Link to={toDetailsRoute(asset)}>
-                      <CornerDownRight />
-                      Details
-                    </Link>
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem disabled={!canEdit} onSelect={() => editAsset.openData(asset)}>
-                    <Pencil />
-                    Edit
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={!canDelete}
-                  onSelect={() =>
-                    setDeleteAction((draft) => {
-                      draft.open = true;
-                      draft.title = "Delete Asset";
-                      draft.message = `Are you sure you want to delete ${asset.name || asset.id}?`;
-                      draft.requiredUserInput = asset.name || asset.id;
-                      draft.onConfirm = () => {
-                        submitDelete(
-                          {},
-                          {
-                            method: "delete",
-                            path: `/api/proxy/assets/${asset.id}`,
-                            viewContext,
-                          }
-                        );
-                      };
-                    })
-                  }
-                >
-                  <Trash />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "details",
+                      text: "Details",
+                      Icon: CornerDownRight,
+                      linkTo: toDetailsRoute ? toDetailsRoute(asset) : undefined,
+                      hide: !toDetailsRoute,
+                    },
+                    {
+                      key: "edit",
+                      text: "Edit",
+                      Icon: Pencil,
+                      disabled: !canEdit,
+                      onAction: () => editAsset.openData(asset),
+                      hide: !!toDetailsRoute,
+                    },
+                  ],
+                },
+                {
+                  key: "destructive-actions",
+                  variant: "destructive",
+                  actions: [
+                    {
+                      key: "delete",
+                      text: "Delete",
+                      Icon: Trash,
+                      disabled: !canDelete,
+                      onAction: () => {
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete Asset";
+                          draft.message = `Are you sure you want to delete ${asset.name || asset.id}?`;
+                          draft.requiredUserInput = asset.name || asset.id;
+                          draft.onConfirm = () => {
+                            submitDelete(
+                              {},
+                              {
+                                method: "delete",
+                                path: `/api/proxy/assets/${asset.id}`,
+                                viewContext,
+                              }
+                            );
+                          };
+                        });
+                      },
+                    },
+                  ],
+                },
+              ]}
+            />
           );
         },
       },

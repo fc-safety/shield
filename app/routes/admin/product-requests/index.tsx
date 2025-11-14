@@ -1,19 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ColumnDef } from "@tanstack/react-table";
-import {
-  AlertCircle,
-  ChevronDown,
-  CornerDownRight,
-  MoreHorizontal,
-  Package,
-  RefreshCw,
-} from "lucide-react";
+import { AlertCircle, ChevronDown, CornerDownRight, Package, RefreshCw } from "lucide-react";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import { ProductRequestStatusBadge } from "~/components/assets/product-request-status-badge";
+import ResponsiveActions from "~/components/common/responsive-actions";
 import { getSelectColumn } from "~/components/data-table/columns";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -138,30 +131,28 @@ export default function AdminProductRequestsIndex({
           const request = row.original;
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
-                <DropdownMenuItem asChild>
-                  <Link to={request.id}>
-                    <CornerDownRight />
-                    Details
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => updateStatus.openData([request])}
-                  disabled={["COMPLETE", "CANCELLED"].includes(request.status)}
-                >
-                  <RefreshCw />
-                  Update Status
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "details",
+                      text: "Details",
+                      Icon: CornerDownRight,
+                      linkTo: request.id,
+                    },
+                    {
+                      key: "update-status",
+                      text: "Update Status",
+                      Icon: RefreshCw,
+                      onAction: () => updateStatus.openData([request]),
+                      disabled: ["COMPLETE", "CANCELLED"].includes(request.status),
+                    },
+                  ],
+                },
+              ]}
+            />
           );
         },
       },

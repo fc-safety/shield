@@ -64,6 +64,7 @@ export interface DataTableProps<TData, TValue> extends Omit<DataTableToolbarProp
   onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
   onColumnOrderChange?: OnChangeFn<ColumnOrderState>;
   onPaginationChange?: OnChangeFn<PaginationState>;
+  onExpandedChange?: OnChangeFn<ExpandedState>;
   getSubRows?: (originalRow: TData, index: number) => TData[] | undefined;
 }
 
@@ -80,6 +81,7 @@ export function DataTable<TData, TValue>({
   onColumnVisibilityChange,
   onColumnOrderChange,
   onPaginationChange,
+  onExpandedChange,
   getSubRows,
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
@@ -117,6 +119,9 @@ export function DataTable<TData, TValue>({
   useEffect(() => {
     onPaginationChange?.(pagination);
   }, [pagination, onPaginationChange]);
+  useEffect(() => {
+    onExpandedChange?.(expanded);
+  }, [expanded, onExpandedChange]);
 
   const table = useReactTable({
     data,
@@ -128,6 +133,7 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnOrder,
       pagination,
+      expanded,
     },
     initialState,
     enableRowSelection: true,
@@ -137,6 +143,7 @@ export function DataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
     onPaginationChange: setPagination,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),

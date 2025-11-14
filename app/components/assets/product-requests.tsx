@@ -41,6 +41,14 @@ import { AnsiCategoryDisplay } from "../products/ansi-category-combobox";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "../ui/empty";
 import { Input } from "../ui/input";
 import { ScrollArea } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
@@ -92,6 +100,7 @@ export function NewSupplyRequestButton({ ...props }: ComponentProps<typeof Produ
       render={({ isDesktop }) => (
         <ProductRequestForm
           {...props}
+          onClose={() => setOpen(false)}
           renderFormFooter={({ renderDefault }) => {
             return isDesktop ? (
               <DialogFooter>{renderDefault({ align: "end" })}</DialogFooter>
@@ -117,6 +126,7 @@ export function ProductRequestForm({
   renderFormFooter = ({ renderDefault }) => renderDefault(),
   onSubmitted = () => {},
   onSuccess = () => {},
+  onClose = () => {},
 }: {
   assetId: string;
   parentProductId: string;
@@ -127,6 +137,7 @@ export function ProductRequestForm({
   }) => React.ReactNode;
   onSubmitted?: () => void;
   onSuccess?: (data: ProductRequest) => void;
+  onClose?: () => void;
 }) {
   const previewImage = useOpenData<string>();
 
@@ -228,15 +239,33 @@ export function ProductRequestForm({
 
   if (!suppliesLoading && ansiCategories && ansiCategories.length === 0) {
     return (
-      <div className="border-border bg-card flex flex-col items-center gap-2 self-center rounded-md border p-4">
-        <SearchX className="size-10" />
-        <div className="text-center">
-          <h4 className="text-sm leading-6 font-medium">No supplies found.</h4>
-          <p className="text-muted-foreground text-xs">
+      // <div className="border-border bg-card flex flex-col items-center gap-2 self-center rounded-md border p-4">
+      //   <SearchX className="size-10" />
+      //   <div className="text-center">
+      //     <h4 className="text-sm leading-6 font-medium">No supplies found.</h4>
+      //     <p className="text-muted-foreground text-xs">
+      //       This asset does not have any supplies available for reorder.
+      //     </p>
+      //   </div>
+      // </div>
+      <Empty className="col-span-full border border-dashed">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <SearchX />
+          </EmptyMedia>
+          <EmptyTitle>No supplies found.</EmptyTitle>
+          <EmptyDescription>
             This asset does not have any supplies available for reorder.
-          </p>
-        </div>
-      </div>
+          </EmptyDescription>
+        </EmptyHeader>
+        {onClose && (
+          <EmptyContent>
+            <Button variant="secondary" onClick={onClose} type="button" size="sm">
+              Close
+            </Button>
+          </EmptyContent>
+        )}
+      </Empty>
     );
   }
 
@@ -293,7 +322,7 @@ export function ProductRequestForm({
                                 <Input
                                   type="text"
                                   {...field}
-                                  className="focus-visible:border-border h-8 w-10 rounded-none rounded-l-md border-0 border-t-1 border-b-1 border-l-1 px-1 text-center"
+                                  className="focus-visible:border-border h-8 w-10 rounded-none rounded-l-md border-0 border-t border-b border-l px-1 text-center"
                                   inputMode="numeric"
                                   pattern="[0-9]*"
                                   onChange={(e) => {
@@ -474,7 +503,7 @@ function ConsumableSelectTabs({
                   "--tab-inactive-color": category.color ?? "hsl(var(--muted-foreground))",
                 } as React.CSSProperties
               }
-              className="flex shrink-0 grow flex-col items-center justify-center bg-[var(--tab-active-bg)] py-1 font-bold text-[var(--tab-active-color)] data-[state=active]:mx-1 data-[state=active]:scale-105 data-[state=active]:bg-[var(--tab-active-bg)] data-[state=active]:text-[var(--tab-active-color)] sm:py-1.5"
+              className="flex shrink-0 grow flex-col items-center justify-center bg-(--tab-active-bg) py-1 font-bold text-(--tab-active-color) data-[state=active]:mx-1 data-[state=active]:scale-105 data-[state=active]:bg-(--tab-active-bg) data-[state=active]:text-(--tab-active-color) sm:py-1.5"
             >
               {category.icon && <Icon iconId={category.icon} className="text-base sm:text-lg" />}
               <div className="text-2xs w-min whitespace-nowrap">{category.name}</div>
@@ -548,8 +577,8 @@ function AvailableConsumables({
       onIsOverflowingY={setAvailableConsumablesIsOverflowingY}
       onIsScrollMaxedY={setAvailableConsumablesIsScrollMaxedY}
       className={cn("[>div]:flex-1 relative flex max-h-[25dvh] flex-col border-t-2 border-b-2", {
-        "border-t-[var(--ansi-color)]": ansiCategory.color,
-        "border-b-[var(--ansi-color)]": ansiCategory.color,
+        "border-t-(--ansi-color)": ansiCategory.color,
+        "border-b-(--ansi-color)": ansiCategory.color,
       })}
     >
       <div className="divide-border/50 mt-2 grid w-full grid-cols-[auto_1fr_auto] gap-x-3 divide-y">
@@ -636,7 +665,7 @@ function ProductRequestItem({
           className={cn(
             "border-border flex size-16 items-center justify-center overflow-hidden rounded-md border-2 bg-white p-1",
             {
-              "border-[var(--ansi-color)]": product.ansiCategory?.color,
+              "border-(--ansi-color)": product.ansiCategory?.color,
             }
           )}
         >

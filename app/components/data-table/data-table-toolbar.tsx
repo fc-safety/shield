@@ -4,6 +4,9 @@ import { X } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 
+import { useMemo } from "react";
+import { Fragment } from "react/jsx-runtime";
+import { ButtonGroup, ButtonGroupSeparator } from "../ui/button-group";
 import {
   DataTableFacetedFilter,
   type DataTableFacetedFilterProps,
@@ -32,6 +35,9 @@ export function DataTableToolbar<TData>({
   searchPlaceholder = "Search...",
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
+  const resolvedActions = useMemo(() => {
+    return typeof actions === "function" ? actions({ table }) : actions;
+  }, [actions, table]);
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -59,10 +65,19 @@ export function DataTableToolbar<TData>({
         )}
         {externalFilters}
       </div>
-      <div className="flex items-center space-x-2">
-        {typeof actions === "function" ? actions({ table }) : actions}
-        <DataTableViewOptions table={table} />
-      </div>
+      <ButtonGroup>
+        <ButtonGroup>
+          {resolvedActions.map((action, idx) => (
+            <Fragment key={idx}>
+              {action}
+              {idx < resolvedActions.length - 1 && <ButtonGroupSeparator />}
+            </Fragment>
+          ))}
+        </ButtonGroup>
+        <ButtonGroup>
+          <DataTableViewOptions table={table} />
+        </ButtonGroup>
+      </ButtonGroup>
     </div>
   );
 }
