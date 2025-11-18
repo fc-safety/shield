@@ -4,7 +4,6 @@ import * as React from "react";
 import { Fragment } from "react";
 import { Link } from "react-router";
 
-import { useMediaQuery } from "usehooks-ts";
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -31,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import useIsMobile from "~/hooks/use-is-mobile";
 
 const ITEMS_TO_DISPLAY = 4;
 
@@ -38,11 +38,9 @@ interface BreadcrumbResponsiveProps {
   items: { id: string; to?: string; label: React.ReactNode }[];
 }
 
-export const BreadcrumbResponsive: React.FC<BreadcrumbResponsiveProps> = ({
-  items,
-}) => {
+export const BreadcrumbResponsive: React.FC<BreadcrumbResponsiveProps> = ({ items }) => {
   const [open, setOpen] = React.useState(false);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isMobile = useIsMobile();
 
   return items.length ? (
     <Breadcrumb>
@@ -50,9 +48,7 @@ export const BreadcrumbResponsive: React.FC<BreadcrumbResponsiveProps> = ({
         {items.length > 1 && (
           <>
             <BreadcrumbItem>
-              <BreadcrumbLink href={items[0].to}>
-                {items[0].label}
-              </BreadcrumbLink>
+              <BreadcrumbLink href={items[0].to}>{items[0].label}</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
           </>
@@ -60,12 +56,9 @@ export const BreadcrumbResponsive: React.FC<BreadcrumbResponsiveProps> = ({
         {items.length > ITEMS_TO_DISPLAY ? (
           <>
             <BreadcrumbItem>
-              {isDesktop ? (
+              {!isMobile ? (
                 <DropdownMenu open={open} onOpenChange={setOpen}>
-                  <DropdownMenuTrigger
-                    className="flex items-center gap-1"
-                    aria-label="Toggle menu"
-                  >
+                  <DropdownMenuTrigger className="flex items-center gap-1" aria-label="Toggle menu">
                     <BreadcrumbEllipsis className="h-4 w-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
@@ -84,17 +77,11 @@ export const BreadcrumbResponsive: React.FC<BreadcrumbResponsiveProps> = ({
                   <DrawerContent>
                     <DrawerHeader className="text-left">
                       <DrawerTitle>Navigate to</DrawerTitle>
-                      <DrawerDescription>
-                        Select a page to navigate to.
-                      </DrawerDescription>
+                      <DrawerDescription>Select a page to navigate to.</DrawerDescription>
                     </DrawerHeader>
                     <div className="grid gap-1 px-4">
                       {items.slice(1, -2).map((item) => (
-                        <Link
-                          key={item.id}
-                          to={item.to ? item.to : "#"}
-                          className="py-1 text-sm"
-                        >
+                        <Link key={item.id} to={item.to ? item.to : "#"} className="py-1 text-sm">
                           {item.label}
                         </Link>
                       ))}
@@ -111,21 +98,16 @@ export const BreadcrumbResponsive: React.FC<BreadcrumbResponsiveProps> = ({
             <BreadcrumbSeparator />
           </>
         ) : null}
-        {items
-          .slice(Math.max(-(items.length - 1), -ITEMS_TO_DISPLAY + 1), -1)
-          .map((item) => (
-            <Fragment key={item.id}>
-              <BreadcrumbItem>
-                <BreadcrumbLink
-                  asChild
-                  className="max-w-20 truncate md:max-w-none"
-                >
-                  <Link to={item.to ? item.to : "#"}>{item.label}</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-            </Fragment>
-          ))}
+        {items.slice(Math.max(-(items.length - 1), -ITEMS_TO_DISPLAY + 1), -1).map((item) => (
+          <Fragment key={item.id}>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild className="max-w-20 truncate md:max-w-none">
+                <Link to={item.to ? item.to : "#"}>{item.label}</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </Fragment>
+        ))}
         <BreadcrumbItem>
           <BreadcrumbPage className="max-w-20 truncate md:max-w-none">
             {items.at(-1)?.label}

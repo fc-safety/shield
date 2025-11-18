@@ -2,7 +2,6 @@ import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 import * as React from "react";
-import { useMediaQuery } from "usehooks-ts";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -11,6 +10,7 @@ import { Sheet, SheetContent } from "~/components/ui/sheet";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAppState } from "~/contexts/app-state-context";
+import useIsMobile from "~/hooks/use-is-mobile";
 import { cn } from "~/lib/utils";
 
 const SIDEBAR_WIDTH = "14rem";
@@ -69,8 +69,7 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const { appState, setAppState } = useAppState();
 
-    const isDesktop = useMediaQuery("(min-width: 768px)", { defaultValue: true });
-    const isMobile = !isDesktop;
+    const isMobile = useIsMobile({ defaultValue: false });
 
     const [openMobile, setOpenMobile] = React.useState<string | undefined>();
 

@@ -502,6 +502,7 @@ export const baseCreateAssetQuestionSchema = z.object({
   helpText: z.string().optional(),
   placeholder: z.string().optional(),
   tone: z.string().optional(),
+  client: disconnectableSchema.optional(),
   assetAlertCriteria: z
     .object({
       createMany: z.object({

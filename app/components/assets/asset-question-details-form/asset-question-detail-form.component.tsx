@@ -62,28 +62,18 @@ export interface AssetQuestionDetailFormProps {
   assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
   viewContext?: ViewContext;
+  clientId?: string;
 }
-
-const FORM_DEFAULTS = {
-  active: true,
-  type: "INSPECTION",
-  required: true,
-  prompt: "",
-  valueType: "BINARY",
-  tone: ASSET_QUESTION_TONES.POSITIVE,
-  conditions: {
-    createMany: {
-      data: [],
-    },
-  },
-} satisfies TForm;
-
 export default function AssetQuestionDetailForm({
   ...passthroughProps
 }: AssetQuestionDetailFormProps) {
-  const { assetQuestion } = passthroughProps;
+  const { assetQuestion, clientId, viewContext } = passthroughProps;
   return (
-    <AssetQuestionDetailFormProvider action={assetQuestion ? "update" : "create"}>
+    <AssetQuestionDetailFormProvider
+      action={assetQuestion ? "update" : "create"}
+      clientId={clientId}
+      viewContext={viewContext}
+    >
       <AssetQuestionDetailsFormContent {...passthroughProps} />
     </AssetQuestionDetailFormProvider>
   );
@@ -93,9 +83,29 @@ function AssetQuestionDetailsFormContent({
   assetQuestion,
   onSubmitted,
   viewContext,
+  clientId,
 }: AssetQuestionDetailFormProps) {
   const isNew = !assetQuestion;
   const { closeSidepanel } = useAssetQuestionDetailFormContext();
+
+  const FORM_DEFAULTS = useMemo(
+    () =>
+      ({
+        active: true,
+        type: "INSPECTION",
+        required: true,
+        prompt: "",
+        valueType: "BINARY",
+        tone: ASSET_QUESTION_TONES.POSITIVE,
+        conditions: {
+          createMany: {
+            data: [],
+          },
+        },
+        client: connectOrEmpty(clientId),
+      }) satisfies TForm,
+    [clientId]
+  );
 
   const form = useForm({
     resolver: zodResolver(!isNew ? updateAssetQuestionSchema : createAssetQuestionSchema),
@@ -117,6 +127,7 @@ function AssetQuestionDetailsFormContent({
               }
             : undefined,
           tone: assetQuestion?.tone ?? ASSET_QUESTION_TONES.NEUTRAL,
+          client: connectOrEmpty(assetQuestion, "clientId") ?? connectOrEmpty(clientId),
           variants: undefined,
           conditions: {
             updateMany: toUpdateMany(assetQuestion.conditions),

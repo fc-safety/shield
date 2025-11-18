@@ -420,7 +420,7 @@ export default function ProductDetailsForm({
             >
               {" "}
               <div className="space-y-4 pt-6">
-                {userIsGlobalAdmin && <MetadataInput />}
+                {userIsGlobalAdmin && <MetadataInput viewContext={viewContext} />}
                 {canAssignOwnership && (
                   <FormField
                     control={form.control}

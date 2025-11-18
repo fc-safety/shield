@@ -3,6 +3,7 @@ import Fuse from "fuse.js";
 import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
+import type { ViewContext } from "~/.server/api-utils";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { cn } from "~/lib/utils";
@@ -27,6 +28,7 @@ export default function MetadataValueCombobox({
   className,
   placeholder,
   autoFocus,
+  viewContext = "user",
 }: {
   metadataKey: string;
   value: string | undefined;
@@ -35,6 +37,7 @@ export default function MetadataValueCombobox({
   className?: string;
   placeholder?: string;
   autoFocus?: boolean;
+  viewContext?: ViewContext;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
 
@@ -48,8 +51,8 @@ export default function MetadataValueCombobox({
 
   const queryClient = useQueryClient();
   const { data: valueOptionsRaw, isLoading } = useQuery({
-    queryKey: ["metadata-values", metadataKey] as const,
-    queryFn: () => getMetadataValues(fetchOrThrow, metadataKey),
+    queryKey: ["metadata-values", metadataKey, viewContext] as const,
+    queryFn: ({ queryKey }) => getMetadataValues(fetchOrThrow, queryKey[1], queryKey[2]),
     enabled: !!metadataKey,
     staleTime: 0,
   });
@@ -166,8 +169,14 @@ export default function MetadataValueCombobox({
   );
 }
 
-const getMetadataValues = async (fetcher: typeof fetch, metadataKey: string): Promise<string[]> => {
-  return await fetcher(`/assets/metadata-values/${metadataKey}`).then(
-    (r) => r.json() as Promise<string[]>
-  );
+const getMetadataValues = async (
+  fetcher: typeof fetch,
+  metadataKey: string,
+  viewContext: ViewContext
+): Promise<string[]> => {
+  return await fetcher(`/assets/metadata-values/${metadataKey}`, {
+    headers: {
+      "x-view-context": viewContext,
+    },
+  }).then((r) => r.json() as Promise<string[]>);
 };

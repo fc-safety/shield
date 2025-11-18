@@ -112,6 +112,7 @@ const ActionButtonGroup = ({ actionGroup }: { actionGroup: TActionGroup }) => {
               size={defaultSize}
               variant={action.variant ?? defaultVariant}
               title={action.text}
+              disabled={action.disabled}
             >
               {action.linkTo ? <Link to={action.linkTo!}>{displayContent}</Link> : displayContent}
             </Button>

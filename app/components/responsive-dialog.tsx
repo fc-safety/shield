@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import { useCallback, useMemo, useState, type ComponentProps } from "react";
-import { useMediaQuery, useResizeObserver } from "usehooks-ts";
+import { useResizeObserver } from "usehooks-ts";
+import useIsMobile from "~/hooks/use-is-mobile";
 import { ScrollArea } from "./ui/scroll-area";
 
 interface ResponsiveDialogProps
@@ -72,7 +73,7 @@ export function ResponsiveDialog({
   isNestedDrawer = false,
   disableScrollArea = false,
 }: ResponsiveDialogProps) {
-  const isDesktop = useMediaQuery(`(min-width: ${minWidth})`);
+  const isMobile = useIsMobile();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
   const onOpenChange = onOpenChangeProp ?? setInternalOpen;
@@ -92,13 +93,13 @@ export function ResponsiveDialog({
   const renderedChildren = useMemo(() => {
     return render
       ? render({
-          isDesktop,
+          isDesktop: !isMobile,
           open,
           onOpenChange,
-          drawerContentHeight: !isDesktop ? drawerContentHeight : undefined,
+          drawerContentHeight: isMobile ? drawerContentHeight : undefined,
         })
       : null;
-  }, [render, isDesktop, open, onOpenChange, drawerContentHeight]);
+  }, [render, isMobile, open, onOpenChange, drawerContentHeight]);
 
   const ScrollAreaComponent = useCallback(
     ({ children, className }: Pick<ComponentProps<"div">, "children" | "className">) =>
@@ -116,7 +117,7 @@ export function ResponsiveDialog({
     return isNestedDrawer ? DrawerNested : Drawer;
   }, [isNestedDrawer]);
 
-  if (isDesktop) {
+  if (!isMobile) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogTrigger asChild={!!trigger} className={classNames?.trigger}>

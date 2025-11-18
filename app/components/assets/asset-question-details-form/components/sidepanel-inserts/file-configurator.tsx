@@ -48,7 +48,12 @@ export default function FileConfigurator() {
             <FormItem>
               <FormLabel>Display Name</FormLabel>
               <FormControl>
-                <Input value={value} onChange={onChange} onBlur={onBlur} />
+                <Input
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  onClick={(e) => e.currentTarget.select()}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
