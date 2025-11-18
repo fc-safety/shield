@@ -25,18 +25,27 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const clientIdPathIdx = pathParts.indexOf("my-organization");
   const currentTab = pathParts.at(clientIdPathIdx + 1) as Tab | undefined;
 
-  const client = await api.clients
+  const clientPromise = api.clients
     .list(request, {
       limit: 1,
       externalId: user.clientId,
     })
     .then((r) => r.results.at(0));
 
+  // Without an admin context, this should only get the user's own sites.
+  const sitesPromise = api.sites
+    .list(request, {
+      limit: 10000,
+    })
+    .then((r) => r.results);
+
+  const [client, sites] = await Promise.all([clientPromise, sitesPromise]);
+
   if (!client) {
     throw new Error("No client found for user.");
   }
 
-  return { client, currentTab };
+  return { client, sites, currentTab };
 };
 
 export default function MyOrganization({

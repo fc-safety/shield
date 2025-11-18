@@ -4,17 +4,25 @@ import ClientDetailsTabsUsersTab from "~/components/clients/pages/client-details
 import type { loader as layoutLoader } from "../layout";
 import type { Route } from "./+types/users-tab";
 
-export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const usersResult = await api.users.list(request, { limit: 10000 });
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const usersPromise = await api.users.list(request, { limit: 10000 }).then((r) => r.results);
+
+  const [users] = await Promise.all([usersPromise]);
 
   return {
-    users: usersResult.results,
+    users,
   };
 };
 
 export default function UsersTab({ loaderData: { users } }: Route.ComponentProps) {
-  const layoutData = useRouteLoaderData<typeof layoutLoader>("my-organization");
+  const layoutData = useRouteLoaderData<typeof layoutLoader>("routes/my-organization/layout");
+
   return (
-    <ClientDetailsTabsUsersTab users={users} clientId={layoutData?.client?.id} viewContext="user" />
+    <ClientDetailsTabsUsersTab
+      users={users}
+      sites={layoutData?.sites ?? []}
+      clientId={layoutData?.client?.id}
+      viewContext="user"
+    />
   );
 }
