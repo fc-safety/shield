@@ -159,7 +159,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className={cn("flex flex-col gap-y-4 bg-inherit", classNames?.container)}>
+    <div className={cn("flex min-w-0 flex-col gap-y-4 bg-inherit", classNames?.container)}>
       {!hideToolbar && <DataTableToolbar table={table} {...passThroughProps} />}
       <div className="flex min-h-0 flex-1 flex-col rounded-md border bg-inherit">
         <Table

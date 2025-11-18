@@ -33,7 +33,7 @@ export default function ProductsQuestionsTab({
       clientId={clientId}
       products={products}
       questions={questions}
-      viewContext="admin"
+      viewContext="user"
     />
   );
 }

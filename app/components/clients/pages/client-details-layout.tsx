@@ -30,7 +30,7 @@ export default function ClientDetailsLayout({
   const { user } = useAuth();
 
   const tabs = useMemo(
-    (): { label: string; value: string; disabled?: boolean }[] => [
+    (): { label: string; value: string; disabled?: boolean; hide?: boolean }[] => [
       {
         label: "Sites",
         value: "sites",
@@ -69,25 +69,29 @@ export default function ClientDetailsLayout({
           <ClientDetailsHeader client={client} viewContext={viewContext} />
           <NavigationMenu className="flex-none">
             <NavigationMenuList>
-              {tabs.map((tab) => (
-                <NavigationMenuItem
-                  key={tab.value}
-                  className={cn({
-                    "cursor-not-allowed": tab.disabled,
-                  })}
-                  title={tab.disabled ? "You do not have permission to access this tab" : undefined}
-                >
-                  <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                    <NavLink
-                      to={`./${tab.value}`}
-                      data-is-active={currentTab === tab.value}
-                      aria-disabled={tab.disabled}
-                    >
-                      {tab.label}
-                    </NavLink>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-              ))}
+              {tabs
+                .filter((tab) => !tab.hide)
+                .map((tab) => (
+                  <NavigationMenuItem
+                    key={tab.value}
+                    className={cn({
+                      "cursor-not-allowed": tab.disabled,
+                    })}
+                    title={
+                      tab.disabled ? "You do not have permission to access this tab" : undefined
+                    }
+                  >
+                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                      <NavLink
+                        to={`./${tab.value}`}
+                        data-is-active={currentTab === tab.value}
+                        aria-disabled={tab.disabled}
+                      >
+                        {tab.label}
+                      </NavLink>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                ))}
             </NavigationMenuList>
           </NavigationMenu>
           <Outlet />

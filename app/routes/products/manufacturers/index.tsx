@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Building2, CornerDownRight, Factory, Globe2, Trash, type LucideIcon } from "lucide-react";
+import { CornerDownRight, Factory, Trash, type LucideIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { api } from "~/.server/api";
@@ -23,7 +23,7 @@ import { can, isGlobalAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const query = { limit: 10000 } as QueryParams;
+  const query = { limit: 10000, clientId: "_NULL" } as QueryParams;
 
   return api.manufacturers.list(request, query).then((manufacturersResponse) => ({
     manufacturers: manufacturersResponse.results,
@@ -40,61 +40,18 @@ export default function ProductManufacturers({
   const hasDeletePermission = can(user, "delete", "manufacturers");
   const hasUpdatePermission = can(user, "update", "manufacturers");
 
-  const [globalManufacturers, clientManufacturers, myManufacturers] = useMemo(() => {
-    const globalManufacturers: Manufacturer[] = [];
-    const clientManufacturers: Manufacturer[] = [];
-    const myManufacturers: Manufacturer[] = [];
-
-    manufacturers.forEach((manufacturer) => {
-      if (manufacturer.clientId !== null) {
-        if (manufacturer.client?.externalId === user.clientId) {
-          myManufacturers.push(manufacturer);
-        } else {
-          clientManufacturers.push(manufacturer);
-        }
-      } else {
-        globalManufacturers.push(manufacturer);
-      }
-    });
-
-    return [globalManufacturers, clientManufacturers, myManufacturers];
-  }, [manufacturers, user.clientId]);
-
   return (
     <div className="grid gap-4">
       <ManufacturersCard
-        title="My Manufacturers"
-        description="These are manufacturers that either you or someone in your organization has created."
-        TitleIcon={Factory}
-        manufacturers={myManufacturers}
-        canCreate={hasCreatePermission}
-        canDelete={hasDeletePermission}
-        canUpdate={hasUpdatePermission}
-        viewContext="user"
-      />
-      <ManufacturersCard
         title="Global Manufacturers"
-        description="These are manufacturers that anyone can use."
-        TitleIcon={Globe2}
-        manufacturers={globalManufacturers}
+        description="Manufacturers accessible to all clients."
+        TitleIcon={Factory}
+        manufacturers={manufacturers}
         canCreate={hasCreatePermission && userIsGlobalAdmin}
         canDelete={hasDeletePermission && userIsGlobalAdmin}
         canUpdate={hasUpdatePermission && userIsGlobalAdmin}
         viewContext={userIsGlobalAdmin ? "admin" : "user"}
       />
-      {isGlobalAdmin(user) && (
-        <ManufacturersCard
-          title="Client Manufacturers"
-          description="These are manufacturers that have been created by other clients."
-          TitleIcon={Building2}
-          manufacturers={clientManufacturers}
-          canCreate={false}
-          canDelete={userIsGlobalAdmin}
-          canUpdate={hasUpdatePermission && userIsGlobalAdmin}
-          viewContext={userIsGlobalAdmin ? "admin" : "user"}
-          showOwner
-        />
-      )}{" "}
     </div>
   );
 }

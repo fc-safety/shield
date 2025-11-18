@@ -53,8 +53,6 @@ export default [
   ...prefix("api", [
     route("query-zip/:zip", "./routes/api/query-zip.ts"),
     route("link-preview-metadata", "./routes/api/link-preview-metadata.ts"),
-    route("product-categories", "./routes/api/product-categories.ts"),
-    route("manufacturers", "./routes/api/manufacturers.ts"),
     route("inspections/:id", "./routes/api/inspections.ts"),
     route("proxy/*", "./routes/api/proxy.ts"),
     route("image-upload-url", "./routes/api/image-upload-url.ts"),

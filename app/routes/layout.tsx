@@ -32,7 +32,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/s
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
-import { can, isSuperAdmin } from "~/lib/users";
+import { can, isGlobalAdmin, isSuperAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -98,7 +98,7 @@ export default function Layout({
     },
     {
       groupTitle: "Products",
-      hide: !can(user, "read", "products"),
+      hide: !isGlobalAdmin(user) || !can(user, "read", "products"),
       items: [
         {
           type: "link",

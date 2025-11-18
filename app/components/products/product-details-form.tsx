@@ -14,12 +14,13 @@ import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
 import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
@@ -46,6 +47,7 @@ export interface ProductDetailsFormProps {
   manufacturer?: Manufacturer;
   consumable?: boolean;
   viewContext?: ViewContext;
+  clientId?: string;
 }
 
 export default function ProductDetailsForm({
@@ -57,6 +59,7 @@ export default function ProductDetailsForm({
   manufacturer,
   consumable = false,
   viewContext,
+  clientId,
 }: ProductDetailsFormProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -67,32 +70,37 @@ export default function ProductDetailsForm({
   const isNew = !product;
   const requireConsumable = Boolean(consumable || parentProduct);
 
-  const FORM_DEFAULTS = {
-    id: "",
-    active: true,
-    type: requireConsumable ? "CONSUMABLE" : "PRIMARY",
-    productCategory: {
-      connect: {
-        id: productCategory?.id ?? parentProduct?.productCategoryId ?? "",
-      },
-    },
-    manufacturer: {
-      connect: {
-        id: manufacturer?.id ?? parentProduct?.manufacturerId ?? "",
-      },
-    },
-    name: "",
-    description: "",
-    sku: "",
-    productUrl: "",
-    parentProduct: parentProduct
-      ? {
+  const FORM_DEFAULTS = useMemo(
+    () =>
+      ({
+        id: "",
+        active: true,
+        type: requireConsumable ? "CONSUMABLE" : "PRIMARY",
+        productCategory: {
           connect: {
-            id: parentProduct.id,
+            id: productCategory?.id ?? parentProduct?.productCategoryId ?? "",
           },
-        }
-      : undefined,
-  } satisfies TForm;
+        },
+        manufacturer: {
+          connect: {
+            id: manufacturer?.id ?? parentProduct?.manufacturerId ?? "",
+          },
+        },
+        name: "",
+        description: "",
+        sku: "",
+        productUrl: "",
+        parentProduct: parentProduct
+          ? {
+              connect: {
+                id: parentProduct.id,
+              },
+            }
+          : undefined,
+        client: connectOrEmpty(clientId),
+      }) satisfies TForm,
+    [clientId]
+  );
 
   const form = useForm({
     resolver: zodResolver(isNew ? createProductSchema : updateProductSchema),
@@ -113,7 +121,7 @@ export default function ProductDetailsForm({
           sku: product.sku ?? "",
           productUrl: product.productUrl ?? "",
           imageUrl: product.imageUrl ?? "",
-          client: product.client ? { connect: { id: product.client.id } } : undefined,
+          client: connectOrEmpty(product.client, "id") ?? connectOrEmpty(clientId),
           parentProduct: parentProduct ? { connect: { id: parentProduct.id } } : undefined,
           ansiCategory: product.ansiCategory
             ? { connect: { id: product.ansiCategory.id } }
@@ -244,6 +252,8 @@ export default function ProductDetailsForm({
                         onValueChange={(id) => onChange({ connect: { id } })}
                         onBlur={onBlur}
                         className="flex"
+                        viewContext={viewContext}
+                        clientId={clientId}
                       />
                     </FormControl>
                     <FormMessage />
@@ -264,6 +274,8 @@ export default function ProductDetailsForm({
                         onValueChange={(id) => onChange({ connect: { id } })}
                         onBlur={onBlur}
                         className="flex"
+                        viewContext={viewContext}
+                        clientId={clientId}
                       />
                     </FormControl>
                     <FormMessage />

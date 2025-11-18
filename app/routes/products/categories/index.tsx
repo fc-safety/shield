@@ -1,8 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  Building2,
   CornerDownRight,
-  Globe2,
   HardHat,
   Pencil,
   Plus,
@@ -41,7 +39,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
 
   const [productCategories, ansiCategories] = await Promise.all([
-    api.productCategories.list(request, { limit: 10000, order: { name: "asc" } }),
+    api.productCategories.list(request, {
+      limit: 10000,
+      order: { name: "asc" },
+      clientId: "_NULL",
+    }),
     canReadAnsiCategories
       ? api.ansiCategories.list(request, { limit: 10000, order: { name: "asc" } })
       : Promise.resolve(null),
@@ -65,61 +67,18 @@ export default function ProductCategories({
 
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
 
-  const [globalCategories, clientCategories, myCategories] = useMemo(() => {
-    const globalCategories: ProductCategory[] = [];
-    const clientCategories: ProductCategory[] = [];
-    const myCategories: ProductCategory[] = [];
-
-    productCategories.forEach((category) => {
-      if (category.clientId !== null) {
-        if (category.client?.externalId === user.clientId) {
-          myCategories.push(category);
-        } else {
-          clientCategories.push(category);
-        }
-      } else {
-        globalCategories.push(category);
-      }
-    });
-
-    return [globalCategories, clientCategories, myCategories];
-  }, [productCategories, user.clientId]);
-
   return (
     <div className="grid gap-4">
       <ProductCategoriesCard
-        title="My Product Categories"
-        description="These are product categories that either you or someone in your organization has created."
-        TitleIcon={Shapes}
-        productCategories={myCategories}
-        canCreate={hasCreatePermission}
-        canDelete={hasDeletePermission}
-        canUpdate={hasUpdatePermission}
-        viewContext="user"
-      />
-      <ProductCategoriesCard
         title="Global Product Categories"
-        description="These are product categories that anyone can use."
-        TitleIcon={Globe2}
-        productCategories={globalCategories}
+        description="Categories accessible to all clients."
+        TitleIcon={Shapes}
+        productCategories={productCategories}
         canCreate={hasCreatePermission && userIsGlobalAdmin}
         canDelete={hasDeletePermission && userIsGlobalAdmin}
         canUpdate={hasUpdatePermission && userIsGlobalAdmin}
         viewContext={userIsGlobalAdmin ? "admin" : "user"}
       />
-      {isGlobalAdmin(user) && (
-        <ProductCategoriesCard
-          title="Client Product Categories"
-          description="These are product categories that have been created by other clients."
-          TitleIcon={Building2}
-          productCategories={clientCategories}
-          canCreate={false}
-          canDelete={userIsGlobalAdmin}
-          canUpdate={hasUpdatePermission && userIsGlobalAdmin}
-          viewContext={userIsGlobalAdmin ? "admin" : "user"}
-          showOwner
-        />
-      )}
       {canReadAnsiCategories && <AnsiCategoriesCard ansiCategories={ansiCategories} />}
     </div>
   );

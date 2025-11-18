@@ -42,9 +42,15 @@ export function useModalFetcher<T>({
   );
 
   const load = useCallback(
-    (options: { path: string; query?: QueryParams; throw?: boolean }) => {
+    (options: {
+      path: string;
+      query?: QueryParams;
+      throw?: boolean;
+      viewContext?: ViewContext;
+    }) => {
       const cleanedPath = buildPath(options.path, {
         _throw: String(!!options.throw),
+        _viewContext: options.viewContext,
         ...options.query,
       });
       rawLoad(cleanedPath);
