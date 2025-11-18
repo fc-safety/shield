@@ -11,6 +11,9 @@ export type BaseUIComponentProps = {
 // Use flat structure to ease data access and updates. This should be kept relatively
 // small to avoid reaching cookie size limits.
 export interface AppState {
+  timeZone?: string;
+  locale?: string;
+
   sidebarState?: Record<string, boolean>;
 
   // Dashboard
@@ -53,10 +56,7 @@ export interface AppState {
   dash_comp_hist_months?: number;
 
   // Products
-  products_showAll?: boolean;
   products_grp?: string[];
-  categories_showAll?: boolean;
-  manufacturers_showAll?: boolean;
 
   // Legacy Redirect
   show_legacy_redirect?: boolean;

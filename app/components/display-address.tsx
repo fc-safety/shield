@@ -1,7 +1,14 @@
 import type { Address } from "~/lib/models";
+import { cn } from "~/lib/utils";
 
-export default function DisplayAddress({ address }: { address: Address }) {
-  return <p className="whitespace-pre-wrap">{displayAddressString(address)}</p>;
+export default function DisplayAddress({
+  address,
+  className,
+}: {
+  address: Address;
+  className?: string;
+}) {
+  return <p className={cn("whitespace-pre-wrap", className)}>{displayAddressString(address)}</p>;
 }
 
 const displayAddressString = (address: Address) => {

@@ -1,17 +1,9 @@
 import { DataTable, type DataTableProps } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { isAfter } from "date-fns";
-import { Copy, Loader2, MoreHorizontal, Pencil, Trash } from "lucide-react";
+import { Copy, Loader2, Pencil, Trash } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type z from "zod";
 import type { ViewContext } from "~/.server/api-utils";
@@ -30,6 +22,7 @@ import { isGlobalAdmin } from "~/lib/users";
 import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
 import EditAssetQuestionButton from "../assets/asset-question-details-form/edit-asset-question-button";
+import ResponsiveActions from "../common/responsive-actions";
 import ConfirmationDialog from "../confirmation-dialog";
 import SubmittingCheckbox from "../submitting-checkbox";
 import SubmittingSelect from "../submitting-select";
@@ -365,126 +358,129 @@ export default function AssetQuestionsDataTable({
           const canManage = !readOnly && getIsOwnerOrGlobalAdmin(question);
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  disabled={!canManage}
-                  onSelect={() => editQuestion.openData(question)}
-                >
-                  <Pencil />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={!canManage}
-                  onSelect={() => {
-                    const payload = {
-                      active: false,
-                      order: question.order ?? undefined,
-                      type: question.type,
-                      required: question.required,
-                      prompt: question.prompt,
-                      valueType: question.valueType,
-                      tone: question.tone ?? undefined,
-                      assetAlertCriteria: question.assetAlertCriteria
-                        ? {
-                            createMany: {
-                              data: question.assetAlertCriteria.map((c) => ({
-                                rule: c.rule,
-                                alertLevel: c.alertLevel,
-                                autoResolve: c.autoResolve,
-                              })),
-                            },
-                          }
-                        : undefined,
-                      consumableConfig: question.consumableConfig
-                        ? {
-                            create: {
-                              consumableProduct: {
-                                connect: {
-                                  id: question.consumableConfig.consumableProductId,
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "edit",
+                      text: "Edit",
+                      Icon: Pencil,
+                      disabled: !canManage,
+                      onAction: () => editQuestion.openData(question),
+                    },
+                    {
+                      key: "duplicate",
+                      text: "Duplicate",
+                      Icon: Copy,
+                      disabled: !canManage,
+                      onAction: () => {
+                        const payload = {
+                          active: false,
+                          order: question.order ?? undefined,
+                          type: question.type,
+                          required: question.required,
+                          prompt: question.prompt,
+                          valueType: question.valueType,
+                          tone: question.tone ?? undefined,
+                          assetAlertCriteria: question.assetAlertCriteria
+                            ? {
+                                createMany: {
+                                  data: question.assetAlertCriteria.map((c) => ({
+                                    rule: c.rule,
+                                    alertLevel: c.alertLevel,
+                                    autoResolve: c.autoResolve,
+                                  })),
                                 },
-                              },
-                              mappingType: question.consumableConfig.mappingType,
-                            },
-                          }
-                        : undefined,
-                      conditions: {
-                        createMany: {
-                          data: (question.conditions ?? []).map((c) => ({
-                            conditionType: c.conditionType,
-                            value: c.value,
-                            description: c.description ?? undefined,
-                          })),
-                        },
-                      },
-                      variants: question.variants
-                        ? {
-                            createMany: {
-                              data: question.variants.map((v) => ({
-                                conditions: {
-                                  createMany: {
-                                    data: (v.conditions ?? []).map((c) => ({
-                                      conditionType: c.conditionType,
-                                      value: c.value,
-                                      description: c.description ?? undefined,
-                                    })),
+                              }
+                            : undefined,
+                          consumableConfig: question.consumableConfig
+                            ? {
+                                create: {
+                                  consumableProduct: {
+                                    connect: {
+                                      id: question.consumableConfig.consumableProductId,
+                                    },
                                   },
+                                  mappingType: question.consumableConfig.mappingType,
                                 },
-                                prompt: v.prompt,
-                                order: v.order ?? undefined,
-                                valueType: v.valueType,
-                                tone: v.tone ?? undefined,
-                                active: v.active,
-                                type: v.type,
-                                required: v.required,
+                              }
+                            : undefined,
+                          conditions: {
+                            createMany: {
+                              data: (question.conditions ?? []).map((c) => ({
+                                conditionType: c.conditionType,
+                                value: c.value,
+                                description: c.description ?? undefined,
                               })),
                             },
-                          }
-                        : undefined,
-                    } satisfies z.infer<typeof createAssetQuestionSchema>;
+                          },
+                          variants: question.variants
+                            ? {
+                                createMany: {
+                                  data: question.variants.map((v) => ({
+                                    conditions: {
+                                      createMany: {
+                                        data: (v.conditions ?? []).map((c) => ({
+                                          conditionType: c.conditionType,
+                                          value: c.value,
+                                          description: c.description ?? undefined,
+                                        })),
+                                      },
+                                    },
+                                    prompt: v.prompt,
+                                    order: v.order ?? undefined,
+                                    valueType: v.valueType,
+                                    tone: v.tone ?? undefined,
+                                    active: v.active,
+                                    type: v.type,
+                                    required: v.required,
+                                  })),
+                                },
+                              }
+                            : undefined,
+                        } satisfies z.infer<typeof createAssetQuestionSchema>;
 
-                    submitDuplicateQuestion(payload as any, {
-                      method: "post",
-                      path: getResourcePath(),
-                      viewContext,
-                    });
-                  }}
-                >
-                  <Copy />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={!canManage}
-                  onSelect={() =>
-                    setDeleteAction((draft) => {
-                      draft.open = true;
-                      draft.title = "Delete Question";
-                      draft.message = `Are you sure you want to delete the question "${question.prompt}"?`;
-                      draft.onConfirm = () => {
-                        submitDelete(
-                          {},
-                          {
-                            method: "delete",
-                            path: getResourcePath(question),
-                            viewContext,
-                          }
-                        );
-                      };
-                    })
-                  }
-                >
-                  <Trash />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                        submitDuplicateQuestion(payload as any, {
+                          method: "post",
+                          path: getResourcePath(),
+                          viewContext,
+                        });
+                      },
+                    },
+                  ],
+                },
+                {
+                  key: "destructive-actions",
+                  variant: "destructive",
+                  actions: [
+                    {
+                      key: "delete",
+                      text: "Delete",
+                      Icon: Trash,
+                      disabled: !canManage,
+                      onAction: () =>
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete Question";
+                          draft.message = `Are you sure you want to delete the question "${question.prompt}"?`;
+                          draft.onConfirm = () => {
+                            submitDelete(
+                              {},
+                              {
+                                method: "delete",
+                                path: getResourcePath(question),
+                                viewContext,
+                              }
+                            );
+                          };
+                        }),
+                    },
+                  ],
+                },
+              ]}
+            />
           );
         },
       },

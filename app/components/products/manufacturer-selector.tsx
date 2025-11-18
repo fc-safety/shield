@@ -1,23 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { DialogClose } from "@radix-ui/react-dialog";
-import { Link2, Loader2, Pencil, Search } from "lucide-react";
+import { Link2, Loader2, Pencil, Search, SearchX } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useFetcher } from "react-router";
+import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import LinkPreview from "../link-preview";
+import { ResponsiveDialog } from "../responsive-dialog";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../ui/empty";
 import CustomTag from "./custom-tag";
 
 interface ManufacturerSelectorProps {
@@ -26,6 +21,8 @@ interface ManufacturerSelectorProps {
   onBlur?: () => void;
   disabled?: boolean;
   className?: string;
+  viewContext?: ViewContext;
+  clientId?: string;
 }
 
 export default function ManufacturerSelector({
@@ -34,12 +31,24 @@ export default function ManufacturerSelector({
   onBlur,
   disabled,
   className,
+  viewContext,
+  clientId,
 }: ManufacturerSelectorProps) {
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
-  const fetcher = useFetcher<ResultsPage<Manufacturer>>();
 
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
+  const {
+    load,
+    data: dataOrError,
+    isLoading,
+  } = useModalFetcher<DataOrError<ResultsPage<Manufacturer>>>({
+    onData: (data) => {
+      if (data.data) {
+        setManufacturers(data.data.results);
+      }
+    },
+  });
 
   const defaultManufacturer = useMemo(
     () => manufacturers.find((c) => c.id === value),
@@ -53,17 +62,14 @@ export default function ManufacturerSelector({
 
   // Preload the manufacturers lazily.
   const handlePreload = useCallback(() => {
-    if (fetcher.state === "idle" && fetcher.data === undefined) {
-      fetcher.load("/api/manufacturers");
+    if (dataOrError === undefined) {
+      load({
+        path: "/api/proxy/manufacturers",
+        query: { limit: 1000, ...(clientId ? { OR: [{ clientId }, { clientId: "_NULL" }] } : {}) },
+        viewContext,
+      });
     }
-  }, [fetcher]);
-
-  // Set the manufacturers when they are loaded from the fetcher.
-  useEffect(() => {
-    if (fetcher.data) {
-      setManufacturers(fetcher.data.results);
-    }
-  }, [fetcher.data]);
+  }, [dataOrError, load, viewContext, clientId]);
 
   // Preload the product manufacturers when a value is set.
   useEffect(() => {
@@ -73,47 +79,58 @@ export default function ManufacturerSelector({
   }, [value, handlePreload]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {value ? (
-        <ManufacturerCard
-          manufacturer={defaultManufacturer}
-          renderEditButton={() => (
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={disabled}
-              >
-                <Pencil />
-              </Button>
-            </DialogTrigger>
-          )}
-        />
-      ) : (
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled}
-            className={cn(className)}
-            onMouseEnter={handlePreload}
-            onTouchStart={handlePreload}
-          >
-            <Search />
-            Select Manufacturer
-          </Button>
-        </DialogTrigger>
-      )}
-      <DialogContent className="px-0">
-        <DialogHeader className="px-6">
-          <DialogTitle>Find Manufacturer</DialogTitle>
-        </DialogHeader>
-        <ScrollArea
-          classNames={{
-            root: "h-96 border-b border-t px-6 self-stretch",
-          }}
-        >
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={setOpen}
+      dialogClassName="sm:max-w-2xl"
+      trigger={
+        value ? (
+          <ManufacturerCard
+            manufacturer={defaultManufacturer}
+            renderEditButton={() => (
+              <DialogTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" disabled={disabled}>
+                  <Pencil />
+                </Button>
+              </DialogTrigger>
+            )}
+          />
+        ) : (
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              disabled={disabled}
+              className={cn(className)}
+              onMouseEnter={handlePreload}
+              onTouchStart={handlePreload}
+            >
+              <Search />
+              Select Manufacturer
+            </Button>
+          </DialogTrigger>
+        )
+      }
+      title="Find Manufacturer"
+      render={() => (
+        <>
+          {isLoading ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="animate-spin" />
+            </div>
+          ) : manufacturers.length === 0 ? (
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <SearchX />
+                </EmptyMedia>
+                <EmptyTitle>No manufacturers found.</EmptyTitle>
+                <EmptyDescription>
+                  There are no manufacturers available for you to select for this product.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : null}
           <RadioGroup
             defaultValue="card"
             className="grid grid-cols-2 gap-4 py-2"
@@ -133,32 +150,33 @@ export default function ManufacturerSelector({
                   />
                   <Label
                     htmlFor={manufacturer.id}
-                    className="font-semibold h-full flex flex-col gap-2 items-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex h-full flex-col items-center justify-center gap-2 rounded-md border-2 p-4 font-semibold"
                   >
+                    {manufacturer.clientId && <CustomTag />}
                     {manufacturer.name}
                   </Label>
                 </div>
               ))}
           </RadioGroup>
-        </ScrollArea>
-        <div className="flex justify-end gap-2 px-6">
-          <DialogClose asChild>
-            <Button variant="secondary">Cancel</Button>
-          </DialogClose>
-          <Button
-            onClick={() => {
-              if (tempValue) {
-                onValueChange?.(tempValue);
-              }
-              setOpen(false);
-            }}
-            disabled={tempValue === undefined}
-          >
-            Select
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" type="button" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (tempValue) {
+                  onValueChange?.(tempValue);
+                }
+                setOpen(false);
+              }}
+              disabled={!tempValue}
+            >
+              Select
+            </Button>
+          </div>
+        </>
+      )}
+    ></ResponsiveDialog>
   );
 }
 
@@ -187,7 +205,7 @@ export function ManufacturerCard({
                   </Button>
                 </LinkPreview>
               )}
-              {manufacturer.client && <CustomTag />}
+              {manufacturer.clientId && <CustomTag />}
               <div className="flex-1"></div>
               {renderEditButton?.()}
             </CardTitle>

@@ -1,8 +1,8 @@
 import { GoogleMap, useJsApiLoader } from "@react-google-maps/api";
-import { format } from "date-fns";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Inspection } from "~/lib/models";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import DataList from "../data-list";
 import DisplayInspectionValue from "./display-inspection-value";
 
@@ -32,16 +32,9 @@ export default function InspectionDetails({
   }, []);
 
   useEffect(() => {
-    if (
-      map &&
-      inspection.latitude !== undefined &&
-      inspection.longitude !== undefined
-    ) {
+    if (map && inspection.latitude !== undefined && inspection.longitude !== undefined) {
       const parser = new DOMParser();
-      const shieldSvg = parser.parseFromString(
-        SHIELD_SVG_STRING,
-        "image/svg+xml"
-      ).documentElement;
+      const shieldSvg = parser.parseFromString(SHIELD_SVG_STRING, "image/svg+xml").documentElement;
 
       const pin = new google.maps.marker.PinElement({
         glyph: shieldSvg,
@@ -72,11 +65,7 @@ export default function InspectionDetails({
   );
 
   useEffect(() => {
-    if (
-      map &&
-      inspection.latitude !== undefined &&
-      inspection.longitude !== undefined
-    ) {
+    if (map && inspection.latitude !== undefined && inspection.longitude !== undefined) {
       const circle = new google.maps.Circle({
         map,
         center: {
@@ -100,7 +89,10 @@ export default function InspectionDetails({
     <div className="grid gap-6">
       <DataList
         details={[
-          { label: "Date", value: format(inspection.createdOn, "PPpp") },
+          {
+            label: "Date",
+            value: <HydrationSafeFormattedDate date={inspection.createdOn} formatStr="PPpp" />,
+          },
           {
             label: "Inspector",
             value: `${inspection.inspector?.firstName} ${inspection.inspector?.lastName}`,
@@ -113,9 +105,7 @@ export default function InspectionDetails({
         title="Questions"
         details={
           inspection.responses?.map((response) => ({
-            label: response.assetQuestion?.prompt ?? (
-              <span className="italic">Unknown</span>
-            ),
+            label: response.assetQuestion?.prompt ?? <span className="italic">Unknown</span>,
             value: <DisplayInspectionValue value={response.value} />,
           })) ?? []
         }
@@ -173,9 +163,7 @@ function calculateZoomForRadius(radiusInMeters: number) {
 
   // Calculate the zoom level
   const zoom = Math.floor(
-    Math.log2(
-      (EARTH_CIRCUMFERENCE / radiusInMeters) * (TILE_SIZE / MAGIC_NUMBER)
-    )
+    Math.log2((EARTH_CIRCUMFERENCE / radiusInMeters) * (TILE_SIZE / MAGIC_NUMBER))
   );
 
   // Ensure the zoom level is within the valid range

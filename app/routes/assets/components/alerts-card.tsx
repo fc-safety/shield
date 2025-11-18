@@ -1,7 +1,8 @@
-import { format, formatDistanceToNow } from "date-fns";
 import { ChevronRight, ShieldAlert } from "lucide-react";
 import { useMemo } from "react";
 import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
+import DisplayRelativeDate from "~/components/display-relative-date";
 import AlertLevelBadge from "~/components/inspections/alert-level-badge";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -45,8 +46,8 @@ export default function AlertsCard({ assetId, alerts }: { assetId: string; alert
             ))}
           </div>
         ) : (
-          <div className="text-muted-foreground text-center text-sm">
-            You have no {alerts.length > 0 ? "unresolved " : ""}alerts.
+          <div className="text-muted-foreground text-center text-xs">
+            This asset has no {alerts.length > 0 ? "unresolved " : ""}alerts.
           </div>
         )}
 
@@ -89,12 +90,8 @@ const AlertItem = ({ alert, idx, assetId }: { alert: Alert; idx: number; assetId
           <div className="flex flex-1 flex-col gap-1.5">
             <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs font-light">
               <span>
-                {format(alert.createdOn, "PPpp")} &bull;{" "}
-                <span className="font-semibold">
-                  {formatDistanceToNow(alert.createdOn, {
-                    addSuffix: true,
-                  })}
-                </span>
+                <HydrationSafeFormattedDate date={alert.createdOn} formatStr="PPpp" /> &bull;{" "}
+                <DisplayRelativeDate date={alert.createdOn} className="font-semibold" />
               </span>
               <AlertLevelBadge resolved={alert.resolved} alertLevel={alert.alertLevel} />
             </div>

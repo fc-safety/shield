@@ -27,7 +27,7 @@ type TForm = z.infer<typeof addUserRoleSchema>;
 
 interface UpdateUserRoleFormProps {
   user: ClientUser;
-  clientId: string;
+  clientId?: string;
   viewContext?: ViewContext;
 }
 

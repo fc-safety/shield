@@ -1,23 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Pencil, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useFetcher } from "react-router";
+import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ProductCategory, ResultsPage } from "~/lib/models";
 import { cn } from "~/lib/utils";
 import Icon from "../icons/icon";
+import { ResponsiveDialog } from "../responsive-dialog";
 import { Badge } from "../ui/badge";
 import CustomTag from "./custom-tag";
 
@@ -27,6 +21,8 @@ interface ProductCategorySelectorProps {
   onBlur?: () => void;
   disabled?: boolean;
   className?: string;
+  viewContext?: ViewContext;
+  clientId?: string;
 }
 
 export default function ProductCategorySelector({
@@ -35,10 +31,19 @@ export default function ProductCategorySelector({
   onBlur,
   disabled,
   className,
+  viewContext,
+  clientId,
 }: ProductCategorySelectorProps) {
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
-  const fetcher = useFetcher<ResultsPage<ProductCategory>>();
+
+  const { load, data: dataOrError } = useModalFetcher<DataOrError<ResultsPage<ProductCategory>>>({
+    onData: (data) => {
+      if (data.data) {
+        setCategories(data.data.results);
+      }
+    },
+  });
 
   const [categories, setCategories] = useState<ProductCategory[]>([]);
 
@@ -54,17 +59,14 @@ export default function ProductCategorySelector({
 
   // Preload the product categories lazily.
   const handlePreload = useCallback(() => {
-    if (fetcher.state === "idle" && fetcher.data === undefined) {
-      fetcher.load("/api/product-categories");
+    if (dataOrError === undefined) {
+      load({
+        path: "/api/proxy/product-categories",
+        query: { limit: 1000, ...(clientId ? { OR: [{ clientId }, { clientId: "_NULL" }] } : {}) },
+        viewContext,
+      });
     }
-  }, [fetcher]);
-
-  // Set the categories when they are loaded from the fetcher.
-  useEffect(() => {
-    if (fetcher.data) {
-      setCategories(fetcher.data.results);
-    }
-  }, [fetcher.data]);
+  }, [dataOrError, load, viewContext, clientId]);
 
   // Preload the product categories when a value is set.
   useEffect(() => {
@@ -74,47 +76,40 @@ export default function ProductCategorySelector({
   }, [value, handlePreload]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {value ? (
-        <ProductCategoryCard
-          productCategory={defaultCategory}
-          renderEditButton={() => (
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                disabled={disabled}
-              >
-                <Pencil />
-              </Button>
-            </DialogTrigger>
-          )}
-        />
-      ) : (
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled}
-            className={cn(className)}
-            onMouseEnter={handlePreload}
-            onTouchStart={handlePreload}
-          >
-            <Search />
-            Select Category
-          </Button>
-        </DialogTrigger>
-      )}
-      <DialogContent className="px-0">
-        <DialogHeader className="px-6">
-          <DialogTitle>Find Category</DialogTitle>
-        </DialogHeader>
-        <ScrollArea
-          classNames={{
-            root: "h-96 border-b border-t px-6 self-stretch",
-          }}
-        >
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={setOpen}
+      dialogClassName="sm:max-w-2xl"
+      trigger={
+        value ? (
+          <ProductCategoryCard
+            productCategory={defaultCategory}
+            renderEditButton={() => (
+              <DialogTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" disabled={disabled}>
+                  <Pencil />
+                </Button>
+              </DialogTrigger>
+            )}
+          />
+        ) : (
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              disabled={disabled}
+              className={cn(className)}
+              onMouseEnter={handlePreload}
+              onTouchStart={handlePreload}
+            >
+              <Search />
+              Select Category
+            </Button>
+          </DialogTrigger>
+        )
+      }
+      render={() => (
+        <>
           <RadioGroup
             defaultValue="card"
             className="grid grid-cols-2 gap-4 py-2"
@@ -134,9 +129,10 @@ export default function ProductCategorySelector({
                   />
                   <Label
                     htmlFor={productCategory.id}
-                    className="font-semibold h-full flex flex-col gap-2 items-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex h-full flex-col items-center justify-center gap-2 rounded-md border-2 p-4 font-semibold"
                   >
-                    <div className="flex gap-2 items-center">
+                    {productCategory.clientId && <CustomTag />}
+                    <div className="flex items-center gap-2">
                       {productCategory.icon && (
                         <Icon
                           iconId={productCategory.icon}
@@ -145,37 +141,33 @@ export default function ProductCategorySelector({
                         />
                       )}
                       {productCategory.shortName && (
-                        <span className="uppercase">
-                          {productCategory.shortName}
-                        </span>
+                        <span className="uppercase">{productCategory.shortName}</span>
                       )}
                     </div>
-                    <span className="font-regular text-xs text-center">
-                      {productCategory.name}
-                    </span>
+                    <span className="font-regular text-center text-xs">{productCategory.name}</span>
                   </Label>
                 </div>
               ))}
           </RadioGroup>
-        </ScrollArea>
-        <div className="flex justify-end gap-2 px-6">
-          <DialogClose asChild>
-            <Button variant="secondary">Cancel</Button>
-          </DialogClose>
-          <Button
-            onClick={() => {
-              if (tempValue) {
-                onValueChange?.(tempValue);
-              }
-              setOpen(false);
-            }}
-            disabled={tempValue === undefined}
-          >
-            Select
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" type="button" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (tempValue) {
+                  onValueChange?.(tempValue);
+                }
+                setOpen(false);
+              }}
+              disabled={tempValue === undefined}
+            >
+              Select
+            </Button>
+          </div>
+        </>
+      )}
+    />
   );
 }
 
@@ -195,9 +187,9 @@ export function ProductCategoryCard({
       {productCategory ? (
         <>
           <CardHeader>
-            <CardTitle className="flex justify-between items-center">
+            <CardTitle className="flex items-center justify-between">
               <div className="grid gap-2">
-                <div className="flex gap-2 items-center flex-wrap">
+                <div className="flex flex-wrap items-center gap-2">
                   {productCategory.icon && (
                     <Icon
                       iconId={productCategory.icon}
@@ -205,20 +197,15 @@ export function ProductCategoryCard({
                       className="text-lg"
                     />
                   )}
-                  <span className="min-w-min flex-1">
-                    {productCategory?.name}
-                  </span>
+                  <span className="min-w-min flex-1">{productCategory?.name}</span>
                   {productCategory.shortName && (
-                    <Badge
-                      className={cn("text-sm uppercase w-max")}
-                      variant="secondary"
-                    >
+                    <Badge className={cn("w-max text-sm uppercase")} variant="secondary">
                       {productCategory.shortName}
                     </Badge>
                   )}
-                  {productCategory.client && <CustomTag />}
+                  {productCategory.clientId && <CustomTag />}
                 </div>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {productCategory?.description || <>&mdash;</>}
                 </span>
               </div>

@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import { RotateCw, X } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import VirtualizedTable from "~/components/data-table/virtualized-data-table";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
+import { ButtonGroup } from "~/components/ui/button-group";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Job, JobQueue } from "~/lib/types";
@@ -42,19 +43,10 @@ export default function AdminAdvancedJobs() {
     isPending: isRetryJobPending,
     variables: retryJobVariables,
   } = useMutation({
-    mutationFn: ({
-      queueName,
-      jobId,
-    }: {
-      queueName: string;
-      jobId: string;
-    }) => {
-      return fetch(
-        `/notifications/job-queues/${queueName}/retry-job/${jobId}`,
-        {
-          method: "POST",
-        }
-      );
+    mutationFn: ({ queueName, jobId }: { queueName: string; jobId: string }) => {
+      return fetch(`/notifications/job-queues/${queueName}/retry-job/${jobId}`, {
+        method: "POST",
+      });
     },
     onSuccess: (_data, { jobId }) => {
       queryClient.invalidateQueries({ queryKey: ["job-queues"] });
@@ -67,19 +59,10 @@ export default function AdminAdvancedJobs() {
     isPending: isRemoveJobPending,
     variables: removeJobVariables,
   } = useMutation({
-    mutationFn: ({
-      queueName,
-      jobId,
-    }: {
-      queueName: string;
-      jobId: string;
-    }) => {
-      return fetch(
-        `/notifications/job-queues/${queueName}/remove-job/${jobId}`,
-        {
-          method: "POST",
-        }
-      );
+    mutationFn: ({ queueName, jobId }: { queueName: string; jobId: string }) => {
+      return fetch(`/notifications/job-queues/${queueName}/remove-job/${jobId}`, {
+        method: "POST",
+      });
     },
     onSuccess: (_data, { jobId, queueName }) => {
       queryClient.invalidateQueries({ queryKey: ["job-queues"] });
@@ -96,33 +79,24 @@ export default function AdminAdvancedJobs() {
         accessorKey: "id",
       },
       {
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         accessorKey: "name",
       },
       {
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         accessorKey: "timestamp",
-        cell: ({ getValue }) => format(getValue() as number, "PPpp"),
+        cell: ({ getValue }) => (
+          <HydrationSafeFormattedDate date={getValue() as number} formatStr="PPpp" />
+        ),
       },
       {
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         accessorKey: "data",
         cell: ({ getValue }) => {
           const data = getValue() as Record<string, unknown>;
           return (
-            <ResponsiveDialog
-              title="Data"
-              trigger={<Button variant="secondary">View data</Button>}
-            >
-              <pre className="text-xs whitespace-pre-wrap">
-                {JSON.stringify(data, null, 2)}
-              </pre>
+            <ResponsiveDialog title="Data" trigger={<Button variant="secondary">View data</Button>}>
+              <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(data, null, 2)}</pre>
             </ResponsiveDialog>
           );
         },
@@ -135,15 +109,11 @@ export default function AdminAdvancedJobs() {
     (queueName: string): ColumnDef<Job<unknown>>[] => [
       ...commonJobColumns,
       {
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         accessorKey: "failedReason",
       },
       {
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         accessorKey: "stacktrace",
         cell: ({ getValue }) => {
           const stacktrace = getValue() as string[];
@@ -152,17 +122,13 @@ export default function AdminAdvancedJobs() {
               title="Stacktrace"
               trigger={<Button variant="secondary">View stacktrace</Button>}
             >
-              <pre className="text-xs whitespace-pre-wrap">
-                {stacktrace.join("\n")}
-              </pre>
+              <pre className="text-xs whitespace-pre-wrap">{stacktrace.join("\n")}</pre>
             </ResponsiveDialog>
           );
         },
       },
       {
-        header: ({ column, table }) => (
-          <DataTableColumnHeader column={column} table={table} />
-        ),
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
         accessorKey: "attemptsMade",
       },
       {
@@ -180,27 +146,31 @@ export default function AdminAdvancedJobs() {
             removeJobVariables?.queueName === queueName;
 
           return (
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="icon"
-                title="Retry job"
-                onClick={() => retryJob({ jobId: job.id, queueName })}
-                disabled={isRetrying}
-              >
-                <RotateCw className={cn(isRetrying ? "animate-spin" : "")} />
-              </Button>
-              <Button
-                variant="destructive"
-                size="icon"
-                title="Remove job"
-                onClick={() => removeJob({ jobId: job.id, queueName })}
-                disabled={isRemoving}
-                className={cn(isRemoving ? "animate-pulse" : "")}
-              >
-                <X />
-              </Button>
-            </div>
+            <ButtonGroup>
+              <ButtonGroup>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  title="Retry job"
+                  onClick={() => retryJob({ jobId: job.id, queueName })}
+                  disabled={isRetrying}
+                >
+                  <RotateCw className={cn(isRetrying ? "animate-spin" : "")} />
+                </Button>
+              </ButtonGroup>
+              <ButtonGroup>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  title="Remove job"
+                  onClick={() => removeJob({ jobId: job.id, queueName })}
+                  disabled={isRemoving}
+                  className={cn(isRemoving ? "animate-pulse" : "")}
+                >
+                  <X />
+                </Button>
+              </ButtonGroup>
+            </ButtonGroup>
           );
         },
       },
@@ -261,15 +231,13 @@ export default function AdminAdvancedJobs() {
           </Card>
         ))
       ) : (
-        <div className="rounded-lg w-full h-72 animate-pulse bg-card"></div>
+        <div className="bg-card h-72 w-full animate-pulse rounded-lg"></div>
       )}
     </div>
   );
 }
 
-const getJobQueues = async (
-  fetch: (url: string, options: RequestInit) => Promise<Response>
-) => {
+const getJobQueues = async (fetch: (url: string, options: RequestInit) => Promise<Response>) => {
   const response = await fetch("/notifications/job-queues", {
     method: "GET",
   });

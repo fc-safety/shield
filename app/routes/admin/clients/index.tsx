@@ -1,27 +1,23 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Building2, CornerDownRight, MoreHorizontal, PhoneCall, Trash } from "lucide-react";
+import { Building2, CornerDownRight, PhoneCall, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useRevalidator } from "react-router";
 import { api } from "~/.server/api";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import EditClientButton from "~/components/clients/edit-client-button";
+import ResponsiveActions from "~/components/common/responsive-actions";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/hover-card";
+import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client } from "~/lib/models";
+import { can } from "~/lib/users";
 import { beautifyPhone } from "~/lib/utils";
 import type { Route } from "./+types/index";
 import MigrationAssistantButton from "./components/migration-assistant/migration-assistant-button";
@@ -31,6 +27,9 @@ export function loader({ request }: Route.LoaderArgs) {
 }
 
 export default function ClientsIndex({ loaderData: clients }: Route.ComponentProps) {
+  const { user } = useAuth();
+  const canDeleteClient = can(user, "delete", "clients");
+
   const { revalidate } = useRevalidator();
   const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete client",
@@ -101,49 +100,52 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
           const client = row.original;
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
-                <DropdownMenuItem asChild>
-                  <Link to={client.id}>
-                    <CornerDownRight />
-                    Details
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={() =>
-                    setDeleteAction((draft) => {
-                      draft.open = true;
-                      draft.title = "Delete Client";
-                      draft.message = `Are you sure you want to delete ${
-                        client.name || client.id
-                      }?`;
-                      draft.requiredUserInput = client.name || client.id;
-                      draft.onConfirm = () => {
-                        submitDelete(
-                          {},
-                          {
-                            method: "delete",
-                            path: `/api/proxy/clients/${client.id}`,
-                            viewContext: "admin",
-                          }
-                        );
-                      };
-                    })
-                  }
-                >
-                  <Trash />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "details",
+                      text: "Details",
+                      Icon: CornerDownRight,
+                      linkTo: client.id,
+                    },
+                  ],
+                },
+                {
+                  key: "destructive-actions",
+                  variant: "destructive",
+                  actions: [
+                    {
+                      key: "delete",
+                      text: "Delete",
+                      Icon: Trash,
+                      disabled: !canDeleteClient,
+                      onAction: () =>
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete Client";
+                          draft.message = `Are you sure you want to delete ${
+                            client.name || client.id
+                          }?`;
+                          draft.requiredUserInput = client.name || client.id;
+                          draft.onConfirm = () => {
+                            submitDelete(
+                              {},
+                              {
+                                method: "delete",
+                                path: `/api/proxy/clients/${client.id}`,
+                                viewContext: "admin",
+                              }
+                            );
+                          };
+                        }),
+                    },
+                  ],
+                },
+              ]}
+            />
           );
         },
       },

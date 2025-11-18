@@ -29,7 +29,7 @@ import { Input } from "../ui/input";
 
 interface ResetPasswordFormProps {
   user: ClientUser;
-  clientId: string;
+  clientId?: string;
   onSubmitted: () => void;
 }
 

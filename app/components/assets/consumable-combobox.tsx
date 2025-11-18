@@ -1,10 +1,10 @@
 import Fuse from "fuse.js";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useFetcher } from "react-router";
+import type { DataOrError } from "~/.server/api-utils";
 import { ResponsiveCombobox } from "~/components/responsive-combobox";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Product, ResultsPage } from "~/lib/models";
-import { buildPath } from "~/lib/urls";
 
 const productSelectFuse = new Fuse([] as Product[], { keys: ["name", "consumableProducts.name"] });
 export default function ConsumableCombobox({
@@ -24,16 +24,21 @@ export default function ConsumableCombobox({
   disabled?: boolean;
   compactClearButton?: boolean;
 }) {
-  const consumableFetcher = useFetcher<ResultsPage<Product>>();
+  const {
+    load,
+    data: dataOrError,
+    isLoading,
+  } = useModalFetcher<DataOrError<ResultsPage<Product>>>();
 
   const [consumableProducts, setConsumableProducts] = useState<Product[]>([]);
   const [productSearch, setProductSearch] = useState("");
 
   const preloadConsumableProducts = useCallback(
     (parentId?: string) => {
-      if (consumableFetcher.state === "idle" && !consumableFetcher.data) {
-        consumableFetcher.load(
-          buildPath("/api/proxy/products", {
+      if (!dataOrError) {
+        load({
+          path: "/api/proxy/products",
+          query: {
             limit: 1000,
             type: "CONSUMABLE",
             include: {
@@ -44,11 +49,11 @@ export default function ConsumableCombobox({
               : {
                   not: "_NULL",
                 },
-          })
-        );
+          },
+        });
       }
     },
-    [consumableFetcher]
+    [dataOrError, load]
   );
 
   useEffect(() => {
@@ -56,10 +61,10 @@ export default function ConsumableCombobox({
   }, [parentProductId, preloadConsumableProducts]);
 
   useEffect(() => {
-    if (consumableFetcher.data) {
-      setConsumableProducts(consumableFetcher.data.results);
+    if (dataOrError?.data) {
+      setConsumableProducts(dataOrError.data.results);
     }
-  }, [consumableFetcher.data]);
+  }, [dataOrError]);
 
   const productOptionGroups = useMemo(() => {
     let filteredProducts = consumableProducts;
@@ -119,7 +124,7 @@ export default function ConsumableCombobox({
             </div>
           );
         }}
-        loading={consumableFetcher.state === "loading"}
+        loading={isLoading}
         options={productOptionGroups}
         disabled={disabled}
         onMouseOver={() => !disabled && preloadConsumableProducts(parentProductId)}

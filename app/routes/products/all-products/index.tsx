@@ -9,24 +9,20 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronRight, FireExtinguisher, Link2, Search } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useRevalidator } from "react-router";
+import { useEffect, useState } from "react";
 import { useImmer } from "use-immer";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
-import { getAppState } from "~/.server/sessions";
 import { requireUserSession } from "~/.server/user-sesssion";
 import Icon from "~/components/icons/icon";
 import LinkPreview from "~/components/link-preview";
-import CustomTag from "~/components/products/custom-tag";
 import EditProductButton from "~/components/products/edit-product-button";
 import ProductCard from "~/components/products/product-card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -35,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Switch } from "~/components/ui/switch";
 import { useAppState } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import type { Manufacturer, ProductCategory } from "~/lib/models";
@@ -58,49 +53,32 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
   const isGlobalAdmin = isGlobalAdminFn(user);
 
-  const { products_showAll } = await getAppState(request);
+  const query = { type: "PRIMARY", limit: 10000, clientId: "_NULL" } as QueryParams;
 
-  let onlyMyProducts = products_showAll === undefined ? true : !products_showAll;
-  if (products_showAll === undefined && isGlobalAdmin) {
-    onlyMyProducts = false;
-  }
-
-  const query = { type: "PRIMARY", limit: 10000 } as QueryParams;
-
-  if (onlyMyProducts) {
-    query.client = {
-      externalId: user.clientId,
-    };
-  }
-
-  return api.products
-    .list(request, query, { context: isGlobalAdmin ? "admin" : "user" })
-    .then((r) => ({
-      products: r.results,
-      optimizedProductImageUrls: new Map(
-        r.results
-          .filter(
-            (
-              p
-            ): p is typeof p & {
-              imageUrl: NonNullable<(typeof p)["imageUrl"]>;
-            } => !!p.imageUrl
-          )
-          .map((p) => [p.id, buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"])])
-      ),
-      isGlobalAdmin,
-      onlyMyProducts,
-    }));
+  return api.products.list(request, query).then((r) => ({
+    products: r.results,
+    optimizedProductImageUrls: new Map(
+      r.results
+        .filter(
+          (
+            p
+          ): p is typeof p & {
+            imageUrl: NonNullable<(typeof p)["imageUrl"]>;
+          } => !!p.imageUrl
+        )
+        .map((p) => [p.id, buildImageProxyUrl(p.imageUrl, ["rs:fit:160:160:1:1"])])
+    ),
+    isGlobalAdmin,
+  }));
 };
 
 export default function AllProducts({
-  loaderData: { products, optimizedProductImageUrls, isGlobalAdmin, onlyMyProducts },
+  loaderData: { products, optimizedProductImageUrls, isGlobalAdmin },
 }: Route.ComponentProps) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "products");
 
   const { appState, setAppState } = useAppState();
-  const { revalidate } = useRevalidator();
 
   const [grouping, setGrouping] = useState<GroupingState>(appState.products_grp ?? ["category"]);
   const handleSetGrouping = (value: GroupingState | ((prev: GroupingState) => GroupingState)) => {
@@ -110,16 +88,6 @@ export default function AllProducts({
       products_grp: newValue,
     });
   };
-
-  const handleSetOnlyMyProducts = useCallback(
-    async (value: boolean) => {
-      await setAppState({
-        products_showAll: !value,
-      });
-      await revalidate();
-    },
-    [setAppState, revalidate]
-  );
 
   const [sorting, setSorting] = useImmer<SortingState>([
     {
@@ -171,8 +139,9 @@ export default function AllProducts({
       <Card className="mb-4">
         <CardHeader>
           <CardTitle>
-            <FireExtinguisher /> All Products
+            <FireExtinguisher /> Global Products
           </CardTitle>
+          <CardDescription>Products accessible to all clients.</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-2">
@@ -196,14 +165,6 @@ export default function AllProducts({
                 </SelectGroup>
               </SelectContent>
             </Select>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="onlyMyProducts"
-                checked={onlyMyProducts}
-                onCheckedChange={(checked) => handleSetOnlyMyProducts(checked)}
-              />
-              <Label htmlFor="onlyMyProducts">Only My Products</Label>
-            </div>
           </div>
           <div className="flex items-center space-x-2">
             {canCreate && (
@@ -264,10 +225,6 @@ export default function AllProducts({
               <Button variant="outline" onClick={() => table.setGlobalFilter("")}>
                 Clear Search
               </Button>
-            ) : onlyMyProducts ? (
-              <Button variant="outline" onClick={() => handleSetOnlyMyProducts(false)}>
-                Show All Products
-              </Button>
             ) : (
               <></>
             )}
@@ -288,7 +245,6 @@ function CategoryLabel({ category }: { category: ProductCategory }) {
           {category.shortName}
         </Badge>
       )}
-      {category.client && <CustomTag />}
     </span>
   );
 }
@@ -304,7 +260,6 @@ function ManufacturerLabel({ manufacturer }: { manufacturer: Manufacturer }) {
           </Button>
         </LinkPreview>
       )}
-      {manufacturer.client && <CustomTag />}
     </span>
   );
 }

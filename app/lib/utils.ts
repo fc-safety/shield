@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { endOfDay, format, isAfter, isValid, parse, parseISO } from "date-fns";
 import type { LoaderFunctionArgs, MetaDescriptor } from "react-router";
 import { twMerge } from "tailwind-merge";
+import type { ZodSchema } from "zod";
 import * as z3 from "zod/v3";
 
 export function cn(...inputs: ClassValue[]) {
@@ -150,10 +151,24 @@ export const stripPhone = (phoneNumber: string) => {
 export const getSearchParams = (request: Request) =>
   URL.parse(request.url)?.searchParams ?? new URLSearchParams();
 export const getSearchParam = (request: Request, key: string) => getSearchParams(request).get(key);
-export const validateSearchParam = (request: Request, key: string, message?: string) => {
+export const validateSearchParam = (
+  request: Request,
+  key: string,
+  message?: string,
+  schema?: ZodSchema
+) => {
   const value = getSearchParams(request).get(key);
-  if (!value) {
-    throw new Response(message ?? `Query parameter '${key}' is required`, {
+  let errorMsg: string | null = null;
+  if (schema) {
+    const result = schema.safeParse(value);
+    if (!result.success) {
+      errorMsg = `Query parameter '${key}' is invalid: ${result.error.message}`;
+    }
+  } else if (!value) {
+    errorMsg = message ?? `Query parameter '${key}' is required`;
+  }
+  if (errorMsg) {
+    throw new Response(message ?? errorMsg, {
       status: 400,
     });
   }

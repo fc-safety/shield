@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { addMinutes, addSeconds } from "date-fns";
 import { redirect } from "react-router";
 import { isTokenExpired, keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import type { Tokens, User } from "./authenticator";
@@ -69,14 +70,15 @@ export const commitUserSession = async (
   session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>
 ) => {
   const tokens = session.get("tokens");
-  let expiresAt = new Date();
+  // Default expire in 10 minutes of no tokens are present.
+  let expiresAt = addMinutes(new Date(), 10);
   if (tokens) {
     const parsedAccessToken = parseToken(
       tokens.accessToken,
       keycloakTokenPayloadSchema.pick({ exp: true, iat: true })
     );
     const expiresInSeconds = parsedAccessToken.exp - parsedAccessToken.iat;
-    expiresAt.setSeconds(expiresAt.getSeconds() + expiresInSeconds + 60); // Add 60 seconds to allow for clock skew.
+    expiresAt = addSeconds(expiresAt, expiresInSeconds + 60); // Add 60 seconds to allow for clock skew.
   }
 
   const sessionCookie = await userSessionStorage.commitSession(session, { expires: expiresAt });

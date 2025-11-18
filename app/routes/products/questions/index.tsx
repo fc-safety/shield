@@ -80,11 +80,9 @@ export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldQuestion className="h-5 w-5" />
-          Asset Questions
+          Global Asset Questions
         </CardTitle>
-        <CardDescription>
-          Manage questions that appear during asset setup and inspections
-        </CardDescription>
+        <CardDescription>Questions presented to all clients.</CardDescription>
       </CardHeader>
       <CardContent>
         <AssetQuestionsDataTable

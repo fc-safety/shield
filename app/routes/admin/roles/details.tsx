@@ -1,5 +1,4 @@
 import type { CheckedState } from "@radix-ui/react-checkbox";
-import { format } from "date-fns";
 import Fuse from "fuse.js";
 import { MinusSquare, Pencil, PlusSquare } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -8,21 +7,12 @@ import type { z } from "zod";
 import { create } from "zustand";
 import { ApiFetcher } from "~/.server/api-utils";
 import EditRoleButton from "~/components/admin/edit-role-button";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import DataList from "~/components/data-list";
 import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
@@ -53,13 +43,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const [role, permissions, notificationGroups] = await Promise.all([
     ApiFetcher.create(request, "/roles/:id", { id }).get<Role>(),
-    ApiFetcher.create(
-      request,
-      "/roles/permissions"
-    ).get<GetPermissionsResponse>(),
-    ApiFetcher.create(request, "/roles/notification-groups").get<
-      NotificationGroup[]
-    >(),
+    ApiFetcher.create(request, "/roles/permissions").get<GetPermissionsResponse>(),
+    ApiFetcher.create(request, "/roles/notification-groups").get<NotificationGroup[]>(),
   ]);
 
   return {
@@ -81,8 +66,7 @@ const usePermissionsStore = create<{
   search: "",
   setSearch: (search: string) => set({ search }),
   selection: new Set(),
-  setSelection: (selection: Iterable<string>) =>
-    set({ selection: new Set(selection) }),
+  setSelection: (selection: Iterable<string>) => set({ selection: new Set(selection) }),
   toggle: (name: string) => {
     set((state) => {
       if (state.selection.has(name)) state.selection.delete(name);
@@ -98,9 +82,7 @@ const usePermissionsStore = create<{
   deselectMany: (names: string[]) => {
     set((state) => {
       return {
-        selection: new Set(
-          [...state.selection].filter((id) => !names.includes(id))
-        ),
+        selection: new Set([...state.selection].filter((id) => !names.includes(id))),
       };
     });
   },
@@ -113,9 +95,9 @@ export default function AdminRoleDetails({
     notificationGroups,
   },
 }: Route.ComponentProps) {
-  const [assignedNotificationGroups, setAssignedNotificationGroups] = useState<
-    string[]
-  >(role.notificationGroups);
+  const [assignedNotificationGroups, setAssignedNotificationGroups] = useState<string[]>(
+    role.notificationGroups
+  );
   const { search, setSearch, selection, setSelection } = usePermissionsStore();
 
   useEffect(() => {
@@ -138,18 +120,13 @@ export default function AdminRoleDetails({
 
   const isNotificationGroupsDirty =
     assignedNotificationGroups.length < role.notificationGroups.length ||
-    assignedNotificationGroups.some(
-      (id) => !role.notificationGroups.includes(id)
-    );
+    assignedNotificationGroups.some((id) => !role.notificationGroups.includes(id));
 
   const isPermissionsDirty =
-    role.permissions.length < selection.size ||
-    role.permissions.some((id) => !selection.has(id));
+    role.permissions.length < selection.size || role.permissions.some((id) => !selection.has(id));
 
-  const {
-    submitJson: submitNotificationGroups,
-    isSubmitting: isSavingNotificationGroups,
-  } = useModalFetcher();
+  const { submitJson: submitNotificationGroups, isSubmitting: isSavingNotificationGroups } =
+    useModalFetcher();
   const handleSaveNotificationGroups = () => {
     submitNotificationGroups(
       { notificationGroupIds: assignedNotificationGroups },
@@ -160,14 +137,11 @@ export default function AdminRoleDetails({
     );
   };
 
-  const { submitJson: submitPermissions, isSubmitting: isSavingPermissions } =
-    useModalFetcher();
+  const { submitJson: submitPermissions, isSubmitting: isSavingPermissions } = useModalFetcher();
   const handleSavePermissions = () => {
     const alreadyGrantedSet = new Set(role.permissions);
 
-    const updatePermissionsMapping: z.infer<
-      typeof updatePermissionMappingSchema
-    > = {
+    const updatePermissionsMapping: z.infer<typeof updatePermissionMappingSchema> = {
       grant: [],
       revoke: [],
     };
@@ -199,9 +173,7 @@ export default function AdminRoleDetails({
   });
   useEffect(() => {
     if (blocker.state === "blocked") {
-      const confirmed = confirm(
-        "You have unsaved changes. Are you sure you want to leave?"
-      );
+      const confirmed = confirm("You have unsaved changes. Are you sure you want to leave?");
       if (confirmed) {
         blocker.proceed();
       }
@@ -247,10 +219,13 @@ export default function AdminRoleDetails({
           <DataList
             title="Other"
             details={[
-              { label: "Created ", value: format(role.createdOn, "PPpp") },
+              {
+                label: "Created",
+                value: <HydrationSafeFormattedDate date={role.createdOn} formatStr="PPpp" />,
+              },
               {
                 label: "Last Updated",
-                value: format(role.updatedOn, "PPpp"),
+                value: <HydrationSafeFormattedDate date={role.updatedOn} formatStr="PPpp" />,
               },
             ]}
             defaultValue={<>&mdash;</>}
@@ -262,8 +237,8 @@ export default function AdminRoleDetails({
           <CardHeader>
             <CardTitle>Notification Groups</CardTitle>
             <CardDescription>
-              Users assigned to this role will receive notifications from each
-              of the selected notification groups.
+              Users assigned to this role will receive notifications from each of the selected
+              notification groups.
             </CardDescription>
           </CardHeader>
           <Button
@@ -283,27 +258,17 @@ export default function AdminRoleDetails({
                   checked={assignedNotificationGroups.includes(group.id)}
                   onCheckedChange={(checked) => {
                     if (checked) {
-                      setAssignedNotificationGroups([
-                        ...assignedNotificationGroups,
-                        group.id,
-                      ]);
+                      setAssignedNotificationGroups([...assignedNotificationGroups, group.id]);
                     } else {
                       setAssignedNotificationGroups(
-                        assignedNotificationGroups.filter(
-                          (id) => id !== group.id
-                        )
+                        assignedNotificationGroups.filter((id) => id !== group.id)
                       );
                     }
                   }}
                 />
-                <Label
-                  className="grid"
-                  htmlFor={`notification-group-${group.id}`}
-                >
+                <Label className="grid" htmlFor={`notification-group-${group.id}`}>
                   <div className="text-sm">{group.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {group.description}
-                  </div>
+                  <div className="text-muted-foreground text-xs">{group.description}</div>
                 </Label>
               </div>
             ))}
@@ -331,7 +296,7 @@ export default function AdminRoleDetails({
           <div className="grid gap-2">
             {permissionGroupComponents}
             {!!search && emptyResults && (
-              <div className="py-6 flex flex-col items-center gap-4">
+              <div className="flex flex-col items-center gap-4 py-6">
                 No permissions found.
                 <Button variant="outline" onClick={() => setSearch("")}>
                   Clear search
@@ -345,14 +310,9 @@ export default function AdminRoleDetails({
   );
 }
 
-function PermissionsGroup({
-  permissionsGroup,
-}: {
-  permissionsGroup: PermissionsGroup;
-}) {
+function PermissionsGroup({ permissionsGroup }: { permissionsGroup: PermissionsGroup }) {
   const [open, setOpen] = useState(false);
-  const { search, selectMany, deselectMany, toggle, selection } =
-    usePermissionsStore();
+  const { search, selectMany, deselectMany, toggle, selection } = usePermissionsStore();
 
   const allChildPermissions = useMemo(() => {
     const extractPermissions = (group: PermissionsGroup) => {
@@ -374,22 +334,15 @@ function PermissionsGroup({
   }, [allChildPermissions]);
 
   const emptyResults = useMemo(
-    () =>
-      !!search && filterPermissions(search, allChildPermissions).length === 0,
+    () => !!search && filterPermissions(search, allChildPermissions).length === 0,
     [search, allChildPermissions]
   );
 
   const filteredPermissions = useMemo(() => {
-    return (
-      permissionsGroup.permissions &&
-      filterPermissions(search, permissionsGroup.permissions)
-    );
+    return permissionsGroup.permissions && filterPermissions(search, permissionsGroup.permissions);
   }, [permissionsGroup.permissions, search]);
 
-  const checkedState = getCheckedStateForPermissions(
-    selection,
-    allChildPermissionsNames
-  );
+  const checkedState = getCheckedStateForPermissions(selection, allChildPermissionsNames);
 
   useEffect(() => {
     setOpen(!!search || !!checkedState);
@@ -437,12 +390,7 @@ function PermissionsGroup({
             {permissionsGroup.children ? (
               permissionsGroup.children
                 .sort((g1, g2) => g1.title.localeCompare(g2.title))
-                .map((child) => (
-                  <PermissionsGroup
-                    key={child.title}
-                    permissionsGroup={child}
-                  />
-                ))
+                .map((child) => <PermissionsGroup key={child.title} permissionsGroup={child} />)
             ) : filteredPermissions ? (
               <DisplayPermissions
                 many={permissionsGroup.many}
@@ -479,9 +427,7 @@ function DisplayPermissions({
   const label = (permission: Permission) => (
     <Label className="grid" htmlFor={`permission-${permission.id}`}>
       <div className="text-sm">{permission.friendlyName}</div>
-      <div className="text-xs text-muted-foreground">
-        {permission.description}
-      </div>
+      <div className="text-muted-foreground text-xs">{permission.description}</div>
     </Label>
   );
 
@@ -496,9 +442,7 @@ function DisplayPermissions({
           <Checkbox
             id={`permission-${permission.id}`}
             checked={selection.has(permission.name)}
-            onCheckedChange={(checked) =>
-              onCheckedToggle?.(permission.name, checked)
-            }
+            onCheckedChange={(checked) => onCheckedToggle?.(permission.name, checked)}
           />
           {label(permission)}
         </div>
@@ -532,12 +476,8 @@ const filterPermissions = (search: string, permissions: Permission[]) => {
   return fuse.search(search).map((result) => result.item);
 };
 
-const getCheckedStateForPermissions = (
-  selection: Set<string>,
-  permissionNames: string[]
-) => {
+const getCheckedStateForPermissions = (selection: Set<string>, permissionNames: string[]) => {
   if (permissionNames.every((pName) => selection.has(pName))) return true;
-  if (permissionNames.some((pName) => selection.has(pName)))
-    return "indeterminate";
+  if (permissionNames.some((pName) => selection.has(pName))) return "indeterminate";
   return false;
 };

@@ -1,7 +1,8 @@
-import { format, formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow } from "date-fns";
 import { BellRing, ChevronRight, SearchCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import AssetInspectionDialog from "~/components/assets/asset-inspection-dialog";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
@@ -31,6 +32,11 @@ export default function InspectionsCard({
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {inspections.length === 0 && (
+          <div className="text-muted-foreground text-center text-xs">
+            This asset has no inspection history.
+          </div>
+        )}
         {sortedInspections.map((inspection, idx) => (
           <AssetInspectionDialog
             key={inspection.id}
@@ -46,7 +52,7 @@ export default function InspectionsCard({
               >
                 <div className="flex flex-1 flex-col gap-1.5">
                   <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs font-light">
-                    {format(inspection.createdOn, "PPpp")}
+                    <HydrationSafeFormattedDate date={inspection.createdOn} formatStr="PPpp" />
                   </div>
                   <div>
                     <p className="text-sm">

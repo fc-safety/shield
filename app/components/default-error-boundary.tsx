@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+import { useEffect, type PropsWithChildren } from "react";
 import { Link, type To } from "react-router";
 import useBoundaryError from "~/hooks/use-boundary-error";
 import { openChat } from "~/lib/contact/utils";
@@ -21,6 +21,10 @@ export default function DefaultErrorBoundary({
   errorMessage?: string;
 } & PropsWithChildren) {
   const errorDisplay = useBoundaryError({ error });
+
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
 
   return (
     <div className="flex flex-col items-center gap-4">

@@ -1,7 +1,8 @@
-import { format, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import { responseValueImageSchema } from "~/lib/schema";
 import type { ResponseValueImage } from "~/lib/types";
 import { isNil } from "~/lib/utils";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import PreviewInspectionImages from "./preview-inspection-images";
 
 export default function DisplayInspectionValue({
@@ -21,7 +22,7 @@ export default function DisplayInspectionValue({
     <PreviewInspectionImages urls={value.urls} dense />
   ) : isStringValue(value) ? (
     isDateValue(value) ? (
-      format(parseISO(value), "PP")
+      <HydrationSafeFormattedDate date={parseISO(value)} formatStr="PP" />
     ) : (
       (value ?? <>&mdash;</>)
     )

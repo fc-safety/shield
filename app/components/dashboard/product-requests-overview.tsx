@@ -10,7 +10,7 @@ import {
   type OnChangeFn,
   type SortingState,
 } from "@tanstack/react-table";
-import { endOfDay, format, startOfDay, subDays } from "date-fns";
+import { endOfDay, startOfDay, subDays } from "date-fns";
 import {
   Check,
   ChevronsUpDown,
@@ -36,6 +36,7 @@ import { can, getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import { cn, humanize } from "~/lib/utils";
 import { ProductRequestStatusBadge } from "../assets/product-request-status-badge";
 import { ProductRequestCard } from "../assets/product-requests";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import DataList from "../data-list";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
@@ -524,7 +525,7 @@ function ProductRequestsDetails({
               className="border-border flex flex-col gap-2 border-t py-2"
             >
               <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
-                {format(productRequest.createdOn, "PPpp")}
+                <HydrationSafeFormattedDate date={productRequest.createdOn} formatStr="PPpp" />
                 {renderCell(cells.status)}
               </div>
               <div className="space-y-1">

@@ -23,7 +23,7 @@ type TForm = z.infer<typeof createUserSchema | typeof updateUserSchema>;
 interface ClientUserDetailsFormProps {
   user?: ClientUser;
   onSubmitted?: () => void;
-  clientId: string;
+  clientId?: string;
   siteExternalId?: string;
   viewContext?: ViewContext;
 }

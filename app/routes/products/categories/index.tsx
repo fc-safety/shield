@@ -1,10 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import {
-  Building2,
   CornerDownRight,
-  Globe2,
   HardHat,
-  MoreHorizontal,
   Pencil,
   Plus,
   Shapes,
@@ -18,6 +15,7 @@ import type { ViewContext } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ActiveToggle from "~/components/active-toggle";
+import ResponsiveActions from "~/components/common/responsive-actions";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
@@ -28,13 +26,6 @@ import EditAnsiCategoryButton from "~/components/products/edit-ansi-category-but
 import EditProductCategoryButton from "~/components/products/edit-product-category-button";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -48,7 +39,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
 
   const [productCategories, ansiCategories] = await Promise.all([
-    api.productCategories.list(request, { limit: 10000, order: { name: "asc" } }),
+    api.productCategories.list(request, {
+      limit: 10000,
+      order: { name: "asc" },
+      clientId: "_NULL",
+    }),
     canReadAnsiCategories
       ? api.ansiCategories.list(request, { limit: 10000, order: { name: "asc" } })
       : Promise.resolve(null),
@@ -72,61 +67,18 @@ export default function ProductCategories({
 
   const canReadAnsiCategories = can(user, "read", "ansi-categories");
 
-  const [globalCategories, clientCategories, myCategories] = useMemo(() => {
-    const globalCategories: ProductCategory[] = [];
-    const clientCategories: ProductCategory[] = [];
-    const myCategories: ProductCategory[] = [];
-
-    productCategories.forEach((category) => {
-      if (category.clientId !== null) {
-        if (category.client?.externalId === user.clientId) {
-          myCategories.push(category);
-        } else {
-          clientCategories.push(category);
-        }
-      } else {
-        globalCategories.push(category);
-      }
-    });
-
-    return [globalCategories, clientCategories, myCategories];
-  }, [productCategories, user.clientId]);
-
   return (
     <div className="grid gap-4">
       <ProductCategoriesCard
-        title="My Product Categories"
-        description="These are product categories that either you or someone in your organization has created."
-        TitleIcon={Shapes}
-        productCategories={myCategories}
-        canCreate={hasCreatePermission}
-        canDelete={hasDeletePermission}
-        canUpdate={hasUpdatePermission}
-        viewContext="user"
-      />
-      <ProductCategoriesCard
         title="Global Product Categories"
-        description="These are product categories that anyone can use."
-        TitleIcon={Globe2}
-        productCategories={globalCategories}
+        description="Categories accessible to all clients."
+        TitleIcon={Shapes}
+        productCategories={productCategories}
         canCreate={hasCreatePermission && userIsGlobalAdmin}
         canDelete={hasDeletePermission && userIsGlobalAdmin}
         canUpdate={hasUpdatePermission && userIsGlobalAdmin}
         viewContext={userIsGlobalAdmin ? "admin" : "user"}
       />
-      {isGlobalAdmin(user) && (
-        <ProductCategoriesCard
-          title="Client Product Categories"
-          description="These are product categories that have been created by other clients."
-          TitleIcon={Building2}
-          productCategories={clientCategories}
-          canCreate={false}
-          canDelete={userIsGlobalAdmin}
-          canUpdate={hasUpdatePermission && userIsGlobalAdmin}
-          viewContext={userIsGlobalAdmin ? "admin" : "user"}
-          showOwner
-        />
-      )}
       {canReadAnsiCategories && <AnsiCategoriesCard ansiCategories={ansiCategories} />}
     </div>
   );
@@ -236,50 +188,51 @@ function ProductCategoriesCard({
           const category = row.original;
 
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
-                <DropdownMenuItem asChild>
-                  <Link to={category.id}>
-                    <CornerDownRight />
-                    Details
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={!canDelete}
-                  onSelect={() =>
-                    setDeleteAction((draft) => {
-                      draft.open = true;
-                      draft.title = "Delete Product Category";
-                      draft.message = `Are you sure you want to delete ${
-                        category.name || category.id
-                      }?`;
-                      draft.requiredUserInput = category.name || category.id;
-                      draft.onConfirm = () => {
-                        submitDelete(
-                          {},
-                          {
-                            method: "delete",
-                            path: `/api/proxy/product-categories/${category.id}`,
-                            viewContext,
-                          }
-                        );
-                      };
-                    })
-                  }
-                >
-                  <Trash />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "details",
+                      text: "Details",
+                      Icon: CornerDownRight,
+                      linkTo: category.id,
+                    },
+                  ],
+                },
+                {
+                  key: "destructive-actions",
+                  variant: "destructive",
+                  actions: [
+                    {
+                      key: "delete",
+                      text: "Delete",
+                      Icon: Trash,
+                      disabled: !canDelete,
+                      onAction: () => {
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete Product Category";
+                          draft.message = `Are you sure you want to delete ${category.name || category.id}?`;
+                          draft.requiredUserInput = category.name || category.id;
+                          draft.onConfirm = () => {
+                            submitDelete(
+                              {},
+                              {
+                                method: "delete",
+                                path: `/api/proxy/product-categories/${category.id}`,
+                                viewContext,
+                              }
+                            );
+                          };
+                        });
+                      },
+                    },
+                  ],
+                },
+              ]}
+            />
           );
         },
       },

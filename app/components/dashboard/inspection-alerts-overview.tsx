@@ -10,7 +10,7 @@ import {
   type OnChangeFn,
   type SortingState,
 } from "@tanstack/react-table";
-import { endOfDay, format, startOfDay, subDays } from "date-fns";
+import { endOfDay, startOfDay, subDays } from "date-fns";
 import {
   Activity,
   AlertCircle,
@@ -36,6 +36,7 @@ import type { QueryParams } from "~/lib/urls";
 import { hasMultiSiteVisibility } from "~/lib/users";
 import { cn, humanize } from "~/lib/utils";
 import AssetInspectionAlert from "../assets/asset-inspection-alert";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
@@ -537,7 +538,7 @@ function AlertsDetails({
         return (
           <div key={alert.id} className="border-border flex flex-col gap-2 border-t py-2">
             <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">
-              {format(alert.createdOn, "PPpp")}
+              <HydrationSafeFormattedDate date={alert.createdOn} formatStr="PPpp" />
               <div className="flex items-center gap-1">
                 {renderCell(cells.asset)}
                 <span className="text-muted-foreground">•</span>

@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { format, formatDistanceToNow, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import {
   CircleAlert,
   MoreHorizontal,
@@ -23,15 +23,18 @@ import EditAssetButton from "~/components/assets/edit-asset-button";
 import EditConsumableButton from "~/components/assets/edit-consumable-button";
 import EditableTagDisplay from "~/components/assets/editable-tag-display";
 import ProductRequests, { NewSupplyRequestButton } from "~/components/assets/product-requests";
+import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import DisplayRelativeDate from "~/components/display-relative-date";
 import Icon from "~/components/icons/icon";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
 import { AnsiCategoryDisplay } from "~/components/products/ansi-category-combobox";
 import { ProductImage } from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
+import { ButtonGroup } from "~/components/ui/button-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   DropdownMenu,
@@ -63,8 +66,10 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 };
 
 export const handle = {
-  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"] | undefined>) => ({
-    label: data?.asset.name || "Details",
+  breadcrumb: ({
+    loaderData,
+  }: Route.MetaArgs | UIMatch<Route.MetaArgs["loaderData"] | undefined>) => ({
+    label: loaderData?.asset.name || "Details",
   }),
 };
 
@@ -128,7 +133,7 @@ export default function AssetDetails({
   return (
     <div className="@container">
       <div className="grid w-full grid-cols-1 gap-x-2 gap-y-4 @4xl:grid-cols-[1fr_400px]">
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex-wrap gap-x-4">
@@ -211,7 +216,9 @@ export default function AssetDetails({
                       },
                       {
                         label: "Setup Completed",
-                        value: asset.setupOn && format(asset.setupOn, "PPpp"),
+                        value: asset.setupOn && (
+                          <HydrationSafeFormattedDate date={asset.setupOn} formatStr="PPpp" />
+                        ),
                       },
                     ]}
                     defaultValue={<>&mdash;</>}
@@ -247,11 +254,15 @@ export default function AssetDetails({
                     details={[
                       {
                         label: "Created",
-                        value: format(asset.createdOn, "PPpp"),
+                        value: (
+                          <HydrationSafeFormattedDate date={asset.createdOn} formatStr="PPpp" />
+                        ),
                       },
                       {
                         label: "Last Updated",
-                        value: format(asset.modifiedOn, "PPpp"),
+                        value: (
+                          <HydrationSafeFormattedDate date={asset.modifiedOn} formatStr="PPpp" />
+                        ),
                       },
                     ]}
                     defaultValue={<>&mdash;</>}
@@ -290,28 +301,32 @@ export default function AssetDetails({
                   </Card>
                 </div>
 
-                <div className="col-span-2 flex gap-2">
+                <ButtonGroup className="col-span-2">
                   {canUpdate && (
-                    <EditAssetButton
-                      asset={asset}
-                      trigger={
-                        <Button variant="outline" size="sm" type="button">
-                          <Pencil /> Edit
-                        </Button>
-                      }
-                    />
+                    <ButtonGroup>
+                      <EditAssetButton
+                        asset={asset}
+                        trigger={
+                          <Button variant="outline" size="sm" type="button">
+                            <Pencil /> Edit
+                          </Button>
+                        }
+                      />
+                    </ButtonGroup>
                   )}
                   {canDelete && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      type="button"
-                      onClick={() => handleDeleteAsset(asset)}
-                    >
-                      <Trash /> Delete
-                    </Button>
+                    <ButtonGroup>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        type="button"
+                        onClick={() => handleDeleteAsset(asset)}
+                      >
+                        <Trash /> Delete
+                      </Button>
+                    </ButtonGroup>
                   )}
-                </div>
+                </ButtonGroup>
               </div>
             </CardContent>
           </Card>
@@ -360,7 +375,7 @@ export default function AssetDetails({
             </BasicCard>
           </div>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           <AlertsCard alerts={asset.alerts ?? []} assetId={asset.id} />
 
           <Card>
@@ -482,12 +497,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
         cell: ({ getValue }) => {
           const value = getValue() as string;
           return value && isValid(parseISO(value)) ? (
-            <span title={format(value, "PPpp")}>
-              {formatDistanceToNow(value, {
-                addSuffix: true,
-                includeSeconds: true,
-              })}
-            </span>
+            <DisplayRelativeDate date={value} />
           ) : (
             <>&mdash;</>
           );

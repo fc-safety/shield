@@ -1,6 +1,7 @@
 import {
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
@@ -11,6 +12,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type ColumnOrderState,
+  type ExpandedState,
   type Header,
   type InitialTableState,
   type OnChangeFn,
@@ -62,6 +64,8 @@ export interface DataTableProps<TData, TValue> extends Omit<DataTableToolbarProp
   onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
   onColumnOrderChange?: OnChangeFn<ColumnOrderState>;
   onPaginationChange?: OnChangeFn<PaginationState>;
+  onExpandedChange?: OnChangeFn<ExpandedState>;
+  getSubRows?: (originalRow: TData, index: number) => TData[] | undefined;
 }
 
 export function DataTable<TData, TValue>({
@@ -77,6 +81,8 @@ export function DataTable<TData, TValue>({
   onColumnVisibilityChange,
   onColumnOrderChange,
   onPaginationChange,
+  onExpandedChange,
+  getSubRows,
   ...passThroughProps
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
@@ -96,6 +102,8 @@ export function DataTable<TData, TValue>({
     pageSize: initialState?.pagination?.pageSize ?? 10,
   });
 
+  const [expanded, setExpanded] = React.useState<ExpandedState>(initialState?.expanded ?? {});
+
   useEffect(() => {
     onSortingChange?.(sorting);
   }, [sorting, onSortingChange]);
@@ -111,6 +119,9 @@ export function DataTable<TData, TValue>({
   useEffect(() => {
     onPaginationChange?.(pagination);
   }, [pagination, onPaginationChange]);
+  useEffect(() => {
+    onExpandedChange?.(expanded);
+  }, [expanded, onExpandedChange]);
 
   const table = useReactTable({
     data,
@@ -122,6 +133,7 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnOrder,
       pagination,
+      expanded,
     },
     initialState,
     enableRowSelection: true,
@@ -131,12 +143,15 @@ export function DataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
     onPaginationChange: setPagination,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getSubRows,
     getRowId,
     filterFns: {
       defaultIncludes: customArrayIncludesFilterFn,
@@ -144,7 +159,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className={cn("flex flex-col gap-y-4 bg-inherit", classNames?.container)}>
+    <div className={cn("flex min-w-0 flex-col gap-y-4 bg-inherit", classNames?.container)}>
       {!hideToolbar && <DataTableToolbar table={table} {...passThroughProps} />}
       <div className="flex min-h-0 flex-1 flex-col rounded-md border bg-inherit">
         <Table

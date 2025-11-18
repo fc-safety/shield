@@ -1,5 +1,6 @@
 import { AppSidebar, type SidebarGroup } from "@/components/app-sidebar";
 import { Separator } from "@/components/ui/separator";
+import { dehydrate, QueryClient } from "@tanstack/react-query";
 import {
   BookOpenText,
   Building,
@@ -21,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 import { Outlet } from "react-router";
+import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { requireUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
@@ -29,11 +31,18 @@ import HelpSidebar from "~/components/help-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
-import { can, isSuperAdmin } from "~/lib/users";
+import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
+import { can, isGlobalAdmin, isSuperAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUserSession(request);
+
+  const queryClient = new QueryClient();
+  const fetcher = getAuthenticatedFetcher(request);
+  const prefetchPromises = [queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher))];
+
+  await Promise.all(prefetchPromises);
 
   return {
     user,
@@ -41,6 +50,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     appHost: config.APP_HOST,
     googleMapsApiKey: config.GOOGLE_MAPS_API_KEY,
     authClientId: config.CLIENT_ID,
+    dehydratedState: dehydrate(queryClient),
   };
 }
 
@@ -52,28 +62,33 @@ export default function Layout({
       groupTitle: "My Shield",
       items: [
         {
+          type: "link",
           title: "Command Center",
           url: "command-center",
           icon: LayoutDashboard,
         },
         {
+          type: "link",
           title: "Assets",
           url: "assets",
           icon: Shield,
           hide: !can(user, "read", "assets"),
         },
         {
+          type: "link",
           title: "Inspection Routes",
           url: "inspection-routes",
           icon: RouteIcon,
           hide: !can(user, "read", "inspection-routes"),
         },
         {
+          type: "link",
           title: "Reports",
           url: "reports",
           icon: FileSpreadsheet,
         },
         {
+          type: "link",
           title: "My Organization",
           url: "my-organization",
           icon: Building,
@@ -83,26 +98,30 @@ export default function Layout({
     },
     {
       groupTitle: "Products",
-      hide: !can(user, "read", "products"),
+      hide: !isGlobalAdmin(user) || !can(user, "read", "products"),
       items: [
         {
+          type: "link",
           title: "All Products",
           url: "products/all",
           icon: FireExtinguisher,
         },
         {
+          type: "link",
           title: "Categories",
           url: "products/categories",
           icon: Shapes,
           hide: !can(user, "read", "product-categories"),
         },
         {
+          type: "link",
           title: "Manufacturers",
           url: "products/manufacturers",
           icon: Factory,
           hide: !can(user, "read", "manufacturers"),
         },
         {
+          type: "link",
           title: "Questions",
           url: "products/questions",
           icon: ShieldQuestion,
@@ -114,36 +133,41 @@ export default function Layout({
       groupTitle: "Admin",
       items: [
         {
+          type: "link",
           title: "Clients",
           url: "admin/clients",
           icon: Building2,
           hide: !can(user, "read", "clients"),
         },
         {
+          type: "link",
           title: "Supply Requests",
           url: "admin/product-requests",
           icon: Package,
           hide: !can(user, "read", "product-requests"),
         },
         {
+          type: "link",
           title: "Tags",
           url: "admin/tags",
           icon: Nfc,
           hide: !can(user, "read", "tags"),
         },
         {
+          type: "link",
           title: "Roles",
           url: "admin/roles",
           icon: Users,
         },
         {
+          type: "link",
           title: "Settings",
           url: "admin/settings",
           icon: Settings,
         },
         {
+          type: "group",
           title: "Advanced",
-          url: "admin/advanced",
           icon: Terminal,
           children: [
             {
@@ -159,16 +183,19 @@ export default function Layout({
       groupTitle: "Support",
       items: [
         {
+          type: "link",
           title: "Contact Us",
           url: "contact-us",
           icon: MessageCircleMore,
         },
         {
+          type: "link",
           title: "FAQs",
           url: "faqs",
           icon: CircleHelp,
         },
         {
+          type: "link",
           title: "Docs",
           url: "docs",
           icon: BookOpenText,

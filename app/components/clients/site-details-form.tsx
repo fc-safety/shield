@@ -16,6 +16,7 @@ import { z } from "zod";
 import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type ResultsPage, type Site } from "~/lib/models";
 import { getSiteSchema } from "~/lib/schema";
 import { type QueryParams } from "~/lib/urls";
@@ -29,7 +30,7 @@ import { Skeleton } from "../ui/skeleton";
 import SiteCombobox from "./site-combobox";
 export interface SiteDetailsFormProps {
   site?: Site;
-  clientId: string;
+  clientId?: string;
   parentSiteId?: string;
   onSubmitted?: () => void;
   isSiteGroup?: boolean;
@@ -73,18 +74,8 @@ export default function SiteDetailsForm({
           update: {},
         },
         phoneNumber: "",
-        client: {
-          connect: {
-            id: clientId,
-          },
-        },
-        parentSite: parentSiteId
-          ? {
-              connect: {
-                id: parentSiteId,
-              },
-            }
-          : undefined,
+        client: connectOrEmpty(clientId),
+        parentSite: connectOrEmpty(parentSiteId),
       }) satisfies TForm,
     [clientId, parentSiteId]
   );

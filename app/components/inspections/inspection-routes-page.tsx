@@ -18,24 +18,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { format } from "date-fns";
-import {
-  ArrowDown,
-  ArrowUp,
-  GripVertical,
-  Pencil,
-  Plus,
-  Trash,
-} from "lucide-react";
-import { forwardRef, useEffect, useState, type HTMLAttributes } from "react";
+import { ArrowDown, ArrowUp, GripVertical, Pencil, Plus, Trash } from "lucide-react";
+import { forwardRef, useEffect, useMemo, useState, type HTMLAttributes } from "react";
 import { useFetcher, type FetcherWithComponents } from "react-router";
 import { useImmer } from "use-immer";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import GradientScrollArea from "~/components/gradient-scroll-area";
-import {
-  HelpSidebarContent,
-  HelpSidebarSection,
-} from "~/components/help-sidebar";
+import { HelpSidebarContent, HelpSidebarSection } from "~/components/help-sidebar";
 import HelpbarTrigger from "~/components/helpbar-trigger";
 import EditRouteButton from "~/components/inspections/edit-route-button";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
@@ -53,34 +42,32 @@ import useConfirmAction from "~/hooks/use-confirm-action";
 import type { InspectionRoute, InspectionRoutePoint } from "~/lib/models";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import DataList from "../data-list";
+import { ButtonGroup, ButtonGroupSeparator } from "../ui/button-group";
+import { Skeleton } from "../ui/skeleton";
 
-export default function InspectionRoutesPage({
-  routes,
-}: {
-  routes: InspectionRoute[];
-}) {
+export default function InspectionRoutesPage({ routes }: { routes: InspectionRoute[] }) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "inspection-routes");
 
   return (
     <div className="grid gap-4 text-center">
       <div className="grid gap-2">
-        <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
+        <h2 className="flex items-center justify-center gap-2 text-2xl font-bold">
           Inspection Routes
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           {canCreate ? (
             <>
-              Build routes to help your inspectors find your assets and ensure
-              inspections get completed if the task gets picked up again on a
-              different day or even by a different inspector.
+              Build routes to help your inspectors find your assets and ensure inspections get
+              completed if the task gets picked up again on a different day or even by a different
+              inspector.
             </>
           ) : (
             <>
-              Routes are used to help inspectors find assets and ensure
-              inspections get completed if the task gets picked up again on a
-              different day or even by a different inspector.
+              Routes are used to help inspectors find assets and ensure inspections get completed if
+              the task gets picked up again on a different day or even by a different inspector.
             </>
           )}
         </p>
@@ -119,19 +106,21 @@ function RouteCard({ route }: { route: InspectionRoute }) {
     })
   );
 
+  const initialPoints = useMemo(() => {
+    return route.inspectionRoutePoints?.slice().sort((a, b) => a.order - b.order) ?? [];
+  }, [route.inspectionRoutePoints]);
+  const [initialPointsLoading, setInitialPointsLoading] = useState(true);
   const [points, setPoints] = useImmer<InspectionRoutePoint[]>([]);
+
+  useEffect(() => {
+    setPoints(initialPoints);
+    setInitialPointsLoading(false);
+  }, [initialPoints, setPoints]);
 
   const [activePoint, setActivePoint] = useState<{
     point: InspectionRoutePoint;
     idx: number;
   } | null>(null);
-
-  useEffect(() => {
-    setPoints(
-      route.inspectionRoutePoints?.slice().sort((a, b) => a.order - b.order) ??
-        []
-    );
-  }, [setPoints, route.inspectionRoutePoints]);
 
   const reorderFetcher = useFetcher();
   const deletePointFetcher = useFetcher();
@@ -225,30 +214,30 @@ function RouteCard({ route }: { route: InspectionRoute }) {
         <CardHeader className="flex-row gap-2">
           <CardHeader className="p-0 sm:p-0">
             <CardTitle>{route.name}</CardTitle>
-            <CardDescription>
-              {route.description || <>&mdash;</>}
-            </CardDescription>
+            <CardDescription>{route.description || <>&mdash;</>}</CardDescription>
           </CardHeader>
           <div className="flex-1"></div>
-          {canUpdate && (
-            <EditRouteButton
-              route={route}
-              trigger={
-                <Button size="icon" variant="secondary">
-                  <Pencil />
+          <ButtonGroup>
+            {canUpdate && (
+              <ButtonGroup>
+                <EditRouteButton
+                  route={route}
+                  trigger={
+                    <Button size="icon" variant="secondary">
+                      <Pencil />
+                    </Button>
+                  }
+                />
+              </ButtonGroup>
+            )}
+            {canDelete && (
+              <ButtonGroup>
+                <Button size="icon" variant="destructive" onClick={() => handleDeleteRoute(route)}>
+                  <Trash />
                 </Button>
-              }
-            />
-          )}
-          {canDelete && (
-            <Button
-              size="icon"
-              variant="destructive"
-              onClick={() => handleDeleteRoute(route)}
-            >
-              <Trash />
-            </Button>
-          )}
+              </ButtonGroup>
+            )}
+          </ButtonGroup>
         </CardHeader>
         <CardContent className="flex flex-col gap-8">
           <DataList
@@ -260,11 +249,11 @@ function RouteCard({ route }: { route: InspectionRoute }) {
               },
               {
                 label: "Created On",
-                value: format(route.createdOn, "PPpp"),
+                value: <HydrationSafeFormattedDate date={route.createdOn} formatStr="PPpp" />,
               },
               {
                 label: "Modified On",
-                value: format(route.modifiedOn, "PPpp"),
+                value: <HydrationSafeFormattedDate date={route.modifiedOn} formatStr="PPpp" />,
               },
             ]}
             defaultValue={<>&mdash;</>}
@@ -272,7 +261,7 @@ function RouteCard({ route }: { route: InspectionRoute }) {
             className="w-max"
           />
           <div className="flex flex-col gap-2">
-            <h3 className="text-md font-semibold flex items-center gap-2">
+            <h3 className="text-md flex items-center gap-2 font-semibold">
               Route Points
               {canUpdate && (
                 <HelpbarTrigger
@@ -303,15 +292,14 @@ function RouteCard({ route }: { route: InspectionRoute }) {
                 />
               )}
             </h3>
-            {!points ||
-              (points.length === 0 && (
-                <div className="text-sm text-muted-foreground">
-                  No route points added yet.
-                </div>
-              ))}
+            {initialPointsLoading ? (
+              <Skeleton className="h-64 w-full" />
+            ) : !points || points.length === 0 ? (
+              <div className="text-muted-foreground text-sm">No route points added yet.</div>
+            ) : null}
             {points && (
               <GradientScrollArea
-                className="max-h-72 h-full"
+                className="h-full max-h-72"
                 variant="card"
                 scrollDisabled={!!activePoint}
               >
@@ -341,7 +329,7 @@ function RouteCard({ route }: { route: InspectionRoute }) {
                           className={cn(
                             activePoint &&
                               activePoint.idx === idx &&
-                              "opacity-50 pointer-events-none"
+                              "pointer-events-none opacity-50"
                           )}
                         />
                       ))}
@@ -396,8 +384,9 @@ const enableBodyScroll = () => {
 };
 
 const SortableRoutePointItem = (props: RoutePointItemProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: props.point.id });
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: props.point.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -412,13 +401,7 @@ const SortableRoutePointItem = (props: RoutePointItemProps) => {
   });
 
   return (
-    <RoutePointItem
-      {...props}
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      style={style}
-    />
+    <RoutePointItem {...props} ref={setNodeRef} {...attributes} {...listeners} style={style} />
   );
 };
 
@@ -473,41 +456,37 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
       <div
         ref={ref}
         style={style}
-        className={cn(
-          "flex gap-3 items-center bg-card rounded-md p-2 -mx-2",
-          className
-        )}
+        className={cn("bg-card -mx-2 flex items-center gap-3 rounded-md p-2", className)}
       >
         {canUpdate && (
           <div {...props} style={{ touchAction: "manipulation" }}>
             <GripVertical className="size-4" />
           </div>
         )}
-        <div className="text-xs font-semibold rounded-full size-7 shrink-0 flex items-center justify-center bg-primary text-primary-foreground">
+        <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
           {idx + 1}
         </div>
         <div className="flex flex-col">
           <div className="text-sm font-semibold">{point.asset?.name}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-muted-foreground text-xs">
             {point.asset?.location} - {point.asset?.placement}
           </div>
         </div>
         <div className="flex-1"></div>
         {canUpdate && (
-          <>
-            <div className="flex gap-0.5">
+          <ButtonGroup>
+            <ButtonGroup>
               <Button
                 size="icon"
                 variant="secondary"
                 disabled={
-                  !allPoints ||
-                  idx === allPoints.length - 1 ||
-                  reorderFetcher.state !== "idle"
+                  !allPoints || idx === allPoints.length - 1 || reorderFetcher.state !== "idle"
                 }
                 onClick={() => handleReorder(point.id, getNextOrder(idx))}
               >
                 <ArrowDown />
               </Button>
+              <ButtonGroupSeparator />
               <Button
                 size="icon"
                 variant="secondary"
@@ -516,17 +495,19 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
               >
                 <ArrowUp />
               </Button>
-            </div>
-            <Button
-              size="icon"
-              variant="destructive"
-              disabled={deleteFetcher.state !== "idle"}
-              onClick={() => handleDelete(point)}
-              className="shrink-0"
-            >
-              <Trash />
-            </Button>
-          </>
+            </ButtonGroup>
+            <ButtonGroup>
+              <Button
+                size="icon"
+                variant="destructive"
+                disabled={deleteFetcher.state !== "idle"}
+                onClick={() => handleDelete(point)}
+                className="shrink-0"
+              >
+                <Trash />
+              </Button>
+            </ButtonGroup>
+          </ButtonGroup>
         )}
       </div>
     );

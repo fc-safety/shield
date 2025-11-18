@@ -43,7 +43,7 @@ export default function MigrationAssistantButton({
         )
       }
     >
-      <div className="h-[36rem]">
+      <div className="h-144">
         <MigrationAssistant {...props} />
       </div>
     </ResponsiveDialog>

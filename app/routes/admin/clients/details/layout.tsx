@@ -1,9 +1,6 @@
-import {
-  Outlet,
-  type ShouldRevalidateFunctionArgs,
-  type UIMatch,
-} from "react-router";
+import { type ShouldRevalidateFunctionArgs, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
+import ClientDetailsLayout, { type Tab } from "~/components/clients/pages/client-details-layout";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
@@ -17,8 +14,8 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 };
 
 export const handle = {
-  breadcrumb: ({ data }: Route.MetaArgs | UIMatch<Route.MetaArgs["data"]>) => ({
-    label: data?.name || "Details",
+  breadcrumb: ({ loaderData }: Route.MetaArgs | UIMatch<Route.MetaArgs["loaderData"]>) => ({
+    label: loaderData?.client.name || "Details",
   }),
 };
 
@@ -26,12 +23,22 @@ export const meta: Route.MetaFunction = ({ matches }) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
-export function loader({ params, request }: Route.LoaderArgs) {
+export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  return api.clients.get(request, id, { context: "admin" });
-}
+  // Get current tab value from the URL path.
+  const pathParts = URL.parse(request.url)?.pathname.split("/") ?? [];
+  const clientIdPathIdx = pathParts.indexOf(id);
+  const currentTab = pathParts.at(clientIdPathIdx + 1) as Tab | undefined;
 
-export default function AdminClientDetailsLayout() {
-  return <Outlet />;
+  const client = await api.clients.get(request, id, { context: "admin" });
+  return { client, currentTab };
+};
+
+export default function AdminClientDetailsLayout({
+  loaderData: { client, currentTab },
+}: Route.ComponentProps) {
+  return (
+    <ClientDetailsLayout client={client} viewContext="admin" currentTab={currentTab ?? "sites"} />
+  );
 }

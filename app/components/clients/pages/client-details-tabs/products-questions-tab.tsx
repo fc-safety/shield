@@ -1,0 +1,236 @@
+import type { ColumnDef } from "@tanstack/react-table";
+import { FireExtinguisher, Pencil, ShieldQuestion, Trash, type LucideIcon } from "lucide-react";
+import { useMemo, type PropsWithChildren } from "react";
+import { toast } from "sonner";
+import type { ViewContext } from "~/.server/api-utils";
+import ResponsiveActions from "~/components/common/responsive-actions";
+import ConfirmationDialog from "~/components/confirmation-dialog";
+import { DataTable } from "~/components/data-table/data-table";
+import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
+import Icon from "~/components/icons/icon";
+import EditProductButton from "~/components/products/edit-product-button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { useAuth } from "~/contexts/auth-context";
+import useConfirmAction from "~/hooks/use-confirm-action";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { useOpenData } from "~/hooks/use-open-data";
+import type { AssetQuestion, Product } from "~/lib/models";
+import { can } from "~/lib/users";
+
+export default function ClientDetailsTabsProductsQuestionsTag({
+  viewContext,
+  clientId,
+  products,
+  questions,
+}: {
+  viewContext: ViewContext;
+  clientId?: string;
+  products: Product[];
+  questions: AssetQuestion[];
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <BasicCard
+        title="Products"
+        icon={FireExtinguisher}
+        description={
+          viewContext === "admin"
+            ? "Products that are custom created by/for this particular client."
+            : "Your custom products."
+        }
+      >
+        <ProductsTable products={products} viewContext={viewContext} clientId={clientId} />
+      </BasicCard>
+      <BasicCard
+        title="Questions"
+        icon={ShieldQuestion}
+        description={
+          viewContext === "admin"
+            ? "Questions that are custom created by/for this particular client."
+            : "Your custom questions."
+        }
+      >
+        <QuestionsTable questions={questions} />
+      </BasicCard>
+    </div>
+  );
+}
+
+const BasicCard = ({
+  title,
+  icon: Icon,
+  description,
+  children,
+}: PropsWithChildren<{ title: string; icon?: LucideIcon; description?: string }>) => {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {Icon && <Icon />} {title}
+        </CardTitle>
+        {description && <CardDescription>{description}</CardDescription>}
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
+};
+
+const ProductsTable = ({
+  products,
+  viewContext,
+  clientId,
+}: {
+  products: Product[];
+  viewContext: ViewContext;
+  clientId?: string;
+}) => {
+  const { user } = useAuth();
+
+  const canCreate = can(user, "create", "products");
+  const canUpdate = can(user, "update", "products");
+  const canDelete = can(user, "delete", "products");
+
+  const editProduct = useOpenData<Product>();
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
+  });
+
+  const { submitJson: submitDelete } = useModalFetcher({
+    defaultErrorMessage: "Error: Failed to delete product",
+    onSubmitted: () => {
+      toast.success("Product deleted successfully.");
+    },
+  });
+
+  const deleteProduct = (productId: string) => {
+    submitDelete(
+      {},
+      {
+        method: "delete",
+        path: `/api/proxy/products/${productId}`,
+        viewContext,
+      }
+    );
+  };
+
+  const columns = useMemo(
+    (): ColumnDef<Product>[] => [
+      {
+        accessorKey: "name",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+      },
+      {
+        accessorKey: "sku",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} title="SKU" />
+        ),
+        cell: ({ getValue }) => getValue() || <>&mdash;</>,
+      },
+      {
+        accessorKey: "productCategory.name",
+        id: "category",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ row }) => {
+          const category = row.original.productCategory;
+          return (
+            <span className="flex items-center gap-2">
+              {category?.icon && (
+                <Icon iconId={category.icon} color={category.color} className="text-lg" />
+              )}
+              {category?.shortName ?? category?.name ?? <>&mdash;</>}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "manufacturer.name",
+        id: "manufacturer",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+      },
+      {
+        id: "actions",
+        cell: ({ row }) => {
+          const product = row.original;
+          return (
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "edit",
+                      text: "Edit",
+                      Icon: Pencil,
+                      disabled: !canUpdate,
+                      onAction: () => editProduct.openData(product),
+                    },
+                  ],
+                },
+                {
+                  key: "destructive-actions",
+                  actions: [
+                    {
+                      key: "delete",
+                      text: "Delete",
+                      variant: "destructive",
+                      Icon: Trash,
+                      disabled: !canDelete,
+                      onAction: () => {
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete Product";
+                          draft.message = `Are you sure you want to delete ${product.name}?`;
+                          draft.requiredUserInput = product.name;
+                          draft.onConfirm = () => deleteProduct(product.id);
+                        });
+                      },
+                    },
+                  ],
+                },
+              ]}
+            />
+          );
+        },
+      },
+    ],
+    []
+  );
+  return (
+    <div>
+      <DataTable
+        columns={columns}
+        data={products}
+        searchPlaceholder="Search products..."
+        actions={
+          canCreate
+            ? [<EditProductButton key="add" viewContext={viewContext} clientId={clientId} />]
+            : undefined
+        }
+      />
+      {editProduct.data && (
+        <EditProductButton
+          trigger={null}
+          open={editProduct.open}
+          onOpenChange={editProduct.setOpen}
+          product={editProduct.data}
+          viewContext={viewContext}
+          clientId={clientId}
+        />
+      )}
+      <ConfirmationDialog {...deleteAction} />
+    </div>
+  );
+};
+
+const QuestionsTable = ({ questions }: { questions: AssetQuestion[] }) => {
+  const columns = useMemo(
+    (): ColumnDef<AssetQuestion>[] => [
+      {
+        accessorKey: "prompt",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+      },
+    ],
+    []
+  );
+  return <DataTable columns={columns} data={questions} searchPlaceholder="Search questions..." />;
+};

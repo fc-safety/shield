@@ -2,7 +2,6 @@ import { beautifyPhone } from "~/lib/utils";
 import DataList from "../data-list";
 import { CardContent, CardHeader, CardTitle } from "../ui/card";
 
-import { format } from "date-fns";
 import { Boxes, Pencil, Warehouse } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import type { ViewContext } from "~/.server/api-utils";
@@ -11,6 +10,7 @@ import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Site } from "~/lib/models";
 import { can, isSuperAdmin } from "~/lib/users";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import ConfirmationDialog from "../confirmation-dialog";
 import { CopyableText } from "../copyable-text";
 import DisplayAddress from "../display-address";
@@ -131,11 +131,11 @@ export default function SiteDetailsCard({
               details={[
                 {
                   label: "Created",
-                  value: format(site.createdOn, "PPpp"),
+                  value: <HydrationSafeFormattedDate date={site.createdOn} formatStr="PPpp" />,
                 },
                 {
                   label: "Last Updated",
-                  value: format(site.modifiedOn, "PPpp"),
+                  value: <HydrationSafeFormattedDate date={site.modifiedOn} formatStr="PPpp" />,
                 },
               ]}
               defaultValue={<>&mdash;</>}

@@ -41,7 +41,6 @@ export default function RouteDetailsForm({ route, onSubmitted }: RouteDetailsFor
           description: route.description ?? undefined,
           inspectionRoutePoints: undefined,
         }) as TForm,
-    mode: "onBlur",
   });
 
   const {

@@ -1,11 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CheckCircle2, Shapes } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Shapes, SquareSlash } from "lucide-react";
 import { useMemo, type ComponentProps } from "react";
 import type { ViewContext } from "~/.server/api-utils";
 import Step from "~/components/assistant/components/step";
 import Icon from "~/components/icons/icon";
 import { ProductImage } from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/components/ui/empty";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -84,17 +92,33 @@ export default function StepSelectExistingAsset({
         }}
       >
         {!isLoading && assetsByCategory && Object.entries(assetsByCategory).length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-4">
-            <div className="text-muted-foreground text-center">
-              <h3 className="text-2xl font-semibold">Oops!</h3>
-              <p className="text-center text-sm">
+          // <div className="col-span-full flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed p-4">
+          //   <div className="text-muted-foreground text-center">
+          //     <h3 className="text-2xl font-semibold">Oops!</h3>
+          //     <p className="text-center text-sm">
+          //       Looks like all existing assets have been registered.
+          //     </p>
+          //   </div>
+          //   <Button variant="ghost" onClick={onStepBackward} type="button" size="sm">
+          //     <ArrowLeft /> Go back
+          //   </Button>
+          // </div>
+          <Empty className="col-span-full border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <SquareSlash />
+              </EmptyMedia>
+              <EmptyTitle>Oops!</EmptyTitle>
+              <EmptyDescription>
                 Looks like all existing assets have been registered.
-              </p>
-            </div>
-            <Button variant="ghost" onClick={onStepBackward} type="button" size="sm">
-              <ArrowLeft /> Go back
-            </Button>
-          </div>
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button variant="secondary" onClick={onStepBackward} type="button" size="sm">
+                <ArrowLeft /> Go back
+              </Button>
+            </EmptyContent>
+          </Empty>
         )}
         {isLoading
           ? Array.from({ length: 4 }).map((_, index) => (

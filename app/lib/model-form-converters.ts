@@ -9,12 +9,28 @@ export const toUpdateMany = <T extends { id: string }>(items: T[] | null | undef
     : undefined;
 };
 
-export const connectOrEmpty = <T, K extends keyof T>(item: T | null | undefined, idKey: K) => {
-  return item && item[idKey]
+type ConnectOrEmpty =
+  | {
+      connect: {
+        id: string;
+      };
+    }
+  | undefined;
+
+export function connectOrEmpty(connectId: string | null | undefined): ConnectOrEmpty;
+export function connectOrEmpty<T, K extends keyof T>(
+  item: T | null | undefined,
+  idKey: K
+): ConnectOrEmpty;
+export function connectOrEmpty<T, K extends keyof T>(
+  item: T | string | null | undefined,
+  idKey?: K
+) {
+  return item && item !== ""
     ? {
         connect: {
-          id: item[idKey],
+          id: idKey ? (item as T)[idKey] : (item as string),
         },
       }
     : undefined;
-};
+}
