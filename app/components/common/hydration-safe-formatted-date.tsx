@@ -6,10 +6,12 @@ import TextSkeleton from "./text-skeleton";
 
 export default function HydrationSafeFormattedDate({
   date,
-  formatStr,
+  formatStr = "PPpp",
+  className,
 }: {
   date: DateArg<Date>;
-  formatStr: string;
+  formatStr?: string;
+  className?: string;
 }) {
   const hydrationSafeDate = useHydrationSafeDate(date);
   const locale = useHydrationSafeLocale();
@@ -37,13 +39,13 @@ export default function HydrationSafeFormattedDate({
   }, []);
 
   return (
-    <time dateTime={dateStr}>
+    <time dateTime={dateStr} className={className}>
       {mounted ? (
         unsafeDateFormatted
       ) : hydrationSafeDateFormatted ? (
         hydrationSafeDateFormatted
       ) : (
-        <TextSkeleton size={estimatedFormattedDateLength} />
+        <TextSkeleton size={estimatedFormattedDateLength} className={className} />
       )}
     </time>
   );

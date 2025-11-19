@@ -556,12 +556,10 @@ function InspectionRouteCard({
   // Allow user to disable route for this inspection.
   const [routeDisabled, setRouteDisabled] = useState(false);
 
-  const [activeSession, setActiveSession] = useState<InspectionSession | undefined | null>();
-
   // Automatically set active session based on user's last session. If the user
   // has multiple sessions, or if another inspector has already started a session,
   // the user will be prompted to confirm which session they would like to continue.
-  useEffect(() => {
+  const defaultSession = useMemo(() => {
     if (activeOrRecentlyExpiredSessions) {
       const mySessions = activeOrRecentlyExpiredSessions.filter(
         (s) => s.lastInspector?.idpId === user.idpId
@@ -570,24 +568,34 @@ function InspectionRouteCard({
 
       if (myActiveSessions.length === 1) {
         // Choose active session if there is only one.
-        setActiveSession(myActiveSessions[0]);
+        return myActiveSessions[0];
       } else if (mySessions.length === 1) {
         // Choose any session if there is only one.
-        setActiveSession(mySessions[0]);
+        return mySessions[0];
       }
     }
   }, [user, activeOrRecentlyExpiredSessions]);
-
-  const [activeRoute, setActiveRoute] = useState<InspectionRoute | undefined | null>();
+  const [selectedSession, setSelectedSession] = useState<InspectionSession | undefined | null>();
+  const activeSession = useMemo(() => {
+    if (typeof selectedSession === "undefined") {
+      return defaultSession;
+    }
+    return selectedSession;
+  }, [selectedSession, defaultSession]);
 
   // Similar to the active session, automatically set the active route if there is only
   // one route for the asset. Otherwise, the user must select the route they would like
   // to use.
-  useEffect(() => {
-    if (matchingRoutes && matchingRoutes.length === 1) {
-      setActiveRoute(matchingRoutes[0]);
-    }
+  const defaultRoute = useMemo(() => {
+    return matchingRoutes && matchingRoutes.length === 1 ? matchingRoutes[0] : undefined;
   }, [matchingRoutes]);
+  const [selectedRoute, setSelectedRoute] = useState<InspectionRoute | undefined | null>();
+  const activeRoute = useMemo(() => {
+    if (typeof selectedRoute === "undefined") {
+      return defaultRoute;
+    }
+    return selectedRoute;
+  }, [selectedRoute, defaultRoute]);
 
   // In order to communicate to the backend which route and session are in use, set query
   // params used in the form submission action.
@@ -610,7 +618,7 @@ function InspectionRouteCard({
     <>
       <RouteProgressCard
         activeRoute={activeRoute}
-        setActiveRoute={setActiveRoute}
+        setActiveRoute={setSelectedRoute}
         activeSession={activeSession}
         matchingRoutes={matchingRoutes}
         routeDisabled={routeDisabled}
@@ -622,8 +630,8 @@ function InspectionRouteCard({
         <ConfirmSessionPrompt
           open={userInteractionReady && activeSession === undefined && activeSessions.length > 0}
           activeSessions={activeSessions}
-          onContinue={setActiveSession}
-          onCancel={() => setActiveSession(null)}
+          onContinue={setSelectedSession}
+          onCancel={() => setSelectedSession(null)}
         />
       )}
       {/* Show alert if there is a single active session and the current asset has
@@ -646,9 +654,9 @@ function InspectionRouteCard({
       {activeSession && activeSession.status === "EXPIRED" && (
         <SessionExpiredAlert
           open={userInteractionReady && activeSession.status === "EXPIRED"}
-          onContinue={() => setActiveSession(null)}
+          onContinue={() => setSelectedSession(null)}
           onContinueWithoutRoute={() => {
-            setActiveSession(null);
+            setSelectedSession(null);
             setRouteDisabled(true);
           }}
         />

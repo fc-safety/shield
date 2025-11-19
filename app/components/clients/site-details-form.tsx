@@ -207,7 +207,12 @@ export default function SiteDetailsForm({
 
   return (
     <FormProvider {...form}>
-      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className="space-y-4"
+        onSubmit={form.handleSubmit(handleSubmit, (e) => {
+          console.error("form error", e);
+        })}
+      >
         <Input type="hidden" {...form.register("id")} hidden />
         <Input type="hidden" {...form.register("client.connect.id")} hidden />
         {!isSiteGroup && (
@@ -451,7 +456,7 @@ export default function SiteDetailsForm({
             )}
           />
         )}
-        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

@@ -24,6 +24,7 @@ import EditConsumableButton from "~/components/assets/edit-consumable-button";
 import EditableTagDisplay from "~/components/assets/editable-tag-display";
 import ProductRequests, { NewSupplyRequestButton } from "~/components/assets/product-requests";
 import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
+import ResponsiveActions from "~/components/common/responsive-actions";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
@@ -58,11 +59,15 @@ import InspectionsCard from "./components/inspections-card";
 
 // When deleting an asset, we don't want to revalidate the page. This would
 // cause a 404 before the page could navigate back.
-export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
-  if (arg.formMethod === "DELETE") {
+export const shouldRevalidate = ({
+  formAction,
+  formMethod,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs) => {
+  if (formMethod === "DELETE" && formAction && formAction.startsWith("/api/proxy/assets")) {
     return false;
   }
-  return arg.defaultShouldRevalidate;
+  return defaultShouldRevalidate;
 };
 
 export const handle = {
@@ -524,6 +529,53 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
         id: "actions",
         cell: ({ row }) => {
           const consumable = row.original;
+
+          return (
+            <ResponsiveActions
+              actionGroups={[
+                {
+                  key: "actions",
+                  actions: [
+                    {
+                      key: "edit",
+                      text: "Edit",
+                      Icon: Pencil,
+                      disabled: !canUpdate,
+                      onAction: () => editConsumable.openData(consumable),
+                    },
+                  ],
+                },
+                {
+                  key: "destructive-actions",
+                  variant: "destructive",
+                  actions: [
+                    {
+                      key: "delete",
+                      text: "Delete",
+                      Icon: Trash,
+                      disabled: !canDelete,
+                      variant: "destructive",
+                      onAction: () =>
+                        setDeleteAction((draft) => {
+                          draft.open = true;
+                          draft.title = "Delete Supply";
+                          draft.message = `Are you sure you want to remove ${consumable.product.name} from this asset?`;
+                          draft.onConfirm = () => {
+                            submitDelete(
+                              {},
+                              {
+                                method: "delete",
+                                action: `/api/proxy/consumables/${consumable.id}`,
+                              }
+                            );
+                          };
+                        }),
+                    },
+                  ],
+                },
+              ]}
+            />
+          );
 
           return (
             <DropdownMenu>
