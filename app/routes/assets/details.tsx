@@ -2,7 +2,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { isValid, parseISO } from "date-fns";
 import {
   CircleAlert,
-  MoreHorizontal,
   Nfc,
   Package,
   Pencil,
@@ -37,13 +36,6 @@ import { ProductImage } from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -576,49 +568,6 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
               ]}
             />
           );
-
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  disabled={!canUpdate}
-                  onSelect={() => editConsumable.openData(consumable)}
-                >
-                  <Pencil />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  disabled={!canDelete}
-                  onSelect={() =>
-                    setDeleteAction((draft) => {
-                      draft.open = true;
-                      draft.title = "Delete Supply";
-                      draft.message = `Are you sure you want to remove ${consumable.product.name} from this asset?`;
-                      draft.onConfirm = () => {
-                        submitDelete(
-                          {},
-                          {
-                            method: "delete",
-                            action: `/api/proxy/consumables/${consumable.id}`,
-                          }
-                        );
-                      };
-                    })
-                  }
-                >
-                  <Trash />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
         },
       },
     ],
@@ -633,6 +582,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
         initialState={{
           columnVisibility: {
             actions: canUpdate || canDelete,
+            ansiCategory: consumables.some((c) => !!c.product?.ansiCategory),
           },
         }}
         classNames={{
