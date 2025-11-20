@@ -381,6 +381,7 @@ function InspectionPage({
           asset={{
             ...asset,
             tag,
+            client: tag.client ?? asset.client,
           }}
           processedProductImageUrl={processedProductImageUrl}
         />

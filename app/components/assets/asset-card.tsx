@@ -179,15 +179,17 @@ export default function AssetCard({ asset, processedProductImageUrl, className }
           <span className="text-muted-foreground font-mono text-xs font-light">
             SN: <span className="break-all">{asset.serialNumber}</span>
           </span>
-          <div className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
-            <RefreshCcwDot className="size-3.5" />
-            <span>
-              {asset.inspectionCycle !== null
-                ? asset.inspectionCycle
-                : asset.client?.defaultInspectionCycle}{" "}
-              days
-            </span>
-          </div>
+          {(asset.inspectionCycle !== null || asset.client) && (
+            <div className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
+              <RefreshCcwDot className="size-3.5" />
+              <span>
+                {asset.inspectionCycle !== null
+                  ? asset.inspectionCycle
+                  : asset.client?.defaultInspectionCycle}{" "}
+                days
+              </span>
+            </div>
+          )}
         </CardFooter>
       </div>
     </Card>
