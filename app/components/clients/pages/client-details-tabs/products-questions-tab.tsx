@@ -10,6 +10,7 @@ import { DataTableColumnHeader } from "~/components/data-table/data-table-column
 import Icon from "~/components/icons/icon";
 import AssetQuestionsDataTable from "~/components/products/asset-questions-data-table";
 import EditProductButton from "~/components/products/edit-product-button";
+import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -22,13 +23,17 @@ export default function ClientDetailsTabsProductsQuestionsTag({
   viewContext,
   clientId,
   products,
+  productsTotalCount,
   questions,
+  questionsTotalCount,
   readOnly = true,
 }: {
   viewContext: ViewContext;
   clientId?: string;
   products: Product[];
+  productsTotalCount?: number;
   questions: AssetQuestion[];
+  questionsTotalCount?: number;
   readOnly?: boolean;
 }) {
   return (
@@ -41,6 +46,7 @@ export default function ClientDetailsTabsProductsQuestionsTag({
             ? "Products that are custom created by/for this particular client."
             : "Your custom products."
         }
+        count={productsTotalCount ?? products.length}
       >
         <ProductsTable
           products={products}
@@ -57,6 +63,7 @@ export default function ClientDetailsTabsProductsQuestionsTag({
             ? "Questions that are custom created by/for this particular client."
             : "Your custom questions."
         }
+        count={questionsTotalCount ?? questions.length}
       >
         <QuestionsTable
           questions={questions}
@@ -73,13 +80,19 @@ const BasicCard = ({
   title,
   icon: Icon,
   description,
+  count,
   children,
-}: PropsWithChildren<{ title: string; icon?: LucideIcon; description?: string }>) => {
+}: PropsWithChildren<{
+  title: string;
+  icon?: LucideIcon;
+  description?: string;
+  count?: number;
+}>) => {
   return (
     <Card>
       <CardHeader>
         <CardTitle>
-          {Icon && <Icon />} {title}
+          {Icon && <Icon />} {title} {count !== undefined && <Badge>{count}</Badge>}
         </CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>

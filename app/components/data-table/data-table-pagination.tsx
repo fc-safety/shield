@@ -16,17 +16,23 @@ interface DataTablePaginationProps<TData> {
 }
 
 export function DataTablePagination<TData>({ table }: DataTablePaginationProps<TData>) {
+  const rowCount = table.getFilteredRowModel().rows.length;
+
   return (
-    <div className="@container flex items-center justify-between px-2">
-      {table.getAllColumns().findIndex((c) => c.id === SELECT_COLUMN_ID) > -1 ? (
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-      ) : (
-        <div />
-      )}
-      <div className="flex items-center space-x-4 @sm:space-x-6 @lg:space-x-8">
+    <div className="@container flex flex-wrap-reverse items-center justify-between gap-4 px-2">
+      <div className="text-muted-foreground flex-1 text-sm">
+        {table.getAllColumns().findIndex((c) => c.id === SELECT_COLUMN_ID) > -1 ? (
+          <>
+            {table.getFilteredSelectedRowModel().rows.length} of {rowCount} row
+            {rowCount === 1 ? "" : "s"} selected.
+          </>
+        ) : (
+          <>
+            {rowCount} total row{rowCount === 1 ? "" : "s"}
+          </>
+        )}
+      </div>
+      <div className="flex flex-1 items-center space-x-4 @sm:space-x-6 @lg:space-x-8">
         <div className="flex items-center space-x-2">
           <p className="text-xs font-medium @sm:text-sm">Rows per page</p>
           <Select

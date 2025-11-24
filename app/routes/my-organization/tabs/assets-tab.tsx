@@ -7,9 +7,18 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   return {
     assets: assetsResult.results,
+    assetsTotalCount: assetsResult.count,
   };
 };
 
-export default function AssetsTab({ loaderData: { assets } }: Route.ComponentProps) {
-  return <ClientDetailsTabsAssetsTab assets={assets} viewContext="user" />;
+export default function AssetsTab({
+  loaderData: { assets, assetsTotalCount },
+}: Route.ComponentProps) {
+  return (
+    <ClientDetailsTabsAssetsTab
+      assets={assets}
+      assetsTotalCount={assetsTotalCount}
+      viewContext="user"
+    />
+  );
 }

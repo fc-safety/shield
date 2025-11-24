@@ -206,7 +206,7 @@ export interface Client extends BaseModel {
   defaultInspectionCycle: number;
   demoMode: boolean;
   sites?: Site[];
-  _count?: { sites: number };
+  _count?: { sites: number; assets: number };
 }
 
 export interface Site extends BaseModel {
@@ -225,6 +225,7 @@ export interface Site extends BaseModel {
   subsites?: Site[];
   _count?: {
     subsites: number;
+    assets: number;
   };
 }
 

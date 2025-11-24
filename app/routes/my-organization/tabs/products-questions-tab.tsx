@@ -21,18 +21,22 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   return {
     clientId,
     products: productResults.results,
+    productsTotalCount: productResults.count,
     questions: questionResults.results,
+    questionsTotalCount: questionResults.count,
   };
 };
 
 export default function ProductsQuestionsTab({
-  loaderData: { clientId, products, questions },
+  loaderData: { clientId, products, productsTotalCount, questions, questionsTotalCount },
 }: Route.ComponentProps) {
   return (
     <ClientDetailsTabsProductsQuestionsTag
       clientId={clientId}
       products={products}
+      productsTotalCount={productsTotalCount}
       questions={questions}
+      questionsTotalCount={questionsTotalCount}
       viewContext="user"
       readOnly
     />

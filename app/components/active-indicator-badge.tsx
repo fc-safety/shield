@@ -1,4 +1,6 @@
+import { Circle } from "lucide-react";
 import { capitalize, cn } from "~/lib/utils";
+import { Badge } from "./ui/badge";
 
 export default function ActiveIndicatorBadge({
   active: activeProp,
@@ -9,9 +11,8 @@ export default function ActiveIndicatorBadge({
 }) {
   const status = activeProp === true ? "active" : activeProp === false ? "inactive" : activeProp;
   return (
-    <div
+    <Badge
       className={cn(
-        "flex items-center gap-1 rounded-md border px-2 py-1 text-sm",
         status === "active"
           ? "bg-primary/10 border-primary/50 text-primary/80"
           : status === "pending"
@@ -19,21 +20,20 @@ export default function ActiveIndicatorBadge({
             : "bg-muted/10 border-muted-foreground/50 text-muted-foreground/80",
         className
       )}
+      title={capitalize(status)}
     >
-      <div
-        title={capitalize(status)}
+      <Circle
         className={cn(
-          "size-2.5 rounded-full border",
           status === "active"
-            ? "bg-primary border-primary"
+            ? "fill-primary text-primary"
             : status === "pending"
-              ? "bg-pending border-pending"
-              : "bg-muted border-muted-foreground/80"
+              ? "fill-pending text-pending"
+              : "text-muted-foreground fill-muted-foreground/20"
         )}
-      ></div>
+      />
       {typeof status === "string" && (
         <div className="text-xs font-semibold uppercase">{status}</div>
       )}
-    </div>
+    </Badge>
   );
 }

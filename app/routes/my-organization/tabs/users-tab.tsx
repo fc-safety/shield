@@ -5,21 +5,23 @@ import type { loader as layoutLoader } from "../layout";
 import type { Route } from "./+types/users-tab";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const usersPromise = await api.users.list(request, { limit: 10000 }).then((r) => r.results);
+  const userResultsPromise = await api.users.list(request, { limit: 10000 });
 
-  const [users] = await Promise.all([usersPromise]);
+  const [userResults] = await Promise.all([userResultsPromise]);
 
   return {
-    users,
+    users: userResults.results,
+    usersTotalCount: userResults.count,
   };
 };
 
-export default function UsersTab({ loaderData: { users } }: Route.ComponentProps) {
+export default function UsersTab({ loaderData: { users, usersTotalCount } }: Route.ComponentProps) {
   const layoutData = useRouteLoaderData<typeof layoutLoader>("routes/my-organization/layout");
 
   return (
     <ClientDetailsTabsUsersTab
       users={users}
+      usersTotalCount={usersTotalCount}
       sites={layoutData?.sites ?? []}
       clientId={layoutData?.client?.id}
       viewContext="user"

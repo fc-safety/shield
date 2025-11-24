@@ -14,10 +14,20 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   return {
     assets: assetsResult.results,
+    assetsTotalCount: assetsResult.count,
     clientId: id,
   };
 };
 
-export default function AssetsTab({ loaderData: { assets, clientId } }: Route.ComponentProps) {
-  return <ClientDetailsTabsAssetsTab assets={assets} clientId={clientId} viewContext="admin" />;
+export default function AssetsTab({
+  loaderData: { assets, assetsTotalCount, clientId },
+}: Route.ComponentProps) {
+  return (
+    <ClientDetailsTabsAssetsTab
+      assets={assets}
+      assetsTotalCount={assetsTotalCount}
+      clientId={clientId}
+      viewContext="admin"
+    />
+  );
 }

@@ -6,27 +6,35 @@ import type { Route } from "./+types/users-tab";
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  const usersPromise = await api.users
-    .list(request, { limit: 10000, clientId: id }, { context: "admin" })
-    .then((r) => r.results);
+  const userResultsPromise = await api.users.list(
+    request,
+    { limit: 10000, clientId: id },
+    { context: "admin" }
+  );
 
-  const sitesPromise = await api.sites
-    .list(request, { limit: 10000, clientId: id }, { context: "admin" })
-    .then((r) => r.results);
+  const siteResultsPromise = await api.sites.list(
+    request,
+    { limit: 10000, clientId: id },
+    { context: "admin" }
+  );
 
-  const [users, sites] = await Promise.all([usersPromise, sitesPromise]);
+  const [userResults, siteResults] = await Promise.all([userResultsPromise, siteResultsPromise]);
 
   return {
-    users,
-    sites,
+    users: userResults.results,
+    usersTotalCount: userResults.count,
+    sites: siteResults.results,
     clientId: id,
   };
 };
 
-export default function UsersTab({ loaderData: { users, sites, clientId } }: Route.ComponentProps) {
+export default function UsersTab({
+  loaderData: { users, usersTotalCount, sites, clientId },
+}: Route.ComponentProps) {
   return (
     <ClientDetailsTabsUsersTab
       users={users}
+      usersTotalCount={usersTotalCount}
       clientId={clientId}
       sites={sites}
       viewContext="admin"
