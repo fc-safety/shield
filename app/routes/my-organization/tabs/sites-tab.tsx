@@ -17,7 +17,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 };
 
 export default function SitesTab({ loaderData: { sites } }: Route.ComponentProps) {
-  const layoutData = useRouteLoaderData<typeof layoutLoader>("my-organization");
+  const layoutData = useRouteLoaderData<typeof layoutLoader>("routes/my-organization/layout");
 
   return (
     <ClientDetailsTabsSitesTab sites={sites} clientId={layoutData?.client?.id} viewContext="user" />

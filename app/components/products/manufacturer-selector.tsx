@@ -9,6 +9,7 @@ import type { DataOrError, ViewContext } from "~/.server/api-utils";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer, ResultsPage } from "~/lib/models";
+import type { QueryParams } from "~/lib/urls";
 import { cn } from "~/lib/utils";
 import LinkPreview from "../link-preview";
 import { ResponsiveDialog } from "../responsive-dialog";
@@ -63,9 +64,16 @@ export default function ManufacturerSelector({
   // Preload the manufacturers lazily.
   const handlePreload = useCallback(() => {
     if (dataOrError === undefined) {
+      let clientQuery: QueryParams = {};
+      if (clientId) {
+        clientQuery.OR = [{ clientId }, { clientId: "_NULL" }];
+      } else if (viewContext === "admin") {
+        clientQuery.clientId = "_NULL";
+      }
+
       load({
         path: "/api/proxy/manufacturers",
-        query: { limit: 1000, ...(clientId ? { OR: [{ clientId }, { clientId: "_NULL" }] } : {}) },
+        query: { limit: 1000, ...clientQuery },
         viewContext,
       });
     }

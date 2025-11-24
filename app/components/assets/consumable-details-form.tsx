@@ -140,10 +140,14 @@ export default function ConsumableDetailsForm({
                   value={
                     isValidDate(parseISO(String(value)))
                       ? format(parseISO(String(value)), "yyyy-MM-dd")
-                      : undefined
+                      : ""
                   }
                   onChange={(e) => {
-                    onChange(parseISO(e.target.value).toISOString());
+                    onChange(
+                      isValidDate(parseISO(e.target.value))
+                        ? parseISO(e.target.value).toISOString()
+                        : ""
+                    );
                   }}
                 />
               </FormControl>

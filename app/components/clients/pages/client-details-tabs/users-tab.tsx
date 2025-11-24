@@ -7,19 +7,14 @@ export default function ClientDetailsTabsUsersTab({
   users,
   clientId,
   viewContext,
-  getSiteByExternalId,
+  sites,
 }: {
   users: ClientUser[];
   clientId?: string;
   viewContext: ViewContext;
-  getSiteByExternalId?: (externalId: string) => Site | undefined;
+  sites: Site[];
 }) {
   return (
-    <ClientUsersCard
-      users={users}
-      clientId={clientId}
-      getSiteByExternalId={getSiteByExternalId}
-      viewContext={viewContext}
-    />
+    <ClientUsersCard users={users} clientId={clientId} sites={sites} viewContext={viewContext} />
   );
 }

@@ -34,6 +34,7 @@ export default function ProductsQuestionsTab({
       products={products}
       questions={questions}
       viewContext="user"
+      readOnly
     />
   );
 }

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { FireExtinguisher, MoreHorizontal, Pencil, SquareStack, Trash } from "lucide-react";
+import { FireExtinguisher, Pencil, SquareStack, Trash } from "lucide-react";
 import { useNavigate, type ShouldRevalidateFunctionArgs, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
@@ -7,6 +7,7 @@ import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator from "~/components/active-indicator";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
+import ResponsiveActions from "~/components/common/responsive-actions";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DataList from "~/components/data-list";
 import { DataTable } from "~/components/data-table/data-table";
@@ -18,13 +19,6 @@ import { ManufacturerCard } from "~/components/products/manufacturer-selector";
 import { ProductImage } from "~/components/products/product-card";
 import { ProductCategoryCard } from "~/components/products/product-category-selector";
 import { Button } from "~/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu";
 import { Label } from "~/components/ui/label";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -110,7 +104,6 @@ export default function ProductDetails({
                         <Pencil />
                       </Button>
                     }
-                    canAssignOwnership={globalAdmin}
                     viewContext={globalAdmin ? "admin" : "user"}
                   />
                 )}
@@ -363,48 +356,51 @@ function SuppliesTable({
               const supply = row.original;
 
               return (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Open menu</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {/* <DropdownMenuLabel>Actions</DropdownMenuLabel> */}
-                    <DropdownMenuItem
-                      disabled={!canUpdate}
-                      onSelect={() => editSupply.openData(supply)}
-                    >
-                      <Pencil />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      disabled={!canDelete}
-                      onSelect={() =>
-                        setDeleteAction((draft) => {
-                          draft.open = true;
-                          draft.title = "Delete Supply";
-                          draft.message = `Are you sure you want to delete ${supply.name}?`;
-                          draft.requiredUserInput = supply.name || supply.id;
-                          draft.onConfirm = () => {
-                            submitDelete(
-                              {},
-                              {
-                                method: "delete",
-                                action: `/api/proxy/products/${supply.id}`,
-                              }
-                            );
-                          };
-                        })
-                      }
-                    >
-                      <Trash />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ResponsiveActions
+                  actionGroups={[
+                    {
+                      key: "actions",
+                      actions: [
+                        {
+                          key: "edit",
+                          text: "Edit",
+                          Icon: Pencil,
+                          disabled: !canUpdate,
+                          onAction: () => editSupply.openData(supply),
+                        },
+                      ],
+                    },
+                    {
+                      key: "destructive-actions",
+                      variant: "destructive",
+                      actions: [
+                        {
+                          key: "delete",
+                          text: "Delete",
+                          Icon: Trash,
+                          disabled: !canDelete,
+                          variant: "destructive",
+                          onAction: () =>
+                            setDeleteAction((draft) => {
+                              draft.open = true;
+                              draft.title = "Delete Supply";
+                              draft.message = `Are you sure you want to delete ${supply.name}?`;
+                              draft.requiredUserInput = supply.name || supply.id;
+                              draft.onConfirm = () => {
+                                submitDelete(
+                                  {},
+                                  {
+                                    method: "delete",
+                                    action: `/api/proxy/products/${supply.id}`,
+                                  }
+                                );
+                              };
+                            }),
+                        },
+                      ],
+                    },
+                  ]}
+                />
               );
             },
           },

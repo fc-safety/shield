@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, PanelRightClose } from "lucide-react";
 import { useMemo } from "react";
-import { useMediaQuery } from "usehooks-ts";
 import { Button } from "~/components/ui/button";
 import { Drawer, DrawerContent } from "~/components/ui/drawer";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import useIsMobile from "~/hooks/use-is-mobile";
 import { cn } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../asset-question-detail-form.context";
 import { AlertTriggerConfigurator } from "./sidepanel-inserts/alert-trigger-configurator";
@@ -13,8 +13,8 @@ import { ConditionConfigurator } from "./sidepanel-inserts/condition-configurato
 import FileConfigurator from "./sidepanel-inserts/file-configurator";
 import RegulatoryCodeConfigurator from "./sidepanel-inserts/regulatory-code-configurator";
 
-export default function FormSidepanel({ minWidth = "768px" }: { minWidth?: string }) {
-  const isDesktop = useMediaQuery(`(min-width: ${minWidth})`);
+export default function FormSidepanel() {
+  const isMobile = useIsMobile();
 
   const { sidepanelId, closeSidepanel } = useAssetQuestionDetailFormContext();
 
@@ -22,7 +22,7 @@ export default function FormSidepanel({ minWidth = "768px" }: { minWidth?: strin
     return <FormSidepanelContent sidepanelId={sidepanelId} />;
   }, [sidepanelId]);
 
-  if (isDesktop) {
+  if (!isMobile) {
     return (
       <AnimatePresence>
         {sidepanelId && (
@@ -46,7 +46,7 @@ export default function FormSidepanel({ minWidth = "768px" }: { minWidth?: strin
             >
               <PanelRightClose />
             </Button>
-            <div className="h-full w-[22rem] px-4 pb-4">{sidePanel}</div>
+            <div className="h-full w-88 px-4 pb-4">{sidePanel}</div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -464,6 +464,7 @@ export interface Product extends BaseModel {
   metadata?: Record<string, string>;
 
   consumableProducts?: Product[];
+  displayExpirationDate: boolean;
   ansiCategory?: AnsiCategory | null;
   ansiCategoryId: string | null;
 }

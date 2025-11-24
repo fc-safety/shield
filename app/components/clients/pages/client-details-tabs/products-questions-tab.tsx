@@ -8,6 +8,7 @@ import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
+import AssetQuestionsDataTable from "~/components/products/asset-questions-data-table";
 import EditProductButton from "~/components/products/edit-product-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
@@ -22,11 +23,13 @@ export default function ClientDetailsTabsProductsQuestionsTag({
   clientId,
   products,
   questions,
+  readOnly = true,
 }: {
   viewContext: ViewContext;
   clientId?: string;
   products: Product[];
   questions: AssetQuestion[];
+  readOnly?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2">
@@ -39,7 +42,12 @@ export default function ClientDetailsTabsProductsQuestionsTag({
             : "Your custom products."
         }
       >
-        <ProductsTable products={products} viewContext={viewContext} clientId={clientId} />
+        <ProductsTable
+          products={products}
+          viewContext={viewContext}
+          clientId={clientId}
+          readOnly={readOnly}
+        />
       </BasicCard>
       <BasicCard
         title="Questions"
@@ -50,7 +58,12 @@ export default function ClientDetailsTabsProductsQuestionsTag({
             : "Your custom questions."
         }
       >
-        <QuestionsTable questions={questions} />
+        <QuestionsTable
+          questions={questions}
+          viewContext={viewContext}
+          readOnly={readOnly}
+          clientId={clientId}
+        />
       </BasicCard>
     </div>
   );
@@ -79,16 +92,18 @@ const ProductsTable = ({
   products,
   viewContext,
   clientId,
+  readOnly = true,
 }: {
   products: Product[];
   viewContext: ViewContext;
   clientId?: string;
+  readOnly?: boolean;
 }) => {
   const { user } = useAuth();
 
-  const canCreate = can(user, "create", "products");
-  const canUpdate = can(user, "update", "products");
-  const canDelete = can(user, "delete", "products");
+  const canCreate = !readOnly && can(user, "create", "products");
+  const canUpdate = !readOnly && can(user, "update", "products");
+  const canDelete = !readOnly && can(user, "delete", "products");
 
   const editProduct = useOpenData<Product>();
   const [deleteAction, setDeleteAction] = useConfirmAction({
@@ -222,15 +237,23 @@ const ProductsTable = ({
   );
 };
 
-const QuestionsTable = ({ questions }: { questions: AssetQuestion[] }) => {
-  const columns = useMemo(
-    (): ColumnDef<AssetQuestion>[] => [
-      {
-        accessorKey: "prompt",
-        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-      },
-    ],
-    []
+const QuestionsTable = ({
+  questions,
+  viewContext,
+  clientId,
+  readOnly = true,
+}: {
+  questions: AssetQuestion[];
+  viewContext: ViewContext;
+  clientId?: string;
+  readOnly?: boolean;
+}) => {
+  return (
+    <AssetQuestionsDataTable
+      questions={questions}
+      viewContext={viewContext}
+      readOnly={readOnly}
+      clientId={clientId}
+    />
   );
-  return <DataTable columns={columns} data={questions} searchPlaceholder="Search questions..." />;
 };

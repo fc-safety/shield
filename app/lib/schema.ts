@@ -158,8 +158,7 @@ export const baseSiteSchema = z.object({
   legacySiteId: z.string().nullable().optional(),
   legacyGroupId: z.string().nullable().optional(),
   externalId: z
-    .string()
-    .length(24)
+    .union([z.string().length(24), z.string().length(0)])
     .optional()
     .transform((id) => id || undefined),
   primary: z.boolean().default(false),
@@ -195,9 +194,9 @@ export const getSiteSchema = ({
 }) => {
   const schema = baseSiteSchema.extend({
     address: baseSiteSchema.shape.address.required(create ? { create: true } : { update: true }),
-    subsites: baseSiteSchema.shape.subsites
-      .unwrap()
-      .required(isSiteGroup ? (create ? { connect: true } : { set: true }) : {}),
+    subsites: !isSiteGroup
+      ? baseSiteSchema.shape.subsites.unwrap().partial().optional()
+      : baseSiteSchema.shape.subsites.unwrap().required(create ? { connect: true } : { set: true }),
   });
 
   if (create) {
@@ -301,6 +300,7 @@ export const createProductSchema = z.object({
   client: disconnectableSchema.optional(),
   metadata: z.record(z.string().nonempty(), z.string().nonempty()).optional(),
   parentProduct: optionalConnectSchema,
+  displayExpirationDate: z.boolean().optional(),
   ansiCategory: optionalConnectOrCreateSchema(createAnsiCategorySchema).optional(),
 });
 
@@ -368,7 +368,11 @@ export const createConsumableSchema = z.object({
     }),
   }),
   quantity: z.coerce.number<number>().gte(1).optional(),
-  expiresOn: z.iso.datetime().optional(),
+  expiresOn: z
+    .union([z.iso.datetime(), z.literal("")])
+    .optional()
+    .nullable()
+    .transform((value) => value || null),
   site: optionalConnectSchema,
 });
 
@@ -502,6 +506,7 @@ export const baseCreateAssetQuestionSchema = z.object({
   helpText: z.string().optional(),
   placeholder: z.string().optional(),
   tone: z.string().optional(),
+  client: disconnectableSchema.optional(),
   assetAlertCriteria: z
     .object({
       createMany: z.object({
@@ -699,7 +704,7 @@ export const responseValueImageSchema = z.object({
 
 export const createAssetQuestionResponseSchema = z.object({
   id: z.string().optional(),
-  value: z.union([z.string(), z.number().int(), responseValueImageSchema]),
+  value: z.union([z.string(), z.number(), responseValueImageSchema]),
   originalPrompt: z.string(),
   assetQuestionId: z.string().nonempty(),
 });

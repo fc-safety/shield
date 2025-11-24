@@ -1,10 +1,14 @@
-import { ChevronDown, ChevronUp, Nfc } from "lucide-react";
+import { differenceInDays, startOfDay } from "date-fns";
+import { AlertTriangle, ChevronDown, ChevronUp, Nfc, RefreshCcwDot } from "lucide-react";
+import { Fragment, useMemo } from "react";
 import type { Asset, Product } from "~/lib/models";
 import { cn } from "~/lib/utils";
+import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import { ProductImage } from "../products/product-card";
 import ProductCategoryIcon from "../products/product-category-icon";
 import { Button } from "../ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { ButtonGroup, ButtonGroupSeparator } from "../ui/button-group";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 
 interface AssetCardProps {
@@ -13,7 +17,18 @@ interface AssetCardProps {
   className?: string;
 }
 
+const EXPIRES_SOON_THRESHOLD = 30;
+const EXPIRED_THRESHOLD = 0;
+
 export default function AssetCard({ asset, processedProductImageUrl, className }: AssetCardProps) {
+  const displayExpiringSupplies = useMemo(
+    () =>
+      (asset.consumables ?? []).filter((consumable) => !!consumable.product?.displayExpirationDate),
+    [asset.consumables]
+  );
+
+  const TODAY = startOfDay(new Date());
+
   return (
     <Card className={cn("flex", className)}>
       <div className="flex flex-col">
@@ -31,7 +46,7 @@ export default function AssetCard({ asset, processedProductImageUrl, className }
         )}
       </div>
       <div className="flex grow flex-col">
-        <CardHeader className="p-4 sm:p-4">
+        <CardHeader className="p-3 sm:p-4">
           <CardTitle className="flex flex-wrap-reverse items-center justify-between">
             <div className="grid gap-1">
               <span>
@@ -45,15 +60,72 @@ export default function AssetCard({ asset, processedProductImageUrl, className }
                 {asset.site && <>{asset.site.name} &mdash; </>}
                 {asset.location} &mdash; {asset.placement}
               </span>
-              <span className="text-muted-foreground text-xs font-light">
-                Serial No. <pre className="inline">{asset.serialNumber}</pre>
-              </span>
             </div>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-4 pt-0 sm:p-4 sm:pt-0">
+        <CardContent className="flex flex-1 flex-col justify-center gap-2 p-3 pt-0 sm:p-4 sm:pt-0">
+          {displayExpiringSupplies.length > 0 && (
+            <div>
+              {/* <h4 className="text-muted-foreground text-xs font-bold">Supply Expirations</h4> */}
+              <ButtonGroup className={cn("text-xs font-light")} orientation="vertical">
+                {displayExpiringSupplies.map((supply, idx) => {
+                  const expiresInDays = supply.expiresOn
+                    ? differenceInDays(startOfDay(supply.expiresOn), TODAY)
+                    : null;
+
+                  return (
+                    <Fragment key={supply.id}>
+                      {idx > 0 && displayExpiringSupplies.length > 1 && (
+                        <ButtonGroupSeparator orientation="horizontal" />
+                      )}
+                      <div
+                        className={cn(
+                          "flex items-center justify-between gap-2 rounded-md px-2 py-1",
+                          {
+                            "bg-status-compliant text-status-compliant-foreground":
+                              expiresInDays !== null && expiresInDays >= EXPIRES_SOON_THRESHOLD,
+                            "bg-status-due-soon text-status-due-soon-foreground":
+                              expiresInDays !== null &&
+                              expiresInDays >= EXPIRED_THRESHOLD &&
+                              expiresInDays < EXPIRES_SOON_THRESHOLD,
+                            "bg-status-non-compliant text-status-non-compliant-foreground":
+                              expiresInDays !== null && expiresInDays < EXPIRED_THRESHOLD,
+                            "bg-status-never text-status-never-foreground": expiresInDays === null,
+                          }
+                        )}
+                      >
+                        <div>
+                          <span className="font-semibold">{supply.product.name}</span>{" "}
+                          {supply.expiresOn && expiresInDays !== null ? (
+                            expiresInDays >= 0 ? (
+                              <>
+                                expiring on{" "}
+                                <HydrationSafeFormattedDate
+                                  date={supply.expiresOn}
+                                  formatStr="PP"
+                                  className="font-semibold"
+                                />
+                                .
+                              </>
+                            ) : (
+                              <span className="font-semibold">expired.</span>
+                            )
+                          ) : (
+                            "– no expiration set."
+                          )}
+                        </div>
+                        {expiresInDays !== null && expiresInDays < 0 && (
+                          <AlertTriangle className="size-4" />
+                        )}
+                      </div>
+                    </Fragment>
+                  );
+                })}
+              </ButtonGroup>
+            </div>
+          )}
           <Collapsible>
-            <CollapsibleTrigger asChild className="group">
+            <CollapsibleTrigger asChild className="group hidden">
               <Button variant="outline" size="xs">
                 <span className="group-data-[state=open]:hidden">More</span>
                 <span className="hidden group-data-[state=open]:block">Less</span>
@@ -103,6 +175,22 @@ export default function AssetCard({ asset, processedProductImageUrl, className }
             </CollapsibleContent>
           </Collapsible>
         </CardContent>
+        <CardFooter className="justify-between gap-3 p-3 pt-0 sm:gap-4 sm:p-4 sm:pt-0">
+          <span className="text-muted-foreground font-mono text-xs font-light">
+            SN: <span className="break-all">{asset.serialNumber}</span>
+          </span>
+          {(asset.inspectionCycle !== null || asset.client) && (
+            <div className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
+              <RefreshCcwDot className="size-3.5" />
+              <span>
+                {asset.inspectionCycle !== null
+                  ? asset.inspectionCycle
+                  : asset.client?.defaultInspectionCycle}{" "}
+                days
+              </span>
+            </div>
+          )}
+        </CardFooter>
       </div>
     </Card>
   );

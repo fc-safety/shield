@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
 import { isAfter } from "date-fns";
 import { Copy, Loader2, Pencil, Trash } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type z from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import ConditionPill from "~/components/assets/condition-pill";
@@ -18,7 +18,7 @@ import type { AssetQuestion, AssetQuestionResponseType } from "~/lib/models";
 import { AssetQuestionTypes } from "~/lib/models";
 import type { createAssetQuestionSchema } from "~/lib/schema";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
-import { isGlobalAdmin } from "~/lib/users";
+import { can } from "~/lib/users";
 import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
 import EditAssetQuestionButton from "../assets/asset-question-details-form/edit-asset-question-button";
@@ -42,12 +42,14 @@ interface AssetQuestionsDataTableProps
   questions: AssetQuestion[];
   readOnly?: boolean;
   viewContext?: ViewContext;
+  clientId?: string;
 }
 
 export default function AssetQuestionsDataTable({
   questions,
   readOnly = false,
   viewContext,
+  clientId,
   initialState = {},
   onSortingChange,
   onColumnFiltersChange,
@@ -60,20 +62,15 @@ export default function AssetQuestionsDataTable({
   const { fetchOrThrow } = useAuthenticatedFetch();
 
   const { user } = useAuth();
-  const userIsGlobalAdmin = isGlobalAdmin(user);
+  const canCreate = !readOnly && can(user, "create", "asset-questions");
+  const canUpdate = !readOnly && can(user, "update", "asset-questions");
+  const canDelete = !readOnly && can(user, "delete", "asset-questions");
 
   const { submitJson: submitDelete } = useModalFetcher();
   const { submitJson: submitDuplicateQuestion } = useModalFetcher();
 
   const [deleteAction, setDeleteAction] = useConfirmAction();
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
-
-  const getIsOwnerOrGlobalAdmin = useCallback(
-    (question: AssetQuestion) => {
-      return userIsGlobalAdmin || question.client?.externalId === user.clientId;
-    },
-    [user]
-  );
 
   // Prefetch all labels when questions change
   useEffect(() => {
@@ -133,7 +130,7 @@ export default function AssetQuestionsDataTable({
         cell: ({ getValue, row }) => {
           const question = row.original;
           const isActive = getValue() as boolean;
-          return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
+          return !canUpdate ? (
             <ActiveIndicator2 active={isActive} />
           ) : (
             <ActiveToggle
@@ -158,7 +155,7 @@ export default function AssetQuestionsDataTable({
               .replace(/\b\w/g, (l) => l.toUpperCase()),
           }));
 
-          return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
+          return !canUpdate ? (
             <span className="capitalize">{currentType.replace(/_/g, " ").toLowerCase()}</span>
           ) : (
             <SubmittingSelect
@@ -178,7 +175,7 @@ export default function AssetQuestionsDataTable({
         cell: ({ getValue, row }) => {
           const question = row.original;
           const isRequired = getValue() as boolean;
-          return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
+          return !canUpdate ? (
             <span className="text-muted-foreground text-xs">{isRequired ? "Yes" : "No"}</span>
           ) : (
             <SubmittingCheckbox
@@ -198,7 +195,7 @@ export default function AssetQuestionsDataTable({
           const question = row.original;
           const prompt = getValue() as string;
 
-          return readOnly || !getIsOwnerOrGlobalAdmin(question) ? (
+          return !canUpdate ? (
             <span className="line-clamp-3 min-w-56">{prompt}</span>
           ) : (
             <SubmittingTextarea
@@ -355,7 +352,6 @@ export default function AssetQuestionsDataTable({
         id: "actions",
         cell: ({ row }) => {
           const question = row.original;
-          const canManage = !readOnly && getIsOwnerOrGlobalAdmin(question);
 
           return (
             <ResponsiveActions
@@ -367,14 +363,14 @@ export default function AssetQuestionsDataTable({
                       key: "edit",
                       text: "Edit",
                       Icon: Pencil,
-                      disabled: !canManage,
+                      disabled: !canUpdate,
                       onAction: () => editQuestion.openData(question),
                     },
                     {
                       key: "duplicate",
                       text: "Duplicate",
                       Icon: Copy,
-                      disabled: !canManage,
+                      disabled: !canCreate,
                       onAction: () => {
                         const payload = {
                           active: false,
@@ -459,7 +455,7 @@ export default function AssetQuestionsDataTable({
                       key: "delete",
                       text: "Delete",
                       Icon: Trash,
-                      disabled: !canManage,
+                      disabled: !canDelete,
                       onAction: () =>
                         setDeleteAction((draft) => {
                           draft.open = true;
@@ -495,7 +491,9 @@ export default function AssetQuestionsDataTable({
       categoryFilterOptions,
       editingPromptId,
       setEditingPromptId,
-      getIsOwnerOrGlobalAdmin,
+      canCreate,
+      canUpdate,
+      canDelete,
     ]
   );
 
@@ -518,7 +516,11 @@ export default function AssetQuestionsDataTable({
         onColumnOrderChange={onColumnOrderChange}
         onPaginationChange={onPaginationChange}
         getRowId={(row) => row.id}
-        actions={readOnly ? [] : [<EditAssetQuestionButton key="add" viewContext={viewContext} />]}
+        actions={
+          readOnly
+            ? []
+            : [<EditAssetQuestionButton key="add" viewContext={viewContext} clientId={clientId} />]
+        }
         filters={({ table }) => [
           {
             column: table.getColumn("active"),
@@ -596,6 +598,7 @@ export default function AssetQuestionsDataTable({
         open={editQuestion.open}
         onOpenChange={editQuestion.setOpen}
         viewContext={viewContext}
+        clientId={clientId}
       />
     </>
   );

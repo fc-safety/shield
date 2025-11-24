@@ -1,12 +1,5 @@
+import LegacyIdField from "@/components/ui-custom/forms/legacy-id-field";
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  Form as FormProvider,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +8,7 @@ import { format } from "date-fns";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
@@ -26,12 +19,11 @@ import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { nullValuesToUndefined, slugify } from "~/lib/utils";
-import ActiveToggleFormInput from "../active-toggle-form-input";
-import ClientCombobox from "../clients/client-combobox";
 import { ImageUploadInput } from "../image-upload-input";
-import LegacyIdField from "../legacy-id-field";
-import MetadataInput from "../metadata-input";
-import { Label } from "../ui/label";
+import ActiveToggleField from "../ui-custom/forms/active-toggle-field";
+import MetadataInputField from "../ui-custom/forms/metadata-input-field";
+import { Field, FieldContent, FieldDescription, FieldError, FieldLabel } from "../ui/field";
+import { Switch } from "../ui/switch";
 import AnsiCategoryCombobox from "./ansi-category-combobox";
 import ManufacturerSelector from "./manufacturer-selector";
 import { ProductImage } from "./product-card";
@@ -41,7 +33,6 @@ type TForm = z.infer<typeof createProductSchema | typeof updateProductSchema>;
 export interface ProductDetailsFormProps {
   product?: Product;
   onSubmitted?: () => void;
-  canAssignOwnership?: boolean;
   parentProduct?: Product;
   productCategory?: ProductCategory;
   manufacturer?: Manufacturer;
@@ -53,7 +44,6 @@ export interface ProductDetailsFormProps {
 export default function ProductDetailsForm({
   product,
   onSubmitted,
-  canAssignOwnership = false,
   parentProduct,
   productCategory,
   manufacturer,
@@ -221,7 +211,7 @@ export default function ProductDetailsForm({
     <FormProvider {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
-        <ActiveToggleFormInput />
+        <ActiveToggleField />
         {productType === "PRIMARY" ? (
           <LegacyIdField
             form={form}
@@ -240,131 +230,146 @@ export default function ProductDetailsForm({
         {!parentProduct && (
           <>
             {!productCategory && (
-              <FormField
+              <Controller
                 control={form.control}
                 name="productCategory"
-                render={({ field: { value, onChange, onBlur } }) => (
-                  <FormItem>
-                    <FormLabel>Category</FormLabel>
-                    <FormControl>
-                      <ProductCategorySelector
-                        value={value?.connect.id}
-                        onValueChange={(id) => onChange({ connect: { id } })}
-                        onBlur={onBlur}
-                        className="flex"
-                        viewContext={viewContext}
-                        clientId={clientId}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                render={({ field: { value, onChange, onBlur }, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="product-category-selector">Category</FieldLabel>
+                    <ProductCategorySelector
+                      value={value?.connect.id}
+                      onValueChange={(id) => onChange({ connect: { id } })}
+                      onBlur={onBlur}
+                      className="flex"
+                      viewContext={viewContext}
+                      clientId={clientId}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
                 )}
               />
             )}
             {!manufacturer && (
-              <FormField
+              <Controller
                 control={form.control}
                 name="manufacturer"
-                render={({ field: { value, onChange, onBlur } }) => (
-                  <FormItem>
-                    <FormLabel>Manufacturer</FormLabel>
-                    <FormControl>
-                      <ManufacturerSelector
-                        value={value?.connect.id}
-                        onValueChange={(id) => onChange({ connect: { id } })}
-                        onBlur={onBlur}
-                        className="flex"
-                        viewContext={viewContext}
-                        clientId={clientId}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                render={({ field: { value, onChange, onBlur }, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="manufacturer-selector">Manufacturer</FieldLabel>
+                    <ManufacturerSelector
+                      value={value?.connect.id}
+                      onValueChange={(id) => onChange({ connect: { id } })}
+                      onBlur={onBlur}
+                      className="flex"
+                      viewContext={viewContext}
+                      clientId={clientId}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
                 )}
               />
             )}
           </>
         )}
-        <FormField
+        <Controller
           control={form.control}
           name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="name">Name</FieldLabel>
+              <Input id="name" {...field} aria-invalid={fieldState.invalid} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="description">Description</FieldLabel>
+              <Textarea id="description" {...field} aria-invalid={fieldState.invalid} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
         {(parentProduct || productType === "CONSUMABLE") && canReadAnsiCategories && (
-          <FormField
-            control={form.control}
-            name="ansiCategory"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ANSI Category</FormLabel>
-                <FormControl>
+          <>
+            <Controller
+              control={form.control}
+              name="displayExpirationDate"
+              render={({ field: { value, onChange, onBlur }, fieldState }) => (
+                <Field data-invalid={fieldState.invalid} orientation="horizontal">
+                  <Switch
+                    id="display-expiration-date"
+                    className="self-start"
+                    checked={value}
+                    onCheckedChange={onChange}
+                    onBlur={onBlur}
+                    aria-invalid={fieldState.invalid}
+                  />
+                  <FieldContent>
+                    <FieldLabel htmlFor="display-expiration-date">
+                      Highlight expiration date
+                    </FieldLabel>
+                    <FieldDescription>
+                      Display the expiration date of this supply during important actions, such as
+                      while inspecting.
+                    </FieldDescription>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </FieldContent>
+                </Field>
+              )}
+            />
+
+            <Controller
+              control={form.control}
+              name="ansiCategory"
+              render={({ field: { value, onChange, onBlur }, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="ansi-category-combobox">ANSI Category</FieldLabel>
                   <AnsiCategoryCombobox
-                    value={field.value?.connect?.id}
+                    value={value?.connect?.id}
                     onValueChange={(id) =>
-                      field.onChange(id ? { connect: { id } } : { disconnect: true })
+                      onChange(id ? { connect: { id } } : { disconnect: true })
                     }
-                    onBlur={field.onBlur}
+                    onBlur={onBlur}
                     className="flex w-full"
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          </>
         )}
-        <FormField
+        <Controller
           control={form.control}
           name="sku"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>SKU</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="sku">SKU</FieldLabel>
+              <Input id="sku" {...field} aria-invalid={fieldState.invalid} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name="productUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Product URL</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="product-url">Product URL</FieldLabel>
+              <Input id="product-url" {...field} aria-invalid={fieldState.invalid} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name="imageUrl"
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <Label>Image</Label>
+          render={({ field: { value, onChange, ...field }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="image-url">Image</FieldLabel>
               {(image || value) && (
                 <ProductImage
                   imageUrl={image?.name ? URL.createObjectURL(image) : value}
@@ -372,20 +377,19 @@ export default function ProductDetailsForm({
                   className="w-full rounded-sm"
                 />
               )}
-              <FormControl>
-                <ImageUploadInput
-                  onImageChange={handleImageChange(onChange)}
-                  accept="image/*"
-                  className="w-full"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+              <ImageUploadInput
+                id="image-url"
+                onImageChange={handleImageChange(onChange)}
+                accept="image/*"
+                className="w-full"
+                {...field}
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
         {/* Advanced Section */}
-        {(userIsGlobalAdmin || canAssignOwnership) && (
+        {userIsGlobalAdmin && (
           <div className="rounded-lg border p-4">
             <button
               type="button"
@@ -420,30 +424,7 @@ export default function ProductDetailsForm({
             >
               {" "}
               <div className="space-y-4 pt-6">
-                {userIsGlobalAdmin && <MetadataInput />}
-                {canAssignOwnership && (
-                  <FormField
-                    control={form.control}
-                    name="client"
-                    render={({ field: { value, onChange } }) => (
-                      <FormItem>
-                        <FormLabel>Owner</FormLabel>
-                        <FormControl>
-                          <ClientCombobox
-                            value={value?.connect?.id}
-                            onValueChange={(v) =>
-                              onChange(v ? { connect: { id: v } } : { disconnect: true })
-                            }
-                            className="w-full"
-                            showClear={viewContext === "admin"}
-                            viewContext={viewContext}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                {userIsGlobalAdmin && <MetadataInputField viewContext={viewContext} />}
               </div>
             </motion.div>
           </div>

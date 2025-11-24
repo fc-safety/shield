@@ -2,13 +2,13 @@ import { dehydrate, QueryClient } from "@tanstack/react-query";
 import { ShieldQuestion } from "lucide-react";
 import { api } from "~/.server/api";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
-import { requireUserSession } from "~/.server/user-sesssion";
+import { guard } from "~/.server/guard";
 import AssetQuestionsDataTable from "~/components/products/asset-questions-data-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { getQueryPersistedState, getQueryStatePersistor } from "~/lib/urls";
-import { can, isGlobalAdmin, isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParams } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -23,15 +23,9 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { user } = await requireUserSession(request);
-  const isGlobalAdmin = isGlobalAdminFn(user);
+  await guard(request, (user) => isGlobalAdmin(user) && can(user, "read", "asset-questions"));
 
   const searchParams = getSearchParams(request);
-
-  // Check if user can manage asset questions
-  if (!can(user, "read", "asset-questions")) {
-    throw new Response("Forbidden", { status: 403 });
-  }
 
   // Fetch all products and product categories to get their questions
   const allQuestionsPromise = api.assetQuestions
@@ -42,9 +36,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
         order: {
           createdOn: "desc",
         },
-        ...(!isGlobalAdmin ? { client: { externalId: user.clientId } } : { clientId: "_NULL" }),
+        clientId: "_NULL",
       },
-      { context: isGlobalAdmin ? "admin" : "user" }
+      { context: "admin" }
     )
     .then((r) => r.results);
 

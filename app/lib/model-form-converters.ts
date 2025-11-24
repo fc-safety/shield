@@ -26,10 +26,11 @@ export function connectOrEmpty<T, K extends keyof T>(
   item: T | string | null | undefined,
   idKey?: K
 ) {
-  return item && item !== ""
+  const id = idKey ? (item as T | null | undefined)?.[idKey] : (item as string | null | undefined);
+  return id && id !== ""
     ? {
         connect: {
-          id: idKey ? (item as T)[idKey] : (item as string),
+          id,
         },
       }
     : undefined;

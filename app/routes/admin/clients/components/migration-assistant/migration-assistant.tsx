@@ -9,12 +9,7 @@ import ChatBlock from "./components/chat-block";
 import type { WsChatBlock } from "./types/ws-chat";
 
 interface ChatBlocksState {
-  status:
-    | "idle"
-    | "processing"
-    | "completed"
-    | "error"
-    | "waiting-for-response";
+  status: "idle" | "processing" | "completed" | "error" | "waiting-for-response";
   chatBlocks: WsChatBlock[];
 }
 
@@ -31,67 +26,59 @@ const initialState: ChatBlocksState = {
   chatBlocks: [],
 };
 
-const useChatBlocks = create<ChatBlocksState & ChatBlocksActions>(
-  (set, get) => {
-    let blockId = 0;
-    return {
-      ...initialState,
-      addChatBlock: (chatBlock: Omit<WsChatBlock, "id" | "status">) => {
-        set(
-          produce((state: ChatBlocksState) => {
-            if (chatBlock.type === "prompt") {
-              state.status = "waiting-for-response";
-            } else if (chatBlock.type === "alert") {
-              state.status = "processing";
-            }
-            state.chatBlocks.push({
-              ...chatBlock,
-              id: blockId++,
-              status: chatBlock.type === "prompt" ? "active" : "inactive",
-            });
-          })
-        );
-      },
-      deactivateChatBlock: (id: number) => {
-        set(
-          produce((state: ChatBlocksState) => {
-            state.chatBlocks = state.chatBlocks.map((chatBlock) =>
-              chatBlock.id === id
-                ? { ...chatBlock, status: "inactive" }
-                : chatBlock
-            );
-          })
-        );
-      },
-      deactivateAllChatBlocks: () => {
-        set(
-          produce((state: ChatBlocksState) => {
-            state.chatBlocks = state.chatBlocks.map((chatBlock) => ({
-              ...chatBlock,
-              status: "inactive",
-            }));
-          })
-        );
-      },
-      setStatus: (status: ChatBlocksState["status"]) => {
-        set(
-          produce((state: ChatBlocksState) => {
-            state.status = status;
-          })
-        );
-      },
-      reset: () => {
-        set(initialState);
-      },
-    };
-  }
-);
+const useChatBlocks = create<ChatBlocksState & ChatBlocksActions>((set, get) => {
+  let blockId = 0;
+  return {
+    ...initialState,
+    addChatBlock: (chatBlock: Omit<WsChatBlock, "id" | "status">) => {
+      set(
+        produce((state: ChatBlocksState) => {
+          if (chatBlock.type === "prompt") {
+            state.status = "waiting-for-response";
+          } else if (chatBlock.type === "alert") {
+            state.status = "processing";
+          }
+          state.chatBlocks.push({
+            ...chatBlock,
+            id: blockId++,
+            status: chatBlock.type === "prompt" ? "active" : "inactive",
+          });
+        })
+      );
+    },
+    deactivateChatBlock: (id: number) => {
+      set(
+        produce((state: ChatBlocksState) => {
+          state.chatBlocks = state.chatBlocks.map((chatBlock) =>
+            chatBlock.id === id ? { ...chatBlock, status: "inactive" } : chatBlock
+          );
+        })
+      );
+    },
+    deactivateAllChatBlocks: () => {
+      set(
+        produce((state: ChatBlocksState) => {
+          state.chatBlocks = state.chatBlocks.map((chatBlock) => ({
+            ...chatBlock,
+            status: "inactive",
+          }));
+        })
+      );
+    },
+    setStatus: (status: ChatBlocksState["status"]) => {
+      set(
+        produce((state: ChatBlocksState) => {
+          state.status = status;
+        })
+      );
+    },
+    reset: () => {
+      set(initialState);
+    },
+  };
+});
 
-export default function MigrationAssistant({
-  onComplete,
-}: {
-  onComplete?: () => void;
-}) {
+export default function MigrationAssistant({ onComplete }: { onComplete?: () => void }) {
   const {
     status,
     setStatus,
@@ -145,6 +132,16 @@ export default function MigrationAssistant({
         onComplete?.();
       }
     },
+    onClose: (ev) => {
+      if (ev.code > 1005) {
+        addChatBlock({
+          type: "alert",
+          direction: "incoming",
+          message: ev.reason,
+          alertType: "error",
+        });
+      }
+    },
   });
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -190,8 +187,8 @@ export default function MigrationAssistant({
   }, [chatBlocks]);
 
   return (
-    <GradientScrollArea className="h-full w-full border-t border-border mt-2">
-      <div className="flex flex-col gap-y-4 py-4 w-full px-3">
+    <GradientScrollArea className="border-border mt-2 h-full w-full border-t">
+      <div className="flex w-full flex-col gap-y-4 px-3 py-4">
         {chatBlocks.map((chatBlock) => (
           <AnimatePresence key={chatBlock.id}>
             <MotionChatBlock
@@ -208,7 +205,7 @@ export default function MigrationAssistant({
             />
           </AnimatePresence>
         ))}
-        {status === "processing" && <Loader2 className="animate-spin size-4" />}
+        {status === "processing" && <Loader2 className="size-4 animate-spin" />}
         <div ref={bottomRef} />
         <div className="h-36" />
       </div>

@@ -167,12 +167,7 @@ export default function AllProducts({
             </Select>
           </div>
           <div className="flex items-center space-x-2">
-            {canCreate && (
-              <EditProductButton
-                canAssignOwnership={isGlobalAdmin}
-                viewContext={isGlobalAdmin ? "admin" : "user"}
-              />
-            )}
+            {canCreate && <EditProductButton viewContext={isGlobalAdmin ? "admin" : "user"} />}
           </div>
         </CardContent>
       </Card>

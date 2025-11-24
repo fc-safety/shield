@@ -57,8 +57,8 @@ export default function ConsumableCombobox({
   );
 
   useEffect(() => {
-    if (value) preloadConsumableProducts();
-  }, [parentProductId, preloadConsumableProducts]);
+    if (value) preloadConsumableProducts(parentProductId);
+  }, [parentProductId, preloadConsumableProducts, value]);
 
   useEffect(() => {
     if (dataOrError?.data) {

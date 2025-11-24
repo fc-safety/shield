@@ -28,7 +28,7 @@ interface ClientUsersTableProps {
   clientId?: string;
   siteExternalId?: string;
   users: ClientUser[];
-  getSiteByExternalId?: (externalId: string) => Site | undefined;
+  sites: Site[];
   viewContext?: ViewContext;
 }
 
@@ -36,7 +36,7 @@ export default function ClientUsersTable({
   clientId,
   siteExternalId,
   users,
-  getSiteByExternalId,
+  sites,
   viewContext,
 }: ClientUsersTableProps) {
   const { user } = useAuth();
@@ -46,6 +46,13 @@ export default function ClientUsersTable({
   const editUser = useOpenData<ClientUser>();
   const updateRole = useOpenData<ClientUser>();
   const resetPassword = useOpenData<ClientUser>();
+
+  const sitesExternalIdMap = useMemo(() => new Map(sites.map((s) => [s.externalId, s])), [sites]);
+  const getSiteByExternalId = useCallback(
+    (externalId: string) => sitesExternalIdMap.get(externalId),
+    [sitesExternalIdMap]
+  );
+
   const { createOrUpdateJson: submit } = useModalFetcher();
   const setUserActive = useCallback(
     (id: string, data: Pick<z.infer<typeof updateUserSchema>, "active">) => {
@@ -195,6 +202,7 @@ export default function ClientUsersTable({
         initialState={{
           columnVisibility: {
             site: !!getSiteByExternalId,
+            phoneNumber: false,
           },
         }}
         searchPlaceholder="Search users..."
@@ -207,6 +215,16 @@ export default function ClientUsersTable({
               viewContext={viewContext}
             />
           ) : null,
+        ]}
+        filters={({ table }) => [
+          {
+            title: "Site",
+            column: table.getColumn("site"),
+            options: sites.map((s) => ({
+              label: s.name,
+              value: s.name,
+            })),
+          },
         ]}
       />
       <ResponsiveDialog title="Edit User" open={editUser.open} onOpenChange={editUser.setOpen}>

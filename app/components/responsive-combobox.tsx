@@ -18,8 +18,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useMemo, useState, type ComponentProps, type ReactNode } from "react";
-import { useMediaQuery } from "usehooks-ts";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
+import useIsMobile from "~/hooks/use-is-mobile";
 import { cn } from "~/lib/utils";
 
 interface ResponsiveComboboxProps extends Omit<SelectOptionsProps, "setOpen" | "onSelected"> {
@@ -64,7 +64,7 @@ export function ResponsiveCombobox({
     setInternalOpen(open);
     onOpenChange?.(open);
   };
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const isMobile = useIsMobile();
   useBlurOnClose({
     onBlur,
     open,
@@ -130,7 +130,7 @@ export function ResponsiveCombobox({
     <SelectOptions setOpen={setOpen} onSelected={setValue} {...selectOptionsProps} />
   );
 
-  if (isDesktop) {
+  if (!isMobile) {
     return (
       <AsPopover
         open={open}
