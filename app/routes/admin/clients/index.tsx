@@ -16,9 +16,9 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "~/components/ui/h
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import type { Client } from "~/lib/models";
+import { ClientStatuses, type Client } from "~/lib/models";
 import { can } from "~/lib/users";
-import { beautifyPhone } from "~/lib/utils";
+import { beautifyPhone, capitalize } from "~/lib/utils";
 import type { Route } from "./+types/index";
 import MigrationAssistantButton from "./components/migration-assistant/migration-assistant-button";
 
@@ -39,8 +39,8 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
     variant: "destructive",
   });
 
-  const columns: ColumnDef<Client>[] = useMemo(
-    () => [
+  const columns = useMemo(
+    (): ColumnDef<Client>[] => [
       {
         accessorKey: "status",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
@@ -53,6 +53,7 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
             </div>
           );
         },
+        filterFn: "defaultIncludes" as any,
       },
       {
         accessorKey: "name",
@@ -64,11 +65,6 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
             {row.original.demoMode && <Badge variant="default">Demo</Badge>}
           </Link>
         ),
-      },
-      {
-        accessorKey: "_count.sites",
-        id: "sites",
-        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
       },
       {
         accessorFn: (data) => `${data.address.city}, ${data.address.state}`,
@@ -93,6 +89,17 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
             </HoverCardContent>
           </HoverCard>
         ),
+      },
+      {
+        accessorKey: "demoMode",
+        id: "demo mode",
+        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        cell: ({ row, getValue }) => (
+          <Badge variant={(getValue() as boolean) ? "default" : "secondary"}>
+            {(getValue() as boolean) ? "Yes" : "No"}
+          </Badge>
+        ),
+        filterFn: "defaultIncludes" as any,
       },
       {
         id: "actions",
@@ -169,6 +176,36 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
             actions={[
               <EditClientButton key="add" viewContext="admin" />,
               <MigrationAssistantButton key="migration" onComplete={() => revalidate()} />,
+            ]}
+            initialState={{
+              columnVisibility: {
+                "demo mode": false,
+              },
+            }}
+            filters={({ table }) => [
+              {
+                title: "Status",
+                multiple: true,
+                column: table.getColumn("status"),
+                options: Object.values(ClientStatuses).map((status) => ({
+                  label: capitalize(status.toLowerCase()),
+                  value: status,
+                })),
+              },
+              {
+                title: "Demo Mode",
+                column: table.getColumn("demo mode"),
+                options: [
+                  {
+                    label: "Yes",
+                    value: true,
+                  },
+                  {
+                    label: "No",
+                    value: false,
+                  },
+                ],
+              },
             ]}
           />
         </CardContent>

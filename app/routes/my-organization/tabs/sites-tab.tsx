@@ -1,18 +1,17 @@
 import { useRouteLoaderData } from "react-router";
 import { api } from "~/.server/api";
 import ClientDetailsTabsSitesTab from "~/components/clients/pages/client-details-tabs/sites-tab";
+import { nestSites } from "~/lib/services/clients.service";
 import type { loader as layoutLoader } from "../layout";
 import type { Route } from "./+types/sites-tab";
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const sitesResult = await api.sites.list(request, {
-    limit: 10000,
-    parentSiteId: "_NULL",
-    include: { subsites: { include: { address: true } } },
+    limit: 1000,
   });
 
   return {
-    sites: sitesResult.results,
+    sites: nestSites(sitesResult.results),
     sitesTotalCount: sitesResult.count,
   };
 };

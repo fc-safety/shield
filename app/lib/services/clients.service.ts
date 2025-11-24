@@ -37,3 +37,30 @@ export const getMyOrganizationQueryOptions = (fetcher: typeof fetch) =>
     queryKey: ["my-organization"] as const,
     queryFn: () => getMyOrganizationFn(fetcher),
   });
+
+/**
+ * Nests a list of sites into a tree of sites.
+ *
+ * @param sites - The sites to nest.
+ * @returns The nested sites.
+ */
+export const nestSites = (sites: Site[]) => {
+  const parentSiteIdSubsitesMap = new Map<string, Site[]>();
+  const parentSites: Site[] = [];
+
+  for (const site of sites) {
+    if (site.parentSiteId) {
+      parentSiteIdSubsitesMap.set(site.parentSiteId, [
+        ...(parentSiteIdSubsitesMap.get(site.parentSiteId) ?? []),
+        site,
+      ]);
+    } else {
+      parentSites.push(site);
+    }
+  }
+
+  return parentSites.map((site) => ({
+    ...site,
+    subsites: parentSiteIdSubsitesMap.get(site.id) ?? [],
+  }));
+};

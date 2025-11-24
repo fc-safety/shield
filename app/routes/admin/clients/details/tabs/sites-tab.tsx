@@ -1,5 +1,6 @@
 import { api } from "~/.server/api";
 import ClientDetailsTabsSitesTab from "~/components/clients/pages/client-details-tabs/sites-tab";
+import { nestSites } from "~/lib/services/clients.service";
 import { validateParam } from "~/lib/utils";
 import type { Route } from "./+types/sites-tab";
 
@@ -9,16 +10,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const sitesResult = await api.sites.list(
     request,
     {
-      limit: 10000,
+      limit: 1000,
       clientId: id,
-      parentSiteId: "_NULL",
-      include: { subsites: { include: { address: true } } },
     },
     { context: "admin" }
   );
 
   return {
-    sites: sitesResult.results,
+    sites: nestSites(sitesResult.results),
     sitesTotalCount: sitesResult.count,
     clientId: id,
   };
