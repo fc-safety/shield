@@ -7,13 +7,11 @@ interface Props {
   connectionPath: string;
   tokenPath: string;
   onMessage: (type: string, data: any, socket: WebSocket) => void;
+  onOpen?: (ev: Event) => void;
+  onClose?: (ev: CloseEvent) => void;
 }
 
-export const useWebsocket = ({
-  connectionPath,
-  tokenPath,
-  onMessage,
-}: Props) => {
+export const useWebsocket = ({ connectionPath, tokenPath, onMessage, onOpen, onClose }: Props) => {
   const { apiUrl } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
   const [token, setToken] = useState<string | null>(null);
@@ -55,14 +53,16 @@ export const useWebsocket = ({
       onMessage(type, data, socket);
     };
 
-    socket.onopen = () => {
+    socket.onopen = (event) => {
       console.log("WebSocket opened");
       setIsOpen(true);
+      onOpen?.(event);
     };
 
-    socket.onclose = () => {
+    socket.onclose = (event) => {
       console.log("WebSocket closed");
       setIsOpen(false);
+      onClose?.(event);
     };
 
     return () => {

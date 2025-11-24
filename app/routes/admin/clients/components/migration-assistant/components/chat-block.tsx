@@ -1,12 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Fuse from "fuse.js";
-import {
-  AlertTriangle,
-  ArrowRight,
-  Check,
-  CheckCircle,
-  CircleX,
-} from "lucide-react";
+import { AlertTriangle, ArrowRight, Check, CheckCircle, CircleX } from "lucide-react";
 import { useMemo, useState, type ComponentProps } from "react";
 import { ResponsiveCombobox } from "~/components/responsive-combobox";
 import { Button } from "~/components/ui/button";
@@ -24,7 +18,7 @@ export default function ChatBlock({
 }) {
   if (chatBlock.type === "system_note") {
     return (
-      <div className="self-center text-sm font-semibold text-muted-foreground">
+      <div className="text-muted-foreground self-center text-sm font-semibold">
         {chatBlock.message}
       </div>
     );
@@ -32,10 +26,10 @@ export default function ChatBlock({
   return (
     <div
       className={cn(
-        "flex flex-col gap-y-2 p-3 rounded-lg border text-sm max-w-[80%]",
+        "flex max-w-[80%] flex-col gap-y-2 rounded-lg border p-3 text-sm",
         chatBlock.direction === "incoming"
-          ? "self-start bg-secondary text-secondary-foreground"
-          : "self-end bg-primary text-primary-foreground"
+          ? "bg-secondary text-secondary-foreground self-start"
+          : "bg-primary text-primary-foreground self-end"
       )}
     >
       {chatBlock.type === "prompt" && chatBlock.direction === "outgoing" ? (
@@ -43,13 +37,13 @@ export default function ChatBlock({
       ) : (
         <div className="flex items-center gap-2">
           {chatBlock.alertType === "success" && (
-            <CheckCircle className="size-5 animate-pop-once text-primary fill-primary/20" />
+            <CheckCircle className="animate-pop-once text-primary fill-primary/20 size-5" />
           )}
           {chatBlock.alertType === "warning" && (
-            <AlertTriangle className="shrink-0 size-5 text-warning-foreground fill-warning dark:text-warning dark:fill-warning/20" />
+            <AlertTriangle className="text-warning-foreground fill-warning dark:text-warning dark:fill-warning/20 size-5 shrink-0" />
           )}
           {chatBlock.alertType === "error" && (
-            <CircleX className="shrink-0 size-5 text-destructive fill-destructive/20" />
+            <CircleX className="text-destructive fill-destructive/20 size-5 shrink-0" />
           )}
           {chatBlock.message}
         </div>
@@ -79,10 +73,7 @@ const PromptChatBlock = ({
   );
   const isInactive = chatBlock.status !== "active";
 
-  const handleChangeObject = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    filter?: (v: any) => any
-  ) => {
+  const handleChangeObject = (e: React.ChangeEvent<HTMLInputElement>, filter?: (v: any) => any) => {
     setValue((v: any) => ({
       ...(v && typeof v === "object" ? v : {}),
       [e.target.name]: filter ? filter(e.target.value) : e.target.value,
@@ -130,7 +121,7 @@ const PromptChatBlock = ({
         </div>
       ) : chatBlock.promptType === "address" ? (
         <form
-          className="flex flex-col gap-y-2 w-72"
+          className="flex w-72 flex-col gap-y-2"
           onSubmit={(e) => {
             e.preventDefault();
             onEmitValue(value);
@@ -183,11 +174,7 @@ const PromptChatBlock = ({
               label="Zip Code"
               value={value.zip}
               name="zip"
-              onChange={(e) =>
-                handleChangeObject(e, (v) =>
-                  v.replace(/[^\d]/g, "").slice(0, 5)
-                )
-              }
+              onChange={(e) => handleChangeObject(e, (v) => v.replace(/[^\d]/g, "").slice(0, 5))}
               disabled={isInactive}
               className="col-span-8"
               required
@@ -206,25 +193,15 @@ const PromptChatBlock = ({
           <LabelledInput
             label="Phone Number"
             value={beautifyPhone(value)}
-            onChange={(e) =>
-              setValue(stripPhone(beautifyPhone(e.target.value)))
-            }
+            onChange={(e) => setValue(stripPhone(beautifyPhone(e.target.value)))}
             disabled={isInactive}
             type={"tel"}
           />
-          <ContinueButton
-            type="submit"
-            hidden={isInactive}
-            disabled={value === ""}
-          />
+          <ContinueButton type="submit" hidden={isInactive} disabled={value === ""} />
         </form>
       ) : (
         <div className="flex flex-col gap-y-2">
-          <Input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            disabled={isInactive}
-          />
+          <Input value={value} onChange={(e) => setValue(e.target.value)} disabled={isInactive} />
           <ContinueButton
             onClick={() => onEmitValue(value)}
             disabled={value === ""}
@@ -249,12 +226,7 @@ const ContinueButton = ({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0 }}
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn("group w-full", className)}
-            {...props}
-          >
+          <Button variant="ghost" size="sm" className={cn("group w-full", className)} {...props}>
             Continue <ArrowRight className="group-hover:text-primary" />
           </Button>
         </motion.div>
@@ -296,9 +268,7 @@ const ResponsiveSelect = ({
       searchValue={search}
       onSearchValueChange={setSearch}
       shouldFilter={false}
-      displayValue={(value) =>
-        options.find((option) => option.value === value)?.label ?? value
-      }
+      displayValue={(value) => options.find((option) => option.value === value)?.label ?? value}
     />
   );
 };
@@ -311,7 +281,11 @@ const LabelledInput = ({
   return (
     <div className={cn(className)}>
       <Label className="text-xs">{label}</Label>
-      <Input {...props} onFocus={(e) => e.target.select()} />
+      <Input
+        {...props}
+        onFocus={(e) => e.target.select()}
+        className="bg-background/60 text-foreground"
+      />
     </div>
   );
 };
