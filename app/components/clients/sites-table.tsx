@@ -106,6 +106,16 @@ export default function SitesTable({
       ),
     },
     {
+      accessorFn: (data) => data._count?.assets ?? -1,
+      id: "assets",
+      header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+
+      cell: ({ row, getValue }) => {
+        const count = getValue() as number;
+        return count > -1 ? count : <>&mdash;</>;
+      },
+    },
+    {
       id: "actions",
       cell: ({ row }) => {
         const site = row.original;

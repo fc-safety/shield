@@ -19,10 +19,20 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   return {
     sites: sitesResult.results,
+    sitesTotalCount: sitesResult.count,
     clientId: id,
   };
 };
 
-export default function SitesTab({ loaderData: { sites, clientId } }: Route.ComponentProps) {
-  return <ClientDetailsTabsSitesTab sites={sites} clientId={clientId} viewContext="admin" />;
+export default function SitesTab({
+  loaderData: { sites, sitesTotalCount, clientId },
+}: Route.ComponentProps) {
+  return (
+    <ClientDetailsTabsSitesTab
+      sites={sites}
+      sitesTotalCount={sitesTotalCount}
+      clientId={clientId}
+      viewContext="admin"
+    />
+  );
 }

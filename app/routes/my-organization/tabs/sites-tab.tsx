@@ -13,13 +13,19 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   return {
     sites: sitesResult.results,
+    sitesTotalCount: sitesResult.count,
   };
 };
 
-export default function SitesTab({ loaderData: { sites } }: Route.ComponentProps) {
+export default function SitesTab({ loaderData: { sites, sitesTotalCount } }: Route.ComponentProps) {
   const layoutData = useRouteLoaderData<typeof layoutLoader>("routes/my-organization/layout");
 
   return (
-    <ClientDetailsTabsSitesTab sites={sites} clientId={layoutData?.client?.id} viewContext="user" />
+    <ClientDetailsTabsSitesTab
+      sites={sites}
+      sitesTotalCount={sitesTotalCount}
+      clientId={layoutData?.client?.id}
+      viewContext="user"
+    />
   );
 }

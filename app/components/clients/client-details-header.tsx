@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CopyPlus, Loader2, Pencil } from "lucide-react";
+import { CopyPlus, Loader2, Pencil, ShieldCheck, Warehouse } from "lucide-react";
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
@@ -16,6 +16,7 @@ import { useOpenData } from "~/hooks/use-open-data";
 import type { Client } from "~/lib/models";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { ResponsiveDialog } from "../responsive-dialog";
+import { Badge } from "../ui/badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../ui/form";
 import { Input } from "../ui/input";
 
@@ -43,6 +44,18 @@ export default function ClientDetailsHeader({
               address={client.address}
               className="text-muted-foreground text-sm @lg:whitespace-normal"
             />
+            {client._count && (
+              <div className="mt-4 flex items-center gap-2">
+                <Badge variant="outline">
+                  <ShieldCheck className="text-primary" />
+                  {client._count.assets} asset{client._count.assets === 1 ? "" : "s"}
+                </Badge>
+                <Badge variant="outline">
+                  <Warehouse className="text-primary" />
+                  {client._count.sites} site{client._count.sites === 1 ? "" : "s"}
+                </Badge>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {viewContext === "admin" && (
