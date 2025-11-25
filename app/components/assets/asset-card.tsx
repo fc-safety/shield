@@ -177,7 +177,7 @@ export default function AssetCard({ asset, processedProductImageUrl, className }
         </CardContent>
         <CardFooter className="justify-between gap-3 p-3 pt-0 sm:gap-4 sm:p-4 sm:pt-0">
           <span className="text-muted-foreground font-mono text-xs font-light">
-            SN: <span className="break-all">{asset.serialNumber}</span>
+            SN: <span className="break-all">{asset.serialNumber || <>&mdash;</>}</span>
           </span>
           {(asset.inspectionCycle !== null || asset.client) && (
             <div className="text-muted-foreground flex shrink-0 items-center gap-1 text-xs">
