@@ -106,7 +106,10 @@ export function ResponsiveDialog({
       disableScrollArea ? (
         <div className={className}>{children}</div>
       ) : (
-        <ScrollArea classNames={{ root: className }} disableDisplayTable={disableDisplayTable}>
+        <ScrollArea
+          classNames={{ root: className, viewport: "p-1" }}
+          disableDisplayTable={disableDisplayTable}
+        >
           {children}
         </ScrollArea>
       ),
