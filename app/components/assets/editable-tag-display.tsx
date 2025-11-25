@@ -53,7 +53,7 @@ export default function EditableTagDisplay({
                     <Button
                       variant="outline"
                       type="button"
-                      size="iconSm"
+                      size="icon-sm"
                       className={cn("text-muted-foreground h-7 w-7")}
                       onClick={() =>
                         handleCopyTagUrl({

@@ -81,7 +81,7 @@ export default function AutomaticSupplySetupInput() {
               {autoSetupSupplyConfig && (
                 <>
                   <Button
-                    size="iconSm"
+                    size="icon-sm"
                     variant="outline"
                     type="button"
                     onClick={() => openSidepanel(AutoSetupSupplyConfigurator.Id)}
@@ -89,7 +89,7 @@ export default function AutomaticSupplySetupInput() {
                     <Pencil />
                   </Button>
                   <Button
-                    size="iconSm"
+                    size="icon-sm"
                     variant="outline"
                     type="button"
                     onClick={() => {

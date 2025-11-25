@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { redirect } from "react-router";
+import { config } from "~/.server/config";
 import { appStateSessionStorage } from "~/.server/sessions";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
@@ -24,7 +25,10 @@ import { cn, getSearchParam, getSearchParams } from "~/lib/utils";
 import type { Route } from "./+types/legacy-redirect";
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const returnTo = getSearchParam(request, "returnTo") ?? "/";
+  const returnToRaw = getSearchParam(request, "returnTo") ?? "/";
+
+  // Prevent redirecting to an external URL by setting the hostname to the app host.
+  const returnTo = URL.parse(returnToRaw, config.APP_HOST)?.toString() ?? "/";
 
   let init: ResponseInit = {};
   const searchParams = getSearchParams(request);
@@ -76,7 +80,7 @@ export default function LegacyRedirect() {
               </Button>
             </form>
             <div className="text-center text-sm">
-              <span className="text-muted-foreground">Havne't received your credentials yet?</span>{" "}
+              <span className="text-muted-foreground">Haven't received your credentials yet?</span>{" "}
               <button
                 className="text-primary inline-block hover:underline"
                 onClick={() => openChat()}

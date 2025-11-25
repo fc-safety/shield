@@ -97,7 +97,7 @@ export default function FilesInput() {
                 {files.map(({ idx, key, action, data }) => (
                   <div className="flex flex-row items-center gap-2 py-1" key={key}>
                     <Button
-                      size="iconSm"
+                      size="icon-sm"
                       variant="outline"
                       type="button"
                       onClick={
@@ -112,7 +112,7 @@ export default function FilesInput() {
                       <Eraser className="text-destructive" />
                     </Button>
                     <Button
-                      size="iconSm"
+                      size="icon-sm"
                       variant="outline"
                       type="button"
                       onClick={() => {

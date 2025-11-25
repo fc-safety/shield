@@ -265,7 +265,7 @@ function MultivaluesInput({
           })}
           {values.length > 1 && (
             <Button
-              size="iconSm"
+              size="icon-sm"
               variant="outline"
               type="button"
               onClick={() => handleDeleteValue(idx)}

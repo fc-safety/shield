@@ -116,7 +116,7 @@ export default function ConditionsInput() {
                 {conditions.flatMap(({ idx, key, action, data: condition }) => (
                   <div className="flex flex-row items-center gap-2 py-1" key={`${key}-${idx}`}>
                     <Button
-                      size="iconSm"
+                      size="icon-sm"
                       variant="outline"
                       type="button"
                       onClick={
@@ -131,7 +131,7 @@ export default function ConditionsInput() {
                       <Eraser className="text-destructive" />
                     </Button>
                     <Button
-                      size="iconSm"
+                      size="icon-sm"
                       variant="outline"
                       type="button"
                       onClick={() => {
@@ -203,11 +203,11 @@ export default function ConditionsInput() {
 
 //   return (
 //     <div className={cn("flex flex-row items-center gap-2", className)}>
-//       <Button size="iconSm" variant="outline" type="button" onClick={() => onRemove()}>
+//       <Button size="icon-sm" variant="outline" type="button" onClick={() => onRemove()}>
 //         <Eraser className="text-destructive" />
 //       </Button>
 //       <Button
-//         size="iconSm"
+//         size="icon-sm"
 //         variant="outline"
 //         type="button"
 //         onClick={() => {

@@ -88,7 +88,7 @@ export default function ResponsiveActions({ actionGroups }: { actionGroups: TAct
 const ActionButtonGroup = ({ actionGroup }: { actionGroup: TActionGroup }) => {
   const resolvedActions = actionGroup.actions.filter((action) => !action.hide);
 
-  const defaultSize = actionGroup.size ?? "iconSm";
+  const defaultSize = actionGroup.size ?? "icon-sm";
   const defaultVariant = actionGroup.variant ?? "secondary";
 
   return (
@@ -100,7 +100,7 @@ const ActionButtonGroup = ({ actionGroup }: { actionGroup: TActionGroup }) => {
         const displayContent = (
           <>
             <action.Icon />
-            {defaultSize !== "icon" && defaultSize !== "iconSm" && action.text}
+            {defaultSize !== "icon" && defaultSize !== "icon-sm" && action.text}
           </>
         );
 

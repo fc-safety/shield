@@ -164,7 +164,7 @@ export const validateSearchParam = (
     if (!result.success) {
       errorMsg = `Query parameter '${key}' is invalid: ${result.error.message}`;
     }
-  } else if (!value) {
+  } else if (value) {
     errorMsg = message ?? `Query parameter '${key}' is required`;
   }
   if (errorMsg) {
@@ -172,7 +172,7 @@ export const validateSearchParam = (
       status: 400,
     });
   }
-  return value;
+  return value as string;
 };
 
 export const validateParam = (

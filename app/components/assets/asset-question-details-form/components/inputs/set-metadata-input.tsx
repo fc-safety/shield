@@ -85,7 +85,7 @@ export default function SetMetadataInput({ requireDynamic = false }: { requireDy
                   <div key={key} className="flex flex-wrap items-center gap-2 py-1">
                     <Button
                       variant="outline"
-                      size="iconSm"
+                      size="icon-sm"
                       type="button"
                       className="text-destructive"
                       onClick={() =>

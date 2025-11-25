@@ -313,7 +313,7 @@ export function ProductRequestForm({
                               <Button
                                 type="button"
                                 variant="destructive"
-                                size="iconSm"
+                                size="icon-sm"
                                 onClick={() => remove(index)}
                               >
                                 <Trash />
@@ -590,7 +590,7 @@ function AvailableConsumables({
             <Button
               type="button"
               variant="default"
-              size="iconSm"
+              size="icon-sm"
               onClick={() => onAdd(product.id)}
               disabled={selectedConsumableIds.has(product.id)}
             >
