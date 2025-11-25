@@ -10,4 +10,7 @@ export default defineConfig({
     tsconfigPaths(),
     tailwindcss(),
   ],
+  build: {
+    assetsDir: "_assets",
+  },
 });
