@@ -7,7 +7,6 @@ import type { Route } from "./+types/layout";
 // When deleting a client, we don't want to revalidate the page. This would
 // cause a 404 before the page could navigate back.
 export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
-  console.log("should revalidate: clients/details/layout");
   if (arg.formMethod === "DELETE") {
     return false;
   }
