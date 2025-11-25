@@ -61,7 +61,7 @@ import {
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 
-export default function InspectionAlertsOverview() {
+export function InspectionAlertsOverview() {
   const { appState, setAppState } = useAppState();
   const [sorting, setSorting] = useAppStateValue("dash_alert_sort", [{ id: "date", desc: true }]);
   const [view, setView] = useAppStateValue("dash_alert_view", "summary");

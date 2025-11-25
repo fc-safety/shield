@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { Fragment } from "react";
 import { Link } from "react-router";

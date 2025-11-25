@@ -14,7 +14,7 @@ import { AssetInspectionsStatuses, type AssetInspectionsStatus } from "~/lib/enu
 import { getSitesQueryOptions } from "~/lib/services/clients.service";
 import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
-import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
+import type { ReactEChartsProps } from "../charts/echarts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import {
   DashboardCard,
@@ -26,6 +26,7 @@ import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 import type { AssetRow } from "./types/stats";
+const { ReactECharts } = await import("../charts/echarts");
 
 export function OverallComplianceChart() {
   const { user } = useAuth();
