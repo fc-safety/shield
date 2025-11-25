@@ -162,11 +162,11 @@ function AlertTrigger({
 
   return (
     <div className={cn("flex flex-row items-center gap-2", className)}>
-      <Button size="iconSm" variant="outline" type="button" onClick={() => onRemove()}>
+      <Button size="icon-sm" variant="outline" type="button" onClick={() => onRemove()}>
         <Eraser className="text-destructive" />
       </Button>
       <Button
-        size="iconSm"
+        size="icon-sm"
         variant="outline"
         type="button"
         onClick={() => {

@@ -51,7 +51,7 @@ export default function MetadataInputField({
               </HelpPopover>
               <Button
                 variant="outline"
-                size="iconSm"
+                size="icon-sm"
                 type="button"
                 className="size-5"
                 onClick={() => {
@@ -142,7 +142,7 @@ const MetadataInputItem = ({
         className="min-w-0 flex-1"
         viewContext={viewContext}
       />
-      <Button variant="ghost" size="iconSm" type="button" onClick={() => onDelete()}>
+      <Button variant="ghost" size="icon-sm" type="button" onClick={() => onDelete()}>
         <Eraser className="size-4" />
       </Button>
     </>

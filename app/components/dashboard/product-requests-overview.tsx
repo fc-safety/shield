@@ -113,7 +113,7 @@ export default function ProductRequestsOverview() {
               <List />
             </ToggleGroupItem>
           </ToggleGroup>
-          {/* <Button variant="outline" size="iconSm">
+          {/* <Button variant="outline" size="icon-sm">
             <Printer />
           </Button> */}
         </DashboardCardTitle>

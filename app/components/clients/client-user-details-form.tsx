@@ -15,7 +15,6 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createUserSchema, updateUserSchema } from "~/lib/schema";
 import type { ClientUser } from "~/lib/types";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
-import LegacyIdField from "../legacy-id-field";
 import { Input } from "../ui/input";
 import SiteCombobox from "./site-combobox";
 
@@ -77,12 +76,6 @@ export default function ClientUserDetailsForm({
   return (
     <FormProvider {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
-        <LegacyIdField
-          form={form}
-          fieldName="legacyUserId"
-          label="Legacy User ID"
-          description="User ID from the legacy Shield system"
-        />
         <FormField
           control={form.control}
           name="firstName"

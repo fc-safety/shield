@@ -10,7 +10,7 @@ import {
   SquareAsterisk,
 } from "lucide-react";
 import { forwardRef, useState, type ComponentProps } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
@@ -24,8 +24,9 @@ import ConfirmationDialog from "../confirmation-dialog";
 import DataList from "../data-list";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { Input } from "../ui/input";
+import { Field, FieldError, FieldLabel } from "../ui/field";
+import { extractErrorMessage } from "../ui/form";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "../ui/input-group";
 
 interface ResetPasswordFormProps {
   user: ClientUser;
@@ -197,7 +198,15 @@ export default function ResetPasswordForm({ user, clientId, onSubmitted }: Reset
           </Button>
         </div>
         <FormProvider {...form}>
-          <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={form.handleSubmit(handleSubmit, (e) => {
+              toast.error("Please fix the errors in the form.", {
+                description: extractErrorMessage(e),
+                duration: 10000,
+              });
+            })}
+          >
             <div>
               <h3 className="text-base font-semibold">Manually Reset Password</h3>
               <p className="text-muted-foreground text-xs">
@@ -219,64 +228,55 @@ export default function ResetPasswordForm({ user, clientId, onSubmitted }: Reset
                 Generate Secure Password
               </Button>
 
-              <FormField
+              <Controller
                 control={form.control}
                 name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        showPassword={showPassword}
-                        onShowPassword={setShowPassword}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Password</FieldLabel>
+                    <PasswordInput
+                      showPassword={showPassword}
+                      onShowPassword={setShowPassword}
+                      {...field}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
                 )}
               />
-              <FormField
+              <Controller
                 control={form.control}
                 name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
-                    <FormControl>
-                      <PasswordInput
-                        showPassword={showPassword}
-                        onShowPassword={setShowPassword}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Confirm Password</FieldLabel>
+                    <PasswordInput
+                      showPassword={showPassword}
+                      onShowPassword={setShowPassword}
+                      {...field}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
                 )}
               />
               {canSendResetPasswordEmail && (
-                <FormField
+                <Controller
                   control={form.control}
                   name="sendEmail"
-                  render={({ field: { onChange, value, ...field } }) => (
-                    <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                      <FormControl>
-                        <Checkbox {...field} checked={value} onCheckedChange={onChange} />
-                      </FormControl>
-                      <FormLabel className="font-normal">
+                  render={({ field: { onChange, value, ...field }, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} orientation="horizontal">
+                      <Checkbox {...field} checked={value} onCheckedChange={onChange} />
+                      <FieldLabel className="font-normal">
                         Send email with new password to{" "}
                         <span className="font-bold underline">{user.email}</span>
-                      </FormLabel>
-                      <FormMessage />
-                    </FormItem>
+                      </FieldLabel>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
                   )}
                 />
               )}
             </div>
 
-            <Button
-              type="submit"
-              disabled={resetPasswordLoading || resetPasswordSuccess || !isValid}
-            >
+            <Button type="submit" disabled={resetPasswordLoading || resetPasswordSuccess}>
               {resetPasswordLoading ? (
                 <Loader2 className="animate-spin" />
               ) : resetPasswordSuccess ? (
@@ -302,24 +302,24 @@ const PasswordInput = forwardRef<
   }
 >(({ showPassword, onShowPassword, className, ...props }, ref) => {
   return (
-    <div className="relative">
-      <Input
+    <InputGroup>
+      <InputGroupInput
         type={showPassword ? "text" : "password"}
         className={cn("pr-10", className)}
         {...props}
         ref={ref}
       />
-      <Button
-        type="button"
-        variant="ghost"
-        className="absolute top-0 right-0"
-        size="icon"
-        onClick={() => onShowPassword(!showPassword)}
-        tabIndex={-1}
-      >
-        {showPassword ? <EyeOff /> : <Eye />}
-      </Button>
-    </div>
+      <InputGroupAddon align="inline-end">
+        <InputGroupButton
+          type="button"
+          size="icon-xs"
+          onClick={() => onShowPassword(!showPassword)}
+          tabIndex={-1}
+        >
+          {showPassword ? <EyeOff /> : <Eye />}
+        </InputGroupButton>
+      </InputGroupAddon>
+    </InputGroup>
   );
 });
 

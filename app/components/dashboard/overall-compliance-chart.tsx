@@ -230,7 +230,7 @@ export function OverallComplianceChart() {
               ))}
             </SelectContent>
           </Select>
-          {/* <Button variant="outline" size="iconSm">
+          {/* <Button variant="outline" size="icon-sm">
             <Printer />
           </Button> */}
         </DashboardCardTitle>

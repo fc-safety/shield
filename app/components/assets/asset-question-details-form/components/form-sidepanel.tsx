@@ -39,7 +39,7 @@ export default function FormSidepanel() {
           >
             <Button
               variant="ghost"
-              size="iconSm"
+              size="icon-sm"
               type="button"
               className="absolute top-0 -left-10"
               onClick={closeSidepanel}

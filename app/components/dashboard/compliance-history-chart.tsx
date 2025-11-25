@@ -171,7 +171,7 @@ export function ComplianceHistoryChart() {
             <ToggleGroupItem value="6">6m</ToggleGroupItem>
             <ToggleGroupItem value="12">12m</ToggleGroupItem>
           </ToggleGroup>
-          {/* <Button variant="outline" size="iconSm">
+          {/* <Button variant="outline" size="icon-sm">
             <Printer />
           </Button> */}
         </DashboardCardTitle>

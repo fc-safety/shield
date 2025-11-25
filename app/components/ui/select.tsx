@@ -1,4 +1,5 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
+import { cva, type VariantProps } from "class-variance-authority";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 
@@ -10,16 +11,30 @@ const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
+const selectTriggerVariants = cva(
+  "border-input ring-offset-background gap-1 data-placeholder:text-muted-foreground focus:ring-ring flex h-9 w-full items-center justify-between rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+  {
+    variants: {
+      size: {
+        default: "h-9 px-3",
+        sm: "h-8 px-2",
+        lg: "h-10 px-4",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  }
+);
+
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> &
+    VariantProps<typeof selectTriggerVariants>
+>(({ className, children, size, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}
-    className={cn(
-      "border-input ring-offset-background data-placeholder:text-muted-foreground focus:ring-ring flex h-9 w-full items-center justify-between rounded-md border bg-transparent px-3 py-2 text-sm whitespace-nowrap shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-      className
-    )}
+    className={cn(selectTriggerVariants({ size, className }))}
     {...props}
   >
     {children}

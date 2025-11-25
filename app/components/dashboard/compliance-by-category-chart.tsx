@@ -129,7 +129,7 @@ export function ComplianceByCategoryChart() {
         <DashboardCardTitle>
           <Shield />+<Shapes /> Compliance by Category
           <div className="flex-1"></div>
-          {/* <Button variant="outline" size="iconSm">
+          {/* <Button variant="outline" size="icon-sm">
             <Printer />
           </Button> */}
         </DashboardCardTitle>

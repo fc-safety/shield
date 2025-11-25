@@ -34,7 +34,7 @@ export default function SelectOptionsInput() {
           />
           <Button
             variant="ghost"
-            size="iconSm"
+            size="icon-sm"
             className="absolute top-1/2 right-0.5 -translate-y-1/2"
             onClick={() => remove(idx)}
             type="button"
@@ -46,7 +46,7 @@ export default function SelectOptionsInput() {
       ))}
       <Button
         variant="outline"
-        size="iconSm"
+        size="icon-sm"
         onClick={() => append({ value: "", label: "" })}
         type="button"
       >

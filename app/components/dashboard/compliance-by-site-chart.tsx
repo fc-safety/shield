@@ -120,7 +120,7 @@ export function ComplianceBySiteChart() {
         <DashboardCardTitle>
           <Shield />+<Warehouse /> Compliance by Site
           <div className="flex-1"></div>
-          {/* <Button variant="outline" size="iconSm">
+          {/* <Button variant="outline" size="icon-sm">
             <Printer />
           </Button> */}
         </DashboardCardTitle>

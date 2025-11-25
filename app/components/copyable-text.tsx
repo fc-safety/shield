@@ -37,7 +37,7 @@ export const CopyableText = ({
               ) : (
                 <Button
                   variant="outline"
-                  size="iconSm"
+                  size="icon-sm"
                   className={cn(
                     "text-muted-foreground h-7 w-7",
                     hoverOnly && "opacity-0 group-hover:opacity-100"
