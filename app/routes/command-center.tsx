@@ -3,12 +3,6 @@ import { useCallback } from "react";
 import { useDebounceCallback } from "usehooks-ts";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { getAppState } from "~/.server/sessions";
-import { ComplianceByCategoryChart } from "~/components/dashboard/compliance-by-category-chart";
-import { ComplianceBySiteChart } from "~/components/dashboard/compliance-by-site-chart";
-import { ComplianceHistoryChart } from "~/components/dashboard/compliance-history-chart";
-import InspectionAlertsOverview from "~/components/dashboard/inspection-alerts-overview";
-import { OverallComplianceChart } from "~/components/dashboard/overall-compliance-chart";
-import ProductRequestsOverview from "~/components/dashboard/product-requests-overview";
 import { useAuth } from "~/contexts/auth-context";
 import { useServerSentEvents } from "~/hooks/use-server-sent-events";
 import { getSitesQueryOptions } from "~/lib/services/clients.service";
@@ -24,6 +18,19 @@ import { getProductCategoriesQueryOptions } from "~/lib/services/product-categor
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/command-center";
+
+const { OverallComplianceChart } = await import("~/components/dashboard/overall-compliance-chart");
+const { ComplianceByCategoryChart } = await import(
+  "~/components/dashboard/compliance-by-category-chart"
+);
+const { ComplianceBySiteChart } = await import("~/components/dashboard/compliance-by-site-chart");
+const { ComplianceHistoryChart } = await import("~/components/dashboard/compliance-history-chart");
+const { InspectionAlertsOverview } = await import(
+  "~/components/dashboard/inspection-alerts-overview"
+);
+const { ProductRequestsOverview } = await import(
+  "~/components/dashboard/product-requests-overview"
+);
 
 export const handle = {
   breadcrumb: () => ({

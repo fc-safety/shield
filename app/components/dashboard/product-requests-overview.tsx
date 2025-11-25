@@ -62,7 +62,7 @@ import {
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
 
-export default function ProductRequestsOverview() {
+export function ProductRequestsOverview() {
   const { appState, setAppState } = useAppState();
   const [sorting, setSorting] = useAppStateValue("dash_pr_sort", [{ id: "orderedOn", desc: true }]);
   const [view, setView] = useAppStateValue("dash_pr_view", "summary");

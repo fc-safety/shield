@@ -9,7 +9,7 @@ import { useAppStateValue } from "~/contexts/app-state-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
-import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
+import type { ReactEChartsProps } from "../charts/echarts";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import {
   DashboardCard,
@@ -20,6 +20,7 @@ import {
 import EmptyStateOverlay from "./components/empty-state-overlay";
 import ErrorOverlay from "./components/error-overlay";
 import LoadingOverlay from "./components/loading-overlay";
+const { ReactECharts } = await import("../charts/echarts");
 
 export function ComplianceHistoryChart() {
   const [theme] = useTheme();
