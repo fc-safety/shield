@@ -1,7 +1,23 @@
+import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { api } from "~/.server/api.js";
 import ClientDetailsTabsProductsQuestionsTag from "~/components/clients/pages/client-details-tabs/products-questions-tab";
 import { validateParam } from "~/lib/utils";
 import type { Route } from "./+types/products-questions-tab.tsx";
+
+export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
+  const { formMethod, formAction } = arg;
+  if (
+    formMethod === "DELETE" &&
+    formAction &&
+    !(
+      formAction.startsWith("/api/proxy/products") ||
+      formAction.startsWith("/api/proxy/asset-questions")
+    )
+  ) {
+    return false;
+  }
+  return arg.defaultShouldRevalidate;
+};
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
