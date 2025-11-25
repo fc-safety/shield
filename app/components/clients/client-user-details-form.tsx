@@ -1,20 +1,15 @@
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  Form as FormProvider,
-} from "@/components/ui/form";
+import { extractErrorMessage, Form as FormProvider } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createUserSchema, updateUserSchema } from "~/lib/schema";
 import type { ClientUser } from "~/lib/types";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
+import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
 import SiteCombobox from "./site-combobox";
 
@@ -49,7 +44,6 @@ export default function ClientUserDetailsForm({
       ...FORM_DEFAULTS,
       siteExternalId: siteExternalId ?? "",
     }) as TForm,
-    mode: "onBlur",
   });
 
   const {
@@ -75,103 +69,99 @@ export default function ClientUserDetailsForm({
 
   return (
     <FormProvider {...form}>
-      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
-        <FormField
+      <form
+        className="space-y-4"
+        onSubmit={form.handleSubmit(handleSubmit, (e) => {
+          toast.error("Please fix the errors in the form.", {
+            description: extractErrorMessage(e),
+            duration: 10000,
+          });
+        })}
+      >
+        <Controller
           control={form.control}
           name="firstName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>First Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>First Name</FieldLabel>
+              <Input {...field} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name="lastName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Last Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Last Name</FieldLabel>
+              <Input {...field} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input {...field} type="email" inputMode="email" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Email</FieldLabel>
+              <Input {...field} type="email" inputMode="email" />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name={"phoneNumber"}
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Phone</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={beautifyPhone(value ?? "")}
-                  onChange={(e) => onChange(stripPhone(beautifyPhone(e.target.value)))}
-                  type="phone"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { value, onChange, ...field }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Phone</FieldLabel>
+              <Input
+                {...field}
+                value={beautifyPhone(value ?? "")}
+                onChange={(e) => onChange(stripPhone(beautifyPhone(e.target.value)))}
+                type="phone"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name="position"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Position</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Position</FieldLabel>
+              <Input {...field} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
 
         {!siteExternalId && (
-          <FormField
+          <Controller
             control={form.control}
             name="siteExternalId"
-            render={({ field: { value, onChange } }) => (
-              <FormItem>
-                <FormLabel>Site or Site Group</FormLabel>
-                <FormControl>
-                  <SiteCombobox
-                    value={value}
-                    onValueChange={onChange}
-                    clientId={clientId}
-                    className="w-full"
-                    valueKey="externalId"
-                    showClear={false}
-                    viewContext={viewContext}
-                    includeSiteGroups
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            render={({ field: { value, onChange }, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Site or Site Group</FieldLabel>
+                <SiteCombobox
+                  value={value}
+                  onValueChange={onChange}
+                  clientId={clientId}
+                  className="w-full"
+                  valueKey="externalId"
+                  showClear={false}
+                  viewContext={viewContext}
+                  includeSiteGroups
+                />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
             )}
           />
         )}
-        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </form>

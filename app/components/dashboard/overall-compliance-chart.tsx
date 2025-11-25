@@ -6,12 +6,14 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "remix-themes";
 import { useAppStateValue } from "~/contexts/app-state-context";
+import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useThemeValues } from "~/hooks/use-theme-values";
 import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
 import { AssetInspectionsStatuses, type AssetInspectionsStatus } from "~/lib/enums";
 import { getSitesQueryOptions } from "~/lib/services/clients.service";
 import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
+import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { ReactECharts, type ReactEChartsProps } from "../charts/echarts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import {
@@ -26,6 +28,9 @@ import LoadingOverlay from "./components/loading-overlay";
 import type { AssetRow } from "./types/stats";
 
 export function OverallComplianceChart() {
+  const { user } = useAuth();
+  const canSelectSite = hasMultiSiteVisibility(user) && can(user, "read", "sites");
+
   const [theme] = useTheme();
   const themeValues = useThemeValues();
   const [siteId, setSiteId] = useAppStateValue("dash_sum_site_id");
@@ -45,9 +50,10 @@ export function OverallComplianceChart() {
     })
   );
 
-  const { data: mySites } = useQuery(
-    getSitesQueryOptions(fetch, { excludeGroups: true, limit: 200 })
-  );
+  const { data: mySites } = useQuery({
+    ...getSitesQueryOptions(fetch, { excludeGroups: true, limit: 200 }),
+    enabled: canSelectSite,
+  });
 
   useEffect(() => {
     if (mySites && siteId && siteId !== "all" && !mySites.some((site) => site.id === siteId)) {
@@ -216,20 +222,22 @@ export function OverallComplianceChart() {
         <DashboardCardTitle className="flex-nowrap">
           <Shield /> <span className="whitespace-nowrap">Overall Compliance</span>
           <div className="flex-1"></div>
-          <Select value={siteId} onValueChange={(value) => setSiteId(value)}>
-            <SelectTrigger className="w-auto min-w-[100px] shrink" size="sm">
-              <Warehouse />
-              <SelectValue placeholder="All Sites" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={"all"}>All Sites</SelectItem>
-              {mySites?.map((site) => (
-                <SelectItem key={site.id} value={site.id}>
-                  {site.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {canSelectSite && (
+            <Select value={siteId} onValueChange={(value) => setSiteId(value)}>
+              <SelectTrigger className="w-auto min-w-[100px] shrink" size="sm">
+                <Warehouse />
+                <SelectValue placeholder="All Sites" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={"all"}>All Sites</SelectItem>
+                {mySites?.map((site) => (
+                  <SelectItem key={site.id} value={site.id}>
+                    {site.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           {/* <Button variant="outline" size="icon-sm">
             <Printer />
           </Button> */}
