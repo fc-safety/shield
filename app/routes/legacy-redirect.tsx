@@ -24,11 +24,16 @@ import { openChat } from "~/lib/contact/utils";
 import { cn, getSearchParam, getSearchParams } from "~/lib/utils";
 import type { Route } from "./+types/legacy-redirect";
 
-export const action = async ({ request }: Route.ActionArgs) => {
-  const returnToRaw = getSearchParam(request, "returnTo") ?? "/";
+const SELF_HOST = URL.parse(config.APP_HOST)?.host ?? "shield.fc-safety.app";
 
-  // Prevent redirecting to an external URL by setting the hostname to the app host.
-  const returnTo = URL.parse(returnToRaw, config.APP_HOST)?.toString() ?? "/";
+export const action = async ({ request }: Route.ActionArgs) => {
+  let returnTo = getSearchParam(request, "returnTo");
+
+  // Prevent redirecting to an external URL by making sure the hostname is the app host.
+  const returnToParsed = returnTo ? URL.parse(returnTo, config.APP_HOST) : null;
+  if (!returnTo || !returnToParsed || returnToParsed.hostname !== SELF_HOST) {
+    returnTo = "/";
+  }
 
   let init: ResponseInit = {};
   const searchParams = getSearchParams(request);
