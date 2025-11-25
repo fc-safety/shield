@@ -1,7 +1,16 @@
+import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { api } from "~/.server/api";
 import ClientDetailsTabsUsersTab from "~/components/clients/pages/client-details-tabs/users-tab";
 import { validateParam } from "~/lib/utils";
 import type { Route } from "./+types/users-tab";
+
+export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
+  const { formMethod, formAction } = arg;
+  if (formMethod === "DELETE" && formAction && !formAction.startsWith("/api/proxy/users")) {
+    return false;
+  }
+  return arg.defaultShouldRevalidate;
+};
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");

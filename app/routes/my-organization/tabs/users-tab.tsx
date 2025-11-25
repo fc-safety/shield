@@ -1,8 +1,16 @@
-import { useRouteLoaderData } from "react-router";
+import { useRouteLoaderData, type ShouldRevalidateFunctionArgs } from "react-router";
 import { api } from "~/.server/api";
 import ClientDetailsTabsUsersTab from "~/components/clients/pages/client-details-tabs/users-tab";
 import type { loader as layoutLoader } from "../layout";
 import type { Route } from "./+types/users-tab";
+
+export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
+  const { formMethod, formAction } = arg;
+  if (formMethod === "DELETE" && formAction && !formAction.startsWith("/api/proxy/users")) {
+    return false;
+  }
+  return arg.defaultShouldRevalidate;
+};
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const userResultsPromise = await api.users.list(request, { limit: 10000 });
