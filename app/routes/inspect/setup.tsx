@@ -354,9 +354,24 @@ export default function InspectSetup({
                       </Button>
                     </div>
                     {isSetup && (
-                      <Button variant="default" asChild type="button" className="w-full">
-                        <Link to={`/inspect/`}>Begin Inspection</Link>
-                      </Button>
+                      <div>
+                        <p className="text-muted-foreground mb-2 text-center text-sm font-medium">
+                          Ready to begin inspecting?
+                        </p>
+                        <Button
+                          variant="default"
+                          asChild
+                          type="button"
+                          className="w-full"
+                          aria-label="Begin Inspection"
+                          title="Click to start inspecting this asset"
+                        >
+                          <Link to="/inspect/">
+                            Begin inspection here
+                            <ArrowRight />
+                          </Link>
+                        </Button>
+                      </div>
                     )}
                   </Form>
                 </RemixFormProvider>
