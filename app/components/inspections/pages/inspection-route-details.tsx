@@ -1,3 +1,8 @@
+import HydrationSafeFormattedDate from "@/components/common/hydration-safe-formatted-date";
+import DataList from "@/components/data-list";
+import { Badge } from "@/components/ui/badge";
+import { ButtonGroup, ButtonGroupSeparator } from "@/components/ui/button-group";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   closestCenter,
   DndContext,
@@ -41,47 +46,8 @@ import useConfirmAction from "~/hooks/use-confirm-action";
 import type { InspectionRoute, InspectionRoutePoint } from "~/lib/models";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
-import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
-import DataList from "../data-list";
-import ScrollAreaWithHint from "../scroll-area-with-hint";
-import { Badge } from "../ui/badge";
-import { ButtonGroup, ButtonGroupSeparator } from "../ui/button-group";
-import { Skeleton } from "../ui/skeleton";
 
-export default function InspectionRoutesPage({ routes }: { routes: InspectionRoute[] }) {
-  const { user } = useAuth();
-  const canCreate = can(user, "create", "inspection-routes");
-
-  return (
-    <div className="grid gap-4 text-center">
-      <div className="grid gap-2">
-        <h2 className="flex items-center justify-center gap-2 text-2xl font-bold">
-          Inspection Routes
-        </h2>
-        <p className="text-muted-foreground text-sm">
-          {canCreate ? (
-            <>
-              Build routes to help your inspectors find your assets and ensure inspections get
-              completed if the task gets picked up again on a different day or even by a different
-              inspector.
-            </>
-          ) : (
-            <>
-              Routes are used to help inspectors find assets and ensure inspections get completed if
-              the task gets picked up again on a different day or even by a different inspector.
-            </>
-          )}
-        </p>
-      </div>
-      {canCreate && <EditRouteButton />}
-      {routes.map((route) => (
-        <RouteCard key={route.id} route={route} />
-      ))}
-    </div>
-  );
-}
-
-function RouteCard({ route }: { route: InspectionRoute }) {
+export default function InspectionRouteDetails({ route }: { route: InspectionRoute }) {
   const { user } = useAuth();
   const canUpdate = can(user, "update", "inspection-routes");
   const canDelete = can(user, "delete", "inspection-routes");
@@ -215,7 +181,9 @@ function RouteCard({ route }: { route: InspectionRoute }) {
         <CardHeader className="flex-row gap-2">
           <CardHeader className="p-0 sm:p-0">
             <CardTitle>{route.name}</CardTitle>
-            <CardDescription>{route.description || <>&mdash;</>}</CardDescription>
+            <CardDescription>
+              {route.description || <span className="italic">No description.</span>}
+            </CardDescription>
           </CardHeader>
           <div className="flex-1"></div>
           <ButtonGroup>
@@ -271,21 +239,21 @@ function RouteCard({ route }: { route: InspectionRoute }) {
                       <HelpSidebarSection
                         title="Adding Route Points Manually"
                         content={`
-                          You can add route points by clicking the
-                          'Manually Add Point' button below the route
-                          points list. You will be prompted to select which
-                          asset you would like to add to the route.
-                      `}
+                            You can add route points by clicking the
+                            'Manually Add Point' button below the route
+                            points list. You will be prompted to select which
+                            asset you would like to add to the route.
+                        `}
                       />
                       <HelpSidebarSection
                         title="Adding Route Points via NFC"
                         content={[
                           `You can also add route points by scanning the NFC tag
-                          on the asset and adding the asset to the route via the
-                          inspection page.`,
+                            on the asset and adding the asset to the route via the
+                            inspection page.`,
                           `On the inspection page there will be an 'Add to
-                          Route' button that will allow you to add the
-                          asset to any of your existing routes.`,
+                            Route' button that will allow you to add the
+                            asset to any of your existing routes.`,
                         ]}
                       />
                     </HelpSidebarContent>
@@ -299,54 +267,50 @@ function RouteCard({ route }: { route: InspectionRoute }) {
               <div className="text-muted-foreground text-sm">No route points added yet.</div>
             ) : null}
             {points && (
-              <ScrollAreaWithHint className="h-full max-h-96" scrollDisabled={!!activePoint}>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleDragEnd}
-                  onDragCancel={handleDragCancel}
-                  onDragAbort={handleDragCancel}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragCancel={handleDragCancel}
+                onDragAbort={handleDragCancel}
+              >
+                <SortableContext
+                  items={points.map((p) => p.id)}
+                  strategy={verticalListSortingStrategy}
                 >
-                  <SortableContext
-                    items={points.map((p) => p.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="grid">
-                      {points.map((point, idx) => (
-                        <SortableRoutePointItem
-                          key={point.id}
-                          point={point}
-                          idx={idx}
-                          allPoints={points}
-                          reorderFetcher={reorderFetcher}
-                          deleteFetcher={deletePointFetcher}
-                          handleReorder={handleReorder}
-                          handleDelete={handleDeletePoint}
-                          className={cn(
-                            activePoint &&
-                              activePoint.idx === idx &&
-                              "pointer-events-none opacity-50"
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                  <DragOverlay>
-                    {activePoint ? (
-                      <RoutePointItem
-                        point={activePoint.point}
-                        idx={activePoint.idx}
+                  <div className="grid">
+                    {points.map((point, idx) => (
+                      <SortableRoutePointItem
+                        key={point.id}
+                        point={point}
+                        idx={idx}
                         allPoints={points}
                         reorderFetcher={reorderFetcher}
                         deleteFetcher={deletePointFetcher}
                         handleReorder={handleReorder}
                         handleDelete={handleDeletePoint}
+                        className={cn(
+                          activePoint && activePoint.idx === idx && "pointer-events-none opacity-50"
+                        )}
                       />
-                    ) : null}
-                  </DragOverlay>
-                </DndContext>
-              </ScrollAreaWithHint>
+                    ))}
+                  </div>
+                </SortableContext>
+                <DragOverlay>
+                  {activePoint ? (
+                    <RoutePointItem
+                      point={activePoint.point}
+                      idx={activePoint.idx}
+                      allPoints={points}
+                      reorderFetcher={reorderFetcher}
+                      deleteFetcher={deletePointFetcher}
+                      handleReorder={handleReorder}
+                      handleDelete={handleDeletePoint}
+                    />
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             )}
           </div>
         </CardContent>
@@ -370,15 +334,15 @@ function RouteCard({ route }: { route: InspectionRoute }) {
   );
 }
 
-const disableBodyScroll = () => {
-  document.body.classList.add("touch-none");
-  document.body.classList.add("overflow-hidden");
-};
-
-const enableBodyScroll = () => {
-  document.body.classList.remove("touch-none");
-  document.body.classList.remove("overflow-hidden");
-};
+interface RoutePointItemProps extends HTMLAttributes<HTMLDivElement> {
+  point: InspectionRoutePoint;
+  allPoints: InspectionRoutePoint[];
+  idx: number;
+  reorderFetcher: FetcherWithComponents<unknown>;
+  deleteFetcher: FetcherWithComponents<unknown>;
+  handleReorder: (id: string, order: number) => void;
+  handleDelete: (point: InspectionRoutePoint) => void;
+}
 
 const SortableRoutePointItem = (props: RoutePointItemProps) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
@@ -401,16 +365,6 @@ const SortableRoutePointItem = (props: RoutePointItemProps) => {
     <RoutePointItem {...props} ref={setNodeRef} {...attributes} {...listeners} style={style} />
   );
 };
-
-interface RoutePointItemProps extends HTMLAttributes<HTMLDivElement> {
-  point: InspectionRoutePoint;
-  allPoints: InspectionRoutePoint[];
-  idx: number;
-  reorderFetcher: FetcherWithComponents<unknown>;
-  deleteFetcher: FetcherWithComponents<unknown>;
-  handleReorder: (id: string, order: number) => void;
-  handleDelete: (point: InspectionRoutePoint) => void;
-}
 
 const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
   (
@@ -520,3 +474,13 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
 );
 
 RoutePointItem.displayName = "RoutePointItem";
+
+const disableBodyScroll = () => {
+  document.body.classList.add("touch-none");
+  document.body.classList.add("overflow-hidden");
+};
+
+const enableBodyScroll = () => {
+  document.body.classList.remove("touch-none");
+  document.body.classList.remove("overflow-hidden");
+};

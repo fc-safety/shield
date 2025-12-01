@@ -270,9 +270,9 @@ function ProductRequestsSummary({
           <div key={status} className={cn("flex items-center gap-4 rounded-lg")}>
             <ProductRequestStatusBadge
               status={status}
-              className="flex size-10 shrink-0 items-center justify-center p-2"
+              className="flex size-10 shrink-0 items-center justify-center p-2 [&>svg]:size-5"
             >
-              <Icon className="size-5" />
+              <Icon />
             </ProductRequestStatusBadge>
             <div className="flex items-center gap-x-2 text-sm sm:text-base">
               <h5
