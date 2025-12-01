@@ -1,3 +1,6 @@
+import { enableMapSet } from "immer";
+import { configure } from "onedollarstats";
+import { useEffect, type PropsWithChildren } from "react";
 import {
   data,
   Link,
@@ -8,9 +11,6 @@ import {
   ScrollRestoration,
   useRouteLoaderData,
 } from "react-router";
-
-import { enableMapSet } from "immer";
-import { type PropsWithChildren } from "react";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
 import { appStateSessionStorage, themeSessionResolver } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
@@ -168,6 +168,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 function BaseLayout({ children }: PropsWithChildren) {
   const data = useRouteLoaderData<typeof loader>("root");
   const [theme] = useTheme();
+
+  useEffect(() => {
+    configure({ trackLocalhostAs: "shield.fc-safety.app" });
+  }, []);
 
   return (
     <html lang="en" className={cn(theme)}>

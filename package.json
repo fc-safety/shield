@@ -61,6 +61,7 @@
     "lucide-react": "^0.553.0",
     "node-html-parser": "^7.0.1",
     "ogl": "^1.0.11",
+    "onedollarstats": "^0.0.11",
     "pako": "^2.1.0",
     "papaparse": "^5.5.3",
     "pino": "^10.1.0",
