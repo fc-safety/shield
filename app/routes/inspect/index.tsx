@@ -308,7 +308,7 @@ function InspectionPage({
   });
 
   const {
-    formState: { isValid, isSubmitting },
+    formState: { isSubmitting },
     setValue,
   } = form;
 
@@ -497,17 +497,9 @@ function InspectionPage({
                       </Field>
                     )}
                   />
-                  <div
-                    onClick={() => {
-                      if (!isValid) {
-                        form.trigger();
-                      }
-                    }}
-                  >
-                    <Button type="submit" disabled={!!isSubmitting} className="w-full">
-                      {isSubmitting ? "Sending data..." : "Complete Inspection"}
-                    </Button>
-                  </div>
+                  <Button type="submit" disabled={!!isSubmitting} className="w-full">
+                    {isSubmitting ? "Sending data..." : "Complete Inspection"}
+                  </Button>
                 </Form>
               </RemixFormProvider>
             )}
