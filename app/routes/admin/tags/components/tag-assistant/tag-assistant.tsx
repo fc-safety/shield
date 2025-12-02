@@ -36,7 +36,7 @@ interface TagAssistantState {
   selectedClientId?: string;
 }
 
-export default function TagAssistant({
+export function TagAssistant({
   assetToRegister,
   onClose,
 }: {
