@@ -219,7 +219,6 @@ export default function InspectIndex({
 
   useEffect(() => {
     if (actionData?.error) {
-      console.error("action error", actionData.error);
       handleError(actionData.error);
     }
   }, [actionData]);
