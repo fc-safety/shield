@@ -12,6 +12,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createRoleSchema, updateRoleSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import type { Role } from "~/lib/types";
 import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
@@ -46,9 +47,7 @@ export default function RoleDetailsForm({ role, onSubmitted }: RoleDetailsFormPr
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: `/api/proxy/roles`,
       id: role?.id,
     });

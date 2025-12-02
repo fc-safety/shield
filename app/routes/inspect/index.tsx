@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isAfter } from "date-fns";
 import { AlertCircle, Info, Loader2, Nfc, Sidebar } from "lucide-react";
 import { isIPv4, isIPv6 } from "net";
+import { event } from "onedollarstats";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useFieldArray } from "react-hook-form";
+import { Controller, useFieldArray } from "react-hook-form";
 import { Form, redirect, useNavigate } from "react-router";
 import { RemixFormProvider, useRemixForm } from "remix-hook-form";
 import type { z } from "zod";
@@ -20,7 +20,7 @@ import {
 } from "~/.server/inspections";
 import { getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
-import AssetQuestionFormInputLabel from "~/components/assets/asset-question-form-input-label";
+import AssetQuestionFieldLabel from "~/components/assets/asset-question-field-label";
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
 import ConfigureAssetForm from "~/components/assets/configure-asset-form";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
@@ -37,10 +37,13 @@ import {
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Textarea } from "~/components/ui/textarea";
 import { useAuth } from "~/contexts/auth-context";
+import { useAlertOnApiError } from "~/hooks/use-alert-on-api-error";
+import { cleanErrorMessage, getErrorOrExtractResponseErrorMessage } from "~/lib/errors";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import type { Asset, AssetQuestion, InspectionRoute, InspectionSession, Tag } from "~/lib/models";
 import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
@@ -119,7 +122,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
           "Set-Cookie": await inspectionSessionStorage.commitSession(inspectionSession),
         },
       })
-    );
+    )
+    .catch(async (error) => {
+      const serializedError = await getErrorOrExtractResponseErrorMessage(error)
+        .then(cleanErrorMessage)
+        .catch(() => null);
+      return { error: serializedError ?? "Unknown error occurred." };
+    });
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
@@ -204,7 +213,17 @@ export default function InspectIndex({
     matchingRoutes,
     configurationCheckResults,
   },
+  actionData,
 }: Route.ComponentProps) {
+  const { handleError } = useAlertOnApiError();
+
+  useEffect(() => {
+    if (actionData?.error) {
+      console.error("action error", actionData.error);
+      handleError(actionData.error);
+    }
+  }, [actionData]);
+
   if (tag.asset) {
     return (
       <InspectionPage
@@ -425,30 +444,36 @@ function InspectionPage({
                   action={
                     actionQueryParams ? `?index&${stringifyQuery(actionQueryParams)}` : undefined
                   }
-                  onSubmit={form.handleSubmit}
+                  onSubmit={(e) => {
+                    form.handleSubmit(e);
+                    event("inspection_complete", {
+                      assetId: asset.id,
+                      tagExternalId: tag.externalId,
+                      routeId: String(actionQueryParams?.routeId),
+                      sessionId: String(actionQueryParams?.sessionId),
+                    });
+                  }}
                 >
                   {questions.filter((q) => q.required).length > 0 && <RequiredFieldsNotice />}
                   <Input type="hidden" {...form.register("asset.connect.id")} hidden />
                   {questionFields.map((questionField, index) => {
                     const question = questions[index];
                     return (
-                      <FormField
+                      <Controller
                         key={questionField.id}
                         control={form.control}
                         name={`responses.createMany.data.${index}.value`}
-                        render={({ field: { value, onChange, onBlur } }) => (
-                          <FormItem>
-                            <AssetQuestionFormInputLabel index={index} question={question} />
-                            <FormControl>
-                              <AssetQuestionResponseField
-                                value={value ?? ""}
-                                onValueChange={onChange}
-                                onBlur={onBlur}
-                                question={question}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
+                        render={({ field: { value, onChange, onBlur }, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <AssetQuestionFieldLabel index={index} question={question} />
+                            <AssetQuestionResponseField
+                              value={value ?? ""}
+                              onValueChange={onChange}
+                              onBlur={onBlur}
+                              question={question}
+                            />
+                            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                          </Field>
                         )}
                       />
                     );
@@ -461,17 +486,15 @@ function InspectionPage({
                       You can still leave comments and submit the inspection.
                     </p>
                   )}
-                  <FormField
+                  <Controller
                     control={form.control}
                     name="comments"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Additional comments</FormLabel>
-                        <FormControl>
-                          <Textarea {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                    render={({ field, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Additional comments</FieldLabel>
+                        <Textarea {...field} />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
                     )}
                   />
                   <div
@@ -481,7 +504,7 @@ function InspectionPage({
                       }
                     }}
                   >
-                    <Button type="submit" disabled={!!isSubmitting || !isValid} className="w-full">
+                    <Button type="submit" disabled={!!isSubmitting} className="w-full">
                       {isSubmitting ? "Sending data..." : "Complete Inspection"}
                     </Button>
                   </div>

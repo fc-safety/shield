@@ -5,6 +5,7 @@ import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { InspectionRoute } from "~/lib/models";
 import { createInspectionRouteSchema, updateInspectionRouteSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { hasMultiSiteVisibility } from "~/lib/users";
 import SiteCombobox from "../clients/site-combobox";
 import { Button } from "../ui/button";
@@ -52,9 +53,7 @@ export default function RouteDetailsForm({ route, onSubmitted }: RouteDetailsFor
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/inspection-routes",
       id: route?.id,
     });

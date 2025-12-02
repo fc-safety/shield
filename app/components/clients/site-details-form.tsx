@@ -19,6 +19,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type ResultsPage, type Site } from "~/lib/models";
 import { getSiteSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { type QueryParams } from "~/lib/urls";
 import { isSuperAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
@@ -197,9 +198,7 @@ export default function SiteDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/sites",
       id: site?.id,
     });

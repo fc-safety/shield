@@ -7,6 +7,7 @@ import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, InspectionRoute, InspectionRoutePoint, ResultsPage } from "~/lib/models";
 import { createInspectionRoutePointSchema, updateInspectionRoutePointSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { buildPath } from "~/lib/urls";
 import AssetCombobox from "../assets/asset-combobox";
 import { Button } from "../ui/button";
@@ -121,9 +122,7 @@ export default function RoutePointDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: `/api/proxy/inspection-routes/${routeId}/points`,
       id: routePoint?.id,
     });

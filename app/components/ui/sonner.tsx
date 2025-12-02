@@ -34,6 +34,8 @@ const Toaster = ({ className, ...props }: ToasterProps) => {
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
       }}
+      richColors
+      closeButton
       {...props}
     />
   );

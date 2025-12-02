@@ -1,14 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseISO } from "date-fns";
 import { AlertCircle, ArrowRight, Plus } from "lucide-react";
 import { useMemo } from "react";
-import { useFieldArray } from "react-hook-form";
+import { Controller, FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { Form, Link } from "react-router";
-import { RemixFormProvider, useRemixForm } from "remix-hook-form";
 import type { z } from "zod";
 import { api } from "~/.server/api";
+import type { DataOrError } from "~/.server/api-utils";
 import { guard } from "~/.server/guard";
 import { buildImageProxyUrl } from "~/.server/images";
 import {
@@ -16,7 +15,7 @@ import {
   validateInspectionSession,
 } from "~/.server/inspections";
 import AssetCard from "~/components/assets/asset-card";
-import AssetQuestionFormInputLabel from "~/components/assets/asset-question-form-input-label";
+import AssetQuestionFieldLabel from "~/components/assets/asset-question-field-label";
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
 import ConfigureAssetForm from "~/components/assets/configure-asset-form";
 import EditRoutePointButton from "~/components/inspections/edit-route-point-button";
@@ -24,23 +23,16 @@ import InspectErrorBoundary from "~/components/inspections/inspect-error-boundar
 import { RequiredFieldsNotice } from "~/components/required-fields";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Field, FieldError } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { useAuth } from "~/contexts/auth-context";
-import { getValidatedFormDataOrThrow } from "~/lib/forms";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import type { Asset } from "~/lib/models";
 import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { can } from "~/lib/users";
 import { buildTitle, cn, isNil } from "~/lib/utils";
 import type { Route } from "./+types/setup";
-
-export const action = async ({ request }: Route.ActionArgs) => {
-  const { data } = await getValidatedFormDataOrThrow(request, zodResolver(setupAssetSchema));
-
-  if (data.setupOn) {
-    return api.assets.updateSetup(request, data as z.infer<typeof setupAssetSchema>);
-  } else {
-    return api.assets.setup(request, data as z.infer<typeof setupAssetSchema>);
-  }
-};
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { tagExternalId } = await validateInspectionSession(request);
@@ -131,7 +123,7 @@ export default function InspectSetup({
     return buildSetupAssetSchema(questions, tag.asset?.setupQuestionResponses ?? []);
   }, [questions, tag]);
 
-  const form = useRemixForm({
+  const form = useForm({
     resolver: zodResolver(narrowedSetupAssetSchema),
     values: {
       id: tag.asset?.id ?? "",
@@ -180,7 +172,7 @@ export default function InspectSetup({
   });
 
   const {
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid },
   } = form;
 
   const { fields: createQuestionFields } = useFieldArray({
@@ -208,6 +200,18 @@ export default function InspectSetup({
       })),
     ];
   }, [createQuestionFields, updateQuestionFields]);
+
+  const { submitJson: submit, isSubmitting } = useModalFetcher<DataOrError<Asset>>();
+  const handleSubmit = (data: TForm) => {
+    const method = isSetup ? "PATCH" : "POST";
+    submit(serializeFormJson(data), {
+      path: "/api/proxy/assets/:id/setup",
+      query: {
+        id: data.id,
+      },
+      method,
+    });
+  };
 
   return (
     <>
@@ -288,15 +292,19 @@ export default function InspectSetup({
                   submitButtonText="Next"
                 />
               ) : (
-                <RemixFormProvider {...form}>
-                  <Form className="space-y-4" method={"post"} onSubmit={form.handleSubmit}>
+                <FormProvider {...form}>
+                  <Form
+                    className="space-y-4"
+                    method={"post"}
+                    onSubmit={form.handleSubmit(handleSubmit)}
+                  >
                     {questions.filter((q) => q.required).length > 0 && <RequiredFieldsNotice />}
                     <Input type="hidden" {...form.register("id")} hidden />
                     {isSetup && <Input type="hidden" {...form.register("setupOn")} hidden />}
                     {allQuestionFields.map(({ key, data }, index) => {
                       const question = questions.find((q) => q.id === data.assetQuestionId);
                       return !question ? null : (
-                        <FormField
+                        <Controller
                           key={key}
                           control={form.control}
                           name={
@@ -304,20 +312,18 @@ export default function InspectSetup({
                               ? `setupQuestionResponses.updateMany.${index}.data.value`
                               : `setupQuestionResponses.createMany.data.${index}.value`
                           }
-                          render={({ field: { value, onChange, onBlur } }) => (
-                            <FormItem>
-                              <AssetQuestionFormInputLabel index={index} question={question} />
-                              <FormControl>
-                                <AssetQuestionResponseField
-                                  value={value}
-                                  onValueChange={onChange}
-                                  onBlur={onBlur}
-                                  question={question}
-                                  disabled={isSetup || !question}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
+                          render={({ field: { value, onChange, onBlur }, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <AssetQuestionFieldLabel index={index} question={question} />
+                              <AssetQuestionResponseField
+                                value={value}
+                                onValueChange={onChange}
+                                onBlur={onBlur}
+                                question={question}
+                                disabled={isSetup || !question}
+                              />
+                              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                            </Field>
                           )}
                         />
                       );
@@ -374,7 +380,7 @@ export default function InspectSetup({
                       </div>
                     )}
                   </Form>
-                </RemixFormProvider>
+                </FormProvider>
               )
             ) : (
               <Alert variant="warning">

@@ -17,6 +17,7 @@ import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Tag } from "~/lib/models";
 import { createTagSchema, updateTagSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { buildUrl } from "~/lib/urls";
 import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
@@ -123,9 +124,7 @@ export default function TagDetailsForm({ tag, onClose, viewContext }: TagDetails
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/tags",
       id: tag?.id,
       viewContext,

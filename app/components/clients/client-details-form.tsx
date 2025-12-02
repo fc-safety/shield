@@ -21,6 +21,7 @@ import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
 import { createClientSchema, updateClientSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
@@ -129,9 +130,7 @@ export default function ClientDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/clients",
       id: client?.id,
       viewContext,

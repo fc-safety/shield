@@ -16,6 +16,7 @@ import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ProductCategory } from "~/lib/models";
 import { createProductCategorySchema, updateProductCategorySchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import ActiveToggleFormInput from "../active-toggle-form-input";
 import IconSelector from "../icons/icon-selector";
 import LegacyIdField from "../legacy-id-field";
@@ -73,9 +74,7 @@ export default function ProductCategoryDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/product-categories",
       id: productCategory?.id,
       viewContext,

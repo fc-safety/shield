@@ -33,6 +33,7 @@ import type {
   ResultsPage,
 } from "~/lib/models";
 import { createProductRequestSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { buildPath } from "~/lib/urls";
 import { cn, dateSort, dedupById } from "~/lib/utils";
 import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
@@ -229,9 +230,7 @@ export function ProductRequestForm({
   );
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: `/api/proxy/product-requests`,
       id: undefined,
     });
