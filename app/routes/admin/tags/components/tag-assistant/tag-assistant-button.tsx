@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
-import TagAssistant from "./tag-assistant";
+import { TagAssistant } from "./tag-assistant";
 
 interface Props {
   trigger?: ReactNode;

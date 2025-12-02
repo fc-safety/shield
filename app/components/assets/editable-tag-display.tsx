@@ -2,17 +2,18 @@ import { useMutation } from "@tanstack/react-query";
 import { CirclePlus, Link, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { CopyableText } from "~/components/copyable-text";
+import { ResponsiveDialog } from "~/components/responsive-dialog";
+import { Button } from "~/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Asset, Tag } from "~/lib/models";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
-import TagAssistant from "~/routes/admin/tags/components/tag-assistant/tag-assistant";
 import { generateSignedTagUrl } from "~/routes/admin/tags/services/tags.service";
-import { CopyableText } from "../copyable-text";
-import { ResponsiveDialog } from "../responsive-dialog";
-import { Button } from "../ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+
+const { TagAssistant } = await import("~/routes/admin/tags/components/tag-assistant/tag-assistant");
 
 export default function EditableTagDisplay({
   asset,
