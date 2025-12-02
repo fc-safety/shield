@@ -28,5 +28,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 };
 
 export default function MyInspectionRoutesLayout({ loaderData: { routes } }: Route.ComponentProps) {
-  return <InspectionRoutesLayout routes={routes} />;
+  return (
+    <InspectionRoutesLayout routes={routes} buildDetailsTo={(id) => `/inspection-routes/${id}`} />
+  );
 }

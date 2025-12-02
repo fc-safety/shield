@@ -1,5 +1,5 @@
 import { ChevronRight, RouteIcon } from "lucide-react";
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, type To } from "react-router";
 import { Fragment } from "react/jsx-runtime";
 import HelpPopover from "~/components/help-popover";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
@@ -10,7 +10,13 @@ import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import EditRouteButton from "../edit-route-button";
 
-export default function InspectionRoutesLayout({ routes }: { routes: InspectionRoute[] }) {
+export default function InspectionRoutesLayout({
+  routes,
+  buildDetailsTo,
+}: {
+  routes: InspectionRoute[];
+  buildDetailsTo: (id: string) => To;
+}) {
   const { user } = useAuth();
   const canCreate = can(user, "create", "inspection-routes");
 
@@ -46,7 +52,7 @@ export default function InspectionRoutesLayout({ routes }: { routes: InspectionR
               <Fragment key={route.id}>
                 {idx > 0 && <Separator />}
                 <NavLink
-                  to={`/inspection-routes/${route.id}`}
+                  to={buildDetailsTo(route.id)}
                   className={({ isActive }) =>
                     cn(
                       "group -mx-3 flex cursor-pointer items-center gap-x-2 rounded-md px-3 py-2.5",
