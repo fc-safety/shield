@@ -20,7 +20,10 @@ export default [
     index("./routes/inspect/index.tsx"),
     route("setup", "./routes/inspect/setup.tsx"),
     route("next", "./routes/inspect/next.tsx"),
-    route("routes", "./routes/inspect/routes.tsx"),
+    route("routes", "./routes/inspect/routes/layout.tsx", [
+      index("./routes/inspect/routes/index.tsx"),
+      route(":id", "./routes/inspect/routes/details.tsx"),
+    ]),
     route("register", "./routes/inspect/register/index.tsx"),
     ...prefix("reorder-supplies", [
       index("./routes/inspect/reorder-supplies/index.tsx"),
@@ -69,7 +72,10 @@ export default [
       index("./routes/assets/index.tsx"),
       route(":id", "./routes/assets/details.tsx"),
     ]),
-    route("inspection-routes", "./routes/inspection-routes.tsx"),
+    route("inspection-routes", "./routes/inspection-routes/layout.tsx", [
+      index("./routes/inspection-routes/index.tsx"),
+      route(":id", "./routes/inspection-routes/details.tsx"),
+    ]),
     route("reports", "./routes/reports/layout.tsx", [
       index("./routes/reports/index.tsx"),
       // route("build/:id?", "./routes/reports/build.tsx"),

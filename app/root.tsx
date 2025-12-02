@@ -170,7 +170,7 @@ function BaseLayout({ children }: PropsWithChildren) {
   const [theme] = useTheme();
 
   useEffect(() => {
-    configure({ trackLocalhostAs: "shield.fc-safety.app" });
+    configure();
   }, []);
 
   return (

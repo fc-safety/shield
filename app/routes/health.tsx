@@ -7,9 +7,9 @@ export default function Health() {
       blend={0.5}
       amplitude={2.0}
       speed={0.5}
-      className="bg-background h-screen w-screen relative"
+      className="dark relative h-screen w-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))]"
     >
-      <h1 className="text-4xl font-bold bg-transparent absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+      <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-transparent text-4xl font-bold">
         Status: <span className="text-green-500">OK</span>
       </h1>
     </Aurora>
