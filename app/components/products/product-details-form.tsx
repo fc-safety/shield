@@ -16,6 +16,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
 import { createProductSchema, updateProductSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { buildPath } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { nullValuesToUndefined, slugify } from "~/lib/utils";
@@ -178,9 +179,7 @@ export default function ProductDetailsForm({
 
   const handleSubmit = async (data: TForm) => {
     const doSubmit = (data: TForm) => {
-      // Remove undefined values to make it JSON-serializable
-      const cleanedData = JSON.parse(JSON.stringify(data));
-      return submit(cleanedData, {
+      return submit(serializeFormJson(data), {
         path: "/api/proxy/products",
         id: product?.id,
         viewContext,

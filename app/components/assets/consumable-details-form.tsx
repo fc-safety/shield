@@ -5,6 +5,7 @@ import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Consumable } from "~/lib/models";
 import { createConsumableSchema, updateConsumableSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import LegacyIdField from "../legacy-id-field";
 import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
@@ -73,9 +74,7 @@ export default function ConsumableDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: `/api/proxy/consumables`,
       id: consumable?.id,
     });

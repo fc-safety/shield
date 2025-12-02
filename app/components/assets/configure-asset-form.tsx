@@ -1,16 +1,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, type RefObject } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import type z from "zod";
 import type { DataOrError, ViewContext } from "~/.server/api-utils";
-import AssetQuestionFormInputLabel from "~/components/assets/asset-question-form-input-label";
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "~/components/ui/form";
+import { Form } from "~/components/ui/form";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, AssetQuestion } from "~/lib/models";
 import { buildConfigureAssetSchema } from "~/lib/schema";
 import { Button } from "../ui/button";
+import { Field, FieldError } from "../ui/field";
+import AssetQuestionFieldLabel from "./asset-question-field-label";
 
 export type ConfigureAssetFormRef = {
   handleSubmit: () => void;
@@ -115,23 +116,21 @@ export default function ConfigureAssetForm({
         {questionFields.map((questionField, index) => {
           const question = questions[index];
           return (
-            <FormField
+            <Controller
               key={questionField.id}
               control={form.control}
               name={`responses.${index}.value`}
-              render={({ field: { value, onChange, onBlur } }) => (
-                <FormItem>
-                  <AssetQuestionFormInputLabel index={index} question={question} />
-                  <FormControl>
-                    <AssetQuestionResponseField
-                      value={value ?? ""}
-                      onValueChange={onChange}
-                      onBlur={onBlur}
-                      question={question}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+              render={({ field: { value, onChange, onBlur }, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <AssetQuestionFieldLabel index={index} question={question} />
+                  <AssetQuestionResponseField
+                    value={value ?? ""}
+                    onValueChange={onChange}
+                    onBlur={onBlur}
+                    question={question}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
               )}
             />
           );

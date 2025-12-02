@@ -42,6 +42,7 @@ import {
   type ConsumableMappingType,
 } from "~/lib/models";
 import { createAssetQuestionSchema, updateAssetQuestionSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { humanize, nullValuesToUndefined } from "~/lib/utils";
 import {
   AssetQuestionDetailFormProvider,
@@ -252,9 +253,7 @@ function AssetQuestionDetailsFormContent({
       }
     }
 
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: `/api/proxy/asset-questions`,
       id: assetQuestion?.id,
       viewContext,

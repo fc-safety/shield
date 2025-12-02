@@ -170,6 +170,7 @@ function BaseLayout({ children }: PropsWithChildren) {
   const [theme] = useTheme();
 
   useEffect(() => {
+    // Configure One Dollar Stats.
     configure();
   }, []);
 

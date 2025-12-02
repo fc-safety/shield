@@ -4,6 +4,7 @@ import type { z } from "zod";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { AnsiCategory } from "~/lib/models";
 import { createAnsiCategorySchema, updateAnsiCategorySchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import IconSelector from "../icons/icon-selector";
 import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
@@ -51,9 +52,7 @@ export default function AnsiCategoryDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/ansi-categories",
       id: ansiCategory?.id,
     });

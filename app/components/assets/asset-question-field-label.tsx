@@ -1,10 +1,10 @@
 import type { AssetQuestion } from "~/lib/models";
 import { RequiredFieldIndicator } from "../required-fields";
-import { FormDescription, FormLabel } from "../ui/form";
+import { FieldDescription, FieldLabel } from "../ui/field";
 import AssetQuestionFilesDisplay from "./asset-question-files-display";
 import AssetQuestionRegulatoryCodesDisplay from "./asset-question-regulatory-codes-display";
 
-export default function AssetQuestionFormInputLabel({
+export default function AssetQuestionFieldLabel({
   index,
   question,
 }: {
@@ -13,12 +13,12 @@ export default function AssetQuestionFormInputLabel({
 }) {
   return (
     <div>
-      <FormLabel>
+      <FieldLabel>
         {index !== undefined && `${index + 1}. `}
         {question?.prompt}
         {question?.required && <RequiredFieldIndicator />}
-      </FormLabel>
-      {question?.helpText && <FormDescription>{question?.helpText}</FormDescription>}
+      </FieldLabel>
+      {question?.helpText && <FieldDescription>{question?.helpText}</FieldDescription>}
       <AssetQuestionRegulatoryCodesDisplay regulatoryCodes={question?.regulatoryCodes} />
       <AssetQuestionFilesDisplay files={question?.files} />
     </div>

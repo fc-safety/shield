@@ -7,6 +7,7 @@ import type { z } from "zod";
 import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createUserSchema, updateUserSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import type { ClientUser } from "~/lib/types";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { Field, FieldError, FieldLabel } from "../ui/field";
@@ -55,9 +56,7 @@ export default function ClientUserDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/users",
       id: user?.id,
       query: {

@@ -1,4 +1,4 @@
-export const extractErrorMessage = async (error: unknown) => {
+export const getErrorOrExtractResponseErrorMessage = async (error: unknown) => {
   if (error instanceof Response) {
     if (error.status >= 400 && error.status < 500) {
       const errMsgString = await error.text();
@@ -11,7 +11,15 @@ export const extractErrorMessage = async (error: unknown) => {
     }
   }
 
-  return null;
+  if (typeof error === "string") {
+    try {
+      return JSON.parse(error);
+    } catch {
+      // do nothing;
+    }
+  }
+
+  return error;
 };
 
 export const cleanErrorMessage = (error: unknown) => {
@@ -28,9 +36,14 @@ export const cleanErrorMessage = (error: unknown) => {
     return String(err).replace(/^./, (str) => str.toUpperCase());
   };
 
-  const errMsg = Array.isArray(error)
-    ? error.map(cleanErrMsg)
-    : cleanErrMsg(error);
+  const errMsg = Array.isArray(error) ? error.map(cleanErrMsg) : cleanErrMsg(error);
 
   return errMsg;
+};
+
+export const asString = (strOrArray: string | string[]) => {
+  if (Array.isArray(strOrArray)) {
+    return strOrArray.join("\n");
+  }
+  return strOrArray;
 };

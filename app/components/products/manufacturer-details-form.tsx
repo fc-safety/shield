@@ -15,6 +15,7 @@ import type { ViewContext } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
 import { createManufacturerSchema, updateManufacturerSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import ActiveToggleFormInput from "../active-toggle-form-input";
 import LegacyIdField from "../legacy-id-field";
 
@@ -60,9 +61,7 @@ export default function ManufacturerDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/manufacturers",
       id: manufacturer?.id,
       viewContext,

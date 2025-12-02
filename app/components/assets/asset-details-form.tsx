@@ -11,6 +11,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import type { Asset } from "~/lib/models";
 import { createAssetSchema, updateAssetSchema } from "~/lib/schema";
+import { serializeFormJson } from "~/lib/serializers";
 import { hasMultiSiteVisibility, isGlobalAdmin } from "~/lib/users";
 import { isEmpty, nullValuesToUndefined } from "~/lib/utils";
 import ActiveToggleFormInput from "../active-toggle-form-input";
@@ -102,9 +103,7 @@ export default function AssetDetailsForm({
   });
 
   const handleSubmit = (data: TForm) => {
-    // Remove undefined values to make it JSON-serializable
-    const cleanedData = JSON.parse(JSON.stringify(data));
-    submit(cleanedData, {
+    submit(serializeFormJson(data), {
       path: "/api/proxy/assets",
       id: asset?.id,
       viewContext: context,
