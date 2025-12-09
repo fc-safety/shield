@@ -47,6 +47,7 @@ export default function SiteDetailsForm({
   const isNew = !site;
   const currentlyPopulatedZip = useRef<string | null>(null);
   const [zipPopulatePending, setZipPopulatePending] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const [subsites, setSubsites] = useState<Site[] | undefined>();
 
   const siteSchema = getSiteSchema({ create: !site, isSiteGroup });
@@ -125,16 +126,32 @@ export default function SiteDetailsForm({
       (!site || debouncedZip !== site.address.zip) &&
       debouncedZip !== currentlyPopulatedZip.current
     ) {
+      // Cancel previous request if it exists
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController for this request
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
       setZipPopulatePending(true);
       console.debug("Fetching zip", debouncedZip);
-      fetch(`/api/query-zip/${debouncedZip}`)
+      
+      fetch(`/api/query-zip/${debouncedZip}`, {
+        signal: abortController.signal,
+      })
         .then((r) => r.json())
         .catch((e) => {
-          console.error("Failed to fetch zip", e);
+          // Don't log abort errors as they are expected when cancelling requests
+          if (e.name !== 'AbortError') {
+            console.error("Failed to fetch zip", e);
+          }
           return null;
         })
         .then((r) => {
-          if (r) {
+          // Only update if this request wasn't aborted
+          if (!abortController.signal.aborted && r) {
             setValue(site ? "address.update.city" : "address.create.city", r.city, {
               shouldValidate: true,
             });
@@ -145,11 +162,25 @@ export default function SiteDetailsForm({
                 shouldValidate: true,
               }
             );
+            currentlyPopulatedZip.current = debouncedZip;
           }
-          setZipPopulatePending(false);
+          
+          // Only update pending state if this request wasn't aborted
+          if (!abortController.signal.aborted) {
+            setZipPopulatePending(false);
+          }
         });
     }
   }, [debouncedZip, site, setValue]);
+
+  // Cleanup AbortController on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const {
     load: subsitesLoad,
