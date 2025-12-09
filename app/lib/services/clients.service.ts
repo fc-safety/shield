@@ -5,6 +5,7 @@ import { buildPath } from "../urls";
 interface GetSitesOptions {
   limit?: number;
   excludeGroups?: boolean;
+  active?: boolean;
 }
 
 export const getSitesQueryOptions = (fetcher: typeof fetch, options?: GetSitesOptions) =>
@@ -14,6 +15,7 @@ export const getSitesQueryOptions = (fetcher: typeof fetch, options?: GetSitesOp
       {
         limit: options?.limit ?? 200,
         subsites: options?.excludeGroups ? { none: "" } : undefined,
+        active: options?.active ?? true,
       },
     ] as const,
     queryFn: ({ queryKey }) =>

@@ -197,6 +197,7 @@ function AsDrawer({
 interface ComboboxOption {
   value: string;
   label: ReactNode;
+  disabled?: boolean;
 }
 
 interface ComboboxOptionGroup {
@@ -290,6 +291,7 @@ function SelectOptions({
                     onSelected(value);
                     setOpen(false);
                   }}
+                  disabled={option.disabled}
                 >
                   {option.label}
                 </CommandItem>
@@ -306,6 +308,7 @@ function SelectOptions({
                   onSelected(value);
                   setOpen(false);
                 }}
+                disabled={option.disabled}
               >
                 {option.label}
               </CommandItem>

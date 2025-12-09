@@ -11,7 +11,7 @@ import type { Site } from "~/lib/models";
 import type { updateUserSchema } from "~/lib/schema";
 import type { ClientUser } from "~/lib/types";
 import { can } from "~/lib/users";
-import { beautifyPhone } from "~/lib/utils";
+import { beautifyPhone, cn } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
 import ResponsiveActions from "../common/responsive-actions";
 import ConfirmationDialog from "../confirmation-dialog";
@@ -113,10 +113,23 @@ export default function ClientUsersTable({
         },
       },
       {
-        accessorFn: (datat) => getSiteByExternalId?.(datat.siteExternalId)?.name,
+        accessorFn: (data) => getSiteByExternalId?.(data.siteExternalId)?.name,
         id: "site",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
-        cell: ({ getValue }) => (getValue() as string) ?? <>&mdash;</>,
+        cell: ({ row, getValue }) => {
+          const siteName = getValue() as string;
+          const siteActive = getSiteByExternalId?.(row.original.siteExternalId)?.active;
+          return !siteName ? (
+            <>&mdash;</>
+          ) : (
+            <div
+              className={cn(!siteActive && "text-muted-foreground line-through")}
+              title={!siteActive ? "This site is inactive." : undefined}
+            >
+              {siteName}
+            </div>
+          );
+        },
       },
       {
         id: "actions",

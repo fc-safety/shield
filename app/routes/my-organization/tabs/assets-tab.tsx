@@ -12,7 +12,7 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const assetsResult = await api.assets.list(request, { limit: 10000 });
+  const assetsResult = await api.assets.list(request, { limit: 10000, site: { active: true } });
 
   return {
     assets: assetsResult.results,
