@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react-router";
 import { useMemo } from "react";
 import { isRouteErrorResponse } from "react-router";
 import { isNil } from "~/lib/utils";
@@ -10,6 +11,8 @@ export default function useBoundaryError({ error }: { error: unknown }) {
         subtitle: error.statusText || undefined,
         message: error instanceof Response ? "" : parseErrorMessage(error.data),
       };
+    } else if (error && error instanceof Error) {
+      Sentry.captureException(error);
     }
 
     return {
