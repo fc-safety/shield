@@ -210,6 +210,7 @@ export interface Client extends BaseModel {
 }
 
 export interface Site extends BaseModel {
+  active: boolean;
   externalId: string;
   legacySiteId?: string | null;
   legacyGroupId?: string | null;
