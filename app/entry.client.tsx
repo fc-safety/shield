@@ -8,7 +8,7 @@ Sentry.init({
   // Adds request headers and IP for users, for more info visit:
   // https://docs.sentry.io/platforms/javascript/guides/react-router/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
-  environment: import.meta.env.SENTRY_ENVIRONMENT ?? "local",
+  environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? "local",
 });
 
 startTransition(() => {

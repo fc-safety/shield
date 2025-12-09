@@ -274,7 +274,8 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
                     <span className="font-semibold">
                       {getUserDisplayName(activeSession.lastInspector)}
                     </span>{" "}
-                    is progressing through this route
+                    started this route on{" "}
+                    <HydrationSafeFormattedDate date={activeSession.createdOn} formatStr="PP" />
                   </span>
                 ) : (
                   "Route in progress"
@@ -441,7 +442,10 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
       <div
         ref={ref}
         style={style}
-        className={cn("bg-card -mx-2 flex items-center gap-3 rounded-md p-2", className)}
+        className={cn(
+          "bg-card -mx-2 flex min-w-0 items-center gap-1.5 rounded-md p-2 sm:gap-3",
+          className
+        )}
       >
         {canUpdate && (
           <div {...props} style={{ touchAction: "manipulation" }}>
@@ -450,19 +454,24 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
         )}
         <div
           className={cn(
-            "bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+            "bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold sm:size-7",
             isIncomplete && "bg-primary/20 text-primary/80 border-primary border border-dashed"
           )}
+          title={
+            isIncomplete
+              ? "This asset has not yet been inspected by the current inspector"
+              : undefined
+          }
         >
           {idx + 1}
         </div>
-        <div className="flex flex-col">
-          <div className="text-sm font-semibold">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-wrap items-center gap-1 text-sm font-semibold">
             {point.asset?.name}
             {point.asset?.tag && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="min-w-0 shrink">
                 <Nfc className="text-primary" />
-                {point.asset.tag.serialNumber}
+                <span className="truncate">{point.asset.tag.serialNumber}</span>
               </Badge>
             )}
           </div>
@@ -470,7 +479,6 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
             {point.asset?.location} - {point.asset?.placement}
           </div>
         </div>
-        <div className="flex-1"></div>
         {canUpdate && (
           <ButtonGroup>
             <ButtonGroup>
