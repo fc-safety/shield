@@ -27,6 +27,7 @@ import { ArrowDown, ArrowUp, GripVertical, Nfc, Pencil, Plus, Trash } from "luci
 import { forwardRef, useEffect, useMemo, useState, type HTMLAttributes } from "react";
 import { useFetcher, type FetcherWithComponents } from "react-router";
 import { useImmer } from "use-immer";
+import ActiveIndicator from "~/components/active-indicator";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { HelpSidebarContent, HelpSidebarSection } from "~/components/help-sidebar";
 import HelpbarTrigger from "~/components/helpbar-trigger";
@@ -44,7 +45,7 @@ import {
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import type { InspectionRoute, InspectionRoutePoint } from "~/lib/models";
-import { can } from "~/lib/users";
+import { can, getUserDisplayName } from "~/lib/users";
 import { cn } from "~/lib/utils";
 
 export default function InspectionRouteDetails({ route }: { route: InspectionRoute }) {
@@ -88,6 +89,10 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
     point: InspectionRoutePoint;
     idx: number;
   } | null>(null);
+
+  const activeSession = useMemo(() => {
+    return route.inspectionSessions?.find((s) => s.status === "PENDING") ?? null;
+  }, [route.inspectionSessions]);
 
   const reorderFetcher = useFetcher();
   const deletePointFetcher = useFetcher();
@@ -261,6 +266,21 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
                 />
               )}
             </h3>
+            {activeSession && (
+              <Badge variant="primary-soft">
+                <ActiveIndicator active={true} />
+                {activeSession.lastInspector ? (
+                  <span>
+                    <span className="font-semibold">
+                      {getUserDisplayName(activeSession.lastInspector)}
+                    </span>{" "}
+                    is progressing through this route
+                  </span>
+                ) : (
+                  "Route in progress"
+                )}
+              </Badge>
+            )}
             {initialPointsLoading ? (
               <Skeleton className="h-64 w-full" />
             ) : !points || points.length === 0 ? (
@@ -284,6 +304,12 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
                       <SortableRoutePointItem
                         key={point.id}
                         point={point}
+                        isIncomplete={
+                          !!activeSession?.completedInspectionRoutePoints &&
+                          !activeSession.completedInspectionRoutePoints.some(
+                            (p) => p.inspectionRoutePointId === point.id
+                          )
+                        }
                         idx={idx}
                         allPoints={points}
                         reorderFetcher={reorderFetcher}
@@ -301,6 +327,12 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
                   {activePoint ? (
                     <RoutePointItem
                       point={activePoint.point}
+                      isIncomplete={
+                        !!activeSession?.completedInspectionRoutePoints &&
+                        !activeSession.completedInspectionRoutePoints.some(
+                          (p) => p.inspectionRoutePointId === activePoint.point.id
+                        )
+                      }
                       idx={activePoint.idx}
                       allPoints={points}
                       reorderFetcher={reorderFetcher}
@@ -336,6 +368,7 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
 
 interface RoutePointItemProps extends HTMLAttributes<HTMLDivElement> {
   point: InspectionRoutePoint;
+  isIncomplete: boolean;
   allPoints: InspectionRoutePoint[];
   idx: number;
   reorderFetcher: FetcherWithComponents<unknown>;
@@ -370,6 +403,7 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
   (
     {
       point,
+      isIncomplete,
       allPoints,
       idx,
       reorderFetcher,
@@ -414,7 +448,12 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
             <GripVertical className="size-4" />
           </div>
         )}
-        <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+        <div
+          className={cn(
+            "bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+            isIncomplete && "bg-primary/20 text-primary/80 border-primary border border-dashed"
+          )}
+        >
           {idx + 1}
         </div>
         <div className="flex flex-col">
