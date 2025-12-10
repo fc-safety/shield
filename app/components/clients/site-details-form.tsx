@@ -137,14 +137,14 @@ export default function SiteDetailsForm({
 
       setZipPopulatePending(true);
       console.debug("Fetching zip", debouncedZip);
-      
+
       fetch(`/api/query-zip/${debouncedZip}`, {
         signal: abortController.signal,
       })
         .then((r) => r.json())
         .catch((e) => {
           // Don't log abort errors as they are expected when cancelling requests
-          if (e.name !== 'AbortError') {
+          if (e.name !== "AbortError") {
             console.error("Failed to fetch zip", e);
           }
           return null;
@@ -162,9 +162,9 @@ export default function SiteDetailsForm({
                 shouldValidate: true,
               }
             );
-            currentlyPopulatedZip.current = debouncedZip;
+            currentlyPopulatedZip.current = debouncedZip ?? null;
           }
-          
+
           // Only update pending state if this request wasn't aborted
           if (!abortController.signal.aborted) {
             setZipPopulatePending(false);
@@ -228,6 +228,7 @@ export default function SiteDetailsForm({
     submit(serializeFormJson(data), {
       path: "/api/proxy/sites",
       id: site?.id,
+      viewContext,
     });
   };
 
@@ -432,7 +433,10 @@ export default function SiteDetailsForm({
                     </p>
                   )}
                   {subsites?.map((subsite) => (
-                    <div key={subsite.id} className="flex flex-row items-center space-y-0 space-x-1">
+                    <div
+                      key={subsite.id}
+                      className="flex flex-row items-center space-y-0 space-x-1"
+                    >
                       <Checkbox
                         id={`subsite-${subsite.id}`}
                         checked={!!value?.find((v) => v.id === subsite.id)}
