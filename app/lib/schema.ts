@@ -162,6 +162,7 @@ export const baseSiteSchema = z.object({
     .optional()
     .transform((id) => id || undefined),
   primary: z.boolean().default(false),
+  active: z.boolean().default(true),
   name: z.string(),
   address: z
     .object({

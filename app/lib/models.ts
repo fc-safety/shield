@@ -104,6 +104,7 @@ export interface InspectionRoute extends BaseModel {
   siteId: string;
   client?: Client;
   clientId: string;
+  inspectionSessions?: InspectionSession[];
 }
 
 export interface InspectionRoutePoint extends BaseModel {
@@ -210,6 +211,7 @@ export interface Client extends BaseModel {
 }
 
 export interface Site extends BaseModel {
+  active: boolean;
   externalId: string;
   legacySiteId?: string | null;
   legacyGroupId?: string | null;

@@ -27,6 +27,7 @@ import { ArrowDown, ArrowUp, GripVertical, Nfc, Pencil, Plus, Trash } from "luci
 import { forwardRef, useEffect, useMemo, useState, type HTMLAttributes } from "react";
 import { useFetcher, type FetcherWithComponents } from "react-router";
 import { useImmer } from "use-immer";
+import ActiveIndicator from "~/components/active-indicator";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { HelpSidebarContent, HelpSidebarSection } from "~/components/help-sidebar";
 import HelpbarTrigger from "~/components/helpbar-trigger";
@@ -44,7 +45,7 @@ import {
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import type { InspectionRoute, InspectionRoutePoint } from "~/lib/models";
-import { can } from "~/lib/users";
+import { can, getUserDisplayName } from "~/lib/users";
 import { cn } from "~/lib/utils";
 
 export default function InspectionRouteDetails({ route }: { route: InspectionRoute }) {
@@ -88,6 +89,10 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
     point: InspectionRoutePoint;
     idx: number;
   } | null>(null);
+
+  const activeSession = useMemo(() => {
+    return route.inspectionSessions?.find((s) => s.status === "PENDING") ?? null;
+  }, [route.inspectionSessions]);
 
   const reorderFetcher = useFetcher();
   const deletePointFetcher = useFetcher();
@@ -261,6 +266,22 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
                 />
               )}
             </h3>
+            {activeSession && (
+              <Badge variant="primary-soft">
+                <ActiveIndicator active={true} />
+                {activeSession.lastInspector ? (
+                  <span>
+                    <span className="font-semibold">
+                      {getUserDisplayName(activeSession.lastInspector)}
+                    </span>{" "}
+                    started this route on{" "}
+                    <HydrationSafeFormattedDate date={activeSession.createdOn} formatStr="PP" />
+                  </span>
+                ) : (
+                  "Route in progress"
+                )}
+              </Badge>
+            )}
             {initialPointsLoading ? (
               <Skeleton className="h-64 w-full" />
             ) : !points || points.length === 0 ? (
@@ -284,6 +305,12 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
                       <SortableRoutePointItem
                         key={point.id}
                         point={point}
+                        isIncomplete={
+                          !!activeSession?.completedInspectionRoutePoints &&
+                          !activeSession.completedInspectionRoutePoints.some(
+                            (p) => p.inspectionRoutePointId === point.id
+                          )
+                        }
                         idx={idx}
                         allPoints={points}
                         reorderFetcher={reorderFetcher}
@@ -301,6 +328,12 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
                   {activePoint ? (
                     <RoutePointItem
                       point={activePoint.point}
+                      isIncomplete={
+                        !!activeSession?.completedInspectionRoutePoints &&
+                        !activeSession.completedInspectionRoutePoints.some(
+                          (p) => p.inspectionRoutePointId === activePoint.point.id
+                        )
+                      }
                       idx={activePoint.idx}
                       allPoints={points}
                       reorderFetcher={reorderFetcher}
@@ -336,6 +369,7 @@ export default function InspectionRouteDetails({ route }: { route: InspectionRou
 
 interface RoutePointItemProps extends HTMLAttributes<HTMLDivElement> {
   point: InspectionRoutePoint;
+  isIncomplete: boolean;
   allPoints: InspectionRoutePoint[];
   idx: number;
   reorderFetcher: FetcherWithComponents<unknown>;
@@ -370,6 +404,7 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
   (
     {
       point,
+      isIncomplete,
       allPoints,
       idx,
       reorderFetcher,
@@ -407,23 +442,36 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
       <div
         ref={ref}
         style={style}
-        className={cn("bg-card -mx-2 flex items-center gap-3 rounded-md p-2", className)}
+        className={cn(
+          "bg-card -mx-2 flex min-w-0 items-center gap-1.5 rounded-md p-2 sm:gap-3",
+          className
+        )}
       >
         {canUpdate && (
           <div {...props} style={{ touchAction: "manipulation" }}>
             <GripVertical className="size-4" />
           </div>
         )}
-        <div className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+        <div
+          className={cn(
+            "bg-primary text-primary-foreground flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold sm:size-7",
+            isIncomplete && "bg-primary/20 text-primary/80 border-primary border border-dashed"
+          )}
+          title={
+            isIncomplete
+              ? "This asset has not yet been inspected by the current inspector"
+              : undefined
+          }
+        >
           {idx + 1}
         </div>
-        <div className="flex flex-col">
-          <div className="text-sm font-semibold">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex min-w-0 flex-wrap items-center gap-1 text-sm font-semibold">
             {point.asset?.name}
             {point.asset?.tag && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="min-w-0 shrink">
                 <Nfc className="text-primary" />
-                {point.asset.tag.serialNumber}
+                <span className="truncate">{point.asset.tag.serialNumber}</span>
               </Badge>
             )}
           </div>
@@ -431,7 +479,6 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
             {point.asset?.location} - {point.asset?.placement}
           </div>
         </div>
-        <div className="flex-1"></div>
         {canUpdate && (
           <ButtonGroup>
             <ButtonGroup>

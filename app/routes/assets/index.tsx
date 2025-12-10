@@ -7,7 +7,7 @@ import { getSearchParams } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const assets = await api.assets.list(request, { limit: 10000 });
+  const assets = await api.assets.list(request, { limit: 10000, site: { active: true } });
   const searchParams = getSearchParams(request);
   return {
     assets,

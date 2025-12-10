@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { ChevronRight, Pencil, PhoneCall, Star, Trash } from "lucide-react";
+import { ChevronRight, Circle, Pencil, PhoneCall, Star, Trash } from "lucide-react";
 import { type To } from "react-router";
 import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
@@ -59,7 +59,7 @@ export default function SitesTable({
               <ChevronRight
                 className={cn(
                   "size-4 transition-transform",
-                  canExpand ? "text-primary" : "text-transparent",
+                  canExpand ? "text-secondary-foreground" : "text-transparent",
                   isExpanded && "rotate-90"
                 )}
               />
@@ -72,10 +72,28 @@ export default function SitesTable({
               </div>
             )}
             <span className="inline-flex items-center gap-1">
-              {getValue() as string}
-              {row.original.primary && (
-                <Star size={14} fill="currentColor" className="text-primary" />
+              {row.original.primary ? (
+                <div title="This site is the primary site for the client.">
+                  <Star
+                    size={14}
+                    fill={row.original.active ? "currentColor" : "none"}
+                    className={cn(row.original.active ? "text-primary" : "text-muted-foreground")}
+                  />
+                </div>
+              ) : (
+                <div
+                  title={row.original.active ? "This site is active." : "This site is inactive."}
+                >
+                  <Circle
+                    size={10}
+                    fill={row.original.active ? "currentColor" : "none"}
+                    className={cn(row.original.active ? "text-primary" : "text-muted-foreground")}
+                  />
+                </div>
               )}
+              <div className={cn(!row.original.active && "text-muted-foreground line-through")}>
+                {getValue() as string}
+              </div>
             </span>
           </div>
         );
@@ -147,7 +165,15 @@ export default function SitesTable({
                       setDeleteAction((draft) => {
                         draft.open = true;
                         draft.title = "Delete Site";
-                        draft.message = `Are you sure you want to delete ${site.name || site.id}?`;
+                        draft.message = (
+                          <div className="space-y-2">
+                            <div>Are you sure you want to delete {site.name || site.id}?</div>
+                            <div className="italic">
+                              It is <span className="font-bold">recommended to deactivate</span> the
+                              site instead.
+                            </div>
+                          </div>
+                        );
                         draft.requiredUserInput = site.name || site.id;
                         draft.onConfirm = () => {
                           submitDelete(

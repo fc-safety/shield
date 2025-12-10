@@ -18,7 +18,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const routesResult = await api.inspectionRoutes.list(request);
+  const routesResult = await api.inspectionRoutes.list(request, { site: { active: true } });
 
   if (!params.id && routesResult.results.length > 0) {
     return redirect(`/inspect/routes/${routesResult.results[0].id}`);

@@ -83,12 +83,13 @@ export default function SiteCombobox({
 
   useEffect(() => {
     if (fetcher.data?.data) {
-      setSites(fetcher.data.data.results);
+      console.debug("fetcher.data.data", fetcher.data.data);
+      setSites(fetcher.data.data.results.filter((s) => s.active || s[valueKey] === value));
     } else if (fetcher.data?.error) {
       console.error("Failed to fetch sites", fetcher.data.error);
       setHasError(true);
     }
-  }, [fetcher.data]);
+  }, [fetcher.data, valueKey]);
 
   const options = useMemo(() => {
     let filteredSites = sites;
@@ -96,9 +97,10 @@ export default function SiteCombobox({
       fuse.setCollection(sites);
       filteredSites = fuse.search(search).map((result) => result.item);
     }
-    return filteredSites.map((c) => ({
-      label: c.name,
-      value: c[valueKey],
+    return filteredSites.map((s) => ({
+      label: s.name,
+      value: s[valueKey],
+      disabled: !s.active,
     }));
   }, [sites, search, valueKey]);
 
