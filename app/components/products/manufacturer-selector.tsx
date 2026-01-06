@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link2, Loader2, Pencil, Search, SearchX } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer, ResultsPage } from "~/lib/models";
@@ -22,7 +23,6 @@ interface ManufacturerSelectorProps {
   onBlur?: () => void;
   disabled?: boolean;
   className?: string;
-  viewContext?: ViewContext;
   clientId?: string;
 }
 
@@ -32,9 +32,9 @@ export default function ManufacturerSelector({
   onBlur,
   disabled,
   className,
-  viewContext,
   clientId,
 }: ManufacturerSelectorProps) {
+  const viewContext = useViewContext();
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
 

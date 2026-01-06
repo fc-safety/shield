@@ -4,7 +4,6 @@ import { ChevronsUpDown, Eraser, Loader2, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type z from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import { conditionTypeVariants } from "~/components/assets/condition-pill";
 import MetadataKeyCombobox from "~/components/metadata-key-combobox";
 import MetadataValueCombobox from "~/components/metadata-value-combobox";
@@ -137,7 +136,6 @@ export const ConditionConfigurator = () => {
                     onBlur={onBlur}
                     conditionType={"METADATA"}
                     className="flex-1"
-                    viewContext={viewContext}
                   />
                 ) : (
                   <MultivaluesInput
@@ -147,7 +145,6 @@ export const ConditionConfigurator = () => {
                     renderSingularInput={({ value, onValueChange, onBlur, className }) => (
                       <MatchingValueInput
                         clientId={clientId}
-                        viewContext={viewContext}
                         value={value}
                         onValueChange={onValueChange}
                         onBlur={onBlur}
@@ -196,7 +193,6 @@ export const ConditionConfigurator = () => {
                         onValueChange={onValueChange}
                         onBlur={onBlur}
                         className={className}
-                        viewContext={viewContext}
                       />
                     )}
                   />
@@ -296,7 +292,6 @@ function MatchingValueInput({
   conditionType,
   className,
   clientId,
-  viewContext,
 }: {
   value: string | undefined;
   onValueChange: (value: string) => void;
@@ -304,8 +299,8 @@ function MatchingValueInput({
   conditionType: AssetQuestionConditionType | undefined;
   className?: string;
   clientId?: string | null;
-  viewContext?: ViewContext;
 }) {
+  const { viewContext } = useAssetQuestionDetailFormContext();
   const { fetchOrThrow } = useAuthenticatedFetch();
 
   const [optionsSearchQuery, setOptionsSearchQuery] = useState("");
@@ -367,7 +362,6 @@ function MatchingValueInput({
         value={value}
         onValueChange={onValueChange}
         onBlur={onBlur}
-        viewContext={viewContext}
       />
     );
   }
@@ -451,7 +445,7 @@ const getValueOptionsForType = async (
   fetcher: typeof fetch,
   conditionType: AssetQuestionConditionType | undefined,
   clientId: string | null = null,
-  viewContext: ViewContext = "admin"
+  viewContext: "admin" | "user" = "admin"
 ): Promise<ValueOption[]> => {
   let options = [] as ValueOption[];
 

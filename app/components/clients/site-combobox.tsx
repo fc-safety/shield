@@ -1,7 +1,8 @@
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import type { ResultsPage, Site } from "~/lib/models";
 import { buildPath, type QueryParams } from "~/lib/urls";
 import { ResponsiveCombobox } from "../responsive-combobox";
@@ -15,7 +16,6 @@ interface SiteComboboxProps {
   valueKey?: "id" | "externalId";
   disabled?: boolean;
   showClear?: boolean;
-  viewContext?: ViewContext;
   includeSiteGroups?: boolean | "exclusively";
   nestDrawers?: boolean;
 }
@@ -31,10 +31,10 @@ export default function SiteCombobox({
   valueKey = "id",
   disabled,
   showClear = true,
-  viewContext,
   includeSiteGroups = false,
   nestDrawers,
 }: SiteComboboxProps) {
+  const viewContext = useViewContext();
   const fetcher = useFetcher<DataOrError<ResultsPage<Site>>>();
   const prevClientId = useRef<string | null>(null);
   const prevIncludeSiteGroups = useRef<boolean | "exclusively">(false);

@@ -25,7 +25,6 @@ export default function StepSelectClient({
         value={selectedClientId}
         onValueChange={onSelectClient}
         className="w-full"
-        viewContext="admin"
       />
     </Step>
   );

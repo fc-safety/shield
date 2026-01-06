@@ -18,7 +18,8 @@ import { Suspense, useCallback, useEffect, useMemo, useState, type ComponentProp
 import { Await } from "react-router";
 import { useImmer } from "use-immer";
 import { create } from "zustand";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useProxyImage } from "~/hooks/use-proxy-image";
@@ -35,7 +36,6 @@ interface ProductSelectorProps {
   disabled?: boolean;
   className?: string;
   readOnly?: boolean;
-  viewContext?: ViewContext;
 }
 
 interface StepsState {
@@ -100,8 +100,8 @@ export default function ProductSelector({
   disabled = false,
   className,
   readOnly = false,
-  viewContext = "user",
 }: ProductSelectorProps) {
+  const viewContext = useViewContext();
   const [open, setOpen] = useState(false);
   const { load, data: dataOrError } = useModalFetcher<DataOrError<ResultsPage<Product>>>();
 

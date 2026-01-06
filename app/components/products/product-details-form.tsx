@@ -240,7 +240,6 @@ export default function ProductDetailsForm({
                       onValueChange={(id) => onChange({ connect: { id } })}
                       onBlur={onBlur}
                       className="flex"
-                      viewContext={viewContext}
                       clientId={clientId}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -260,7 +259,6 @@ export default function ProductDetailsForm({
                       onValueChange={(id) => onChange({ connect: { id } })}
                       onBlur={onBlur}
                       className="flex"
-                      viewContext={viewContext}
                       clientId={clientId}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -423,7 +421,7 @@ export default function ProductDetailsForm({
             >
               {" "}
               <div className="space-y-4 pt-6">
-                {userIsGlobalAdmin && <MetadataInputField viewContext={viewContext} />}
+                {userIsGlobalAdmin && <MetadataInputField />}
               </div>
             </motion.div>
           </div>

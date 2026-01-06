@@ -12,8 +12,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Tag } from "~/lib/models";
 import { createTagSchema, updateTagSchema } from "~/lib/schema";
@@ -31,15 +32,15 @@ type TForm = z.infer<typeof updateTagSchema | typeof createTagSchema>;
 interface TagDetailsFormProps {
   tag?: Tag;
   onClose?: () => void;
-  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
   serialNumber: "",
 } satisfies TForm;
 
-export default function TagDetailsForm({ tag, onClose, viewContext }: TagDetailsFormProps) {
+export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
   const { appHost } = useAuth();
+  const viewContext = useViewContext();
 
   const isNew = !tag;
 
@@ -204,7 +205,6 @@ export default function TagDetailsForm({ tag, onClose, viewContext }: TagDetails
                   }
                   onBlur={field.onBlur}
                   className="w-full"
-                  viewContext={viewContext}
                   showClear
                 />
               </FormControl>
@@ -230,7 +230,6 @@ export default function TagDetailsForm({ tag, onClose, viewContext }: TagDetails
                   className="w-full"
                   clientId={clientId}
                   disabled={!clientId}
-                  viewContext={viewContext}
                 />
               </FormControl>
               <FormMessage />
@@ -255,7 +254,6 @@ export default function TagDetailsForm({ tag, onClose, viewContext }: TagDetails
                   className="w-full"
                   optionQueryFilter={getAssetOptionQueryFilter(siteId, field.value?.connect?.id)}
                   disabled={!siteId}
-                  viewContext={viewContext}
                   clientId={clientId}
                   siteId={siteId}
                 />

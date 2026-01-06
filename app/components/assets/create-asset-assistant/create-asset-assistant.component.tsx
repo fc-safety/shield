@@ -159,7 +159,6 @@ export const useCreateAssetAssistant = ({
                   draft.assetData = { ...draft.assetData, siteId };
                 })
               }
-              viewContext={viewContext}
               clientIdInputDisabled={!shouldRequireClientId}
               ownershipObjectName="asset"
             />
@@ -251,7 +250,6 @@ export const useCreateAssetAssistant = ({
                   draft.assetData = data;
                 })
               }
-              viewContext={viewContext}
               continueLabel={shouldConfigure ? "Configure" : continueLabel}
             />
           );
@@ -270,7 +268,6 @@ export const useCreateAssetAssistant = ({
               }
               continueLabel={continueLabel}
               onClose={onClose}
-              viewContext={viewContext}
             />
           );
         default:

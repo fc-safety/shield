@@ -2,11 +2,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import ClientCombobox from "~/components/clients/client-combobox";
 import SiteCombobox from "~/components/clients/site-combobox";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { can } from "~/lib/users";
 import Step from "../../../../../../components/assistant/components/step";
 
@@ -24,7 +24,6 @@ export default function StepSelectOwnership({
   siteId,
   setClientId,
   setSiteId,
-  viewContext = "user",
   clientIdInputDisabled = false,
   ownershipObjectName = "tag",
 }: {
@@ -34,11 +33,11 @@ export default function StepSelectOwnership({
   siteId?: string;
   setClientId: (clientId: string) => void;
   setSiteId: (siteId: string) => void;
-  viewContext?: ViewContext;
   clientIdInputDisabled?: boolean;
   ownershipObjectName?: string;
 }) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const canReadClients = can(user, "read", "clients");
 
   const form = useForm<TForm>({
@@ -102,7 +101,6 @@ export default function StepSelectOwnership({
                       onBlur={field.onBlur}
                       className="w-full"
                       showClear={false}
-                      viewContext={viewContext}
                       disabled={clientIdInputDisabled || viewContext !== "admin"}
                     />
                   </FormControl>
@@ -129,7 +127,6 @@ export default function StepSelectOwnership({
                     className="w-full"
                     clientId={fieldClientId}
                     showClear={false}
-                    viewContext={viewContext}
                     disabled={!fieldClientId && viewContext === "admin"}
                   />
                 </FormControl>

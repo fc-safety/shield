@@ -182,7 +182,6 @@ export function AssetDetailFormFields({
                   disabled={disabled}
                   readOnly={productReadOnly}
                   className="flex"
-                  viewContext={viewContext}
                 />
               </FormControl>
               <FormMessage />
@@ -236,7 +235,6 @@ export function AssetDetailFormFields({
                   onBlur={field.onBlur}
                   className="w-full"
                   showClear={false}
-                  viewContext={viewContext}
                   nestDrawers={nestDrawers}
                 />
               </FormControl>
@@ -262,7 +260,6 @@ export function AssetDetailFormFields({
                   showClear={false}
                   clientId={clientId}
                   disabled={isGlobalAdmin(user) && viewContext === "admin" && !clientId}
-                  viewContext={viewContext}
                   nestDrawers={nestDrawers}
                 />
               </FormControl>
@@ -341,7 +338,7 @@ export function AssetDetailFormFields({
           style={{ overflow: "hidden" }}
         >
           <div className="space-y-4 pt-6">
-            {userIsGlobalAdmin && <MetadataInput viewContext={viewContext} />}
+            {userIsGlobalAdmin && <MetadataInput />}
             <FormField
               control={form.control}
               name="inspectionCycle"
