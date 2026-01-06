@@ -1,21 +1,19 @@
 import { Button } from "@/components/ui/button";
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  Form as FormProvider,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, isAfter, isValid as isValidDate, parseISO, startOfDay } from "date-fns";
+import { isAfter, startOfDay } from "date-fns";
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import { Form } from "react-router";
+import { Controller, FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
+import { CopyableInput } from "~/components/copyable-input";
+import LegacyIdField from "~/components/ui-custom/forms/legacy-id-field";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
+import { extractErrorMessage } from "~/components/ui/form";
+import { Label } from "~/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
+import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
 import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -24,11 +22,6 @@ import { createClientSchema, updateClientSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import { isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
-import { CopyableInput } from "../copyable-input";
-import LegacyIdField from "../legacy-id-field";
-import { Label } from "../ui/label";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Switch } from "../ui/switch";
 
 type TForm = z.infer<typeof createClientSchema | typeof updateClientSchema>;
 interface ClientDetailsFormProps {
@@ -135,46 +128,51 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
 
   return (
     <FormProvider {...form}>
-      <Form className="space-y-4" method="post" onSubmit={form.handleSubmit(handleSubmit)}>
+      <form
+        className="space-y-4"
+        method="post"
+        onSubmit={form.handleSubmit(handleSubmit, (e) => {
+          toast.error("Please fix the errors in the form.", {
+            description: extractErrorMessage(e),
+            duration: 10000,
+          });
+        })}
+      >
         <Input type="hidden" {...form.register("id")} hidden />
-        <FormField
+        <Controller
           control={form.control}
           name="status"
-          render={({ field: { onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <FormControl>
-                <RadioGroup {...field} onValueChange={onChange} className="flex gap-4">
-                  {ClientStatuses.map((status, idx) => (
-                    <div key={status} className="flex items-center space-x-2">
-                      <RadioGroupItem value={status} id={"status" + idx} />
-                      <Label className="capitalize" htmlFor={"status" + idx}>
-                        {status.toLowerCase()}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, ...field }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Status</FieldLabel>
+              <RadioGroup {...field} onValueChange={onChange} className="flex gap-4">
+                {ClientStatuses.map((status, idx) => (
+                  <div key={status} className="flex items-center space-x-2">
+                    <RadioGroupItem value={status} id={"status" + idx} />
+                    <Label className="capitalize" htmlFor={"status" + idx}>
+                      {status.toLowerCase()}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
         {userIsGlobalAdmin && (
-          <FormField
+          <Controller
             control={form.control}
             name="externalId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>External ID</FormLabel>
-                <FormControl>
-                  {isNew ? (
-                    <Input {...field} placeholder="Automatically generated" tabIndex={-1} />
-                  ) : (
-                    <CopyableInput {...field} readOnly />
-                  )}
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>External ID</FieldLabel>
+                {isNew ? (
+                  <Input {...field} placeholder="Automatically generated" tabIndex={-1} />
+                ) : (
+                  <CopyableInput {...field} readOnly />
+                )}
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
             )}
           />
         )}
@@ -184,169 +182,136 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
           label="Legacy Client ID"
           description="Client ID from the legacy Shield system"
         />
-        <FormField
+        <Controller
           control={form.control}
           name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Name</FieldLabel>
+              <Input {...field} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name="startedOn"
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>
+          render={({ field: { value, onChange, ...field }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>
                 {!value || isAfter(value, startOfDay(new Date())) ? "Starting On" : "Started On"}
-              </FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  type="date"
-                  value={
-                    isValidDate(parseISO(String(value)))
-                      ? format(parseISO(String(value)), "yyyy-MM-dd")
-                      : undefined
-                  }
-                  onChange={(e) => {
-                    onChange(parseISO(e.target.value).toISOString());
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+              </FieldLabel>
+              <Input {...field} type="date" />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
 
         {!isNew && <Input type="hidden" {...form.register("address.update.id")} hidden />}
-        <FormField
+        <Controller
           control={form.control}
           name={isNew ? "address.create.street1" : "address.update.street1"}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Address Line 1</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Address Line 1</FieldLabel>
+              <Input {...field} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name={isNew ? "address.create.street2" : "address.update.street2"}
-          render={({ field: { value, ...field } }) => (
-            <FormItem>
-              <FormLabel>Address Line 2</FormLabel>
-              <FormControl>
-                <Input {...field} value={value ?? ""} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { value, ...field }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Address Line 2</FieldLabel>
+              <Input {...field} value={value ?? ""} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
 
-        <FormField
+        <Controller
           control={form.control}
           name={isNew ? "address.create.zip" : "address.update.zip"}
-          render={({ field: { value, ...field } }) => (
-            <FormItem>
-              <FormLabel>Zip</FormLabel>
-              <FormControl>
-                <Input {...field} value={value ?? ""} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { value, ...field }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Zip</FieldLabel>
+              <Input {...field} value={value ?? ""} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
         <div className="grid grid-cols-2 gap-4">
-          <FormField
+          <Controller
             control={form.control}
             name={isNew ? "address.create.city" : "address.update.city"}
-            render={({ field: { value, ...field } }) => (
-              <FormItem>
-                <FormLabel>City</FormLabel>
-                <FormControl>
-                  <Input {...field} value={value ?? ""} disabled={zipPopulatePending} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            render={({ field: { value, ...field }, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>City</FieldLabel>
+                <Input {...field} value={value ?? ""} disabled={zipPopulatePending} />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
             )}
           />
-          <FormField
+          <Controller
             control={form.control}
             name={isNew ? "address.create.state" : "address.update.state"}
-            render={({ field: { value, ...field } }) => (
-              <FormItem>
-                <FormLabel>State</FormLabel>
-                <FormControl>
-                  <Input {...field} value={value ?? ""} disabled={zipPopulatePending} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+            render={({ field: { value, ...field }, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>State</FieldLabel>
+                <Input {...field} value={value ?? ""} disabled={zipPopulatePending} />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
             )}
           />
         </div>
-        <FormField
+        <Controller
           control={form.control}
           name={"phoneNumber"}
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Phone</FormLabel>
-              <FormControl>
-                <Input
-                  {...field}
-                  value={beautifyPhone(value ?? "")}
-                  onChange={(e) => onChange(stripPhone(beautifyPhone(e.target.value)))}
-                  type="phone"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { value, onChange, ...field }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Phone</FieldLabel>
+              <Input
+                {...field}
+                value={beautifyPhone(value ?? "")}
+                onChange={(e) => onChange(stripPhone(beautifyPhone(e.target.value)))}
+                type="phone"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name={"defaultInspectionCycle"}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Default Inspection Cycle</FormLabel>
-              <FormControl>
-                <Input {...field} type="number" />
-              </FormControl>
-              <FormDescription>
-                The default number of days each asset should be inspected.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Default Inspection Cycle</FieldLabel>
+              <Input {...field} type="number" />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={form.control}
           name="demoMode"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Demo Mode</FormLabel>
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} />
-              </FormControl>
-              <FormDescription>
-                When enabled, this client will be enabled to perform special actions not suitable
-                for production environments.
-              </FormDescription>
-            </FormItem>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Demo Mode</FieldLabel>
+              <Switch
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                onBlur={field.onBlur}
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
+        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
           {isSubmitting ? "Saving..." : "Save"}
         </Button>
-      </Form>
+      </form>
     </FormProvider>
   );
 }

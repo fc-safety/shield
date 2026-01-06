@@ -20,16 +20,21 @@ import { isNil } from "./utils";
 
 export const addressSchema = z.object({
   id: z.string().optional(),
-  street1: z.string().nonempty(),
+  street1: z.string().nonempty("Address line 1 is required."),
   street2: z
     .nullable(z.string())
     .optional()
     .transform((street2) => street2 || undefined),
-  city: z.nullable(z.string().nonempty()),
-  state: z.nullable(z.string().min(2)),
-  zip: z.nullable(z.string().length(5)),
-  county: z.nullable(z.string().nonempty()),
-  country: z.nullable(z.string().nonempty()),
+  city: z.nullable(z.string().nonempty("City is required.")),
+  state: z.nullable(
+    z
+      .string()
+      .min(2, "State must be 2 characters (e.g. CA).")
+      .transform((state) => state.toUpperCase())
+  ),
+  zip: z.nullable(z.string().length(5, "Zip code must be 5 digits.")),
+  county: z.nullable(z.string().optional()),
+  country: z.nullable(z.string().optional()),
 });
 
 export const createRegulatoryCodeSchema = z.object({
