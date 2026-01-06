@@ -113,6 +113,70 @@ shield/
 - Role-based access control (RBAC)
 - Protected routes with proper redirects
 
+## React Router 7 Architecture
+
+This project uses React Router 7, which has a different architecture than Next.js.
+
+### No "use client" or "use server" Directives
+
+React Router 7 does **NOT** use the `"use client"` or `"use server"` directives found in Next.js. Instead, React Router uses a different model for separating server and client code:
+
+- **Loaders**: Run on the server to fetch data before rendering. Export a `loader` function from route modules.
+- **Actions**: Run on the server to handle form submissions and mutations. Export an `action` function from route modules.
+- **Components**: The default export runs on both server (SSR) and client (hydration).
+
+```tsx
+// Example route module (app/routes/users.tsx)
+import type { Route } from "./+types/users";
+
+// Runs on the server - fetches data
+export async function loader({ request }: Route.LoaderArgs) {
+  const users = await db.users.findMany();
+  return { users };
+}
+
+// Runs on the server - handles form submissions
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData();
+  await db.users.create({ name: formData.get("name") });
+  return { success: true };
+}
+
+// Renders on server and client
+export default function Users({ loaderData }: Route.ComponentProps) {
+  return <div>{loaderData.users.map(u => <p key={u.id}>{u.name}</p>)}</div>;
+}
+```
+
+### Key Differences from Next.js
+
+| Feature | Next.js | React Router 7 |
+|---------|---------|----------------|
+| Server code | `"use server"` directive | `loader`/`action` exports |
+| Client code | `"use client"` directive | All components hydrate by default |
+| Data fetching | Server Components or API routes | Loaders |
+| Mutations | Server Actions | Actions via `<Form>` |
+
+### Client-Only Code
+
+For code that should only run on the client (e.g., browser APIs), use standard React patterns:
+
+```tsx
+import { useEffect, useState } from "react";
+
+function ClientOnlyFeature() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return <div>Client-only content using {window.localStorage.getItem("key")}</div>;
+}
+```
+
 ## Development Tips
 
 1. **Type Safety**: Always define TypeScript types for props, API responses, and form data
