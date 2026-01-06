@@ -101,7 +101,6 @@ export default function AssetsTable({
             <ActiveToggle
               active={isActive}
               path={getResourcePath(asset)}
-              viewContext={viewContext}
             />
           );
         },

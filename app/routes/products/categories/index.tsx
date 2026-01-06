@@ -125,7 +125,6 @@ function ProductCategoriesCard({
             <ActiveToggle
               active={isActive}
               path={getResourcePath(category)}
-              viewContext={viewContext}
             />
           ) : (
             <ActiveIndicator2 active={isActive} />

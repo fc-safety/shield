@@ -1,7 +1,6 @@
 import { Eraser, Plus } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import type { ViewContext } from "~/.server/api-utils";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
@@ -9,7 +8,7 @@ import MetadataKeyCombobox from "./metadata-key-combobox";
 import MetadataValueCombobox from "./metadata-value-combobox";
 
 type TMetadataForm = { metadata: Record<string, string> };
-export default function MetadataInput({ viewContext = "user" }: { viewContext?: ViewContext }) {
+export default function MetadataInput() {
   const form = useFormContext<TMetadataForm>();
 
   return (

@@ -135,7 +135,6 @@ export default function AssetQuestionsDataTable({
             <ActiveToggle
               active={isActive}
               path={getResourcePath(question)}
-              viewContext={viewContext}
             />
           );
         },
@@ -163,7 +162,6 @@ export default function AssetQuestionsDataTable({
               valueKey="type"
               options={typeOptions}
               className="w-[160px]"
-              viewContext={viewContext}
             />
           );
         },
@@ -182,7 +180,6 @@ export default function AssetQuestionsDataTable({
               path={getResourcePath(question)}
               checkedKey="required"
               className="block"
-              viewContext={viewContext}
             />
           );
         },
@@ -204,7 +201,6 @@ export default function AssetQuestionsDataTable({
               isEditing={editingPromptId === question.id}
               onEditingChange={(editing) => setEditingPromptId(editing ? question.id : null)}
               className="w-full"
-              viewContext={viewContext}
               displayClassName="line-clamp-3 min-w-56"
             />
           );
