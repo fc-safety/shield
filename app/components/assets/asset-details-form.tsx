@@ -125,7 +125,7 @@ export default function AssetDetailsForm({
           showSiteSelect={hasMultiSiteVisibility(user) && !siteId}
           clientId={formClientId}
           showProductSelect
-          productReadOnly={!!asset?.setupOn}
+          productReadOnly={context !== "admin" && !!asset?.setupOn}
           viewContext={context}
           nestDrawers={nestDrawers}
         />
@@ -184,6 +184,7 @@ export function AssetDetailFormFields({
                   disabled={disabled}
                   readOnly={productReadOnly}
                   className="flex"
+                  viewContext={viewContext}
                 />
               </FormControl>
               <FormMessage />
