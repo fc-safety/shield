@@ -104,7 +104,6 @@ export default function ProductDetails({
                         <Pencil />
                       </Button>
                     }
-                    viewContext={globalAdmin ? "admin" : "user"}
                   />
                 )}
                 {canDelete && (
@@ -425,7 +424,6 @@ function SuppliesTable({
           product={editSupply.data}
           parentProduct={parentProduct}
           trigger={null}
-          viewContext={globalAdmin ? "admin" : "user"}
         />
       )}
       <ConfirmationDialog {...deleteAction} />

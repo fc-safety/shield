@@ -73,7 +73,6 @@ export default function ProductManufacturerDetails({
                 {canUpdate && (
                   <EditManufacturerButton
                     manufacturer={manufacturer}
-                    viewContext={userIsGlobalAdmin ? "admin" : "user"}
                     trigger={
                       <Button variant="secondary" size="icon" type="button">
                         <Pencil />

@@ -1,8 +1,8 @@
 import { isAfter, startOfDay } from "date-fns";
 import { Building2 } from "lucide-react";
 import { useNavigate } from "react-router";
-import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client } from "~/lib/models";
@@ -22,13 +22,12 @@ import { Skeleton } from "../ui/skeleton";
 export default function ClientDetailsCard({
   title = "Client Details",
   client,
-  viewContext,
 }: {
   title?: string;
   client: Client | undefined;
-  viewContext?: ViewContext;
 }) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const canDeleteClient =
     client && client.externalId !== user.clientId && can(user, "delete", "clients");

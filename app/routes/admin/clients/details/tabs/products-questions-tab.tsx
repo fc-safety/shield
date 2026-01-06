@@ -47,7 +47,6 @@ export default function ProductsQuestionsTab({
       productsTotalCount={productsTotalCount}
       questions={questions}
       questionsTotalCount={questionsTotalCount}
-      viewContext="admin"
       readOnly={false}
     />
   );

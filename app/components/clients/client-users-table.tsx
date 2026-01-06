@@ -2,8 +2,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Shield, ShieldOff, SquareAsterisk, UserPen } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import type { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -29,7 +29,6 @@ interface ClientUsersTableProps {
   siteExternalId?: string;
   users: ClientUser[];
   sites: Site[];
-  viewContext?: ViewContext;
 }
 
 export default function ClientUsersTable({
@@ -37,9 +36,9 @@ export default function ClientUsersTable({
   siteExternalId,
   users,
   sites,
-  viewContext,
 }: ClientUsersTableProps) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const canCreateUser = can(user, "create", "users");
   const canUpdateUser = can(user, "update", "users");
 
@@ -225,7 +224,6 @@ export default function ClientUsersTable({
               key="add"
               clientId={clientId}
               siteExternalId={siteExternalId}
-              viewContext={viewContext}
             />
           ) : null,
         ]}
@@ -246,7 +244,6 @@ export default function ClientUsersTable({
           siteExternalId={siteExternalId}
           user={editUser.data ?? undefined}
           onSubmitted={() => editUser.setOpen(false)}
-          viewContext={viewContext}
         />
       </ResponsiveDialog>
       {canUpdateUser && updateRole.data && (
@@ -258,7 +255,6 @@ export default function ClientUsersTable({
           <UpdateUserRoleForm
             user={updateRole.data}
             clientId={clientId}
-            viewContext={viewContext}
           />
           <div className="flex justify-end pt-4">
             <Button type="button" variant="outline" onClick={() => updateRole.setOpen(false)}>

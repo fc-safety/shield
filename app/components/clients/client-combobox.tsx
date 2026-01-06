@@ -1,7 +1,8 @@
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import type { Client, ResultsPage } from "~/lib/models";
 import { buildPath, type QueryParams } from "~/lib/urls";
 import { ResponsiveCombobox } from "../responsive-combobox";
@@ -12,7 +13,6 @@ interface ClientComboboxProps {
   onBlur?: () => void;
   className?: string;
   disabled?: boolean;
-  viewContext?: ViewContext;
   showClear?: boolean;
   nestDrawers?: boolean;
 }
@@ -25,10 +25,10 @@ export default function ClientCombobox({
   onBlur,
   className,
   disabled,
-  viewContext,
   showClear,
   nestDrawers,
 }: ClientComboboxProps) {
+  const viewContext = useViewContext();
   const fetcher = useFetcher<DataOrError<ResultsPage<Client>>>();
 
   const preloadClients = useCallback(() => {

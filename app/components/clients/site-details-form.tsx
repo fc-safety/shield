@@ -6,8 +6,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type ResultsPage, type Site } from "~/lib/models";
@@ -30,7 +31,6 @@ export interface SiteDetailsFormProps {
   parentSiteId?: string;
   onSubmitted?: () => void;
   isSiteGroup?: boolean;
-  viewContext?: ViewContext;
 }
 
 export default function SiteDetailsForm({
@@ -39,9 +39,9 @@ export default function SiteDetailsForm({
   parentSiteId,
   onSubmitted,
   isSiteGroup = false,
-  viewContext = "user",
 }: SiteDetailsFormProps) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const userIsSuperAdmin = isSuperAdmin(user);
 
   const isNew = !site;
@@ -475,7 +475,6 @@ export default function SiteDetailsForm({
                   onValueChange={onChange}
                   onBlur={onBlur}
                   clientId={clientId}
-                  viewContext={viewContext}
                   includeSiteGroups="exclusively"
                   showClear={false}
                 />

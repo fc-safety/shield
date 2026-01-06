@@ -1,6 +1,6 @@
 import { Pencil } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { ViewContext } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { cn } from "~/lib/utils";
 import { Textarea } from "./ui/textarea";
@@ -15,7 +15,6 @@ interface SubmittingTextareaProps {
   isEditing: boolean;
   onEditingChange: (editing: boolean) => void;
   displayClassName?: string;
-  viewContext?: ViewContext;
 }
 
 export default function SubmittingTextarea({
@@ -28,8 +27,8 @@ export default function SubmittingTextarea({
   isEditing,
   onEditingChange,
   displayClassName,
-  viewContext,
 }: SubmittingTextareaProps) {
+  const viewContext = useViewContext();
   const [currentValue, setCurrentValue] = useState(() => value);
   const { submitJson: updateValue, isLoading } = useModalFetcher();
   const textareaRef = useRef<HTMLTextAreaElement>(null);

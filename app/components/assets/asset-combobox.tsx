@@ -1,8 +1,8 @@
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Asset, ResultsPage } from "~/lib/models";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
@@ -20,7 +20,6 @@ interface AssetComboboxProps {
   optionFilter?: (asset: Asset) => boolean;
   optionQueryFilter?: QueryParams;
   disabled?: boolean;
-  viewContext?: ViewContext;
   clientId?: string;
   siteId?: string;
   showClear?: boolean;
@@ -37,13 +36,13 @@ export default function AssetCombobox({
   optionFilter = () => true,
   optionQueryFilter,
   disabled = false,
-  viewContext,
   clientId,
   siteId,
   showClear,
   nestDrawers,
 }: AssetComboboxProps) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const canCreate = useMemo(() => can(user, "create", "assets"), [user]);
 
   const fetcher = useFetcher<ResultsPage<Asset>>();
@@ -129,9 +128,7 @@ export default function AssetCombobox({
           onOpenChange={createNew.setOpen}
           clientId={clientId}
           siteId={siteId}
-          viewContext={viewContext}
           nestDrawers
-          // className="absolute"
         />
       ) : (
         <Dialog open={createNew.open} onOpenChange={createNew.setOpen}>

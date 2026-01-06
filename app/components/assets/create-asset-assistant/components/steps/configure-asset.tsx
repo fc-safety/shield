@@ -1,6 +1,5 @@
 import { Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
-import type { ViewContext } from "~/.server/api-utils";
 import ConfigureAssetForm, {
   type ConfigureAssetFormRef,
 } from "~/components/assets/configure-asset-form";
@@ -15,7 +14,6 @@ export default function StepConfigureAsset({
   onContinue,
   continueLabel,
   onClose,
-  viewContext,
 }: {
   assetId: string;
   questions: AssetQuestion[];
@@ -23,7 +21,6 @@ export default function StepConfigureAsset({
   onContinue?: () => void;
   continueLabel?: string;
   onClose?: () => void;
-  viewContext?: ViewContext;
 }) {
   const [isValid, setIsValid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +55,6 @@ export default function StepConfigureAsset({
       <ConfigureAssetForm
         assetId={assetId}
         questions={questions}
-        viewContext={viewContext}
         onSubmitted={onContinue ?? onClose}
         setIsValid={setIsValid}
         setIsSubmitting={setIsSubmitting}

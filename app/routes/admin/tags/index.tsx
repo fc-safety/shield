@@ -95,7 +95,6 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
               tag={tag}
               asset={tag.asset ?? undefined}
               key={`tag-row-${tag.id}`}
-              viewContext="admin"
             />
           );
         },
@@ -241,7 +240,6 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
         open={editTag.open}
         onOpenChange={editTag.setOpen}
         trigger={null}
-        viewContext="admin"
       />
       <ConfirmationDialog {...deleteAction} />
     </>

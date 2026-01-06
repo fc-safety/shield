@@ -43,7 +43,6 @@ export default function ProductDetails({ loaderData: tag }: Route.ComponentProps
                       <Pencil />
                     </Button>
                   }
-                  viewContext="admin"
                 />
               </div>
             </div>

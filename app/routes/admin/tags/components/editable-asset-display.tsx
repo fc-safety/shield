@@ -1,10 +1,10 @@
 import { CirclePlus } from "lucide-react";
 import { useState } from "react";
 import type z from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, Tag } from "~/lib/models";
 import type { updateTagSchema } from "~/lib/schema";
@@ -16,13 +16,12 @@ type TRegisterForm = z.infer<typeof updateTagSchema>;
 export default function EditableAssetDisplay({
   asset,
   tag,
-  viewContext = "user",
 }: {
   asset?: Pick<Asset, "id" | "name" | "placement" | "location">;
   tag: Pick<Tag, "id" | "serialNumber" | "externalId" | "siteId" | "clientId">;
-  viewContext?: ViewContext;
 }) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const [modalOpen, setModalOpen] = useState(false);
 
   const canCreateTags = can(user, "create", "tags");
@@ -67,7 +66,7 @@ export default function EditableAssetDisplay({
         trigger={null}
         dialogClassName="sm:max-w-2xl"
         children={
-          <div className="h-[32rem]">
+          <div className="h-128">
             <RegisterTagAssistant
               canRegister={canRegiserTag}
               isRegistered={!!asset}
@@ -88,7 +87,6 @@ export default function EditableAssetDisplay({
               clientId={tag.clientId}
               onClose={() => setModalOpen(false)}
               hideInspectionPrompt
-              viewContext={viewContext}
             />
           </div>
         }

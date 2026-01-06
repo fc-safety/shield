@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Pencil, Search } from "lucide-react";
 import type React from "react";
@@ -18,11 +19,12 @@ import { Suspense, useCallback, useEffect, useMemo, useState, type ComponentProp
 import { Await } from "react-router";
 import { useImmer } from "use-immer";
 import { create } from "zustand";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
-import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useProxyImage } from "~/hooks/use-proxy-image";
-import type { Manufacturer, Product, ProductCategory, ResultsPage } from "~/lib/models";
+import type { Manufacturer, Product, ProductCategory } from "~/lib/models";
+import { getProductsQuery } from "~/lib/services/products.service";
 import { cn, dedupById } from "~/lib/utils";
 import { ManufacturerCard } from "./manufacturer-selector";
 import ProductCard from "./product-card";
@@ -35,7 +37,7 @@ interface ProductSelectorProps {
   disabled?: boolean;
   className?: string;
   readOnly?: boolean;
-  viewContext?: ViewContext;
+  clientId?: string;
 }
 
 interface StepsState {
@@ -100,12 +102,15 @@ export default function ProductSelector({
   disabled = false,
   className,
   readOnly = false,
-  viewContext = "user",
+  clientId,
 }: ProductSelectorProps) {
+  const viewContext = useViewContext();
   const [open, setOpen] = useState(false);
-  const { load, data: dataOrError } = useModalFetcher<DataOrError<ResultsPage<Product>>>();
 
-  const products = useMemo(() => dataOrError?.data?.results, [dataOrError]);
+  const { fetchOrThrow } = useAuthenticatedFetch();
+  const { data: products } = useSuspenseQuery(
+    getProductsQuery(fetchOrThrow, { clientId, viewContext })
+  );
 
   const {
     step,
@@ -119,7 +124,7 @@ export default function ProductSelector({
     reset: resetStep,
   } = useSteps();
 
-  const defaultProduct = useMemo(() => products?.find((p) => p.id === value), [products, value]);
+  const defaultProduct = useMemo(() => products.find((p) => p.id === value), [products, value]);
   const defaultSelected = useMemo(
     () =>
       defaultProduct
@@ -134,13 +139,13 @@ export default function ProductSelector({
   const [selected, setSelected] = useImmer<Selections>(DEFAULT_SELECTIONS);
 
   const productCategories = useMemo(
-    () => dedupById((products ?? []).map((p) => p.productCategory)),
+    () => dedupById(products.map((p) => p.productCategory)),
     [products]
   );
   const manufacturers = useMemo(
     () =>
       dedupById(
-        (products ?? [])
+        products
           .filter(
             (p) =>
               !selected.productCategoryId || p.productCategory.id === selected.productCategoryId
@@ -151,7 +156,7 @@ export default function ProductSelector({
   );
   const narrowedProducts = useMemo(
     () =>
-      (products ?? []).filter(
+      products.filter(
         (p) =>
           (!selected.productCategoryId || p.productCategory.id === selected.productCategoryId) &&
           (!selected.manufacturerId || p.manufacturer.id === selected.manufacturerId)
@@ -172,27 +177,6 @@ export default function ProductSelector({
     onBlur,
     open,
   });
-
-  // Preload the products lazily.
-  const handlePreload = useCallback(() => {
-    if (!products) {
-      load({
-        path: "/api/proxy/products",
-        query: {
-          type: "PRIMARY",
-          limit: 10000,
-        },
-        viewContext,
-      });
-    }
-  }, [load]);
-
-  // Preload the products when a value is set.
-  useEffect(() => {
-    if (value) {
-      handlePreload();
-    }
-  }, [value, handlePreload]);
 
   const steps: ProductSelectStep[] = useMemo(
     () => [
@@ -298,14 +282,7 @@ export default function ProductSelector({
         />
       ) : (
         <DialogTrigger asChild>
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled || readOnly}
-            className={cn(className)}
-            onMouseEnter={handlePreload}
-            onTouchStart={handlePreload}
-          >
+          <Button type="button" size="sm" disabled={disabled || readOnly} className={cn(className)}>
             <Search />
             Find Product
           </Button>

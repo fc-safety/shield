@@ -32,7 +32,6 @@ export default function SitesTab({ loaderData: { sites, sitesTotalCount } }: Rou
       sites={sites}
       sitesTotalCount={sitesTotalCount}
       clientId={layoutData?.client?.id}
-      viewContext="user"
     />
   );
 }

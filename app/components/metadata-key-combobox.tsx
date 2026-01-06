@@ -4,6 +4,7 @@ import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useImmer } from "use-immer";
 import type { ViewContext } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { cn } from "~/lib/utils";
@@ -27,7 +28,6 @@ export default function MetadataKeyCombobox({
   className,
   placeholder,
   autoFocus,
-  viewContext = "user",
 }: {
   value: string | undefined;
   onValueChange: (value: string) => void;
@@ -35,8 +35,9 @@ export default function MetadataKeyCombobox({
   className?: string;
   placeholder?: string;
   autoFocus?: boolean;
-  viewContext?: ViewContext;
 }) {
+  const viewContext = useViewContext();
+
   const { fetchOrThrow } = useAuthenticatedFetch();
 
   const [optionsSearchQuery, setOptionsSearchQuery] = useState("");

@@ -51,7 +51,7 @@ export default function ClientSiteGroupsTable({
         searchPlaceholder="Search site groups..."
         actions={[
           canCreateSiteGroup ? (
-            <EditSiteButton key="add" clientId={clientId} isSiteGroup viewContext="admin" />
+            <EditSiteButton key="add" clientId={clientId} isSiteGroup />
           ) : null,
         ]}
       />

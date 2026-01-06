@@ -6,6 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
+import type { ViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { cn } from "~/lib/utils";
 import { getCategoriesByProductQuery } from "../../services/product.service";
@@ -16,15 +17,21 @@ export default function StepSelectCategoryOrExistingAsset({
   onContinue,
   onStepBackward,
   allowSelectExistingAsset,
+  clientId,
+  viewContext,
 }: {
   onStepBackward?: () => void;
   onContinue: (options: { skipToSelectExistingAsset?: boolean }) => void;
   productCategoryId?: string;
   setProductCategoryId: (productCategoryId: string) => void;
   allowSelectExistingAsset?: boolean;
+  clientId?: string;
+  viewContext?: ViewContext;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
-  const { data: categories, isLoading } = useQuery(getCategoriesByProductQuery(fetchOrThrow));
+  const { data: categories, isLoading } = useQuery(
+    getCategoriesByProductQuery(fetchOrThrow, { clientId, viewContext })
+  );
 
   return (
     <Step

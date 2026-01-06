@@ -3,9 +3,10 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, type RefObject } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import type z from "zod";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
 import { Form } from "~/components/ui/form";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, AssetQuestion } from "~/lib/models";
 import { buildConfigureAssetSchema } from "~/lib/schema";
@@ -21,7 +22,6 @@ export default function ConfigureAssetForm({
   assetId,
   questions,
   responses,
-  viewContext,
   onSubmitted,
   setIsValid,
   setIsSubmitting,
@@ -32,7 +32,6 @@ export default function ConfigureAssetForm({
   assetId: string;
   questions: AssetQuestion[];
   responses?: { questionId: string; value: string }[];
-  viewContext?: ViewContext;
   onSubmitted?: () => void;
   setIsValid?: (isValid: boolean) => void;
   setIsSubmitting?: (isSubmitting: boolean) => void;
@@ -40,6 +39,7 @@ export default function ConfigureAssetForm({
   submitButtonText?: string;
   ref?: RefObject<ConfigureAssetFormRef | null>;
 }) {
+  const viewContext = useViewContext();
   const narrowedConfigureAssetSchema = useMemo(() => {
     return buildConfigureAssetSchema(questions);
   }, [questions]);

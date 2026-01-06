@@ -38,7 +38,5 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 export default function AdminClientDetailsLayout({
   loaderData: { client, currentTab },
 }: Route.ComponentProps) {
-  return (
-    <ClientDetailsLayout client={client} viewContext="admin" currentTab={currentTab ?? "sites"} />
-  );
+  return <ClientDetailsLayout client={client} currentTab={currentTab ?? "sites"} />;
 }

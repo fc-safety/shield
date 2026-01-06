@@ -2,11 +2,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import type z from "zod";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
 import { AssetDetailFormFields } from "~/components/assets/asset-details-form";
 import Step from "~/components/assistant/components/step";
 import { Button } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import type { Asset } from "~/lib/models";
@@ -21,7 +22,6 @@ export default function StepAssetDetailsForm({
   onClose,
   assetData,
   setAssetData,
-  viewContext,
   continueLabel,
 }: {
   onStepBackward: () => void;
@@ -29,9 +29,9 @@ export default function StepAssetDetailsForm({
   onClose?: () => void;
   assetData?: Partial<Asset>;
   setAssetData?: (data: Partial<Asset>) => void;
-  viewContext?: ViewContext;
   continueLabel?: string;
 }) {
+  const viewContext = useViewContext();
   const form = useForm({
     resolver: zodResolver(assetData?.id ? updateAssetSchema : createAssetSchema),
     defaultValues: {
@@ -124,7 +124,6 @@ export default function StepAssetDetailsForm({
               form as UseFormReturn<z.infer<typeof createAssetSchema | typeof updateAssetSchema>>
             }
             showActiveToggle={false}
-            viewContext={viewContext}
           />
         </form>
       </Form>

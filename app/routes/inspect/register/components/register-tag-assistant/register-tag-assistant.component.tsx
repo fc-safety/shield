@@ -1,4 +1,3 @@
-import type { ViewContext } from "~/.server/api-utils";
 import { useCreateAssetAssistant } from "~/components/assets/create-asset-assistant/create-asset-assistant.component";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
 import type { Asset, AssetQuestion } from "~/lib/models";
@@ -18,7 +17,6 @@ export default function RegisterTagAssistant({
   setupQuestions,
   onClose,
   hideInspectionPrompt = false,
-  viewContext = "user",
 }: {
   assetId?: string;
   siteId?: string;
@@ -32,7 +30,6 @@ export default function RegisterTagAssistant({
   setupQuestions?: AssetQuestion[] | null;
   onClose?: () => void;
   hideInspectionPrompt?: boolean;
-  viewContext?: ViewContext;
 }) {
   const assistant = useAssistant({
     firstStepId: StepInitial.StepId,
@@ -61,7 +58,6 @@ export default function RegisterTagAssistant({
           clientId,
         },
       },
-      viewContext,
       mode: "register-tag",
       onClose,
     });

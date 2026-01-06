@@ -166,9 +166,7 @@ export default function AllProducts({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center space-x-2">
-            {canCreate && <EditProductButton viewContext={isGlobalAdmin ? "admin" : "user"} />}
-          </div>
+          <div className="flex items-center space-x-2">{canCreate && <EditProductButton />}</div>
         </CardContent>
       </Card>
       <div className="grid grid-cols-[repeat(auto-fit,minmax(28rem,1fr))] gap-4 sm:gap-8">

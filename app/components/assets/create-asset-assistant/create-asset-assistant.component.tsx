@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
-import type { ViewContext } from "~/.server/api-utils";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Asset } from "~/lib/models";
 import { getAssetQuestionsByAssetPropertiesQueryOptions } from "~/lib/services/assets.service";
@@ -30,7 +30,6 @@ export const useCreateAssetAssistant = ({
   state,
   onStepBackward,
   onContinue,
-  viewContext,
   continueLabel,
   mode = "normal",
 }: {
@@ -39,11 +38,12 @@ export const useCreateAssetAssistant = ({
   state?: Partial<CreateAssetAssistantState>;
   onStepBackward?: () => void;
   onContinue?: (data: Asset) => void;
-  viewContext?: ViewContext;
   continueLabel?: string;
   mode?: "normal" | "register-tag";
 }) => {
   const [lastStepId, setLastStepId] = useState(DEFAULT_LAST_STEP_ID);
+
+  const viewContext = useViewContext();
 
   const { user } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
@@ -159,7 +159,6 @@ export const useCreateAssetAssistant = ({
                   draft.assetData = { ...draft.assetData, siteId };
                 })
               }
-              viewContext={viewContext}
               clientIdInputDisabled={!shouldRequireClientId}
               ownershipObjectName="asset"
             />
@@ -167,6 +166,8 @@ export const useCreateAssetAssistant = ({
         case StepSelectCategoryOrExistingAsset.StepId:
           return (
             <StepSelectCategoryOrExistingAsset
+              clientId={createAssetAssistantState.assetData?.clientId}
+              viewContext={viewContext}
               allowSelectExistingAsset={mode === "register-tag"}
               onStepBackward={
                 firstStepId === StepSelectOwnership.StepId
@@ -197,7 +198,6 @@ export const useCreateAssetAssistant = ({
                 context.stepTo(StepSelectCategoryOrExistingAsset.StepId, "backward")
               }
               onContinue={onContinue ?? (() => {})}
-              viewContext={viewContext}
               assetId={createAssetAssistantState.assetData?.id}
               setAssetId={(id) =>
                 setCreateAssetAssistantState((draft) => {
@@ -212,6 +212,8 @@ export const useCreateAssetAssistant = ({
         case StepSelectProduct.StepId:
           return (
             <StepSelectProduct
+              clientId={createAssetAssistantState.assetData?.clientId}
+              viewContext={viewContext}
               onStepBackward={() =>
                 context.stepTo(StepSelectCategoryOrExistingAsset.StepId, "backward")
               }
@@ -251,7 +253,6 @@ export const useCreateAssetAssistant = ({
                   draft.assetData = data;
                 })
               }
-              viewContext={viewContext}
               continueLabel={shouldConfigure ? "Configure" : continueLabel}
             />
           );
@@ -270,7 +271,6 @@ export const useCreateAssetAssistant = ({
               }
               continueLabel={continueLabel}
               onClose={onClose}
-              viewContext={viewContext}
             />
           );
         default:
