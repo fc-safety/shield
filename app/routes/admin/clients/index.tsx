@@ -174,7 +174,7 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
             data={clients.results}
             searchPlaceholder="Search clients..."
             actions={[
-              <EditClientButton key="add" viewContext="admin" />,
+              <EditClientButton key="add" />,
               <MigrationAssistantButton key="migration" onComplete={() => revalidate()} />,
             ]}
             initialState={{

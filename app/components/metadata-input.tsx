@@ -1,7 +1,6 @@
 import { Eraser, Plus } from "lucide-react";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
-import type { ViewContext } from "~/.server/api-utils";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
@@ -9,7 +8,7 @@ import MetadataKeyCombobox from "./metadata-key-combobox";
 import MetadataValueCombobox from "./metadata-value-combobox";
 
 type TMetadataForm = { metadata: Record<string, string> };
-export default function MetadataInput({ viewContext = "user" }: { viewContext?: ViewContext }) {
+export default function MetadataInput() {
   const form = useFormContext<TMetadataForm>();
 
   return (
@@ -79,7 +78,6 @@ export default function MetadataInput({ viewContext = "user" }: { viewContext?: 
                     onValueChange={(v) => updateValue(idx, v)}
                     onBlur={field.onBlur}
                     onDelete={() => deleteMetadata(idx)}
-                    viewContext={viewContext}
                   />
                 ))}
 
@@ -103,7 +101,6 @@ const MetadataInputItem = ({
   onValueChange,
   onBlur,
   onDelete,
-  viewContext = "user",
 }: {
   metadataKey: string;
   metadataValue: string;
@@ -111,7 +108,6 @@ const MetadataInputItem = ({
   onValueChange: (value: string) => void;
   onDelete: () => void;
   onBlur: () => void;
-  viewContext?: ViewContext;
 }) => {
   const [valueBlurred, setValueBlurred] = useState(false);
   return (
@@ -126,7 +122,6 @@ const MetadataInputItem = ({
           }
         }}
         className="min-w-0 flex-1"
-        viewContext={viewContext}
       />
       <MetadataValueCombobox
         autoFocus={false}
@@ -138,7 +133,6 @@ const MetadataInputItem = ({
           setValueBlurred(true);
         }}
         className="min-w-0 flex-1"
-        viewContext={viewContext}
       />
       <Button variant="ghost" size="icon-sm" type="button" onClick={() => onDelete()}>
         <Eraser className="size-4" />

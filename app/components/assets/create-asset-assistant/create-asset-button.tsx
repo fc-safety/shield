@@ -1,7 +1,6 @@
 import { ShieldPlus } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import type { ViewContext } from "~/.server/api-utils";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
 import CreateAssetAssistant from "./create-asset-assistant.component";
@@ -12,7 +11,6 @@ interface Props {
   onOpenChange?: (open: boolean) => void;
   clientId?: string;
   siteId?: string;
-  viewContext?: ViewContext;
   nestDrawers?: boolean;
 }
 
@@ -22,7 +20,6 @@ export default function CreateAssetButton({
   onOpenChange,
   clientId,
   siteId,
-  viewContext,
   nestDrawers,
 }: Props) {
   const [internalOpen, setInternalOpen] = useState(false);
@@ -56,7 +53,6 @@ export default function CreateAssetButton({
           <CreateAssetAssistant
             onClose={() => setOpen(false)}
             state={{ assetData: { clientId, siteId } }}
-            viewContext={viewContext}
           />
         </div>
       )}

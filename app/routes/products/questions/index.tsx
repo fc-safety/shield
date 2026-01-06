@@ -66,8 +66,6 @@ export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
   const { user } = useAuth();
 
   const canManageQuestions = can(user, "manage", "asset-questions");
-  const userIsGlobalAdmin = isGlobalAdmin(user);
-  const viewContext = userIsGlobalAdmin ? "admin" : "user";
 
   return (
     <Card>
@@ -82,7 +80,6 @@ export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
         <AssetQuestionsDataTable
           questions={loaderData.questions}
           readOnly={!canManageQuestions}
-          viewContext={viewContext}
           initialState={{
             sorting: loaderData.sorting,
             columnFilters: loaderData.columnFilters,

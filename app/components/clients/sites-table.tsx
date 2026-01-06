@@ -1,8 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight, Circle, Pencil, PhoneCall, Star, Trash } from "lucide-react";
 import { type To } from "react-router";
-import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -22,7 +22,6 @@ interface SitesTableProps {
   sites: Site[];
   parentSiteId?: string;
   buildToSite: (id: string) => To;
-  viewContext?: ViewContext;
 }
 
 export default function SitesTable({
@@ -30,9 +29,9 @@ export default function SitesTable({
   clientId,
   parentSiteId,
   buildToSite,
-  viewContext,
 }: SitesTableProps) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const canCreateSite = can(user, "create", "sites");
   const canUpdateSite = can(user, "update", "sites");
   const canDeleteSite = can(user, "delete", "sites");
@@ -213,7 +212,6 @@ export default function SitesTable({
               key="add"
               clientId={clientId}
               parentSiteId={parentSiteId}
-              viewContext={viewContext}
             />
           ) : null,
         ]}
@@ -225,7 +223,6 @@ export default function SitesTable({
         open={editSite.open}
         onOpenChange={editSite.setOpen}
         parentSiteId={parentSiteId}
-        viewContext={viewContext}
       />
       <ConfirmationDialog {...deleteAction} />
     </>

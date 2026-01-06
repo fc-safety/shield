@@ -2,6 +2,7 @@ import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ClientDetailsLayout, { type Tab } from "~/components/clients/pages/client-details-layout";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
+import { ViewContextProvider } from "~/contexts/view-context";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
@@ -52,6 +53,8 @@ export default function MyOrganization({
   loaderData: { client, currentTab },
 }: Route.ComponentProps) {
   return (
-    <ClientDetailsLayout client={client} viewContext="user" currentTab={currentTab ?? "sites"} />
+    <ViewContextProvider value="user">
+      <ClientDetailsLayout client={client} currentTab={currentTab ?? "sites"} />
+    </ViewContextProvider>
   );
 }

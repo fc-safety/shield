@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
 import { createManufacturerSchema, updateManufacturerSchema } from "~/lib/schema";
@@ -23,7 +23,6 @@ type TForm = z.infer<typeof createManufacturerSchema | typeof updateManufacturer
 interface ManufacturerDetailsFormProps {
   manufacturer?: Manufacturer;
   onSubmitted?: () => void;
-  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -36,9 +35,9 @@ const FORM_DEFAULTS = {
 export default function ManufacturerDetailsForm({
   manufacturer,
   onSubmitted,
-  viewContext,
 }: ManufacturerDetailsFormProps) {
   const isNew = !manufacturer;
+  const viewContext = useViewContext();
 
   const form = useForm<TForm>({
     resolver: zodResolver(isNew ? createManufacturerSchema : updateManufacturerSchema),

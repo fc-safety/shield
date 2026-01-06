@@ -13,7 +13,8 @@ import { Plus, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { VISIBILITY } from "~/lib/permissions";
@@ -28,7 +29,6 @@ type TForm = z.infer<typeof addUserRoleSchema>;
 interface UpdateUserRoleFormProps {
   user: ClientUser;
   clientId?: string;
-  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -38,8 +38,8 @@ const FORM_DEFAULTS = {
 export default function UpdateUserRoleForm({
   user,
   clientId,
-  viewContext,
 }: UpdateUserRoleFormProps) {
+  const viewContext = useViewContext();
   const form = useForm<TForm>({
     resolver: zodResolver(addUserRoleSchema),
     defaultValues: FORM_DEFAULTS,

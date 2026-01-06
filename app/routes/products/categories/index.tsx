@@ -11,7 +11,6 @@ import {
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { api } from "~/.server/api";
-import type { ViewContext } from "~/.server/api-utils";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ActiveToggle from "~/components/active-toggle";
@@ -27,6 +26,7 @@ import EditProductCategoryButton from "~/components/products/edit-product-catego
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -77,7 +77,6 @@ export default function ProductCategories({
         canCreate={hasCreatePermission && userIsGlobalAdmin}
         canDelete={hasDeletePermission && userIsGlobalAdmin}
         canUpdate={hasUpdatePermission && userIsGlobalAdmin}
-        viewContext={userIsGlobalAdmin ? "admin" : "user"}
       />
       {canReadAnsiCategories && <AnsiCategoriesCard ansiCategories={ansiCategories} />}
     </div>
@@ -93,7 +92,6 @@ function ProductCategoriesCard({
   canUpdate,
   TitleIcon = Shapes,
   showOwner = false,
-  viewContext = "user",
 }: {
   productCategories: ProductCategory[];
   title: string;
@@ -103,8 +101,9 @@ function ProductCategoriesCard({
   canUpdate: boolean;
   TitleIcon?: LucideIcon;
   showOwner?: boolean;
-  viewContext?: ViewContext;
 }) {
+  const viewContext = useViewContext();
+
   const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete product category",
   });
@@ -122,11 +121,7 @@ function ProductCategoriesCard({
           const category = row.original;
           const isActive = getValue() as boolean;
           return canUpdate ? (
-            <ActiveToggle
-              active={isActive}
-              path={getResourcePath(category)}
-              viewContext={viewContext}
-            />
+            <ActiveToggle active={isActive} path={getResourcePath(category)} />
           ) : (
             <ActiveIndicator2 active={isActive} />
           );
@@ -262,11 +257,7 @@ function ProductCategoriesCard({
               ],
             }}
             searchPlaceholder="Search categories..."
-            actions={
-              canCreate
-                ? [<EditProductCategoryButton key="add" viewContext={viewContext} />]
-                : undefined
-            }
+            actions={canCreate ? [<EditProductCategoryButton key="add" />] : undefined}
           />
         </CardContent>
       </Card>

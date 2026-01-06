@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
-import type { ViewContext } from "~/.server/api-utils";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -9,6 +8,7 @@ import {
   navigationMenuTriggerStyle,
 } from "~/components/ui/navigation-menu";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import type { Client } from "~/lib/models";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
@@ -20,14 +20,13 @@ export type Tab = (typeof TABS)[number];
 
 export default function ClientDetailsLayout({
   client,
-  viewContext,
   currentTab,
 }: {
   client: Client;
-  viewContext: ViewContext;
   currentTab: Tab;
 }) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
 
   const tabs = useMemo(
     (): { label: string; value: string; disabled?: boolean; hide?: boolean }[] => [
@@ -66,7 +65,7 @@ export default function ClientDetailsLayout({
               enabled and others disabled to facilitate product demonstrations.
             </div>
           )}
-          <ClientDetailsHeader client={client} viewContext={viewContext} />
+          <ClientDetailsHeader client={client} />
           <NavigationMenu className="flex-none">
             <NavigationMenuList>
               {tabs
@@ -96,7 +95,7 @@ export default function ClientDetailsLayout({
           </NavigationMenu>
           <Outlet />
         </div>
-        <ClientDetailsCard client={client} viewContext={viewContext} />
+        <ClientDetailsCard client={client} />
       </div>
     </div>
   );

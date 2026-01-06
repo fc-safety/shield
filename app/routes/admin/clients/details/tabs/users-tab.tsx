@@ -46,7 +46,6 @@ export default function UsersTab({
       usersTotalCount={usersTotalCount}
       clientId={clientId}
       sites={sites}
-      viewContext="admin"
     />
   );
 }

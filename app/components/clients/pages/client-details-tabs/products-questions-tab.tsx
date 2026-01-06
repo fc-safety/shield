@@ -2,7 +2,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { FireExtinguisher, Pencil, ShieldQuestion, Trash, type LucideIcon } from "lucide-react";
 import { useMemo, type PropsWithChildren } from "react";
 import { toast } from "sonner";
-import type { ViewContext } from "~/.server/api-utils";
 import ResponsiveActions from "~/components/common/responsive-actions";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
@@ -13,6 +12,7 @@ import EditProductButton from "~/components/products/edit-product-button";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -20,7 +20,6 @@ import type { AssetQuestion, Product } from "~/lib/models";
 import { can } from "~/lib/users";
 
 export default function ClientDetailsTabsProductsQuestionsTag({
-  viewContext,
   clientId,
   products,
   productsTotalCount,
@@ -28,7 +27,6 @@ export default function ClientDetailsTabsProductsQuestionsTag({
   questionsTotalCount,
   readOnly = true,
 }: {
-  viewContext: ViewContext;
   clientId?: string;
   products: Product[];
   productsTotalCount?: number;
@@ -36,6 +34,7 @@ export default function ClientDetailsTabsProductsQuestionsTag({
   questionsTotalCount?: number;
   readOnly?: boolean;
 }) {
+  const viewContext = useViewContext();
   return (
     <div className="flex flex-col gap-2">
       <BasicCard
@@ -48,12 +47,7 @@ export default function ClientDetailsTabsProductsQuestionsTag({
         }
         count={productsTotalCount ?? products.length}
       >
-        <ProductsTable
-          products={products}
-          viewContext={viewContext}
-          clientId={clientId}
-          readOnly={readOnly}
-        />
+        <ProductsTable products={products} clientId={clientId} readOnly={readOnly} />
       </BasicCard>
       <BasicCard
         title="Questions"
@@ -65,12 +59,7 @@ export default function ClientDetailsTabsProductsQuestionsTag({
         }
         count={questionsTotalCount ?? questions.length}
       >
-        <QuestionsTable
-          questions={questions}
-          viewContext={viewContext}
-          readOnly={readOnly}
-          clientId={clientId}
-        />
+        <QuestionsTable questions={questions} readOnly={readOnly} clientId={clientId} />
       </BasicCard>
     </div>
   );
@@ -103,16 +92,15 @@ const BasicCard = ({
 
 const ProductsTable = ({
   products,
-  viewContext,
   clientId,
   readOnly = true,
 }: {
   products: Product[];
-  viewContext: ViewContext;
   clientId?: string;
   readOnly?: boolean;
 }) => {
   const { user } = useAuth();
+  const viewContext = useViewContext();
 
   const canCreate = !readOnly && can(user, "create", "products");
   const canUpdate = !readOnly && can(user, "update", "products");
@@ -229,11 +217,7 @@ const ProductsTable = ({
         columns={columns}
         data={products}
         searchPlaceholder="Search products..."
-        actions={
-          canCreate
-            ? [<EditProductButton key="add" viewContext={viewContext} clientId={clientId} />]
-            : undefined
-        }
+        actions={canCreate ? [<EditProductButton key="add" clientId={clientId} />] : undefined}
       />
       {editProduct.data && (
         <EditProductButton
@@ -241,7 +225,6 @@ const ProductsTable = ({
           open={editProduct.open}
           onOpenChange={editProduct.setOpen}
           product={editProduct.data}
-          viewContext={viewContext}
           clientId={clientId}
         />
       )}
@@ -252,21 +235,12 @@ const ProductsTable = ({
 
 const QuestionsTable = ({
   questions,
-  viewContext,
   clientId,
   readOnly = true,
 }: {
   questions: AssetQuestion[];
-  viewContext: ViewContext;
   clientId?: string;
   readOnly?: boolean;
 }) => {
-  return (
-    <AssetQuestionsDataTable
-      questions={questions}
-      viewContext={viewContext}
-      readOnly={readOnly}
-      clientId={clientId}
-    />
-  );
+  return <AssetQuestionsDataTable questions={questions} readOnly={readOnly} clientId={clientId} />;
 };

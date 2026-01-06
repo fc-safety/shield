@@ -27,7 +27,6 @@ export default function AssetsTab({
     <ClientDetailsTabsAssetsTab
       assets={assets}
       assetsTotalCount={assetsTotalCount}
-      viewContext="user"
     />
   );
 }

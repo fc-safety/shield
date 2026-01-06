@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ViewContext } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
@@ -11,7 +11,6 @@ interface SubmittingSelectProps {
   options: Array<{ value: string; label: string }>;
   className?: string;
   placeholder?: string;
-  viewContext?: ViewContext;
 }
 
 export default function SubmittingSelect({
@@ -22,8 +21,8 @@ export default function SubmittingSelect({
   options,
   className,
   placeholder = "Select...",
-  viewContext,
 }: SubmittingSelectProps) {
+  const viewContext = useViewContext();
   const [currentValue, setCurrentValue] = useState(() => value);
   const { submitJson: updateValue, isLoading } = useModalFetcher();
 

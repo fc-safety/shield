@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ViewContext } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { Switch } from "./ui/switch";
 
@@ -9,7 +9,6 @@ interface ActiveToggleProps {
   path: string;
   isActiveKey?: string;
   className?: string;
-  viewContext?: ViewContext;
 }
 
 export default function ActiveToggle({
@@ -18,8 +17,8 @@ export default function ActiveToggle({
   path,
   isActiveKey = "active",
   className,
-  viewContext,
 }: ActiveToggleProps) {
+  const viewContext = useViewContext();
   const [internalActive, setInternalActive] = useState(() => active);
 
   const { submitJson: toggleActive, isLoading } = useModalFetcher();

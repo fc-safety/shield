@@ -4,8 +4,8 @@ import { CardContent, CardHeader, CardTitle } from "../ui/card";
 
 import { Boxes, Pencil, Warehouse } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Site } from "~/lib/models";
@@ -23,13 +23,12 @@ import EditSiteButton from "./edit-site-button";
 export default function SiteDetailsCard({
   isSiteGroup,
   site,
-  viewContext,
 }: {
   isSiteGroup: boolean;
   site: Site;
-  viewContext?: ViewContext;
 }) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const userIsSuperAdmin = isSuperAdmin(user);
   const canUpdateSite = can(user, "update", "sites");
   const canDeleteSite = site.externalId !== user.siteId && can(user, "delete", "sites");
@@ -69,7 +68,6 @@ export default function SiteDetailsCard({
                       </Button>
                     }
                     isSiteGroup={isSiteGroup}
-                    viewContext="admin"
                   />
                 )}
               </div>

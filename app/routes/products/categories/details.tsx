@@ -86,7 +86,6 @@ export default function ProductCategoryDetails({
                   {canUpdate && (
                     <EditProductCategoryButton
                       productCategory={productCategory}
-                      viewContext={userIsGlobalAdmin ? "admin" : "user"}
                       trigger={
                         <Button variant="secondary" size="icon" type="button">
                           <Pencil />
@@ -242,7 +241,6 @@ function ProductsCard({
             productCategory={productCategory}
             manufacturer={manufacturer}
             consumable={consumable}
-            viewContext={userIsGlobalAdmin ? "admin" : "user"}
           />
         )}
       </CardHeader>
@@ -276,7 +274,6 @@ function ProductsCard({
                           <Pencil />
                         </Button>
                       }
-                      viewContext={userIsGlobalAdmin ? "admin" : "user"}
                     />
                   ) : null
                 }

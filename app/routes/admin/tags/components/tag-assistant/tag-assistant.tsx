@@ -85,7 +85,6 @@ export function TagAssistant({
         clientId: tagAssistantState.clientId,
       },
     },
-    viewContext: "admin",
     mode: "register-tag",
   });
 
@@ -200,7 +199,6 @@ export function TagAssistant({
                     draft.siteId = siteId;
                   });
                 }}
-                viewContext="admin"
               />
             );
           case StepSingleRegisterPreselectedAsset.StepId:

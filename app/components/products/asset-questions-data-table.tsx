@@ -6,9 +6,9 @@ import { isAfter } from "date-fns";
 import { Copy, Loader2, Pencil, Trash } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type z from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import ConditionPill from "~/components/assets/condition-pill";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -41,14 +41,12 @@ interface AssetQuestionsDataTableProps
   > {
   questions: AssetQuestion[];
   readOnly?: boolean;
-  viewContext?: ViewContext;
   clientId?: string;
 }
 
 export default function AssetQuestionsDataTable({
   questions,
   readOnly = false,
-  viewContext,
   clientId,
   initialState = {},
   onSortingChange,
@@ -57,6 +55,7 @@ export default function AssetQuestionsDataTable({
   onColumnOrderChange,
   onPaginationChange,
 }: AssetQuestionsDataTableProps) {
+  const viewContext = useViewContext();
   const editQuestion = useOpenData<AssetQuestion>();
   const { labels, prefetchLabels, isLoading, getLabel } = useConditionLabels();
   const { fetchOrThrow } = useAuthenticatedFetch();
@@ -136,7 +135,6 @@ export default function AssetQuestionsDataTable({
             <ActiveToggle
               active={isActive}
               path={getResourcePath(question)}
-              viewContext={viewContext}
             />
           );
         },
@@ -164,7 +162,6 @@ export default function AssetQuestionsDataTable({
               valueKey="type"
               options={typeOptions}
               className="w-[160px]"
-              viewContext={viewContext}
             />
           );
         },
@@ -183,7 +180,6 @@ export default function AssetQuestionsDataTable({
               path={getResourcePath(question)}
               checkedKey="required"
               className="block"
-              viewContext={viewContext}
             />
           );
         },
@@ -205,7 +201,6 @@ export default function AssetQuestionsDataTable({
               isEditing={editingPromptId === question.id}
               onEditingChange={(editing) => setEditingPromptId(editing ? question.id : null)}
               className="w-full"
-              viewContext={viewContext}
               displayClassName="line-clamp-3 min-w-56"
             />
           );
@@ -516,11 +511,7 @@ export default function AssetQuestionsDataTable({
         onColumnOrderChange={onColumnOrderChange}
         onPaginationChange={onPaginationChange}
         getRowId={(row) => row.id}
-        actions={
-          readOnly
-            ? []
-            : [<EditAssetQuestionButton key="add" viewContext={viewContext} clientId={clientId} />]
-        }
+        actions={readOnly ? [] : [<EditAssetQuestionButton key="add" clientId={clientId} />]}
         filters={({ table }) => [
           {
             column: table.getColumn("active"),
@@ -597,7 +588,6 @@ export default function AssetQuestionsDataTable({
         trigger={null}
         open={editQuestion.open}
         onOpenChange={editQuestion.setOpen}
-        viewContext={viewContext}
         clientId={clientId}
       />
     </>

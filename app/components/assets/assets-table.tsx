@@ -2,7 +2,6 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, Pencil, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
-import type { ViewContext } from "~/.server/api-utils";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -10,6 +9,7 @@ import { DataTable, type DataTableProps } from "~/components/data-table/data-tab
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -28,7 +28,6 @@ import EditableTagDisplay from "./editable-tag-display";
 export default function AssetsTable({
   assets,
   clientId,
-  viewContext,
   toDetailsRoute,
   initialState,
   onSortingChange,
@@ -39,7 +38,6 @@ export default function AssetsTable({
 }: {
   assets: Asset[];
   clientId?: string;
-  viewContext?: ViewContext;
   toDetailsRoute?: (asset: Asset) => string;
 } & Pick<
   DataTableProps<Asset, any>,
@@ -51,6 +49,7 @@ export default function AssetsTable({
   | "onPaginationChange"
 >) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const canCreate = can(user, "create", "assets");
   const canDelete = can(user, "delete", "assets");
   const canEdit = can(user, "update", "assets");
@@ -102,7 +101,6 @@ export default function AssetsTable({
             <ActiveToggle
               active={isActive}
               path={getResourcePath(asset)}
-              viewContext={viewContext}
             />
           );
         },
@@ -406,11 +404,7 @@ export default function AssetsTable({
             title: "Site",
           },
         ]}
-        actions={
-          canCreate
-            ? [<CreateAssetButton key="add" clientId={clientId} viewContext={viewContext} />]
-            : []
-        }
+        actions={canCreate ? [<CreateAssetButton key="add" clientId={clientId} />] : []}
       />
       <ConfirmationDialog {...deleteAction} />
       {canEdit && editAsset.data && (
@@ -423,7 +417,6 @@ export default function AssetsTable({
           <AssetDetailsForm
             asset={editAsset.data}
             onSubmitted={() => editAsset.setOpen(false)}
-            context={viewContext}
             clientId={clientId}
           />
         </ResponsiveDialog>

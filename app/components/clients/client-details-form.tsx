@@ -7,7 +7,6 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import { CopyableInput } from "~/components/copyable-input";
 import LegacyIdField from "~/components/ui-custom/forms/legacy-id-field";
 import { Field, FieldError, FieldLabel } from "~/components/ui/field";
@@ -16,6 +15,7 @@ import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
 import { createClientSchema, updateClientSchema } from "~/lib/schema";
@@ -27,7 +27,6 @@ type TForm = z.infer<typeof createClientSchema | typeof updateClientSchema>;
 interface ClientDetailsFormProps {
   client?: Client;
   onSubmitted?: () => void;
-  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -51,12 +50,9 @@ const FORM_DEFAULTS = {
   defaultInspectionCycle: 30,
 } satisfies TForm;
 
-export default function ClientDetailsForm({
-  client,
-  onSubmitted,
-  viewContext,
-}: ClientDetailsFormProps) {
+export default function ClientDetailsForm({ client, onSubmitted }: ClientDetailsFormProps) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const userIsGlobalAdmin = isGlobalAdmin(user);
 
   const isNew = !client;
