@@ -8,10 +8,10 @@ import {
   navigationMenuTriggerStyle,
 } from "~/components/ui/navigation-menu";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import type { Client } from "~/lib/models";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
-import { useViewContext } from "~/lib/view-context";
 import ClientDetailsCard from "../client-details-card";
 import ClientDetailsHeader from "../client-details-header";
 

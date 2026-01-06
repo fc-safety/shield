@@ -9,6 +9,7 @@ import { DataTable, type DataTableProps } from "~/components/data-table/data-tab
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -17,7 +18,6 @@ import { getAssetAlertsStatus, getAssetInspectionStatus } from "~/lib/model-util
 import type { Asset, ProductCategory } from "~/lib/models";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
-import { useViewContext } from "~/lib/view-context";
 import ActiveToggle from "../active-toggle";
 import ResponsiveActions from "../common/responsive-actions";
 import { ResponsiveDialog } from "../responsive-dialog";
@@ -390,11 +390,7 @@ export default function AssetsTable({
             title: "Site",
           },
         ]}
-        actions={
-          canCreate
-            ? [<CreateAssetButton key="add" clientId={clientId} />]
-            : []
-        }
+        actions={canCreate ? [<CreateAssetButton key="add" clientId={clientId} />] : []}
       />
       <ConfirmationDialog {...deleteAction} />
       {canEdit && editAsset.data && (

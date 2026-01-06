@@ -12,12 +12,12 @@ import EditProductButton from "~/components/products/edit-product-button";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AssetQuestion, Product } from "~/lib/models";
 import { can } from "~/lib/users";
-import { useViewContext } from "~/lib/view-context";
 
 export default function ClientDetailsTabsProductsQuestionsTag({
   clientId,
@@ -47,11 +47,7 @@ export default function ClientDetailsTabsProductsQuestionsTag({
         }
         count={productsTotalCount ?? products.length}
       >
-        <ProductsTable
-          products={products}
-          clientId={clientId}
-          readOnly={readOnly}
-        />
+        <ProductsTable products={products} clientId={clientId} readOnly={readOnly} />
       </BasicCard>
       <BasicCard
         title="Questions"
@@ -63,11 +59,7 @@ export default function ClientDetailsTabsProductsQuestionsTag({
         }
         count={questionsTotalCount ?? questions.length}
       >
-        <QuestionsTable
-          questions={questions}
-          readOnly={readOnly}
-          clientId={clientId}
-        />
+        <QuestionsTable questions={questions} readOnly={readOnly} clientId={clientId} />
       </BasicCard>
     </div>
   );
@@ -255,11 +247,5 @@ const QuestionsTable = ({
   clientId?: string;
   readOnly?: boolean;
 }) => {
-  return (
-    <AssetQuestionsDataTable
-      questions={questions}
-      readOnly={readOnly}
-      clientId={clientId}
-    />
-  );
+  return <AssetQuestionsDataTable questions={questions} readOnly={readOnly} clientId={clientId} />;
 };

@@ -19,7 +19,6 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
 import { can } from "~/lib/users";
 import { beautifyPhone, capitalize } from "~/lib/utils";
-import { ViewContextProvider } from "~/lib/view-context";
 import type { Route } from "./+types/index";
 import MigrationAssistantButton from "./components/migration-assistant/migration-assistant-button";
 
@@ -162,7 +161,7 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
   );
 
   return (
-    <ViewContextProvider value="admin">
+    <>
       <Card>
         <CardHeader>
           <CardTitle>
@@ -212,6 +211,6 @@ export default function ClientsIndex({ loaderData: clients }: Route.ComponentPro
         </CardContent>
       </Card>
       <ConfirmationDialog {...deleteAction} />
-    </ViewContextProvider>
+    </>
   );
 }

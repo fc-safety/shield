@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import type z from "zod";
 import ConditionPill from "~/components/assets/condition-pill";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -18,7 +19,6 @@ import { AssetQuestionTypes } from "~/lib/models";
 import type { createAssetQuestionSchema } from "~/lib/schema";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { can } from "~/lib/users";
-import { useViewContext } from "~/lib/view-context";
 import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
 import EditAssetQuestionButton from "../assets/asset-question-details-form/edit-asset-question-button";
@@ -515,11 +515,7 @@ export default function AssetQuestionsDataTable({
         onColumnOrderChange={onColumnOrderChange}
         onPaginationChange={onPaginationChange}
         getRowId={(row) => row.id}
-        actions={
-          readOnly
-            ? []
-            : [<EditAssetQuestionButton key="add" clientId={clientId} />]
-        }
+        actions={readOnly ? [] : [<EditAssetQuestionButton key="add" clientId={clientId} />]}
         filters={({ table }) => [
           {
             column: table.getColumn("active"),

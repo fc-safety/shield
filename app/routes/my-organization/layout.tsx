@@ -2,7 +2,7 @@ import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ClientDetailsLayout, { type Tab } from "~/components/clients/pages/client-details-layout";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
-import { ViewContextProvider } from "~/lib/view-context";
+import { ViewContextProvider } from "~/contexts/view-context";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 

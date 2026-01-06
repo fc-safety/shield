@@ -4,11 +4,11 @@ import type z from "zod";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, Tag } from "~/lib/models";
 import type { updateTagSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
-import { useViewContext } from "~/lib/view-context";
 import RegisterTagAssistant from "~/routes/inspect/register/components/register-tag-assistant/register-tag-assistant.component";
 
 type TRegisterForm = z.infer<typeof updateTagSchema>;

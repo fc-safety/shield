@@ -21,7 +21,6 @@ import { useOpenData } from "~/hooks/use-open-data";
 import type { Tag } from "~/lib/models";
 import { can } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
-import { ViewContextProvider } from "~/lib/view-context";
 import type { Route } from "./+types/index";
 import EditableAssetDisplay from "./components/editable-asset-display";
 import TagAssistantButton from "./components/tag-assistant/tag-assistant-button";
@@ -197,7 +196,7 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
   );
 
   return (
-    <ViewContextProvider value="admin">
+    <>
       <Card>
         <CardHeader>
           <CardTitle>
@@ -243,6 +242,6 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
         trigger={null}
       />
       <ConfirmationDialog {...deleteAction} />
-    </ViewContextProvider>
+    </>
   );
 }

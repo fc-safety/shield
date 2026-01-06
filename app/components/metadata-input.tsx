@@ -79,7 +79,6 @@ export default function MetadataInput({ viewContext = "user" }: { viewContext?: 
                     onValueChange={(v) => updateValue(idx, v)}
                     onBlur={field.onBlur}
                     onDelete={() => deleteMetadata(idx)}
-                    viewContext={viewContext}
                   />
                 ))}
 
@@ -103,7 +102,6 @@ const MetadataInputItem = ({
   onValueChange,
   onBlur,
   onDelete,
-  viewContext = "user",
 }: {
   metadataKey: string;
   metadataValue: string;
@@ -111,7 +109,6 @@ const MetadataInputItem = ({
   onValueChange: (value: string) => void;
   onDelete: () => void;
   onBlur: () => void;
-  viewContext?: ViewContext;
 }) => {
   const [valueBlurred, setValueBlurred] = useState(false);
   return (
@@ -126,7 +123,6 @@ const MetadataInputItem = ({
           }
         }}
         className="min-w-0 flex-1"
-        viewContext={viewContext}
       />
       <MetadataValueCombobox
         autoFocus={false}
@@ -138,7 +134,6 @@ const MetadataInputItem = ({
           setValueBlurred(true);
         }}
         className="min-w-0 flex-1"
-        viewContext={viewContext}
       />
       <Button variant="ghost" size="icon-sm" type="button" onClick={() => onDelete()}>
         <Eraser className="size-4" />

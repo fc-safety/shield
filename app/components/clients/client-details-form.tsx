@@ -17,13 +17,13 @@ import { Form } from "react-router";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
 import { createClientSchema, updateClientSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import { isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
-import { useViewContext } from "~/lib/view-context";
 import { CopyableInput } from "../copyable-input";
 import LegacyIdField from "../legacy-id-field";
 import { Label } from "../ui/label";
@@ -57,10 +57,7 @@ const FORM_DEFAULTS = {
   defaultInspectionCycle: 30,
 } satisfies TForm;
 
-export default function ClientDetailsForm({
-  client,
-  onSubmitted,
-}: ClientDetailsFormProps) {
+export default function ClientDetailsForm({ client, onSubmitted }: ClientDetailsFormProps) {
   const { user } = useAuth();
   const viewContext = useViewContext();
   const userIsGlobalAdmin = isGlobalAdmin(user);

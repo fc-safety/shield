@@ -6,11 +6,11 @@ import { guard } from "~/.server/guard";
 import AssetQuestionsDataTable from "~/components/products/asset-questions-data-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
+import { ViewContextProvider } from "~/contexts/view-context";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { getQueryPersistedState, getQueryStatePersistor } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParams } from "~/lib/utils";
-import { ViewContextProvider } from "~/lib/view-context";
 import type { Route } from "./+types/index";
 
 export const handle = {

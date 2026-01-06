@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
+import { ViewContextProvider } from "~/contexts/view-context";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
@@ -18,5 +19,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export default function Admin() {
-  return <Outlet />;
+  return (
+    <ViewContextProvider value="admin">
+      <Outlet />
+    </ViewContextProvider>
+  );
 }
