@@ -4,9 +4,9 @@ import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import type { Asset } from "~/lib/models";
@@ -38,7 +38,6 @@ interface AssetDetailsFormProps {
   onSubmitted?: () => void;
   clientId?: string;
   siteId?: string;
-  context?: ViewContext;
   nestDrawers?: boolean;
 }
 
@@ -55,10 +54,10 @@ export default function AssetDetailsForm({
   onSubmitted,
   clientId,
   siteId,
-  context,
   nestDrawers,
 }: AssetDetailsFormProps) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
 
   const isNew = !asset;
 
@@ -106,7 +105,7 @@ export default function AssetDetailsForm({
     submit(serializeFormJson(data), {
       path: "/api/proxy/assets",
       id: asset?.id,
-      viewContext: context,
+      viewContext,
     });
   };
 
@@ -121,12 +120,11 @@ export default function AssetDetailsForm({
       >
         <AssetDetailFormFields
           form={form}
-          showClientSelect={isGlobalAdmin(user) && context === "admin" && !clientId}
+          showClientSelect={isGlobalAdmin(user) && viewContext === "admin" && !clientId}
           showSiteSelect={hasMultiSiteVisibility(user) && !siteId}
           clientId={formClientId}
           showProductSelect
-          productReadOnly={context !== "admin" && !!asset?.setupOn}
-          viewContext={context}
+          productReadOnly={viewContext !== "admin" && !!asset?.setupOn}
           nestDrawers={nestDrawers}
         />
         <Button
@@ -148,7 +146,6 @@ export function AssetDetailFormFields({
   showSiteSelect = false,
   showProductSelect = false,
   clientId,
-  viewContext = "user",
   productReadOnly = false,
   nestDrawers = false,
 }: {
@@ -158,12 +155,13 @@ export function AssetDetailFormFields({
   showSiteSelect?: boolean;
   showProductSelect?: boolean;
   clientId?: string;
-  viewContext?: ViewContext;
   productReadOnly?: boolean;
   nestDrawers?: boolean;
 }) {
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
+  const viewContext = useViewContext();
+
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
