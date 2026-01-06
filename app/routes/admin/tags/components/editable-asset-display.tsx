@@ -66,7 +66,7 @@ export default function EditableAssetDisplay({
         trigger={null}
         dialogClassName="sm:max-w-2xl"
         children={
-          <div className="h-[32rem]">
+          <div className="h-128">
             <RegisterTagAssistant
               canRegister={canRegiserTag}
               isRegistered={!!asset}
@@ -87,7 +87,6 @@ export default function EditableAssetDisplay({
               clientId={tag.clientId}
               onClose={() => setModalOpen(false)}
               hideInspectionPrompt
-              viewContext={viewContext}
             />
           </div>
         }

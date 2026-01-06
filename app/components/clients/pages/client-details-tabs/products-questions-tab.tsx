@@ -217,11 +217,7 @@ const ProductsTable = ({
         columns={columns}
         data={products}
         searchPlaceholder="Search products..."
-        actions={
-          canCreate
-            ? [<EditProductButton key="add" viewContext={viewContext} clientId={clientId} />]
-            : undefined
-        }
+        actions={canCreate ? [<EditProductButton key="add" clientId={clientId} />] : undefined}
       />
       {editProduct.data && (
         <EditProductButton
@@ -229,7 +225,6 @@ const ProductsTable = ({
           open={editProduct.open}
           onOpenChange={editProduct.setOpen}
           product={editProduct.data}
-          viewContext={viewContext}
           clientId={clientId}
         />
       )}

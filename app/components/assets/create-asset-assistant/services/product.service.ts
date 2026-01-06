@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import type { ViewContext } from "~/contexts/view-context";
 import type { Product, ResultsPage } from "~/lib/models";
 import { buildPath } from "~/lib/urls";
 import { dedupById } from "~/lib/utils";
@@ -6,6 +7,8 @@ import { dedupById } from "~/lib/utils";
 interface GetProductsOptions {
   productCategoryId?: string;
   manufacturerId?: string;
+  clientId?: string;
+  viewContext?: ViewContext;
 }
 
 export const getPrimaryProductsFn = async (
@@ -18,7 +21,9 @@ export const getPrimaryProductsFn = async (
       type: "PRIMARY",
       productCategory: options.productCategoryId ? { id: options.productCategoryId } : undefined,
       manufacturer: options.manufacturerId ? { id: options.manufacturerId } : undefined,
-    })
+      ...(options.clientId ? { OR: [{ clientId: options.clientId }, { clientId: "_NULL" }] } : {}),
+    }),
+    { headers: { "x-view-context": options.viewContext ?? "user" } }
   )
     .then((r) => r.json() as Promise<ResultsPage<Product>>)
     .then((r) => r.results);

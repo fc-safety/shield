@@ -6,7 +6,6 @@ import { guard } from "~/.server/guard";
 import AssetQuestionsDataTable from "~/components/products/asset-questions-data-table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { ViewContextProvider } from "~/contexts/view-context";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { getQueryPersistedState, getQueryStatePersistor } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
@@ -67,34 +66,30 @@ export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
   const { user } = useAuth();
 
   const canManageQuestions = can(user, "manage", "asset-questions");
-  const userIsGlobalAdmin = isGlobalAdmin(user);
-  const viewContext = userIsGlobalAdmin ? "admin" : "user";
 
   return (
-    <ViewContextProvider value={viewContext}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldQuestion className="h-5 w-5" />
-            Global Asset Questions
-          </CardTitle>
-          <CardDescription>Questions presented to all clients.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AssetQuestionsDataTable
-            questions={loaderData.questions}
-            readOnly={!canManageQuestions}
-            initialState={{
-              sorting: loaderData.sorting,
-              columnFilters: loaderData.columnFilters,
-              pagination: loaderData.pagination,
-            }}
-            onSortingChange={getQueryStatePersistor("sorting")}
-            onColumnFiltersChange={getQueryStatePersistor("columnFilters")}
-            onPaginationChange={getQueryStatePersistor("pagination")}
-          />
-        </CardContent>
-      </Card>
-    </ViewContextProvider>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ShieldQuestion className="h-5 w-5" />
+          Global Asset Questions
+        </CardTitle>
+        <CardDescription>Questions presented to all clients.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AssetQuestionsDataTable
+          questions={loaderData.questions}
+          readOnly={!canManageQuestions}
+          initialState={{
+            sorting: loaderData.sorting,
+            columnFilters: loaderData.columnFilters,
+            pagination: loaderData.pagination,
+          }}
+          onSortingChange={getQueryStatePersistor("sorting")}
+          onColumnFiltersChange={getQueryStatePersistor("columnFilters")}
+          onPaginationChange={getQueryStatePersistor("pagination")}
+        />
+      </CardContent>
+    </Card>
   );
 }

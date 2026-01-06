@@ -3,7 +3,6 @@ import { CornerDownRight, Factory, Trash, type LucideIcon } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router";
 import { api } from "~/.server/api";
-import type { ViewContext } from "~/.server/api-utils";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import ActiveToggle from "~/components/active-toggle";
 import ResponsiveActions from "~/components/common/responsive-actions";
@@ -15,6 +14,7 @@ import CustomTag from "~/components/products/custom-tag";
 import NewManufacturerButton from "~/components/products/edit-manufacturer-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
@@ -50,7 +50,6 @@ export default function ProductManufacturers({
         canCreate={hasCreatePermission && userIsGlobalAdmin}
         canDelete={hasDeletePermission && userIsGlobalAdmin}
         canUpdate={hasUpdatePermission && userIsGlobalAdmin}
-        viewContext={userIsGlobalAdmin ? "admin" : "user"}
       />
     </div>
   );
@@ -65,7 +64,6 @@ function ManufacturersCard({
   TitleIcon = Factory,
   showOwner = false,
   canUpdate,
-  viewContext = "user",
 }: {
   manufacturers: Manufacturer[];
   title: string;
@@ -75,8 +73,9 @@ function ManufacturersCard({
   TitleIcon?: LucideIcon;
   showOwner?: boolean;
   canUpdate: boolean;
-  viewContext?: ViewContext;
 }) {
+  const viewContext = useViewContext();
+
   const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete manufacturer",
   });
@@ -94,10 +93,7 @@ function ManufacturersCard({
           const category = row.original;
           const isActive = getValue() as boolean;
           return canUpdate ? (
-            <ActiveToggle
-              active={isActive}
-              path={getResourcePath(category)}
-            />
+            <ActiveToggle active={isActive} path={getResourcePath(category)} />
           ) : (
             <ActiveIndicator2 active={isActive} />
           );
@@ -213,11 +209,7 @@ function ManufacturersCard({
               ],
             }}
             searchPlaceholder="Search manufacturers..."
-            actions={
-              canCreate
-                ? [<NewManufacturerButton key="add" viewContext={viewContext} />]
-                : undefined
-            }
+            actions={canCreate ? [<NewManufacturerButton key="add" />] : undefined}
           />
         </CardContent>
       </Card>

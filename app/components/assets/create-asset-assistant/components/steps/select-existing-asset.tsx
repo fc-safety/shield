@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, Shapes, SquareSlash } from "lucide-react";
 import { useMemo, type ComponentProps } from "react";
-import type { ViewContext } from "~/.server/api-utils";
 import Step from "~/components/assistant/components/step";
 import Icon from "~/components/icons/icon";
 import { ProductImage } from "~/components/products/product-card";
@@ -17,6 +16,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
+import { useViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useProxyImage } from "~/hooks/use-proxy-image";
 import type { Asset } from "~/lib/models";
@@ -30,7 +30,6 @@ export default function StepSelectExistingAsset({
   setAssetId,
   siteId,
   clientId,
-  viewContext = "user",
   continueLabel,
 }: {
   onStepBackward: () => void;
@@ -39,9 +38,10 @@ export default function StepSelectExistingAsset({
   setAssetId: (assetId: string) => void;
   siteId?: string;
   clientId?: string;
-  viewContext?: ViewContext;
   continueLabel?: string;
 }) {
+  const viewContext = useViewContext();
+
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { data: assets, isLoading } = useQuery(
     getAssetsQuery(fetchOrThrow, { siteId, clientId, context: viewContext, noTag: true })

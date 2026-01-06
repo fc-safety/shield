@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ProductCategory } from "~/lib/models";
 import { createProductCategorySchema, updateProductCategorySchema } from "~/lib/schema";
@@ -25,7 +25,6 @@ type TForm = z.infer<typeof createProductCategorySchema | typeof updateProductCa
 interface ProductCategoryDetailsFormProps {
   productCategory?: ProductCategory;
   onSubmitted?: () => void;
-  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -41,9 +40,9 @@ const FORM_DEFAULTS = {
 export default function ProductCategoryDetailsForm({
   productCategory,
   onSubmitted,
-  viewContext,
 }: ProductCategoryDetailsFormProps) {
   const isNew = !productCategory;
+  const viewContext = useViewContext();
 
   const form = useForm<TForm>({
     resolver: zodResolver(isNew ? createProductCategorySchema : updateProductCategorySchema),

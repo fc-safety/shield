@@ -10,8 +10,8 @@ import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import type { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
@@ -38,7 +38,6 @@ export interface ProductDetailsFormProps {
   productCategory?: ProductCategory;
   manufacturer?: Manufacturer;
   consumable?: boolean;
-  viewContext?: ViewContext;
   clientId?: string;
 }
 
@@ -49,10 +48,11 @@ export default function ProductDetailsForm({
   productCategory,
   manufacturer,
   consumable = false,
-  viewContext,
   clientId,
 }: ProductDetailsFormProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const viewContext = useViewContext();
 
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
@@ -420,9 +420,7 @@ export default function ProductDetailsForm({
               style={{ overflow: "hidden" }}
             >
               {" "}
-              <div className="space-y-4 pt-6">
-                {userIsGlobalAdmin && <MetadataInputField />}
-              </div>
+              <div className="space-y-4 pt-6">{userIsGlobalAdmin && <MetadataInputField />}</div>
             </motion.div>
           </div>
         )}

@@ -25,11 +25,11 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import ActiveToggleFormInput from "~/components/active-toggle-form-input";
 import HelpPopover from "~/components/help-popover";
 import LegacyIdField from "~/components/legacy-id-field";
 import QuestionResponseTypeDisplay from "~/components/products/question-response-type-display";
+import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { RESPONSE_TYPE_LABELS } from "~/lib/asset-questions/constants";
 import { ASSET_QUESTION_TONE_OPTIONS, ASSET_QUESTION_TONES } from "~/lib/constants";
@@ -62,18 +62,16 @@ type TForm = z.infer<typeof updateAssetQuestionSchema | typeof createAssetQuesti
 export interface AssetQuestionDetailFormProps {
   assetQuestion?: AssetQuestion;
   onSubmitted?: () => void;
-  viewContext?: ViewContext;
   clientId?: string;
 }
 export default function AssetQuestionDetailForm({
   ...passthroughProps
 }: AssetQuestionDetailFormProps) {
-  const { assetQuestion, clientId, viewContext } = passthroughProps;
+  const { assetQuestion, clientId } = passthroughProps;
   return (
     <AssetQuestionDetailFormProvider
       action={assetQuestion ? "update" : "create"}
       clientId={clientId}
-      viewContext={viewContext}
     >
       <AssetQuestionDetailsFormContent {...passthroughProps} />
     </AssetQuestionDetailFormProvider>
@@ -83,9 +81,10 @@ export default function AssetQuestionDetailForm({
 function AssetQuestionDetailsFormContent({
   assetQuestion,
   onSubmitted,
-  viewContext,
   clientId,
 }: AssetQuestionDetailFormProps) {
+  const viewContext = useViewContext();
+
   const isNew = !assetQuestion;
   const { closeSidepanel } = useAssetQuestionDetailFormContext();
 

@@ -8,6 +8,7 @@ import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
 import URLFavicon from "~/components/url-favicon";
+import type { ViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useProxyImage } from "~/hooks/use-proxy-image";
 import type { Product } from "~/lib/models";
@@ -18,18 +19,22 @@ export default function StepSelectProduct({
   productId,
   setProductId,
   productCategoryId,
+  clientId,
+  viewContext,
   onStepBackward,
   onContinue,
 }: {
   productId?: string;
   setProductId: (productId: string) => void;
   productCategoryId?: string;
+  clientId?: string;
+  viewContext?: ViewContext;
   onStepBackward: () => void;
   onContinue: () => void;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { data: products, isLoading } = useQuery(
-    getProductsQuery(fetchOrThrow, { productCategoryId })
+    getProductsQuery(fetchOrThrow, { productCategoryId, clientId, viewContext })
   );
 
   const productsByManufacturer = useMemo(() => {
