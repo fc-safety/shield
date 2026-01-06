@@ -91,6 +91,7 @@ export default function AssetsTable({
       {
         accessorKey: "active",
         header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        filterFn: "defaultIncludes" as any,
         cell: ({ getValue, row }) => {
           const asset = row.original;
           const isActive = getValue() as boolean;
@@ -330,6 +331,20 @@ export default function AssetsTable({
         onColumnOrderChange={onColumnOrderChange}
         onPaginationChange={onPaginationChange}
         filters={({ table }) => [
+          {
+            column: table.getColumn("active"),
+            options: [
+              {
+                label: "Active",
+                value: true,
+              },
+              {
+                label: "Inactive",
+                value: false,
+              },
+            ],
+            title: "Status",
+          },
           {
             column: table.getColumn("category"),
             options: allCategories.map((category) => ({
