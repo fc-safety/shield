@@ -3,7 +3,7 @@ import { CopyPlus, Loader2, Pencil, ShieldCheck, Warehouse } from "lucide-react"
 import { FormProvider, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
-import type { DataOrError, ViewContext } from "~/.server/api-utils";
+import type { DataOrError } from "~/.server/api-utils";
 import ActiveIndicatorBadge from "~/components/active-indicator-badge";
 import EditClientButton from "~/components/clients/edit-client-button";
 import DisplayAddress from "~/components/display-address";
@@ -15,6 +15,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Client } from "~/lib/models";
 import { can, isGlobalAdmin } from "~/lib/users";
+import { useViewContext } from "~/lib/view-context";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Badge } from "../ui/badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../ui/form";
@@ -22,12 +23,11 @@ import { Input } from "../ui/input";
 
 export default function ClientDetailsHeader({
   client,
-  viewContext = "user",
 }: {
   client: Client;
-  viewContext?: ViewContext;
 }) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const canEditClient = can(user, "update", "clients");
   const duplicateDemoClient = useOpenData();
@@ -72,7 +72,6 @@ export default function ClientDetailsHeader({
                       <Pencil />
                     </Button>
                   }
-                  viewContext="admin"
                 />
               )}
               {userIsGlobalAdmin && client?.demoMode && (

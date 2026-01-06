@@ -32,7 +32,6 @@ export default function UsersTab({ loaderData: { users, usersTotalCount } }: Rou
       usersTotalCount={usersTotalCount}
       sites={layoutData?.sites ?? []}
       clientId={layoutData?.client?.id}
-      viewContext="user"
     />
   );
 }

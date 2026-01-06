@@ -1,7 +1,6 @@
 import { CirclePlus } from "lucide-react";
 import { useState } from "react";
 import type z from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
@@ -9,6 +8,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, Tag } from "~/lib/models";
 import type { updateTagSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
+import { useViewContext } from "~/lib/view-context";
 import RegisterTagAssistant from "~/routes/inspect/register/components/register-tag-assistant/register-tag-assistant.component";
 
 type TRegisterForm = z.infer<typeof updateTagSchema>;
@@ -16,13 +16,12 @@ type TRegisterForm = z.infer<typeof updateTagSchema>;
 export default function EditableAssetDisplay({
   asset,
   tag,
-  viewContext = "user",
 }: {
   asset?: Pick<Asset, "id" | "name" | "placement" | "location">;
   tag: Pick<Tag, "id" | "serialNumber" | "externalId" | "siteId" | "clientId">;
-  viewContext?: ViewContext;
 }) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const [modalOpen, setModalOpen] = useState(false);
 
   const canCreateTags = can(user, "create", "tags");

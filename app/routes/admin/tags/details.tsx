@@ -9,6 +9,7 @@ import DataList from "~/components/data-list";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
+import { ViewContextProvider } from "~/lib/view-context";
 import type { Route } from "./+types/details";
 
 export const handle = {
@@ -28,27 +29,27 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 
 export default function ProductDetails({ loaderData: tag }: Route.ComponentProps) {
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
-      <Card className="h-max">
-        <CardHeader>
-          <CardTitle>
-            <Nfc />
-            <div className="inline-flex items-center gap-4">
-              Tag Details
-              <div className="flex gap-2">
-                <EditTagButton
-                  tag={tag}
-                  trigger={
-                    <Button variant="secondary" size="icon" type="button">
-                      <Pencil />
-                    </Button>
-                  }
-                  viewContext="admin"
-                />
+    <ViewContextProvider value="admin">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(450px,1fr))] gap-2 sm:gap-4">
+        <Card className="h-max">
+          <CardHeader>
+            <CardTitle>
+              <Nfc />
+              <div className="inline-flex items-center gap-4">
+                Tag Details
+                <div className="flex gap-2">
+                  <EditTagButton
+                    tag={tag}
+                    trigger={
+                      <Button variant="secondary" size="icon" type="button">
+                        <Pencil />
+                      </Button>
+                    }
+                  />
+                </div>
               </div>
-            </div>
-          </CardTitle>
-        </CardHeader>
+            </CardTitle>
+          </CardHeader>
         <CardContent className="grid gap-8">
           <div className="grid gap-4">
             <Label>Properties</Label>
@@ -106,11 +107,12 @@ export default function ProductDetails({ loaderData: tag }: Route.ComponentProps
           </div>
         </CardContent>
       </Card>
-      <Card className="h-max">
-        <CardHeader>
-          <CardTitle>...</CardTitle>
-        </CardHeader>
-      </Card>
-    </div>
+        <Card className="h-max">
+          <CardHeader>
+            <CardTitle>...</CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    </ViewContextProvider>
   );
 }

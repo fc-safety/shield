@@ -16,7 +16,6 @@ import { useForm } from "react-hook-form";
 import { Form } from "react-router";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
@@ -24,6 +23,7 @@ import { createClientSchema, updateClientSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import { isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
+import { useViewContext } from "~/lib/view-context";
 import { CopyableInput } from "../copyable-input";
 import LegacyIdField from "../legacy-id-field";
 import { Label } from "../ui/label";
@@ -34,7 +34,6 @@ type TForm = z.infer<typeof createClientSchema | typeof updateClientSchema>;
 interface ClientDetailsFormProps {
   client?: Client;
   onSubmitted?: () => void;
-  viewContext?: ViewContext;
 }
 
 const FORM_DEFAULTS = {
@@ -61,9 +60,9 @@ const FORM_DEFAULTS = {
 export default function ClientDetailsForm({
   client,
   onSubmitted,
-  viewContext,
 }: ClientDetailsFormProps) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const userIsGlobalAdmin = isGlobalAdmin(user);
 
   const isNew = !client;

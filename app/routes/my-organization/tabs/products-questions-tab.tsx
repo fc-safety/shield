@@ -53,7 +53,6 @@ export default function ProductsQuestionsTab({
       productsTotalCount={productsTotalCount}
       questions={questions}
       questionsTotalCount={questionsTotalCount}
-      viewContext="user"
       readOnly
     />
   );

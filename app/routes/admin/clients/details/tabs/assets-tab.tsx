@@ -36,7 +36,6 @@ export default function AssetsTab({
       assets={assets}
       assetsTotalCount={assetsTotalCount}
       clientId={clientId}
-      viewContext="admin"
     />
   );
 }

@@ -10,6 +10,7 @@ import { getProductCategoriesQueryOptions } from "~/lib/services/product-categor
 import { getQueryPersistedState, getQueryStatePersistor } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParams } from "~/lib/utils";
+import { ViewContextProvider } from "~/lib/view-context";
 import type { Route } from "./+types/index";
 
 export const handle = {
@@ -70,29 +71,30 @@ export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
   const viewContext = userIsGlobalAdmin ? "admin" : "user";
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldQuestion className="h-5 w-5" />
-          Global Asset Questions
-        </CardTitle>
-        <CardDescription>Questions presented to all clients.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <AssetQuestionsDataTable
-          questions={loaderData.questions}
-          readOnly={!canManageQuestions}
-          viewContext={viewContext}
-          initialState={{
-            sorting: loaderData.sorting,
-            columnFilters: loaderData.columnFilters,
-            pagination: loaderData.pagination,
-          }}
-          onSortingChange={getQueryStatePersistor("sorting")}
-          onColumnFiltersChange={getQueryStatePersistor("columnFilters")}
-          onPaginationChange={getQueryStatePersistor("pagination")}
-        />
-      </CardContent>
-    </Card>
+    <ViewContextProvider value={viewContext}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldQuestion className="h-5 w-5" />
+            Global Asset Questions
+          </CardTitle>
+          <CardDescription>Questions presented to all clients.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AssetQuestionsDataTable
+            questions={loaderData.questions}
+            readOnly={!canManageQuestions}
+            initialState={{
+              sorting: loaderData.sorting,
+              columnFilters: loaderData.columnFilters,
+              pagination: loaderData.pagination,
+            }}
+            onSortingChange={getQueryStatePersistor("sorting")}
+            onColumnFiltersChange={getQueryStatePersistor("columnFilters")}
+            onPaginationChange={getQueryStatePersistor("pagination")}
+          />
+        </CardContent>
+      </Card>
+    </ViewContextProvider>
   );
 }

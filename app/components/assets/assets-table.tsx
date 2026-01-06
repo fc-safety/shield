@@ -2,7 +2,6 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { CornerDownRight, Pencil, Trash } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
-import type { ViewContext } from "~/.server/api-utils";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import { AlertsStatusBadge, InspectionStatusBadge } from "~/components/assets/asset-status-badge";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -18,6 +17,7 @@ import { getAssetAlertsStatus, getAssetInspectionStatus } from "~/lib/model-util
 import type { Asset, ProductCategory } from "~/lib/models";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
+import { useViewContext } from "~/lib/view-context";
 import ActiveToggle from "../active-toggle";
 import ResponsiveActions from "../common/responsive-actions";
 import { ResponsiveDialog } from "../responsive-dialog";
@@ -28,7 +28,6 @@ import EditableTagDisplay from "./editable-tag-display";
 export default function AssetsTable({
   assets,
   clientId,
-  viewContext,
   toDetailsRoute,
   initialState,
   onSortingChange,
@@ -39,7 +38,6 @@ export default function AssetsTable({
 }: {
   assets: Asset[];
   clientId?: string;
-  viewContext?: ViewContext;
   toDetailsRoute?: (asset: Asset) => string;
 } & Pick<
   DataTableProps<Asset, any>,
@@ -51,6 +49,7 @@ export default function AssetsTable({
   | "onPaginationChange"
 >) {
   const { user } = useAuth();
+  const viewContext = useViewContext();
   const canCreate = can(user, "create", "assets");
   const canDelete = can(user, "delete", "assets");
   const canEdit = can(user, "update", "assets");
@@ -393,7 +392,7 @@ export default function AssetsTable({
         ]}
         actions={
           canCreate
-            ? [<CreateAssetButton key="add" clientId={clientId} viewContext={viewContext} />]
+            ? [<CreateAssetButton key="add" clientId={clientId} />]
             : []
         }
       />
@@ -408,7 +407,6 @@ export default function AssetsTable({
           <AssetDetailsForm
             asset={editAsset.data}
             onSubmitted={() => editAsset.setOpen(false)}
-            context={viewContext}
             clientId={clientId}
           />
         </ResponsiveDialog>

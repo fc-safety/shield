@@ -6,7 +6,6 @@ import { isAfter } from "date-fns";
 import { Copy, Loader2, Pencil, Trash } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type z from "zod";
-import type { ViewContext } from "~/.server/api-utils";
 import ConditionPill from "~/components/assets/condition-pill";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
@@ -19,6 +18,7 @@ import { AssetQuestionTypes } from "~/lib/models";
 import type { createAssetQuestionSchema } from "~/lib/schema";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { can } from "~/lib/users";
+import { useViewContext } from "~/lib/view-context";
 import ActiveIndicator2 from "../active-indicator-2";
 import ActiveToggle from "../active-toggle";
 import EditAssetQuestionButton from "../assets/asset-question-details-form/edit-asset-question-button";
@@ -41,14 +41,12 @@ interface AssetQuestionsDataTableProps
   > {
   questions: AssetQuestion[];
   readOnly?: boolean;
-  viewContext?: ViewContext;
   clientId?: string;
 }
 
 export default function AssetQuestionsDataTable({
   questions,
   readOnly = false,
-  viewContext,
   clientId,
   initialState = {},
   onSortingChange,
@@ -57,6 +55,7 @@ export default function AssetQuestionsDataTable({
   onColumnOrderChange,
   onPaginationChange,
 }: AssetQuestionsDataTableProps) {
+  const viewContext = useViewContext();
   const editQuestion = useOpenData<AssetQuestion>();
   const { labels, prefetchLabels, isLoading, getLabel } = useConditionLabels();
   const { fetchOrThrow } = useAuthenticatedFetch();
@@ -519,7 +518,7 @@ export default function AssetQuestionsDataTable({
         actions={
           readOnly
             ? []
-            : [<EditAssetQuestionButton key="add" viewContext={viewContext} clientId={clientId} />]
+            : [<EditAssetQuestionButton key="add" clientId={clientId} />]
         }
         filters={({ table }) => [
           {
@@ -597,7 +596,6 @@ export default function AssetQuestionsDataTable({
         trigger={null}
         open={editQuestion.open}
         onOpenChange={editQuestion.setOpen}
-        viewContext={viewContext}
         clientId={clientId}
       />
     </>

@@ -1,6 +1,7 @@
 import { type ShouldRevalidateFunctionArgs, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import ClientDetailsLayout, { type Tab } from "~/components/clients/pages/client-details-layout";
+import { ViewContextProvider } from "~/lib/view-context";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
@@ -39,6 +40,8 @@ export default function AdminClientDetailsLayout({
   loaderData: { client, currentTab },
 }: Route.ComponentProps) {
   return (
-    <ClientDetailsLayout client={client} viewContext="admin" currentTab={currentTab ?? "sites"} />
+    <ViewContextProvider value="admin">
+      <ClientDetailsLayout client={client} currentTab={currentTab ?? "sites"} />
+    </ViewContextProvider>
   );
 }
