@@ -35,8 +35,10 @@ export default function EditableTagDisplay({
     mutationFn: ({ serialNumber, externalId }: { serialNumber: string; externalId: string }) =>
       generateSignedTagUrl(fetchOrThrow, serialNumber, externalId),
     onSuccess: (data) => {
-      navigator.clipboard.writeText(data.tagUrl).then(() => {
-        toast.success("Copied tag's inspection URL to clipboard!");
+      toast.promise(navigator.clipboard.writeText(data.tagUrl), {
+        loading: "Copying tag's inspection URL to clipboard...",
+        success: "Copied tag's inspection URL to clipboard!",
+        error: "Failed to copy tag's inspection URL to clipboard.",
       });
     },
   });

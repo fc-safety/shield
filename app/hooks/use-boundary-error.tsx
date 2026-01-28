@@ -6,12 +6,16 @@ import { isNil } from "~/lib/utils";
 export default function useBoundaryError({ error }: { error: unknown }) {
   const errorDisplay = useMemo(() => {
     if (isRouteErrorResponse(error) || error instanceof Response) {
+      if (error.status >= 500) {
+        Sentry.captureException(error);
+      }
+
       return {
         title: error.status,
         subtitle: error.statusText || undefined,
         message: error instanceof Response ? "" : parseErrorMessage(error.data),
       };
-    } else if (error && error instanceof Error) {
+    } else {
       Sentry.captureException(error);
     }
 

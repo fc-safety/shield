@@ -61,8 +61,10 @@ export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.
         { serialNumber, externalId },
         {
           onSuccess: (data) => {
-            navigator.clipboard.writeText(data.tagUrl).then(() => {
-              toast.success("Copied inspection URL to clipboard!");
+            toast.promise(navigator.clipboard.writeText(data.tagUrl), {
+              loading: "Copying tag's inspection URL to clipboard...",
+              success: "Copied tag's inspection URL to clipboard!",
+              error: "Failed to copy tag's inspection URL to clipboard.",
             });
           },
         }
