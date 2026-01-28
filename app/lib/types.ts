@@ -14,6 +14,9 @@ export interface AppState {
   timeZone?: string;
   locale?: string;
 
+  // Multi-Client Access
+  activeClientId?: string;
+
   sidebarState?: Record<string, boolean>;
 
   // Dashboard
@@ -77,7 +80,8 @@ export interface Role {
   groupId: string;
   name: string;
   description?: string;
-  permissions: string[];
+  scope: "SYSTEM" | "GLOBAL" | "CLIENT" | "SITE_GROUP" | "SITE" | "SELF";
+  capabilities: string[];
   notificationGroups: string[];
   createdOn: string;
   updatedOn: string;
@@ -118,6 +122,12 @@ export interface GetPermissionsResponse {
 export interface NotificationGroup {
   id: string;
   name: string;
+  description: string;
+}
+
+export interface Capability {
+  name: string;
+  label: string;
   description: string;
 }
 
@@ -205,4 +215,78 @@ export interface AssetQuestionCheckResult {
 export interface CheckConfigurationByAssetResult {
   checkResults: AssetQuestionCheckResult[];
   isConfigurationMet: boolean;
+}
+
+// Multi-Client Access Types
+
+export interface ClientAccessClient {
+  id: string;
+  externalId: string;
+  name: string;
+}
+
+export interface ClientAccessSite {
+  id: string;
+  externalId: string;
+  name: string;
+}
+
+export interface ClientAccessRole {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface ClientAccess {
+  id: string;
+  personId: string;
+  clientId: string;
+  siteId: string;
+  roleId: string;
+  isPrimary: boolean;
+  createdOn: string;
+  client: ClientAccessClient;
+  site: ClientAccessSite;
+  role: ClientAccessRole;
+}
+
+export const InvitationStatuses = ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"] as const;
+export type InvitationStatus = (typeof InvitationStatuses)[number];
+
+export interface Invitation {
+  id: string;
+  code: string;
+  clientId: string;
+  createdById: string;
+  email?: string;
+  roleId?: string;
+  siteId?: string;
+  status: InvitationStatus;
+  expiresOn: string;
+  acceptedById?: string;
+  acceptedOn?: string;
+  createdOn: string;
+  modifiedOn: string;
+  inviteUrl?: string;
+  client?: ClientAccessClient;
+  createdBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  role?: ClientAccessRole;
+  site?: ClientAccessSite;
+}
+
+export interface InvitationValidation {
+  valid: boolean;
+  client: { name: string };
+  expiresOn: string;
+  restrictedToEmail: boolean;
+  hasPreassignedRole: boolean;
+}
+
+export interface AcceptInvitationResult {
+  success: boolean;
+  clientAccess: ClientAccess;
 }

@@ -15,7 +15,7 @@ import { cn } from "~/lib/utils";
 import ClientDetailsCard from "../client-details-card";
 import ClientDetailsHeader from "../client-details-header";
 
-export const TABS = ["sites", "users", "assets", "products-questions"] as const;
+export const TABS = ["sites", "users", "invitations", "assets", "products-questions"] as const;
 export type Tab = (typeof TABS)[number];
 
 export default function ClientDetailsLayout({
@@ -39,6 +39,12 @@ export default function ClientDetailsLayout({
         label: "Users",
         value: "users",
         disabled: !can(user, "read", "users"),
+      },
+      {
+        label: "Invitations",
+        value: "invitations",
+        disabled: !can(user, "create", "invitations"),
+        hide: viewContext !== "user", // Only show in my-organization, not admin client details
       },
       {
         label: "Assets",

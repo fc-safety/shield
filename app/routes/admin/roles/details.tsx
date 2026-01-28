@@ -1,10 +1,7 @@
-import type { CheckedState } from "@radix-ui/react-checkbox";
 import Fuse from "fuse.js";
-import { MinusSquare, Pencil, PlusSquare } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useBeforeUnload, useBlocker, type UIMatch } from "react-router";
-import type { z } from "zod";
-import { create } from "zustand";
 import { ApiFetcher } from "~/.server/api-utils";
 import EditRoleButton from "~/components/admin/edit-role-button";
 import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
@@ -12,20 +9,11 @@ import DataList from "~/components/data-list";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "~/components/ui/collapsible";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import { type updatePermissionMappingSchema } from "~/lib/schema";
-import type {
-  GetPermissionsResponse,
-  NotificationGroup,
-  Permission,
-  PermissionsGroup,
-  Role,
-} from "~/lib/types";
-import { buildTitleFromBreadcrumb, cn, validateParam } from "~/lib/utils";
+import type { Capability, NotificationGroup, Role } from "~/lib/types";
+import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
 
 export const handle = {
@@ -41,93 +29,69 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  const [role, permissions, notificationGroups] = await Promise.all([
+  const [role, capabilities, notificationGroups] = await Promise.all([
     ApiFetcher.create(request, "/roles/:id", { id }).get<Role>(),
-    ApiFetcher.create(request, "/roles/permissions").get<GetPermissionsResponse>(),
+    ApiFetcher.create(request, "/roles/capabilities").get<Capability[]>(),
     ApiFetcher.create(request, "/roles/notification-groups").get<NotificationGroup[]>(),
   ]);
 
   return {
     role,
-    permissions,
+    capabilities,
     notificationGroups,
   };
 };
 
-const usePermissionsStore = create<{
-  search: string;
-  setSearch: (search: string) => void;
-  selection: Set<string>;
-  setSelection: (selection: Iterable<string>) => void;
-  toggle: (name: string) => void;
-  selectMany: (names: string[]) => void;
-  deselectMany: (names: string[]) => void;
-}>((set) => ({
-  search: "",
-  setSearch: (search: string) => set({ search }),
-  selection: new Set(),
-  setSelection: (selection: Iterable<string>) => set({ selection: new Set(selection) }),
-  toggle: (name: string) => {
-    set((state) => {
-      if (state.selection.has(name)) state.selection.delete(name);
-      else state.selection.add(name);
-      return { selection: state.selection };
-    });
-  },
-  selectMany: (names: string[]) => {
-    set((state) => {
-      return { selection: new Set([...state.selection, ...names]) };
-    });
-  },
-  deselectMany: (names: string[]) => {
-    set((state) => {
-      return {
-        selection: new Set([...state.selection].filter((id) => !names.includes(id))),
-      };
-    });
-  },
-}));
+const SCOPE_LABELS: Record<Role["scope"], string> = {
+  SYSTEM: "System",
+  GLOBAL: "Global (All Clients)",
+  CLIENT: "Client (All Sites)",
+  SITE_GROUP: "Site Group",
+  SITE: "Single Site",
+  SELF: "Self Only",
+};
 
 export default function AdminRoleDetails({
-  loaderData: {
-    role,
-    permissions: { permissions, permissionsFlat },
-    notificationGroups,
-  },
+  loaderData: { role, capabilities, notificationGroups },
 }: Route.ComponentProps) {
   const [assignedNotificationGroups, setAssignedNotificationGroups] = useState<string[]>(
     role.notificationGroups
   );
-  const { search, setSearch, selection, setSelection } = usePermissionsStore();
+  const [selectedCapabilities, setSelectedCapabilities] = useState<Set<string>>(
+    new Set(role.capabilities)
+  );
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     setSearch("");
-    setSelection(role.permissions);
-  }, [role, setSelection, setSearch]);
+    setSelectedCapabilities(new Set(role.capabilities));
+  }, [role]);
 
   useEffect(() => {
     setAssignedNotificationGroups(role.notificationGroups);
   }, [role]);
 
-  const permissionGroupComponents = Object.values(permissions).map((group) => (
-    <PermissionsGroup key={group.title} permissionsGroup={group} />
-  ));
-
-  const emptyResults = useMemo(
-    () => !!search && filterPermissions(search, permissionsFlat).length === 0,
-    [search, permissionsFlat]
-  );
+  const filteredCapabilities = useMemo(() => {
+    if (!search) return capabilities;
+    const fuse = new Fuse(capabilities, {
+      keys: ["name", "label", "description"],
+      threshold: 0.2,
+    });
+    return fuse.search(search).map((result) => result.item);
+  }, [search, capabilities]);
 
   const isNotificationGroupsDirty =
-    assignedNotificationGroups.length < role.notificationGroups.length ||
+    assignedNotificationGroups.length !== role.notificationGroups.length ||
     assignedNotificationGroups.some((id) => !role.notificationGroups.includes(id));
 
-  const isPermissionsDirty =
-    role.permissions.length < selection.size || role.permissions.some((id) => !selection.has(id));
+  const isCapabilitiesDirty =
+    selectedCapabilities.size !== role.capabilities.length ||
+    role.capabilities.some((cap) => !selectedCapabilities.has(cap));
 
   const { submitJson: submitNotificationGroups, isSubmitting: isSavingNotificationGroups } =
     useModalFetcher();
   const handleSaveNotificationGroups = () => {
+    // Use the dedicated endpoint for notification groups
     submitNotificationGroups(
       { notificationGroupIds: assignedNotificationGroups },
       {
@@ -137,32 +101,48 @@ export default function AdminRoleDetails({
     );
   };
 
-  const { submitJson: submitPermissions, isSubmitting: isSavingPermissions } = useModalFetcher();
-  const handleSavePermissions = () => {
-    const alreadyGrantedSet = new Set(role.permissions);
-
-    const updatePermissionsMapping: z.infer<typeof updatePermissionMappingSchema> = {
-      grant: [],
-      revoke: [],
-    };
-
-    for (const p of permissionsFlat) {
-      if (selection.has(p.name) && !alreadyGrantedSet.has(p.name)) {
-        updatePermissionsMapping.grant.push(p);
-      } else if (!selection.has(p.name) && alreadyGrantedSet.has(p.name)) {
-        updatePermissionsMapping.revoke.push(p);
+  const { submitJson: submitCapabilities, isSubmitting: isSavingCapabilities } = useModalFetcher();
+  const handleSaveCapabilities = () => {
+    // Include all role fields to prevent them from being reset
+    submitCapabilities(
+      {
+        name: role.name,
+        ...(role.description && { description: role.description }),
+        scope: role.scope,
+        clientAssignable: role.clientAssignable,
+        capabilities: Array.from(selectedCapabilities),
+        notificationGroups: assignedNotificationGroups,
+      },
+      {
+        method: "patch",
+        path: `/api/proxy/roles/${role.id}`,
       }
-    }
+    );
+  };
 
-    submitPermissions(updatePermissionsMapping, {
-      method: "post",
-      path: `/api/proxy/roles/${role.id}/update-permissions`,
+  const toggleCapability = (name: string) => {
+    setSelectedCapabilities((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
     });
   };
 
+  const selectAllCapabilities = () => {
+    setSelectedCapabilities(new Set(capabilities.map((c) => c.name)));
+  };
+
+  const deselectAllCapabilities = () => {
+    setSelectedCapabilities(new Set());
+  };
+
   const shouldBlock = useMemo(
-    () => isPermissionsDirty || isNotificationGroupsDirty,
-    [isPermissionsDirty, isNotificationGroupsDirty]
+    () => isCapabilitiesDirty || isNotificationGroupsDirty,
+    [isCapabilitiesDirty, isNotificationGroupsDirty]
   );
   const blocker = useBlocker(shouldBlock);
   useBeforeUnload((e) => {
@@ -209,9 +189,14 @@ export default function AdminRoleDetails({
                 value: role.description,
               },
               {
+                label: "Scope",
+                value: SCOPE_LABELS[role.scope],
+                help: "Controls how much data users with this role can see.",
+              },
+              {
                 label: "Client Assignable",
                 value: role.clientAssignable ? "Yes" : "No",
-                help: "If true, clients can assign this role to their own users.",
+                help: "If true, client admins can assign this role to their own users.",
               },
             ]}
             defaultValue={<>&mdash;</>}
@@ -278,29 +263,58 @@ export default function AdminRoleDetails({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            Permissions
+            Capabilities
             <Button
-              disabled={!isPermissionsDirty || isSavingPermissions}
-              onClick={handleSavePermissions}
+              disabled={!isCapabilitiesDirty || isSavingCapabilities}
+              onClick={handleSaveCapabilities}
             >
-              {isSavingPermissions ? "Saving..." : "Save Changes"}
+              {isSavingCapabilities ? "Saving..." : "Save Changes"}
             </Button>
           </CardTitle>
+          <CardDescription>
+            Capabilities control what actions users with this role can perform.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <Input
-            placeholder="Search permissions..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="flex items-center gap-4">
+            <Input
+              placeholder="Search capabilities..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1"
+            />
+            <Button variant="outline" size="sm" onClick={selectAllCapabilities}>
+              Select All
+            </Button>
+            <Button variant="outline" size="sm" onClick={deselectAllCapabilities}>
+              Deselect All
+            </Button>
+          </div>
           <div className="grid gap-2">
-            {permissionGroupComponents}
-            {!!search && emptyResults && (
+            {filteredCapabilities.length > 0 ? (
+              filteredCapabilities
+                .sort((a, b) => a.label.localeCompare(b.label))
+                .map((capability) => (
+                  <div key={capability.name} className="flex items-center gap-4">
+                    <Checkbox
+                      id={`capability-${capability.name}`}
+                      checked={selectedCapabilities.has(capability.name)}
+                      onCheckedChange={() => toggleCapability(capability.name)}
+                    />
+                    <Label className="grid" htmlFor={`capability-${capability.name}`}>
+                      <div className="text-sm">{capability.label}</div>
+                      <div className="text-muted-foreground text-xs">{capability.description}</div>
+                    </Label>
+                  </div>
+                ))
+            ) : (
               <div className="flex flex-col items-center gap-4 py-6">
-                No permissions found.
-                <Button variant="outline" onClick={() => setSearch("")}>
-                  Clear search
-                </Button>
+                No capabilities found.
+                {search && (
+                  <Button variant="outline" onClick={() => setSearch("")}>
+                    Clear search
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -309,175 +323,3 @@ export default function AdminRoleDetails({
     </div>
   );
 }
-
-function PermissionsGroup({ permissionsGroup }: { permissionsGroup: PermissionsGroup }) {
-  const [open, setOpen] = useState(false);
-  const { search, selectMany, deselectMany, toggle, selection } = usePermissionsStore();
-
-  const allChildPermissions = useMemo(() => {
-    const extractPermissions = (group: PermissionsGroup) => {
-      const childPermissions: Permission[] = [];
-      if (group.permissions) childPermissions.push(...group.permissions);
-      if (group.children) {
-        group.children.forEach((child) => {
-          childPermissions.push(...extractPermissions(child));
-        });
-      }
-      return childPermissions;
-    };
-
-    return extractPermissions(permissionsGroup);
-  }, [permissionsGroup]);
-
-  const allChildPermissionsNames = useMemo(() => {
-    return allChildPermissions.map((p) => p.name);
-  }, [allChildPermissions]);
-
-  const emptyResults = useMemo(
-    () => !!search && filterPermissions(search, allChildPermissions).length === 0,
-    [search, allChildPermissions]
-  );
-
-  const filteredPermissions = useMemo(() => {
-    return permissionsGroup.permissions && filterPermissions(search, permissionsGroup.permissions);
-  }, [permissionsGroup.permissions, search]);
-
-  const checkedState = getCheckedStateForPermissions(selection, allChildPermissionsNames);
-
-  useEffect(() => {
-    setOpen(!!search || !!checkedState);
-  }, [search, checkedState]);
-
-  useEffect(() => {
-    if (permissionsGroup.defaultName) {
-      selectMany([permissionsGroup.defaultName]);
-    }
-  }, [permissionsGroup.defaultName, selectMany]);
-
-  return (
-    !emptyResults && (
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <div className="flex items-center gap-2">
-          <span className="capitalize">{permissionsGroup.title}</span>
-          <div className="flex-1"></div>
-          {permissionsGroup.many && (
-            <Checkbox
-              checked={checkedState}
-              onCheckedChange={(checked) =>
-                checked
-                  ? selectMany(allChildPermissionsNames)
-                  : deselectMany(allChildPermissionsNames)
-              }
-            />
-          )}
-          <CollapsibleTrigger className="relative size-5">
-            <PlusSquare
-              className={cn(
-                "absolute inset-0 size-5 transition-opacity",
-                open ? "opacity-0" : "opacity-100"
-              )}
-            />
-            <MinusSquare
-              className={cn(
-                "absolute inset-0 size-5 transition-opacity",
-                open ? "opacity-100" : "opacity-0"
-              )}
-            />
-          </CollapsibleTrigger>
-        </div>
-        <CollapsibleContent>
-          <div className="grid gap-2 px-4 py-2">
-            {permissionsGroup.children ? (
-              permissionsGroup.children
-                .sort((g1, g2) => g1.title.localeCompare(g2.title))
-                .map((child) => <PermissionsGroup key={child.title} permissionsGroup={child} />)
-            ) : filteredPermissions ? (
-              <DisplayPermissions
-                many={permissionsGroup.many}
-                permissions={filteredPermissions}
-                onCheckedToggle={(name, checked) => {
-                  if (!permissionsGroup.many) {
-                    if (checked) {
-                      deselectMany(allChildPermissionsNames);
-                      selectMany([name]);
-                    }
-                  } else {
-                    toggle(name);
-                  }
-                }}
-              />
-            ) : null}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-    )
-  );
-}
-
-function DisplayPermissions({
-  permissions,
-  onCheckedToggle,
-  many,
-}: {
-  permissions: Permission[];
-  onCheckedToggle?: (name: string, checked: CheckedState) => void;
-  many?: boolean;
-}) {
-  const { selection } = usePermissionsStore();
-  const label = (permission: Permission) => (
-    <Label className="grid" htmlFor={`permission-${permission.id}`}>
-      <div className="text-sm">{permission.friendlyName}</div>
-      <div className="text-muted-foreground text-xs">{permission.description}</div>
-    </Label>
-  );
-
-  const sortedPermissions = permissions.sort((a, b) =>
-    a.friendlyName.localeCompare(b.friendlyName)
-  );
-
-  return many ? (
-    <div className="grid gap-2">
-      {sortedPermissions.map((permission) => (
-        <div key={permission.id} className="flex items-center gap-4">
-          <Checkbox
-            id={`permission-${permission.id}`}
-            checked={selection.has(permission.name)}
-            onCheckedChange={(checked) => onCheckedToggle?.(permission.name, checked)}
-          />
-          {label(permission)}
-        </div>
-      ))}
-    </div>
-  ) : (
-    <RadioGroup
-      className="grid gap-2"
-      onValueChange={(name) => onCheckedToggle?.(name, true)}
-      value={permissions.find((p) => selection.has(p.name))?.name}
-    >
-      {sortedPermissions.map((permission) => (
-        <div key={permission.id} className="flex items-center gap-4">
-          <RadioGroupItem
-            value={permission.name}
-            id={`permission-${permission.id}`}
-          ></RadioGroupItem>
-          {label(permission)}
-        </div>
-      ))}
-    </RadioGroup>
-  );
-}
-
-const filterPermissions = (search: string, permissions: Permission[]) => {
-  if (!search) return permissions;
-  const fuse = new Fuse(permissions, {
-    keys: ["name", "friendlyName", "description"],
-    threshold: 0.2,
-  });
-  return fuse.search(search).map((result) => result.item);
-};
-
-const getCheckedStateForPermissions = (selection: Set<string>, permissionNames: string[]) => {
-  if (permissionNames.every((pName) => selection.has(pName))) return true;
-  if (permissionNames.some((pName) => selection.has(pName))) return "indeterminate";
-  return false;
-};

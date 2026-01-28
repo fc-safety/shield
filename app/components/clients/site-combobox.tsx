@@ -83,7 +83,6 @@ export default function SiteCombobox({
 
   useEffect(() => {
     if (fetcher.data?.data) {
-      console.debug("fetcher.data.data", fetcher.data.data);
       setSites(fetcher.data.data.results.filter((s) => s.active || s[valueKey] === value));
     } else if (fetcher.data?.error) {
       console.error("Failed to fetch sites", fetcher.data.error);

@@ -49,6 +49,7 @@ export const RESOURCES = [
   "products",
   "ansi-categories",
   "users",
+  "invitations",
 ] as const;
 
 export type TResource = (typeof RESOURCES)[number];

@@ -5,6 +5,7 @@ import useMyOrganization from "~/hooks/use-my-organization";
 import type { GetMyOrganizationResult } from "~/lib/services/clients.service";
 import { cn, validateBreadcrumb } from "~/lib/utils";
 import { BreadcrumbResponsive } from "./breadcrumb-responsive";
+import { ClientSwitcher } from "./client-switcher";
 import { UserDropdownMenu } from "./user-dropdown-menu";
 
 export default function Header({
@@ -56,7 +57,7 @@ export default function Header({
           </Link>
         )}
         <DemoLabel />
-        <ClientLabel className="flex-1 px-4 opacity-0 @2xl:opacity-100" />
+        <ClientSwitcherOrLabel className="flex-1 px-4 opacity-0 @2xl:opacity-100" />
         <div className="flex items-center gap-x-1 sm:gap-x-2">
           {rightSlot}
           {user && (
@@ -124,4 +125,17 @@ const ClientLabel = ({ className }: { className?: string }) => {
   ) : (
     <div className={cn(className)}></div>
   );
+};
+
+/**
+ * Renders ClientSwitcher if ClientAccessContext is available,
+ * otherwise falls back to the simple ClientLabel.
+ */
+const ClientSwitcherOrLabel = ({ className }: { className?: string }) => {
+  try {
+    return <ClientSwitcher className={className} />;
+  } catch (e) {
+    // ClientAccessContext not available, fall back to simple label
+    return <ClientLabel className={className} />;
+  }
 };

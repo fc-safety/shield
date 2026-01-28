@@ -12,6 +12,9 @@ export default [
   route("logout", "./routes/auth/logout.tsx"),
   route("callback", "./routes/auth/callback.tsx"),
 
+  // Invitation acceptance (public route)
+  route("accept-invite/:code", "./routes/accept-invite.$code.tsx"),
+
   // Read tag routes
   ...prefix("tag", [index("./routes/read-tag/index.tsx")]),
 
@@ -85,6 +88,7 @@ export default [
       index("./routes/my-organization/index.tsx"),
       route("sites", "./routes/my-organization/tabs/sites-tab.tsx"),
       route("users", "./routes/my-organization/tabs/users-tab.tsx"),
+      route("invitations", "./routes/my-organization/tabs/invitations-tab.tsx"),
       route("assets", "./routes/my-organization/tabs/assets-tab.tsx"),
       route("products-questions", "./routes/my-organization/tabs/products-questions-tab.tsx"),
     ]),

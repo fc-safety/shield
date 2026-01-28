@@ -35,10 +35,7 @@ const FORM_DEFAULTS = {
   roleId: "",
 } satisfies TForm;
 
-export default function UpdateUserRoleForm({
-  user,
-  clientId,
-}: UpdateUserRoleFormProps) {
+export default function UpdateUserRoleForm({ user, clientId }: UpdateUserRoleFormProps) {
   const viewContext = useViewContext();
   const form = useForm<TForm>({
     resolver: zodResolver(addUserRoleSchema),
@@ -113,11 +110,11 @@ export default function UpdateUserRoleForm({
     if (
       selectedRoleForAdd &&
       selectedRoleForAdd.id === roleId &&
-      selectedRoleForAdd.permissions.some(
+      selectedRoleForAdd.capabilities.some(
         (p) => p === VISIBILITY.GLOBAL || p === VISIBILITY.SUPER_ADMIN
       )
     ) {
-      if (selectedRoleForAdd.permissions.some((p) => p === VISIBILITY.GLOBAL)) {
+      if (selectedRoleForAdd.capabilities.some((p) => p === VISIBILITY.GLOBAL)) {
         setAssignGlobalAdminAction((draft) => {
           draft.open = true;
           draft.title = "Add Global Admin Role";
@@ -128,7 +125,7 @@ export default function UpdateUserRoleForm({
             doAdd();
           };
         });
-      } else if (selectedRoleForAdd.permissions.some((p) => p === VISIBILITY.SUPER_ADMIN)) {
+      } else if (selectedRoleForAdd.capabilities.some((p) => p === VISIBILITY.SUPER_ADMIN)) {
         setAssignGlobalAdminAction((draft) => {
           draft.open = true;
           draft.title = "Add Super Admin Role";

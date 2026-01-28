@@ -45,6 +45,8 @@ export type ViewContext = (typeof VIEW_CONTEXTS)[number];
 
 export type FetchBuildOptions = {
   context?: ViewContext;
+  /** Client ID for multi-client access. Sets X-Client-Id header. */
+  clientId?: string;
   params?: QueryParams;
   headers?: HeadersInit;
   method?: NonNullable<NativeFetchParameters[1]>["method"];
@@ -164,6 +166,10 @@ export class FetchOptions {
 
     if (options.context) {
       this.options.headers.set("X-View-Context", options.context);
+    }
+
+    if (options.clientId) {
+      this.options.headers.set("X-Client-Id", options.clientId);
     }
 
     if (options.headers) {

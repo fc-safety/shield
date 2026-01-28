@@ -6,6 +6,7 @@ const INSPECTION_TOKEN_HEADER = "x-inspection-token";
 const ALLOWED_PASSTHROUGH_HEADERS = [
   "Content-Type",
   "X-View-Context",
+  "X-Client-Id",
   "X-Inspection-Token",
   "Accept",
   "Referer",
@@ -36,6 +37,13 @@ const proxy = async ({
 
   if (viewContext) {
     headers.set("x-view-context", viewContext);
+  }
+
+  const clientId = query.get("_clientId");
+  query.delete("_clientId");
+
+  if (clientId) {
+    headers.set("x-client-id", clientId);
   }
 
   const inspectionToken = query.get("_inspectionToken");

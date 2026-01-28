@@ -30,7 +30,9 @@ import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { AuthProvider } from "~/contexts/auth-context";
+import { ClientAccessProvider } from "~/contexts/client-access-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
+import { getMyClientAccessQueryOptions } from "~/lib/services/client-access.service";
 import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
 import { can, isGlobalAdmin, isSuperAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
@@ -40,7 +42,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const queryClient = new QueryClient();
   const fetcher = getAuthenticatedFetcher(request);
-  const prefetchPromises = [queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher))];
+  const prefetchPromises = [
+    queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher)),
+    queryClient.prefetchQuery(getMyClientAccessQueryOptions(fetcher)),
+  ];
 
   await Promise.all(prefetchPromises);
 
@@ -212,27 +217,29 @@ export default function Layout({
       googleMapsApiKey={googleMapsApiKey}
       clientId={authClientId}
     >
-      <SidebarProvider defaultOpenState={{ help: false }}>
-        <HelpSidebarProvider>
-          <AppSidebar groups={groups} />
-          <SidebarInset className="min-w-0">
-            <Header
-              user={user}
-              leftSlot={
-                <>
-                  <SidebarTrigger className="-ml-1.5 [&_svg:not([class*='size-'])]:size-5" />
-                  <Separator orientation="vertical" className="mr-2 h-5" />
-                </>
-              }
-            />
-            <section className="flex grow flex-col p-2 pb-6 sm:p-4 sm:pb-12">
-              <Outlet />
-            </section>
-            <Footer />
-          </SidebarInset>
-          <HelpSidebar />
-        </HelpSidebarProvider>
-      </SidebarProvider>
+      <ClientAccessProvider>
+        <SidebarProvider defaultOpenState={{ help: false }}>
+          <HelpSidebarProvider>
+            <AppSidebar groups={groups} />
+            <SidebarInset className="min-w-0">
+              <Header
+                user={user}
+                leftSlot={
+                  <>
+                    <SidebarTrigger className="-ml-1.5 [&_svg:not([class*='size-'])]:size-5" />
+                    <Separator orientation="vertical" className="mr-2 h-5" />
+                  </>
+                }
+              />
+              <section className="flex grow flex-col p-2 pb-6 sm:p-4 sm:pb-12">
+                <Outlet />
+              </section>
+              <Footer />
+            </SidebarInset>
+            <HelpSidebar />
+          </HelpSidebarProvider>
+        </SidebarProvider>
+      </ClientAccessProvider>
     </AuthProvider>
   );
 }
