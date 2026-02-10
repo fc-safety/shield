@@ -1,36 +1,25 @@
 import { z } from "zod";
 import type { User } from "~/.server/authenticator";
-import { isValidPermission, type TAction, type TResource, type TVisibility } from "./permissions";
+import type { TCapability, TScope } from "./permissions";
 
-export const MULTI_CLIENT_VISIBILITIES: TVisibility[] = ["super-admin", "global"] as const;
-
-export const MULTI_SITE_VISIBILITIES: TVisibility[] = [
-  ...MULTI_CLIENT_VISIBILITIES,
-  "client-sites",
-  "site-group",
-  "multi-site",
-];
-
-export function isSuperAdmin(user: User) {
-  return visibility(user) === "super-admin";
+export function isSystemsAdmin(user: User) {
+  return user.scope === "SYSTEM";
 }
 
 export function isGlobalAdmin(user: User) {
-  return visibility(user) === "global" || isSuperAdmin(user);
+  return user.scope === "GLOBAL" || isSystemsAdmin(user);
 }
 
-export function visibility(user: User): TVisibility {
-  const visibilityPermission = user.permissions?.find((p) => p.startsWith("visibility:"));
-
-  if (visibilityPermission) {
-    return visibilityPermission.replace("visibility:", "") as TVisibility;
-  }
-
-  return "self";
+export function visibility(user: User): TScope {
+  return user.scope;
 }
 
 export function hasMultiSiteVisibility(user: User) {
-  return MULTI_SITE_VISIBILITIES.includes(visibility(user));
+  return user.hasMultiSiteScope;
+}
+
+export function hasMultiClientVisibility(user: User) {
+  return user.hasMultiClientScope;
 }
 
 const DEFAULT_TOKEN_EXPIRATION_BUFFER_SECONDS = 2;
@@ -52,20 +41,6 @@ export const keycloakTokenPayloadSchema = z.object({
   given_name: z.string().optional(),
   family_name: z.string().optional(),
   picture: z.string().optional(),
-  resource_access: z
-    .record(
-      z.string(),
-      z.object({
-        roles: z.array(z.string()).transform((roles) => roles.filter(isValidPermission)),
-      })
-    )
-    .optional(),
-  permissions: z
-    .array(z.string())
-    .transform((roles) => roles.filter(isValidPermission))
-    .optional(),
-  client_id: z.string().default("unknown"),
-  site_id: z.string().default("unknown"),
 });
 
 export const parseToken = <S extends z.Schema>(token: string, schema: S): z.infer<S> => {
@@ -103,9 +78,6 @@ export function getUserDisplayName(user: {
   }`.trim();
 }
 
-export function can(user: User, action: TAction, resource: TResource) {
-  if (["create", "update", "read", "delete"].includes(action) && can(user, "manage", resource)) {
-    return true;
-  }
-  return !!user.permissions?.includes(`${action}:${resource}`);
+export function can(user: User, capability: TCapability) {
+  return user.capabilities.includes(capability);
 }

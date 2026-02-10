@@ -30,6 +30,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset } from "~/lib/models";
 import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { buildTitle, cn, isNil } from "~/lib/utils";
 import type { Route } from "./+types/setup";
@@ -37,7 +38,7 @@ import type { Route } from "./+types/setup";
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { tagExternalId } = await validateInspectionSession(request);
 
-  await guard(request, (user) => can(user, "setup", "assets"));
+  await guard(request, (user) => can(user, CAPABILITIES.PERFORM_INSPECTIONS));
 
   const tag = await api.tags.getForAssetSetup(request, tagExternalId);
 
@@ -109,7 +110,7 @@ export default function InspectSetup({
   const isSetup = !!tag.asset?.setupOn;
 
   const { user } = useAuth();
-  const canUpdateInspectionRoutes = can(user, "update", "inspection-routes");
+  const canUpdateInspectionRoutes = can(user, CAPABILITIES.MANAGE_ROUTES);
 
   const showRouteCard =
     (!!matchingRoutes && matchingRoutes.length > 0) || canUpdateInspectionRoutes;

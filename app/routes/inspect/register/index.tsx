@@ -7,6 +7,7 @@ import InspectErrorBoundary from "~/components/inspections/inspect-error-boundar
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { AssetQuestion } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { registerTagSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
@@ -53,7 +54,7 @@ export default function InspectRegister({
   loaderData: { tag, inspectionToken, setupQuestions },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canRegister = can(user, "register", "tags") && can(user, "create", "assets");
+  const canRegister = can(user, CAPABILITIES.REGISTER_TAGS) && can(user, CAPABILITIES.MANAGE_ASSETS);
 
   const [recentlyRegistered, setRecentlyRegistered] = useState(false);
 

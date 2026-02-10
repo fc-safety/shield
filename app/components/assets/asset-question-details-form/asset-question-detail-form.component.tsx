@@ -29,7 +29,7 @@ import ActiveToggleFormInput from "~/components/active-toggle-form-input";
 import HelpPopover from "~/components/help-popover";
 import LegacyIdField from "~/components/legacy-id-field";
 import QuestionResponseTypeDisplay from "~/components/products/question-response-type-display";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { RESPONSE_TYPE_LABELS } from "~/lib/asset-questions/constants";
 import { ASSET_QUESTION_TONE_OPTIONS, ASSET_QUESTION_TONES } from "~/lib/constants";

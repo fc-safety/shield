@@ -3,6 +3,13 @@ import type { SortingState } from "@tanstack/react-table";
 import type { QuickRangeId } from "~/components/date-range-select";
 import type { AssetQuestion } from "./models";
 import type { QueryParams } from "./urls";
+import type { TCapability, TScope } from "./permissions";
+
+export interface ActiveAccessGrant {
+  clientId: string;
+  siteId: string;
+  roleId: string;
+}
 
 export type BaseUIComponentProps = {
   className?: string;
@@ -11,6 +18,9 @@ export type BaseUIComponentProps = {
 // Use flat structure to ease data access and updates. This should be kept relatively
 // small to avoid reaching cookie size limits.
 export interface AppState {
+  // Multi-Client Access
+  activeAccessGrant?: ActiveAccessGrant;
+
   timeZone?: string;
   locale?: string;
 
@@ -148,7 +158,16 @@ export interface ClientUser {
   roleName?: string; // Deprecated: Use roles array instead. Kept for backward compatibility.
   roles: UserRole[]; // Array of roles assigned to the user
   position?: string;
+  clientAccess: Array<{
+    id: string;
+    isPrimary: boolean;
+    client: { id: string; externalId: string; name: string };
+    site: { id: string; externalId: string; name: string };
+    role: { id: string; name: string; scope: TScope };
+  }>;
 }
+
+export type UserResponse = ClientUser;
 
 export interface ResponseValueImage {
   urls: string[];
@@ -284,6 +303,40 @@ export interface InvitationValidation {
   expiresOn: string;
   restrictedToEmail: boolean;
   hasPreassignedRole: boolean;
+}
+
+export interface MyClientAccess {
+  clientId: string;
+  clientName: string;
+  siteId: string;
+  siteName: string;
+  roleId: string;
+  roleName: string;
+  scope: TScope;
+  capabilities: TCapability[];
+}
+
+// Member Types (new /members API)
+
+export interface MemberClientAccess {
+  id: string;
+  isPrimary: boolean;
+  role: { id: string; name: string };
+  site: { id: string; name: string };
+}
+
+export interface Member {
+  id: string;
+  createdOn: string;
+  modifiedOn: string;
+  idpId?: string;
+  active: boolean;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  position?: string;
+  clientAccess: MemberClientAccess[];
 }
 
 export interface AcceptInvitationResult {

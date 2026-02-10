@@ -1,5 +1,8 @@
+import { PartyPopper } from "lucide-react";
 import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
+import GradientScrollArea from "~/components/gradient-scroll-area";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -7,23 +10,27 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "~/components/ui/navigation-menu";
+import { ScrollBar } from "~/components/ui/scroll-area";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import type { Client } from "~/lib/models";
-import { can } from "~/lib/users";
+import { CAPABILITIES } from "~/lib/permissions";
+import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import ClientDetailsCard from "../client-details-card";
 import ClientDetailsHeader from "../client-details-header";
 
-export const TABS = ["sites", "users", "invitations", "assets", "products-questions"] as const;
+export const TABS = ["sites", "members", "assets", "products-questions"] as const;
 export type Tab = (typeof TABS)[number];
 
 export default function ClientDetailsLayout({
   client,
   currentTab,
+  showWelcome = false,
 }: {
   client: Client;
   currentTab: Tab;
+  showWelcome?: boolean;
 }) {
   const { user } = useAuth();
   const viewContext = useViewContext();
@@ -33,28 +40,22 @@ export default function ClientDetailsLayout({
       {
         label: "Sites",
         value: "sites",
-        disabled: !can(user, "read", "sites"),
+        disabled: !hasMultiSiteVisibility(user),
       },
       {
-        label: "Users",
-        value: "users",
-        disabled: !can(user, "read", "users"),
-      },
-      {
-        label: "Invitations",
-        value: "invitations",
-        disabled: !can(user, "create", "invitations"),
-        hide: viewContext !== "user", // Only show in my-organization, not admin client details
+        label: "Members",
+        value: "members",
+        disabled: !can(user, CAPABILITIES.MANAGE_USERS),
       },
       {
         label: "Assets",
         value: "assets",
-        disabled: !can(user, "read", "assets"),
+        disabled: !can(user, CAPABILITIES.PERFORM_INSPECTIONS),
       },
       {
         label: "Products & Questions",
         value: "products-questions",
-        disabled: !can(user, "read", "products") || !can(user, "read", "asset-questions"),
+        disabled: !can(user, CAPABILITIES.CONFIGURE_PRODUCTS),
       },
     ],
     [user]
@@ -71,33 +72,46 @@ export default function ClientDetailsLayout({
               enabled and others disabled to facilitate product demonstrations.
             </div>
           )}
+          {showWelcome && (
+            <Alert className="bg-primary/10 border-primary/50 text-primary [&>svg]:text-primary">
+              <PartyPopper className="animate-pop-once size-4" />
+              <AlertTitle>Welcome to {client.name}!</AlertTitle>
+              <AlertDescription>
+                Your invitation has been accepted. You can now explore your organization's sites,
+                assets, and more using the tabs below.
+              </AlertDescription>
+            </Alert>
+          )}
           <ClientDetailsHeader client={client} />
           <NavigationMenu className="flex-none">
-            <NavigationMenuList>
-              {tabs
-                .filter((tab) => !tab.hide)
-                .map((tab) => (
-                  <NavigationMenuItem
-                    key={tab.value}
-                    className={cn({
-                      "cursor-not-allowed": tab.disabled,
-                    })}
-                    title={
-                      tab.disabled ? "You do not have permission to access this tab" : undefined
-                    }
-                  >
-                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                      <NavLink
-                        to={`./${tab.value}`}
-                        data-is-active={currentTab === tab.value}
-                        aria-disabled={tab.disabled}
-                      >
-                        {tab.label}
-                      </NavLink>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                ))}
-            </NavigationMenuList>
+            <GradientScrollArea>
+              <NavigationMenuList>
+                {tabs
+                  .filter((tab) => !tab.hide)
+                  .map((tab) => (
+                    <NavigationMenuItem
+                      key={tab.value}
+                      className={cn({
+                        "cursor-not-allowed": tab.disabled,
+                      })}
+                      title={
+                        tab.disabled ? "You do not have permission to access this tab" : undefined
+                      }
+                    >
+                      <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                        <NavLink
+                          to={`./${tab.value}`}
+                          data-is-active={currentTab === tab.value}
+                          aria-disabled={tab.disabled}
+                        >
+                          {tab.label}
+                        </NavLink>
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                  ))}
+              </NavigationMenuList>
+              <ScrollBar orientation="horizontal" />
+            </GradientScrollArea>
           </NavigationMenu>
           <Outlet />
         </div>

@@ -25,6 +25,7 @@ import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import useMyOrganization from "~/hooks/use-my-organization";
 import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import type { Route } from "./+types/layout";
 import { getUserOrHandleInspectLoginRedirect } from "./.server/inspect-auth";
@@ -132,7 +133,7 @@ const InspectionSidebar = () => {
           url: "/inspect/routes",
           icon: RouteIcon,
           exact: true,
-          hide: !can(user, "read", "inspection-routes"),
+          hide: !can(user, CAPABILITIES.MANAGE_ROUTES),
         },
         {
           type: "link",

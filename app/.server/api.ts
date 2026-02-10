@@ -28,10 +28,11 @@ import {
 } from "~/lib/schema";
 import type {
   CheckConfigurationByAssetResult,
-  ClientUser,
   GetReportResult,
   ListReportsResult,
+  Member,
   Role,
+  UserResponse,
 } from "~/lib/types";
 import type { QueryParams } from "~/lib/urls";
 import { INSPECTION_TOKEN_HEADER } from "~/routes/inspect/constants/headers";
@@ -178,8 +179,25 @@ export const api = {
   // CLIENTS & SITES
   clients: {
     ...CRUD.for<Client>("/clients").all(),
+    getMyOrganization: (request: Request) =>
+      ApiFetcher.create(request, "/clients/my-organization").get<{ client: Client; site: Site }>(),
   },
-  users: CRUD.for<ClientUser>(`/users`).all(),
+  users: CRUD.for<UserResponse>(`/users`).all(),
+  members: {
+    ...CRUD.for<Member>("/members").all(),
+    invite: (request: Request, data: { email?: string; roleId?: string; siteId?: string }) =>
+      ApiFetcher.create(request, "/members/invite").json(data).post<Member>(),
+    addRole: (request: Request, id: string, data: { roleId: string; siteId: string }) =>
+      ApiFetcher.create(request, "/members/:id/roles", { id }).json(data).post<Member>(),
+    removeRole: (request: Request, id: string, data: { roleId: string; siteId: string }) =>
+      ApiFetcher.create(request, "/members/:id/roles", { id }).json(data).delete<void>(),
+    remove: (request: Request, id: string) =>
+      ApiFetcher.create(request, "/members/:id", { id }).delete<void>(),
+    sendResetPasswordEmail: (request: Request, id: string, appClientId: string) =>
+      ApiFetcher.create(request, "/members/:id/reset-password-email", { id })
+        .setHeader("x-app-client-id", appClientId)
+        .post<void>(),
+  },
   sites: CRUD.for<Site>("/sites").all(),
 
   // Other ADMIN

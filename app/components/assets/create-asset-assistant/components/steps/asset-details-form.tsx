@@ -7,7 +7,7 @@ import { AssetDetailFormFields } from "~/components/assets/asset-details-form";
 import Step from "~/components/assistant/components/step";
 import { Button } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import type { Asset } from "~/lib/models";

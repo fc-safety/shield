@@ -2,8 +2,6 @@ import { ChevronDown, LogOut, Moon, Sun, UserCog, UserRound } from "lucide-react
 import { Link } from "react-router";
 import { Theme, useTheme } from "remix-themes";
 import type { User } from "~/.server/authenticator";
-import useMyOrganization from "~/hooks/use-my-organization";
-import type { GetMyOrganizationResult } from "~/lib/services/clients.service";
 import type { SidebarMenuItem } from "./app-sidebar";
 import { Button } from "./ui/button";
 import {
@@ -37,17 +35,13 @@ export function UserDropdownMenu({
   logoutReturnTo?: string;
 }) {
   const accountLabel = user?.name ?? user?.email ?? "My Account";
-  let client: GetMyOrganizationResult["client"] | undefined;
-  try {
-    ({ client } = useMyOrganization());
-  } catch (e) {}
 
   const [, setTheme] = useTheme();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" type="button">
+        <Button variant="outline" size="sm" type="button">
           <div className="bg-primary/20 border-primary text-primary flex size-5 shrink-0 items-end justify-center overflow-hidden rounded-full border">
             <UserRound className="size-4" />
           </div>
@@ -57,9 +51,12 @@ export function UserDropdownMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" className="w-(--radix-popper-anchor-width)">
         <DropdownMenuLabel>
-          <div className="block w-max max-w-50 truncate sm:hidden">{accountLabel}</div>
-          <div className="hidden w-max max-w-50 truncate sm:block">My Organization</div>
-          <div className="text-xs font-normal">{client?.name}</div>
+          <div className="block w-max max-w-50 truncate">
+            {user?.name ?? user?.email ?? "My Account"}
+          </div>
+          {user.name && user.email && (
+            <div className="truncate text-xs font-normal">{user.email}</div>
+          )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {userRoutes.map((route) => (

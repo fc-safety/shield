@@ -8,26 +8,29 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "~/components/ui/empty";
-import { can } from "~/lib/users";
+import { CAPABILITIES } from "~/lib/permissions";
+import { can, hasMultiSiteVisibility } from "~/lib/users";
+import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
 
-  if (can(user, "read", "sites")) {
-    return redirect("/my-organization/sites");
+  let tabId: string | null = null;
+  const shouldWelcome = getSearchParam(request, "welcome") === "true";
+
+  if (hasMultiSiteVisibility(user)) {
+    tabId = "sites";
+  } else if (can(user, CAPABILITIES.MANAGE_USERS)) {
+    tabId = "members";
+  } else if (can(user, CAPABILITIES.PERFORM_INSPECTIONS)) {
+    tabId = "assets";
+  } else if (can(user, CAPABILITIES.CONFIGURE_PRODUCTS)) {
+    tabId = "products-questions";
   }
 
-  if (can(user, "read", "users")) {
-    return redirect("/my-organization/sites");
-  }
-
-  if (can(user, "read", "assets")) {
-    return redirect("/my-organization/assets");
-  }
-
-  if (can(user, "read", "products") || can(user, "read", "asset-questions")) {
-    return redirect("/my-organization/products-questions");
+  if (tabId) {
+    return redirect(`/my-organization/${tabId}?welcome=${shouldWelcome}`);
   }
 };
 

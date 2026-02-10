@@ -8,14 +8,14 @@ import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type ResultsPage, type Site } from "~/lib/models";
 import { getSiteSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import { type QueryParams } from "~/lib/urls";
-import { isSuperAdmin } from "~/lib/users";
+import { isSystemsAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
 import ActiveToggleField from "../ui-custom/forms/active-toggle-field";
@@ -42,7 +42,7 @@ export default function SiteDetailsForm({
 }: SiteDetailsFormProps) {
   const { user } = useAuth();
   const viewContext = useViewContext();
-  const userIsSuperAdmin = isSuperAdmin(user);
+  const userIsSuperAdmin = isSystemsAdmin(user);
 
   const isNew = !site;
   const currentlyPopulatedZip = useRef<string | null>(null);

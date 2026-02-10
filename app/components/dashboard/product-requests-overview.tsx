@@ -32,6 +32,7 @@ import { useOpenData } from "~/hooks/use-open-data";
 import { type ProductRequest, type ProductRequestStatus } from "~/lib/models";
 import { getProductRequestsQueryOptions } from "~/lib/services/dashboard.service";
 import { type QueryParams } from "~/lib/urls";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, getUserDisplayName, hasMultiSiteVisibility } from "~/lib/users";
 import { cn, humanize } from "~/lib/utils";
 import { ProductRequestStatusBadge } from "../assets/product-request-status-badge";
@@ -127,7 +128,7 @@ export function ProductRequestsOverview() {
             sorting: [{ id: "orderedOn", desc: true }],
             columnVisibility: {
               site: hasMultiSiteVisibility(user),
-              review: can(user, "review", "product-requests"),
+              review: can(user, CAPABILITIES.APPROVE_REQUESTS),
             },
           }}
           data={data?.results ?? []}
@@ -485,7 +486,7 @@ function ProductRequestsDetails({
     initialState: {
       columnVisibility: {
         site: hasMultiSiteVisibility(user),
-        review: can(user, "review", "product-requests"),
+        review: can(user, CAPABILITIES.APPROVE_REQUESTS),
       },
     },
     state: {

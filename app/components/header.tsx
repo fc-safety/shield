@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { Link, useMatches } from "react-router";
+import { useOptionalActiveAccessGrant } from "~/contexts/active-access-grant-context";
 import { useOptimizedImageUrls } from "~/contexts/optimized-image-context";
 import useMyOrganization from "~/hooks/use-my-organization";
 import type { GetMyOrganizationResult } from "~/lib/services/clients.service";
@@ -7,6 +8,21 @@ import { cn, validateBreadcrumb } from "~/lib/utils";
 import { BreadcrumbResponsive } from "./breadcrumb-responsive";
 import { ClientSwitcher } from "./client-switcher";
 import { UserDropdownMenu } from "./user-dropdown-menu";
+
+function LogoLink({
+  to,
+  logo: { light, dark },
+  className,
+}: { to: string; logo: { light: string; dark: string }; className?: string } & ComponentProps<
+  typeof Link
+>) {
+  return (
+    <Link to={to} className={cn(className)}>
+      <img src={light} alt="" className="h-4 w-auto object-contain sm:h-4.5 dark:hidden" />
+      <img src={dark} alt="" className="hidden h-4 w-auto object-contain sm:h-4.5 dark:block" />
+    </Link>
+  );
+}
 
 export default function Header({
   leftSlot,
@@ -40,25 +56,27 @@ export default function Header({
         className
       )}
     >
+      {showBannerLogo && (
+        <LogoLink
+          to={homeTo}
+          logo={{ light: bannerLogoLightUrl, dark: bannerLogoDarkUrl }}
+          className="block shrink-0 py-1 sm:hidden"
+        />
+      )}
       <div className="@container flex items-center gap-x-1 sm:gap-x-2">
-        {leftSlot}
-        {showBannerLogo && (
-          <Link to={homeTo}>
-            <img
-              src={bannerLogoLightUrl}
-              alt=""
-              className="h-4 w-auto object-contain sm:h-4.5 dark:hidden"
+        <div className="flex flex-1 items-center gap-x-1 sm:gap-x-2">
+          {leftSlot}
+          {showBannerLogo && (
+            <LogoLink
+              to={homeTo}
+              logo={{ light: bannerLogoLightUrl, dark: bannerLogoDarkUrl }}
+              className="hidden shrink-0 sm:block"
             />
-            <img
-              src={bannerLogoDarkUrl}
-              alt=""
-              className="hidden h-4 w-auto object-contain sm:h-4.5 dark:block"
-            />
-          </Link>
-        )}
-        <DemoLabel />
-        <ClientSwitcherOrLabel className="flex-1 px-4 opacity-0 @2xl:opacity-100" />
-        <div className="flex items-center gap-x-1 sm:gap-x-2">
+          )}
+          <DemoLabel />
+        </div>
+        <ClientSwitcherOrLabel className="px-4" />
+        <div className="flex flex-1 items-center justify-end gap-x-1 sm:gap-x-2">
           {rightSlot}
           {user && (
             <>
@@ -116,7 +134,7 @@ const ClientLabel = ({ className }: { className?: string }) => {
   return client?.name ? (
     <div
       className={cn(
-        "min-w-0 flex-1 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
+        "min-w-0 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
         className
       )}
     >
@@ -132,10 +150,9 @@ const ClientLabel = ({ className }: { className?: string }) => {
  * otherwise falls back to the simple ClientLabel.
  */
 const ClientSwitcherOrLabel = ({ className }: { className?: string }) => {
-  try {
+  const clientAccess = useOptionalActiveAccessGrant();
+  if (clientAccess) {
     return <ClientSwitcher className={className} />;
-  } catch (e) {
-    // ClientAccessContext not available, fall back to simple label
-    return <ClientLabel className={className} />;
   }
+  return <ClientLabel className={className} />;
 };

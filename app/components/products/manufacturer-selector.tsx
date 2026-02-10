@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link2, Loader2, Pencil, Search, SearchX } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer, ResultsPage } from "~/lib/models";

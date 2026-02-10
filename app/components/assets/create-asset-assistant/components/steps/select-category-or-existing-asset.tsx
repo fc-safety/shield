@@ -6,7 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
-import type { ViewContext } from "~/contexts/view-context";
+import type { ViewContext } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { cn } from "~/lib/utils";
 import { getCategoriesByProductQuery } from "../../services/product.service";

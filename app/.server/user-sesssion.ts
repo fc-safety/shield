@@ -1,9 +1,11 @@
 import { createId } from "@paralleldrive/cuid2";
 import { addMinutes, addSeconds } from "date-fns";
 import { redirect } from "react-router";
+import type { TCapability, TScope } from "~/lib/permissions";
 import { isTokenExpired, keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import type { Tokens, User } from "./authenticator";
 import { buildUser, strategy } from "./authenticator";
+import { config } from "./config";
 import { cookieStore } from "./cookie-store";
 import { logger } from "./logger";
 import { userSessionStorage } from "./sessions";
@@ -14,7 +16,161 @@ declare global {
 
 globalThis.REFRESH_SESSION_TOKEN_MAP = globalThis.REFRESH_SESSION_TOKEN_MAP ?? new Map();
 
+export interface ClientAccessEntry {
+  clientId: string;
+  clientName: string;
+  clientExternalId: string;
+  siteId: string;
+  siteName: string;
+  isPrimary: boolean;
+  role: {
+    id: string;
+    name: string;
+    scope: TScope;
+    capabilities: TCapability[];
+  };
+}
+
+export interface CurrentUserResponse {
+  // Identity info from token
+  idpId: string;
+  email: string;
+  username: string;
+  name?: string;
+  givenName?: string;
+  familyName?: string;
+  picture?: string;
+  personId: string | null;
+  accessGrant: AccessGrant | null;
+}
+
+export interface AccessGrant {
+  scope: TScope;
+  capabilities: TCapability[];
+  clientId: string;
+  siteId: string;
+}
+
+/**
+ * Extract permissions from clientAccess array based on the active client.
+ * Priority: 1) storedActiveClientId if valid, 2) primary client, 3) first available
+ * Returns null if user has no client access.
+ */
+export function extractPermissionsFromClientAccess(
+  clientAccess: ClientAccessEntry[],
+  storedActiveClientId?: string | null
+): {
+  scope: TScope;
+  capabilities: TCapability[];
+  hasMultiClientScope: boolean;
+  hasMultiSiteScope: boolean;
+  activeClientId: string | null;
+  activeSiteId: string | null;
+} | null {
+  if (clientAccess.length === 0) {
+    return null;
+  }
+
+  // Find the active client
+  let activeClient: ClientAccessEntry | undefined;
+
+  // 1. Try to use stored active client ID
+  if (storedActiveClientId) {
+    activeClient = clientAccess.find((c) => c.clientId === storedActiveClientId);
+  }
+
+  // 2. Fallback to primary client
+  if (!activeClient) {
+    activeClient = clientAccess.find((c) => c.isPrimary);
+  }
+
+  // 3. Fallback to first available
+  if (!activeClient) {
+    activeClient = clientAccess[0];
+  }
+
+  // Compute hasMultiClientScope: user has access to multiple unique clients
+  const uniqueClientIds = new Set(clientAccess.map((c) => c.clientId));
+  const hasMultiClientScope = uniqueClientIds.size > 1;
+
+  // Compute hasMultiSiteScope: user has access to multiple unique sites
+  const uniqueSiteIds = new Set(clientAccess.map((c) => c.siteId));
+  const hasMultiSiteScope = uniqueSiteIds.size > 1;
+
+  return {
+    scope: activeClient.role.scope,
+    capabilities: activeClient.role.capabilities,
+    hasMultiClientScope,
+    hasMultiSiteScope,
+    activeClientId: activeClient.clientId,
+    activeSiteId: activeClient.siteId,
+  };
+}
+
+export async function fetchCurrentUser(
+  accessToken: string,
+  { clientId, siteId }: { clientId?: string | null; siteId?: string | null } = {}
+): Promise<CurrentUserResponse> {
+  const headers = new Headers({
+    Authorization: `Bearer ${accessToken}`,
+    Accept: "application/json",
+  });
+  if (clientId) {
+    headers.set("X-Client-Id", clientId);
+  }
+  if (siteId) {
+    headers.set("X-Site-Id", siteId);
+  }
+  const response = await fetch(`${config.API_BASE_URL}/auth/me`, {
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch current user: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Apply access grant data to the user session. Handles null accessGrant gracefully
+ * (defaults to SELF scope with no capabilities). Accepts optional overrides for
+ * activeClientId/activeSiteId (used by switch-client to set these from the request body
+ * rather than the fetched user response).
+ *
+ * Returns the computed values so callers can use them for buildUser() without
+ * re-reading the session.
+ */
+export function applyAccessGrantToSession(
+  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
+  accessGrant: AccessGrant
+) {
+  const scope = accessGrant.scope;
+  const capabilities = accessGrant.capabilities;
+  const hasMultiClientScope = ["SYSTEM", "GLOBAL"].includes(scope);
+  const hasMultiSiteScope = ["SYSTEM", "GLOBAL", "CLIENT"].includes(scope);
+  const activeClientId = accessGrant.clientId;
+  const activeSiteId = accessGrant.siteId;
+
+  session.set("scope", scope);
+  session.set("capabilities", capabilities);
+  session.set("hasMultiClientScope", hasMultiClientScope);
+  session.set("hasMultiSiteScope", hasMultiSiteScope);
+  session.set("activeClientId", activeClientId);
+  session.set("activeSiteId", activeSiteId);
+
+  return {
+    scope,
+    capabilities,
+    hasMultiClientScope,
+    hasMultiSiteScope,
+    activeClientId,
+    activeSiteId,
+  };
+}
+
 export interface LoginRedirectOptions {
+  allowEmptyAccessGrant?: boolean;
   returnTo?: string;
   loginRoute?: string;
 }
@@ -60,8 +216,18 @@ export const getActiveUserSession = async (
     };
   }
 
+  const scope = session.get("scope");
+  const capabilities = session.get("capabilities");
+
   return {
-    user: buildUser(tokens),
+    user: buildUser(tokens, {
+      scope: scope ?? "SELF",
+      capabilities: capabilities ?? ([] as TCapability[]),
+      hasMultiClientScope: session.get("hasMultiClientScope") ?? false,
+      hasMultiSiteScope: session.get("hasMultiSiteScope") ?? false,
+      activeClientId: session.get("activeClientId") ?? null,
+      activeSiteId: session.get("activeSiteId") ?? null,
+    }),
     session,
   };
 };
@@ -113,8 +279,54 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
     await commitUserSession(session);
   }
 
-  // Get user, refreshing tokens if needed.
-  const user = buildUser(tokens);
+  // Get stored permission data
+  let scope = session.get("scope");
+  let capabilities = session.get("capabilities");
+  let hasMultiClientScope = session.get("hasMultiClientScope");
+  let hasMultiSiteScope = session.get("hasMultiSiteScope");
+  let activeClientId = session.get("activeClientId");
+  let activeSiteId = session.get("activeSiteId");
+
+  // If not stored, fetch from backend
+  if (!scope || !capabilities) {
+    try {
+      const currentUser = await fetchCurrentUser(tokens.accessToken, {
+        clientId: activeClientId,
+        siteId: activeSiteId,
+      });
+
+      if (currentUser.accessGrant) {
+        const result = applyAccessGrantToSession(session, currentUser.accessGrant);
+        ({
+          scope,
+          capabilities,
+          hasMultiClientScope,
+          hasMultiSiteScope,
+          activeClientId,
+          activeSiteId,
+        } = result);
+        await commitUserSession(session);
+      } else if (!options.allowEmptyAccessGrant) {
+        await commitUserSession(session);
+        throw redirect("/no-access");
+      }
+    } catch (error) {
+      // Re-throw redirects (e.g. /no-access redirect for null accessGrant)
+      if (error instanceof Response) throw error;
+
+      logger.error({ error }, "Failed to fetch current user");
+      throw redirect("/login?error=backend_unavailable");
+    }
+  }
+
+  const user = buildUser(tokens, {
+    scope: scope ?? "SELF",
+    capabilities: capabilities ?? ([] as TCapability[]),
+    hasMultiClientScope: hasMultiClientScope ?? false,
+    hasMultiSiteScope: hasMultiSiteScope ?? false,
+    activeClientId: activeClientId ?? null,
+    activeSiteId: activeSiteId ?? null,
+  });
 
   // Return user with updated session token;
   return {
@@ -185,6 +397,25 @@ export const refreshTokensOrRelogin = async (
 
     // Update session
     session.set("tokens", tokensResponse);
+
+    // Also refresh permissions when tokens are refreshed
+    try {
+      const currentUser = await fetchCurrentUser(tokensResponse.accessToken, {
+        clientId: session.get("activeClientId"),
+        siteId: session.get("activeSiteId"),
+      });
+
+      if (!currentUser.accessGrant) {
+        throw redirect("/no-access");
+      }
+
+      applyAccessGrantToSession(session, currentUser.accessGrant);
+    } catch (error) {
+      if (error instanceof Response) throw error;
+
+      logger.warn({ error }, "Failed to refresh permissions after token refresh");
+      // Keep existing permissions
+    }
 
     // Return new tokens
     return tokensResponse;

@@ -2,12 +2,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight, Circle, Pencil, PhoneCall, Star, Trash } from "lucide-react";
 import { type To } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Site } from "~/lib/models";
-import { can } from "~/lib/users";
+import { isGlobalAdmin } from "~/lib/users";
 import { beautifyPhone, cn } from "~/lib/utils";
 import ResponsiveActions from "../common/responsive-actions";
 import ConfirmationDialog from "../confirmation-dialog";
@@ -32,9 +32,9 @@ export default function SitesTable({
 }: SitesTableProps) {
   const { user } = useAuth();
   const viewContext = useViewContext();
-  const canCreateSite = can(user, "create", "sites");
-  const canUpdateSite = can(user, "update", "sites");
-  const canDeleteSite = can(user, "delete", "sites");
+  const canCreateSite = isGlobalAdmin(user);
+  const canUpdateSite = isGlobalAdmin(user);
+  const canDeleteSite = isGlobalAdmin(user);
 
   const editSite = useOpenData<Site>();
 
@@ -208,11 +208,7 @@ export default function SitesTable({
         }}
         actions={[
           canCreateSite ? (
-            <EditSiteButton
-              key="add"
-              clientId={clientId}
-              parentSiteId={parentSiteId}
-            />
+            <EditSiteButton key="add" clientId={clientId} parentSiteId={parentSiteId} />
           ) : null,
         ]}
       />

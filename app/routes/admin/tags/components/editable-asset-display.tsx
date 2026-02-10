@@ -4,9 +4,10 @@ import type z from "zod";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, Tag } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import type { updateTagSchema } from "~/lib/schema";
 import { can } from "~/lib/users";
 import RegisterTagAssistant from "~/routes/inspect/register/components/register-tag-assistant/register-tag-assistant.component";
@@ -24,9 +25,9 @@ export default function EditableAssetDisplay({
   const viewContext = useViewContext();
   const [modalOpen, setModalOpen] = useState(false);
 
-  const canCreateTags = can(user, "create", "tags");
-  const canRegiserTag = can(user, "create", "assets") && can(user, "update", "tags");
-  const canProgramTags = can(user, "program", "tags");
+  const canCreateTags = can(user, CAPABILITIES.MANAGE_ASSETS);
+  const canRegiserTag = can(user, CAPABILITIES.MANAGE_ASSETS);
+  const canProgramTags = can(user, CAPABILITIES.PROGRAM_TAGS);
 
   const [recentlyRegistered, setRecentlyRegistered] = useState(false);
 

@@ -8,7 +8,7 @@ import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
 import URLFavicon from "~/components/url-favicon";
-import type { ViewContext } from "~/contexts/view-context";
+import type { ViewContext } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useProxyImage } from "~/hooks/use-proxy-image";
 import type { Product } from "~/lib/models";

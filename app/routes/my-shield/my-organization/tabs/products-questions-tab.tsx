@@ -24,7 +24,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const clientId = await api.clients
     .list(request, {
       limit: 1,
-      externalId: user.clientId,
+      id: user.activeClientId,
     })
     .then((r) => r.results.at(0)?.id);
 

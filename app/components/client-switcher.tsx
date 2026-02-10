@@ -1,7 +1,8 @@
-import { Building2, Check, ChevronDown } from "lucide-react";
+import { ArrowLeftRight, Building2, Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { useClientAccess } from "~/contexts/client-access-context";
+import { useActiveAccessGrant } from "~/contexts/active-access-grant-context";
 import { cn } from "~/lib/utils";
+import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,20 +17,25 @@ interface ClientSwitcherProps {
 }
 
 export function ClientSwitcher({ className }: ClientSwitcherProps) {
-  const { accessibleClients, activeClient, activeClientId, setActiveClient, hasMultipleClients } =
-    useClientAccess();
+  const {
+    accessibleClients,
+    activeClient,
+    activeAccessGrant,
+    setActiveAccessGrant,
+    hasMultipleAccessGrants,
+  } = useActiveAccessGrant();
   const [open, setOpen] = useState(false);
 
   // If user only has one client, just show the label (no dropdown)
-  if (!hasMultipleClients) {
+  if (!hasMultipleAccessGrants) {
     return (
       <div
         className={cn(
-          "min-w-0 flex-1 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
+          "min-w-0 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
           className
         )}
       >
-        {activeClient?.client.name}
+        {activeClient?.clientName}
       </div>
     );
   }
@@ -37,47 +43,50 @@ export function ClientSwitcher({ className }: ClientSwitcherProps) {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <button
-          className={cn(
-            "flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1 rounded-md px-2 py-1 text-center transition-colors hover:bg-accent/50",
-            className
-          )}
-        >
-          <span className="truncate text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg">
-            {activeClient?.client.name}
-          </span>
-          <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
-        </button>
+        <Button variant="outline" size="sm" className={className}>
+          <Building2 />
+          <span className="truncate">{activeClient?.clientName}</span>
+          <ChevronDown />
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-64">
-        <DropdownMenuLabel className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
-          <Building2 className="h-3.5 w-3.5" />
-          Switch Organization
-        </DropdownMenuLabel>
+        <DropdownMenuItem disabled asChild>
+          <DropdownMenuLabel className="text-muted-foreground flex items-center gap-2 text-xs font-normal">
+            <ArrowLeftRight />
+            Switch Organization
+          </DropdownMenuLabel>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        {accessibleClients.map((access) => (
-          <DropdownMenuItem
-            key={access.id}
-            onSelect={() => {
-              if (access.client.externalId !== activeClientId) {
-                setActiveClient(access.client.externalId);
-              }
-              setOpen(false);
-            }}
-            className="flex cursor-pointer items-center justify-between gap-2"
-          >
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="truncate font-medium">{access.client.name}</span>
-              <span className="truncate text-xs text-muted-foreground">
-                {access.role.name}
-                {access.site && ` - ${access.site.name}`}
-              </span>
-            </div>
-            {access.client.externalId === activeClientId && (
-              <Check className="h-4 w-4 shrink-0 text-primary" />
-            )}
-          </DropdownMenuItem>
-        ))}
+        {accessibleClients.map((access) => {
+          const isActive =
+            activeAccessGrant?.clientId === access.clientId &&
+            activeAccessGrant?.siteId === access.siteId &&
+            activeAccessGrant?.roleId === access.roleId;
+          return (
+            <DropdownMenuItem
+              key={`${access.clientId}-${access.siteId}-${access.roleId}`}
+              onSelect={() => {
+                if (!isActive) {
+                  setActiveAccessGrant({
+                    clientId: access.clientId,
+                    siteId: access.siteId,
+                    roleId: access.roleId,
+                  });
+                }
+                setOpen(false);
+              }}
+              className="flex cursor-pointer items-center justify-between gap-2"
+            >
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="truncate font-medium">{access.clientName}</span>
+                <span className="text-muted-foreground truncate text-xs">
+                  {access.siteName} &middot; {access.roleName}
+                </span>
+              </div>
+              {isActive && <Check className="text-primary h-4 w-4 shrink-0" />}
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -90,7 +99,7 @@ export function ClientSwitcherFallback({ className }: ClientSwitcherProps) {
   return (
     <div
       className={cn(
-        "min-w-0 flex-1 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
+        "min-w-0 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
         className
       )}
     />

@@ -6,7 +6,6 @@ import type z from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
 import { Form } from "~/components/ui/form";
-import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, AssetQuestion } from "~/lib/models";
 import { buildConfigureAssetSchema } from "~/lib/schema";
@@ -39,7 +38,6 @@ export default function ConfigureAssetForm({
   submitButtonText?: string;
   ref?: RefObject<ConfigureAssetFormRef | null>;
 }) {
-  const viewContext = useViewContext();
   const narrowedConfigureAssetSchema = useMemo(() => {
     return buildConfigureAssetSchema(questions);
   }, [questions]);
@@ -86,7 +84,6 @@ export default function ConfigureAssetForm({
       query: {
         id: assetId,
       },
-      viewContext: viewContext,
       onSubmitted,
     });
   };

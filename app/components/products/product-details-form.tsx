@@ -11,10 +11,11 @@ import { useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import { buildPath } from "~/lib/urls";
@@ -56,7 +57,7 @@ export default function ProductDetailsForm({
 
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const canReadAnsiCategories = can(user, "read", "ansi-categories");
+  const canReadAnsiCategories = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
   const isNew = !product;
   const requireConsumable = Boolean(consumable || parentProduct);

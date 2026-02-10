@@ -13,7 +13,7 @@ import { getStatusLabel, sortByStatus } from "~/lib/dashboard-utils";
 import { AssetInspectionsStatuses, type AssetInspectionsStatus } from "~/lib/enums";
 import { getSitesQueryOptions } from "~/lib/services/clients.service";
 import { getComplianceHistoryQueryOptions } from "~/lib/services/dashboard.service";
-import { can, hasMultiSiteVisibility } from "~/lib/users";
+import { hasMultiSiteVisibility } from "~/lib/users";
 import type { ReactEChartsProps } from "../charts/echarts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import {
@@ -30,7 +30,7 @@ const { ReactECharts } = await import("../charts/echarts");
 
 export function OverallComplianceChart() {
   const { user } = useAuth();
-  const canSelectSite = hasMultiSiteVisibility(user) && can(user, "read", "sites");
+  const canSelectSite = hasMultiSiteVisibility(user);
 
   const [theme] = useTheme();
   const themeValues = useThemeValues();

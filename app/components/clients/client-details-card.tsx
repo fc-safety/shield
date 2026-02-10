@@ -2,11 +2,11 @@ import { isAfter, startOfDay } from "date-fns";
 import { Building2 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client } from "~/lib/models";
-import { can, isGlobalAdmin } from "~/lib/users";
+import { isGlobalAdmin, isSystemsAdmin } from "~/lib/users";
 import { beautifyPhone } from "~/lib/utils";
 import ActiveIndicator2 from "../active-indicator-2";
 import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
@@ -29,8 +29,7 @@ export default function ClientDetailsCard({
   const { user } = useAuth();
   const viewContext = useViewContext();
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const canDeleteClient =
-    client && client.externalId !== user.clientId && can(user, "delete", "clients");
+  const canDeleteClient = client && client.id !== user.activeClientId && isSystemsAdmin(user);
 
   const navigate = useNavigate();
 

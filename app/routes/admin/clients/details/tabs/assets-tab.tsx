@@ -17,8 +17,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const assetsResult = await api.assets.list(
     request,
-    { limit: 10000, clientId: id, site: { active: true } },
-    { context: "admin" }
+    { limit: 10000, site: { active: true } },
+    { clientId: id }
   );
 
   return {

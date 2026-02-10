@@ -2,7 +2,7 @@ import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
 import type { DataOrError } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import type { Client, ResultsPage } from "~/lib/models";
 import { buildPath, type QueryParams } from "~/lib/urls";
 import { ResponsiveCombobox } from "../responsive-combobox";

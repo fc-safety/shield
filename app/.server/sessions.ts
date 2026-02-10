@@ -1,6 +1,7 @@
 import { deflate, inflate } from "pako";
 import { createCookieSessionStorage, type SessionData, type SessionStorage } from "react-router";
 import { createThemeSessionResolver } from "remix-themes";
+import type { TCapability, TScope } from "~/lib/permissions";
 import type { AppState } from "~/lib/types";
 import { type Tokens } from "./authenticator";
 import { config } from "./config";
@@ -86,6 +87,12 @@ export const userSessionStorage = createCookieSessionStorage<{
   id?: string;
   tokens?: Tokens | null;
   returnTo?: string;
+  scope?: TScope | null;
+  capabilities?: TCapability[] | null;
+  hasMultiClientScope?: boolean;
+  hasMultiSiteScope?: boolean;
+  activeClientId?: string | null;
+  activeSiteId?: string | null;
 }>({
   cookie: {
     name: "session",

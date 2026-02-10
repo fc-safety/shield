@@ -14,12 +14,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { VISIBILITY } from "~/lib/permissions";
 import { addUserRoleSchema } from "~/lib/schema";
-import type { ClientUser, Role, UserRole } from "~/lib/types";
+import type { Role, UserResponse, UserRole } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
 import ConfirmationDialog from "../confirmation-dialog";
 import RoleCombobox from "./role-combobox";
@@ -27,7 +27,7 @@ import RoleCombobox from "./role-combobox";
 type TForm = z.infer<typeof addUserRoleSchema>;
 
 interface UpdateUserRoleFormProps {
-  user: ClientUser;
+  user: UserResponse;
   clientId?: string;
 }
 

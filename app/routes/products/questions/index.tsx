@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { useAuth } from "~/contexts/auth-context";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { getQueryPersistedState, getQueryStatePersistor } from "~/lib/urls";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParams } from "~/lib/utils";
 import type { Route } from "./+types/index";
@@ -23,7 +24,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await guard(request, (user) => isGlobalAdmin(user) && can(user, "read", "asset-questions"));
+  await guard(request, (user) => isGlobalAdmin(user) && can(user, CAPABILITIES.CONFIGURE_PRODUCTS));
 
   const searchParams = getSearchParams(request);
 
@@ -65,7 +66,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function QuestionsIndex({ loaderData }: Route.ComponentProps) {
   const { user } = useAuth();
 
-  const canManageQuestions = can(user, "manage", "asset-questions");
+  const canManageQuestions = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
   return (
     <Card>

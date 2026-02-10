@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import type z from "zod";
 import ConditionPill from "~/components/assets/condition-pill";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -16,6 +16,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AssetQuestion, AssetQuestionResponseType } from "~/lib/models";
 import { AssetQuestionTypes } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import type { createAssetQuestionSchema } from "~/lib/schema";
 import { getProductCategoriesQueryOptions } from "~/lib/services/product-categories.service";
 import { can } from "~/lib/users";
@@ -61,9 +62,10 @@ export default function AssetQuestionsDataTable({
   const { fetchOrThrow } = useAuthenticatedFetch();
 
   const { user } = useAuth();
-  const canCreate = !readOnly && can(user, "create", "asset-questions");
-  const canUpdate = !readOnly && can(user, "update", "asset-questions");
-  const canDelete = !readOnly && can(user, "delete", "asset-questions");
+  const canConfigureProducts = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
+  const canCreate = !readOnly && canConfigureProducts;
+  const canUpdate = !readOnly && canConfigureProducts;
+  const canDelete = !readOnly && canConfigureProducts;
 
   const { submitJson: submitDelete } = useModalFetcher();
   const { submitJson: submitDuplicateQuestion } = useModalFetcher();
@@ -132,10 +134,7 @@ export default function AssetQuestionsDataTable({
           return !canUpdate ? (
             <ActiveIndicator2 active={isActive} />
           ) : (
-            <ActiveToggle
-              active={isActive}
-              path={getResourcePath(question)}
-            />
+            <ActiveToggle active={isActive} path={getResourcePath(question)} />
           );
         },
       },

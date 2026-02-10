@@ -19,7 +19,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState, type ComponentProp
 import { Await } from "react-router";
 import { useImmer } from "use-immer";
 import { create } from "zustand";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { useProxyImage } from "~/hooks/use-proxy-image";

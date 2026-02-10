@@ -11,6 +11,7 @@ export default [
   route("login", "./routes/auth/login.tsx"),
   route("logout", "./routes/auth/logout.tsx"),
   route("callback", "./routes/auth/callback.tsx"),
+  route("no-access", "./routes/no-access.tsx"),
 
   // Invitation acceptance (public route)
   route("accept-invite/:code", "./routes/accept-invite.$code.tsx"),
@@ -53,6 +54,7 @@ export default [
     route("refresh-auth", "./routes/actions/refresh-auth.ts"),
     route("access-vault/*", "./routes/actions/access-vault.ts"),
     route("set-app-state", "./routes/actions/set-app-state.ts"),
+    route("switch-client", "./routes/actions/switch-client.ts"),
   ]),
 
   // API Routes
@@ -69,28 +71,36 @@ export default [
   // App Routes
   layout("./routes/layout.tsx", [
     index("./routes/index.tsx"),
-    route("command-center", "./routes/command-center.tsx"),
-    route("dashboard", "./routes/dashboard.tsx"),
-    route("assets", "./routes/assets/layout.tsx", [
-      index("./routes/assets/index.tsx"),
-      route(":id", "./routes/assets/details.tsx"),
-    ]),
-    route("inspection-routes", "./routes/inspection-routes/layout.tsx", [
-      index("./routes/inspection-routes/index.tsx"),
-      route(":id", "./routes/inspection-routes/details.tsx"),
-    ]),
-    route("reports", "./routes/reports/layout.tsx", [
-      index("./routes/reports/index.tsx"),
-      // route("build/:id?", "./routes/reports/build.tsx"),
-      route(":id", "./routes/reports/details.tsx"),
-    ]),
-    route("my-organization", "./routes/my-organization/layout.tsx", [
-      index("./routes/my-organization/index.tsx"),
-      route("sites", "./routes/my-organization/tabs/sites-tab.tsx"),
-      route("users", "./routes/my-organization/tabs/users-tab.tsx"),
-      route("invitations", "./routes/my-organization/tabs/invitations-tab.tsx"),
-      route("assets", "./routes/my-organization/tabs/assets-tab.tsx"),
-      route("products-questions", "./routes/my-organization/tabs/products-questions-tab.tsx"),
+
+    layout("./routes/my-shield/layout.tsx", [
+      route("command-center", "./routes/my-shield/command-center.tsx"),
+      route("dashboard", "./routes/my-shield/dashboard.tsx"),
+      route("assets", "./routes/my-shield/assets/layout.tsx", [
+        index("./routes/my-shield/assets/index.tsx"),
+        route(":id", "./routes/my-shield/assets/details.tsx"),
+      ]),
+      route("inspection-routes", "./routes/my-shield/inspection-routes/layout.tsx", [
+        index("./routes/my-shield/inspection-routes/index.tsx"),
+        route(":id", "./routes/my-shield/inspection-routes/details.tsx"),
+      ]),
+      route("reports", "./routes/my-shield/reports/layout.tsx", [
+        index("./routes/my-shield/reports/index.tsx"),
+        // route("build/:id?", "./routes/reports/build.tsx"),
+        route(":id", "./routes/my-shield/reports/details.tsx"),
+      ]),
+      route("my-organization", "./routes/my-shield/my-organization/layout.tsx", [
+        index("./routes/my-shield/my-organization/index.tsx"),
+        route("sites", "./routes/my-shield/my-organization/tabs/sites-tab.tsx"),
+        route("members", "./routes/my-shield/my-organization/tabs/members-tab.tsx"),
+        route("assets", "./routes/my-shield/my-organization/tabs/assets-tab.tsx"),
+        route(
+          "products-questions",
+          "./routes/my-shield/my-organization/tabs/products-questions-tab.tsx"
+        ),
+        // Backwards-compatible redirects
+        route("users", "./routes/my-shield/my-organization/tabs/users-redirect.tsx"),
+        route("invitations", "./routes/my-shield/my-organization/tabs/invitations-redirect.tsx"),
+      ]),
     ]),
 
     // Product Routes
@@ -121,12 +131,14 @@ export default [
         route(":id", "./routes/admin/clients/details/layout.tsx", [
           index("./routes/admin/clients/details/index.tsx"),
           route("sites", "./routes/admin/clients/details/tabs/sites-tab.tsx"),
-          route("users", "./routes/admin/clients/details/tabs/users-tab.tsx"),
+          route("members", "./routes/admin/clients/details/tabs/members-tab.tsx"),
           route("assets", "./routes/admin/clients/details/tabs/assets-tab.tsx"),
           route(
             "products-questions",
             "./routes/admin/clients/details/tabs/products-questions-tab.tsx"
           ),
+          // Backwards-compatible redirect
+          route("users", "./routes/admin/clients/details/tabs/users-redirect.tsx"),
         ]),
       ]),
       route("product-requests", "./routes/admin/product-requests/layout.tsx", [
@@ -137,6 +149,7 @@ export default [
         index("./routes/admin/tags/index.tsx"),
         route(":id", "./routes/admin/tags/details.tsx"),
       ]),
+      route("users", "./routes/admin/users/layout.tsx", [index("./routes/admin/users/index.tsx")]),
       route("roles", "./routes/admin/roles/layout.tsx", [
         index("./routes/admin/roles/index.tsx"),
         route(":id", "./routes/admin/roles/details.tsx"),

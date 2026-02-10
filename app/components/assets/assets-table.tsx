@@ -9,13 +9,13 @@ import { DataTable, type DataTableProps } from "~/components/data-table/data-tab
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import Icon from "~/components/icons/icon";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AlertsStatus, AssetInspectionsStatus } from "~/lib/enums";
 import { getAssetAlertsStatus, getAssetInspectionStatus } from "~/lib/model-utils";
 import type { Asset, ProductCategory } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
 import ActiveToggle from "../active-toggle";
@@ -49,10 +49,8 @@ export default function AssetsTable({
   | "onPaginationChange"
 >) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
-  const canCreate = can(user, "create", "assets");
-  const canDelete = can(user, "delete", "assets");
-  const canEdit = can(user, "update", "assets");
+
+  const canManageAssets = can(user, CAPABILITIES.MANAGE_ASSETS);
 
   const [searchParams] = useSearchParams();
 
@@ -95,13 +93,10 @@ export default function AssetsTable({
         cell: ({ getValue, row }) => {
           const asset = row.original;
           const isActive = getValue() as boolean;
-          return !canEdit ? (
+          return !canManageAssets ? (
             <ActiveIndicator2 active={isActive} />
           ) : (
-            <ActiveToggle
-              active={isActive}
-              path={getResourcePath(asset)}
-            />
+            <ActiveToggle active={isActive} path={getResourcePath(asset)} />
           );
         },
       },
@@ -254,7 +249,7 @@ export default function AssetsTable({
                       key: "edit",
                       text: "Edit",
                       Icon: Pencil,
-                      disabled: !canEdit,
+                      disabled: !canManageAssets,
                       onAction: () => editAsset.openData(asset),
                       hide: !!toDetailsRoute,
                     },
@@ -268,7 +263,7 @@ export default function AssetsTable({
                       key: "delete",
                       text: "Delete",
                       Icon: Trash,
-                      disabled: !canDelete,
+                      disabled: !canManageAssets,
                       onAction: () => {
                         setDeleteAction((draft) => {
                           draft.open = true;
@@ -281,7 +276,6 @@ export default function AssetsTable({
                               {
                                 method: "delete",
                                 path: `/api/proxy/assets/${asset.id}`,
-                                viewContext,
                               }
                             );
                           };
@@ -296,7 +290,7 @@ export default function AssetsTable({
         },
       },
     ],
-    [setDeleteAction, canEdit, submitDelete, canDelete]
+    [setDeleteAction, canManageAssets, submitDelete, canManageAssets]
   );
 
   const allCategories = dedupById(assets.map((asset) => asset.product?.productCategory));
@@ -404,10 +398,10 @@ export default function AssetsTable({
             title: "Site",
           },
         ]}
-        actions={canCreate ? [<CreateAssetButton key="add" clientId={clientId} />] : []}
+        actions={canManageAssets ? [<CreateAssetButton key="add" clientId={clientId} />] : []}
       />
       <ConfirmationDialog {...deleteAction} />
-      {canEdit && editAsset.data && (
+      {canManageAssets && editAsset.data && (
         <ResponsiveDialog
           title="Edit Asset"
           open={editAsset.open}

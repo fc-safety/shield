@@ -276,10 +276,15 @@ export const fetchAuthenticated = async (
   authOptions: LoginRedirectOptions = {}
 ) => {
   const { user, session } = await requireUserSession(request, authOptions);
+  const activeClientId = session.get("activeClientId");
 
   const getResponse = (accessToken: string) => {
     fetchOptions.headers = new Headers(fetchOptions?.headers);
     fetchOptions.headers.set("Authorization", `Bearer ${accessToken}`);
+
+    if (activeClientId && !fetchOptions.headers.has("X-Client-Id")) {
+      fetchOptions.headers.set("X-Client-Id", activeClientId);
+    }
 
     return fetch(url, fetchOptions);
   };

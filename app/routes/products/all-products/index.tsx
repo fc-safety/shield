@@ -35,6 +35,7 @@ import { useAppState } from "~/contexts/app-state-context";
 import { useAuth } from "~/contexts/auth-context";
 import type { Manufacturer, ProductCategory } from "~/lib/models";
 import type { QueryParams } from "~/lib/urls";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, isGlobalAdmin as isGlobalAdminFn } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/index";
@@ -76,7 +77,7 @@ export default function AllProducts({
   loaderData: { products, optimizedProductImageUrls, isGlobalAdmin },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canCreate = can(user, "create", "products");
+  const canCreate = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
   const { appState, setAppState } = useAppState();
 

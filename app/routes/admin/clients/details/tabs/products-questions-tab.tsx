@@ -24,8 +24,8 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   //   const sitesResult = await api.sites.list(request, { clientId: id });
   const [productResults, questionResults] = await Promise.all([
-    api.products.list(request, { limit: 10000, clientId: id }, { context: "admin" }),
-    api.assetQuestions.list(request, { limit: 10000, clientId: id }, { context: "admin" }),
+    api.products.list(request, { limit: 10000 }, { clientId: id }),
+    api.assetQuestions.list(request, { limit: 10000 }, { clientId: id }),
   ]);
 
   return {

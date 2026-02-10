@@ -2,8 +2,8 @@ import { api } from "~/.server/api";
 import { requireUserSession } from "~/.server/user-sesssion";
 import ClientDetailsLayout, { type Tab } from "~/components/clients/pages/client-details-layout";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
-import { ViewContextProvider } from "~/contexts/view-context";
-import { buildTitleFromBreadcrumb } from "~/lib/utils";
+import { RequestedAccessContextProvider } from "~/contexts/requested-access-context";
+import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
 export const handle = {
@@ -26,12 +26,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const clientIdPathIdx = pathParts.indexOf("my-organization");
   const currentTab = pathParts.at(clientIdPathIdx + 1) as Tab | undefined;
 
-  const clientPromise = api.clients
-    .list(request, {
-      limit: 1,
-      externalId: user.clientId,
-    })
-    .then((r) => r.results.at(0));
+  const showWelcome = getSearchParam(request, "welcome") === "true";
+
+  const clientPromise = api.clients.getMyOrganization(request).then((r) => r.client);
 
   // Without an admin context, this should only get the user's own sites.
   const sitesPromise = api.sites
@@ -46,15 +43,19 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     throw new Error("No client found for user.");
   }
 
-  return { client, sites, currentTab };
+  return { client, sites, currentTab, showWelcome };
 };
 
 export default function MyOrganization({
-  loaderData: { client, currentTab },
+  loaderData: { client, currentTab, showWelcome },
 }: Route.ComponentProps) {
   return (
-    <ViewContextProvider value="user">
-      <ClientDetailsLayout client={client} currentTab={currentTab ?? "sites"} />
-    </ViewContextProvider>
+    <RequestedAccessContextProvider viewContext="user">
+      <ClientDetailsLayout
+        client={client}
+        currentTab={currentTab ?? "sites"}
+        showWelcome={showWelcome}
+      />
+    </RequestedAccessContextProvider>
   );
 }

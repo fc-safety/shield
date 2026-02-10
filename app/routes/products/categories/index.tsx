@@ -26,17 +26,18 @@ import EditProductCategoryButton from "~/components/products/edit-product-catego
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { type AnsiCategory, type ProductCategory } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, isGlobalAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const { user } = await requireUserSession(request);
-  const canReadAnsiCategories = can(user, "read", "ansi-categories");
+  const canReadAnsiCategories = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
   const [productCategories, ansiCategories] = await Promise.all([
     api.productCategories.list(request, {
@@ -61,11 +62,11 @@ export default function ProductCategories({
   const { user } = useAuth();
 
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const hasCreatePermission = can(user, "create", "product-categories");
-  const hasDeletePermission = can(user, "delete", "product-categories");
-  const hasUpdatePermission = can(user, "update", "product-categories");
+  const hasCreatePermission = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
+  const hasDeletePermission = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
+  const hasUpdatePermission = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
-  const canReadAnsiCategories = can(user, "read", "ansi-categories");
+  const canReadAnsiCategories = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
   return (
     <div className="grid gap-4">
@@ -269,9 +270,9 @@ function ProductCategoriesCard({
 function AnsiCategoriesCard({ ansiCategories }: { ansiCategories: AnsiCategory[] }) {
   const { user } = useAuth();
 
-  const canCreate = useMemo(() => can(user, "create", "ansi-categories"), [user]);
-  const canUpdate = useMemo(() => can(user, "update", "ansi-categories"), [user]);
-  const canDelete = useMemo(() => can(user, "delete", "ansi-categories"), [user]);
+  const canCreate = useMemo(() => can(user, CAPABILITIES.CONFIGURE_PRODUCTS), [user]);
+  const canUpdate = useMemo(() => can(user, CAPABILITIES.CONFIGURE_PRODUCTS), [user]);
+  const canDelete = useMemo(() => can(user, CAPABILITIES.CONFIGURE_PRODUCTS), [user]);
 
   const editAnsiCategory = useOpenData<AnsiCategory>();
 

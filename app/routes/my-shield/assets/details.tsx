@@ -43,6 +43,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import { getAssetAlertsStatus, getAssetInspectionStatus } from "~/lib/model-utils";
 import type { Asset, Consumable } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
@@ -90,11 +91,10 @@ export default function AssetDetails({
   loaderData: { asset, processedProductImageUrl },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canUpdate = can(user, "update", "assets");
-  const canDelete = can(user, "delete", "assets");
-  const canReadInspections = can(user, "read", "inspections");
-  const canUpdateRoutes = can(user, "update", "inspection-routes");
-  const canCreateProductRequests = can(user, "create", "product-requests");
+  const canManageAssets = can(user, CAPABILITIES.MANAGE_ASSETS);
+  const canReadInspections = can(user, CAPABILITIES.PERFORM_INSPECTIONS);
+  const canUpdateRoutes = can(user, CAPABILITIES.MANAGE_ROUTES);
+  const canCreateProductRequests = can(user, CAPABILITIES.SUBMIT_REQUESTS);
 
   const navigate = useNavigate();
 
@@ -299,7 +299,7 @@ export default function AssetDetails({
                 </div>
 
                 <ButtonGroup className="col-span-2">
-                  {canUpdate && (
+                  {canManageAssets && (
                     <ButtonGroup>
                       <EditAssetButton
                         asset={asset}
@@ -311,7 +311,7 @@ export default function AssetDetails({
                       />
                     </ButtonGroup>
                   )}
-                  {canDelete && (
+                  {canManageAssets && (
                     <ButtonGroup>
                       <Button
                         variant="destructive"
@@ -467,9 +467,7 @@ function BasicCard({
 
 function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; asset: Asset }) {
   const { user } = useAuth();
-  const canCreate = can(user, "create", "consumables");
-  const canUpdate = can(user, "update", "consumables");
-  const canDelete = can(user, "delete", "consumables");
+  const canManageConsumables = can(user, CAPABILITIES.MANAGE_ASSETS);
 
   const editConsumable = useOpenData<Consumable>();
 
@@ -532,7 +530,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
                       key: "edit",
                       text: "Edit",
                       Icon: Pencil,
-                      disabled: !canUpdate,
+                      disabled: !canManageConsumables,
                       onAction: () => editConsumable.openData(consumable),
                     },
                   ],
@@ -545,7 +543,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
                       key: "delete",
                       text: "Delete",
                       Icon: Trash,
-                      disabled: !canDelete,
+                      disabled: !canManageConsumables,
                       variant: "destructive",
                       onAction: () =>
                         setDeleteAction((draft) => {
@@ -571,7 +569,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
         },
       },
     ],
-    [setDeleteAction, submitDelete, editConsumable, canUpdate, canDelete]
+    [setDeleteAction, submitDelete, editConsumable, canManageConsumables]
   );
 
   return (
@@ -581,7 +579,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
         data={consumables}
         initialState={{
           columnVisibility: {
-            actions: canUpdate || canDelete,
+            actions: canManageConsumables,
             ansiCategory: consumables.some((c) => !!c.product?.ansiCategory),
           },
         }}
@@ -590,7 +588,7 @@ function ConsumablesTable({ consumables, asset }: { consumables: Consumable[]; a
         }}
         searchPlaceholder="Search supplies..."
         actions={
-          canCreate
+          canManageConsumables
             ? [
                 <EditConsumableButton
                   key="add"

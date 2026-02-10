@@ -49,6 +49,7 @@ import type { Asset, AssetQuestion, InspectionRoute, InspectionSession, Tag } fr
 import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import type { CheckConfigurationByAssetResult } from "~/lib/types";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, getUserDisplayName } from "~/lib/users";
 import { buildTitle, getSearchParams, isNil } from "~/lib/utils";
 import { getClientIPAddress } from "~/lib/utils/get-client-ip-address";
@@ -138,7 +139,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // [✅] PUBLIC: View public inspection history.
   // [✅] INSPECTOR: Begin inspection.
   // [  ] MANAGER: View menu: Inspect, History, Order Supplies, etc.
-  await guard(request, (user) => can(user, "create", "inspections"));
+  await guard(request, (user) => can(user, CAPABILITIES.PERFORM_INSPECTIONS));
 
   const { tagExternalId } = await validateInspectionSession(request);
 

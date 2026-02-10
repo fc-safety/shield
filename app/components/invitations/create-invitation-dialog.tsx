@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createInvitationSchema } from "~/lib/schema";
 import type { Invitation } from "~/lib/types";
@@ -16,13 +16,7 @@ import { Button } from "../ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "../ui/field";
 import { extractErrorMessage, Form as FormProvider } from "../ui/form";
 import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 type TForm = z.infer<typeof createInvitationSchema>;
 
@@ -34,10 +28,94 @@ interface CreateInvitationDialogProps {
 
 const FORM_DEFAULTS: TForm = {
   email: "",
-  roleId: undefined,
-  siteId: undefined,
+  roleId: "",
+  siteId: "",
   expiresInDays: 7,
 };
+
+function CreatedInvitationDisplay({
+  invitation,
+  onClose,
+}: {
+  invitation: Invitation;
+  onClose: () => void;
+}) {
+  // Construct invite URL - need code to be present
+  const hasValidCode = invitation.code && invitation.code !== "undefined";
+  const inviteUrl = hasValidCode
+    ? invitation.inviteUrl || `${window.location.origin}/accept-invite/${invitation.code}`
+    : null;
+
+  // Format expiration date safely
+  const expiresDate = invitation.expiresOn ? new Date(invitation.expiresOn) : null;
+  const expiresFormatted =
+    expiresDate && !isNaN(expiresDate.getTime()) ? expiresDate.toLocaleDateString() : null;
+
+  const copyInviteLink = async () => {
+    if (inviteUrl) {
+      await navigator.clipboard.writeText(inviteUrl);
+      toast.success("Invite link copied to clipboard");
+    }
+  };
+
+  // If we don't have the necessary data, show an error state
+  if (!inviteUrl) {
+    return (
+      <div className="space-y-4 pt-4">
+        <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4">
+          <p className="text-destructive text-sm">
+            The invitation was created but we couldn't retrieve the invite link. Please check the
+            Members tab to copy the invitation link.
+          </p>
+        </div>
+        <div className="flex justify-end">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-w-0 space-y-4 pt-4">
+      <div className="bg-muted/50 rounded-lg border p-4">
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+          <Link2 className="h-4 w-4" />
+          Invitation Link
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <code className="bg-background flex-1 truncate rounded px-2 py-1 text-sm">
+            {inviteUrl}
+          </code>
+          <Button size="sm" variant="outline" onClick={copyInviteLink}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {invitation.email && (
+        <p className="text-muted-foreground text-sm">
+          This invitation is restricted to: <strong>{invitation.email}</strong>
+        </p>
+      )}
+
+      {expiresFormatted && (
+        <p className="text-muted-foreground text-sm">Expires: {expiresFormatted}</p>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={onClose}>
+          Close
+        </Button>
+        <Button onClick={copyInviteLink}>
+          <Copy className="h-4 w-4" />
+          Copy Link
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function CreateInvitationDialog({
   clientId,
@@ -53,13 +131,16 @@ export function CreateInvitationDialog({
     defaultValues: FORM_DEFAULTS,
   });
 
-  const {
-    formState: { isValid },
-    reset,
-  } = form;
+  const { reset } = form;
 
-  const { submitJson, isSubmitting } = useModalFetcher<Invitation>({
-    onSubmitted: (invitation) => {
+  const { submitJson, isSubmitting } = useModalFetcher<Invitation | { data: Invitation }>({
+    onSubmitted: (response) => {
+      // Debug: log the actual response structure
+      console.log("[CreateInvitationDialog] API response:", response);
+
+      // Handle both direct response and wrapped response (e.g., { data: invitation })
+      const invitation =
+        "data" in response && response.data ? response.data : (response as Invitation);
       setCreatedInvitation(invitation);
       onCreated?.(invitation);
     },
@@ -91,13 +172,6 @@ export function CreateInvitationDialog({
     }
   };
 
-  const copyInviteLink = async () => {
-    if (createdInvitation?.inviteUrl) {
-      await navigator.clipboard.writeText(createdInvitation.inviteUrl);
-      toast.success("Invite link copied to clipboard");
-    }
-  };
-
   return (
     <ResponsiveDialog
       open={open}
@@ -106,11 +180,13 @@ export function CreateInvitationDialog({
         trigger ?? (
           <Button size="sm">
             <Plus className="h-4 w-4" />
-            Create Invitation
+            Invite Member
           </Button>
         )
       }
-      title={createdInvitation ? "Invitation Created" : "Create Invitation"}
+      dialogClassName="sm:max-w-lg"
+      disableDisplayTable
+      title={createdInvitation ? "Invitation Created" : "Invite Member"}
       description={
         createdInvitation
           ? "Share this link with the person you want to invite."
@@ -118,42 +194,10 @@ export function CreateInvitationDialog({
       }
     >
       {createdInvitation ? (
-        <div className="space-y-4 pt-4">
-          <div className="rounded-lg border bg-muted/50 p-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Link2 className="h-4 w-4" />
-              Invitation Link
-            </div>
-            <div className="mt-2 flex items-center gap-2">
-              <code className="flex-1 truncate rounded bg-background px-2 py-1 text-sm">
-                {createdInvitation.inviteUrl}
-              </code>
-              <Button size="sm" variant="outline" onClick={copyInviteLink}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {createdInvitation.email && (
-            <p className="text-sm text-muted-foreground">
-              This invitation is restricted to: <strong>{createdInvitation.email}</strong>
-            </p>
-          )}
-
-          <p className="text-sm text-muted-foreground">
-            Expires: {new Date(createdInvitation.expiresOn).toLocaleDateString()}
-          </p>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => handleOpenChange(false)}>
-              Close
-            </Button>
-            <Button onClick={copyInviteLink}>
-              <Copy className="h-4 w-4" />
-              Copy Link
-            </Button>
-          </div>
-        </div>
+        <CreatedInvitationDisplay
+          invitation={createdInvitation}
+          onClose={() => handleOpenChange(false)}
+        />
       ) : (
         <FormProvider {...form}>
           <form
@@ -170,15 +214,16 @@ export function CreateInvitationDialog({
               name="email"
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Email (Optional)</FieldLabel>
+                  <FieldLabel>Email</FieldLabel>
                   <Input
                     {...field}
                     type="email"
                     inputMode="email"
                     placeholder="user@example.com"
+                    required
                   />
                   <FieldDescription>
-                    If provided, only this email can accept the invitation.
+                    The invitation will be sent to this email address.
                   </FieldDescription>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -190,15 +235,10 @@ export function CreateInvitationDialog({
               name="roleId"
               render={({ field: { value, onChange }, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Role (Optional)</FieldLabel>
-                  <RoleCombobox
-                    value={value}
-                    onValueChange={onChange}
-                    className="w-full"
-                    showClear
-                  />
+                  <FieldLabel>Role</FieldLabel>
+                  <RoleCombobox value={value} onValueChange={onChange} className="w-full" />
                   <FieldDescription>
-                    Pre-assign a role when the invitation is accepted.
+                    The role assigned to this member when they join.
                   </FieldDescription>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -210,7 +250,7 @@ export function CreateInvitationDialog({
               name="siteId"
               render={({ field: { value, onChange }, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Site (Optional)</FieldLabel>
+                  <FieldLabel>Site</FieldLabel>
                   <SiteCombobox
                     value={value}
                     onValueChange={onChange}
@@ -218,7 +258,7 @@ export function CreateInvitationDialog({
                     className="w-full"
                   />
                   <FieldDescription>
-                    Pre-assign a site when the invitation is accepted.
+                    The site assigned to this member when they join.
                   </FieldDescription>
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
@@ -249,15 +289,11 @@ export function CreateInvitationDialog({
             />
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleOpenChange(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Invitation"}
+                {isSubmitting ? "Sending..." : "Send Invitation"}
               </Button>
             </div>
           </form>

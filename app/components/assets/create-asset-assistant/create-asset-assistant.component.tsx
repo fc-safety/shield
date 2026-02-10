@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Asset } from "~/lib/models";
 import { getAssetQuestionsByAssetPropertiesQueryOptions } from "~/lib/services/assets.service";

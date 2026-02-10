@@ -23,11 +23,11 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ResultsPage } from "~/lib/models";
-import type { ClientUser } from "~/lib/types";
+import type { UserResponse } from "~/lib/types";
 import { cn } from "~/lib/utils";
 
 type TForm = {
-  recipients: ClientUser[];
+  recipients: UserResponse[];
 };
 
 interface SendNotificationsFormProps {
@@ -43,8 +43,8 @@ export function SendNotificationsForm({
 }: SendNotificationsFormProps) {
   const [open, setOpen] = useState(false);
 
-  const [users, setUsers] = useState<ClientUser[] | undefined>();
-  const { load, isLoading } = useModalFetcher<DataOrError<ResultsPage<ClientUser>>>({
+  const [users, setUsers] = useState<UserResponse[] | undefined>();
+  const { load, isLoading } = useModalFetcher<DataOrError<ResultsPage<UserResponse>>>({
     onData: (data) => setUsers(data.data?.results ?? []),
   });
 
@@ -69,8 +69,8 @@ export function SendNotificationsForm({
 
   const recipients = watch("recipients");
 
-  const [selectionQueue, setSelectionQueue] = useState<ClientUser[]>([]);
-  const [deselectionQueue, setDeselectionQueue] = useState<ClientUser[]>([]);
+  const [selectionQueue, setSelectionQueue] = useState<UserResponse[]>([]);
+  const [deselectionQueue, setDeselectionQueue] = useState<UserResponse[]>([]);
 
   const flushSelectedQueue = useCallback(() => {
     if (selectionQueue.length > 0) {

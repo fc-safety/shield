@@ -17,7 +17,7 @@ import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
-import { can } from "~/lib/users";
+import { isSystemsAdmin } from "~/lib/users";
 import { beautifyPhone, capitalize } from "~/lib/utils";
 import type { Route } from "./+types/index";
 import MigrationAssistantButton from "./components/migration-assistant/migration-assistant-button";
@@ -28,7 +28,7 @@ export function loader({ request }: Route.LoaderArgs) {
 
 export default function ClientsIndex({ loaderData: clients }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canDeleteClient = can(user, "delete", "clients");
+  const canDeleteClient = isSystemsAdmin(user);
 
   const { revalidate } = useRevalidator();
   const { submitJson: submitDelete } = useModalFetcher({

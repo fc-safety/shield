@@ -2,10 +2,11 @@ import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Asset, ResultsPage } from "~/lib/models";
-import { stringifyQuery, type QueryParams } from "~/lib/urls";
+import { CAPABILITIES } from "~/lib/permissions";
+import { type QueryParams } from "~/lib/urls";
 import { can } from "~/lib/users";
 import { objectsEqual } from "~/lib/utils";
 import { ResponsiveCombobox } from "../responsive-combobox";
@@ -42,8 +43,9 @@ export default function AssetCombobox({
   nestDrawers,
 }: AssetComboboxProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
-  const canCreate = useMemo(() => can(user, "create", "assets"), [user]);
+  const { load } = useModalFetcher();
+
+  const canCreate = useMemo(() => can(user, CAPABILITIES.MANAGE_ASSETS), [user]);
 
   const fetcher = useFetcher<ResultsPage<Asset>>();
   const prevQueryFilter = useRef<QueryParams | null>(null);
@@ -55,15 +57,15 @@ export default function AssetCombobox({
       if (optionQueryFilter) {
         prevQueryFilter.current = optionQueryFilter;
       }
-      fetcher.load(
-        `/api/proxy/assets?${stringifyQuery({
+      load({
+        path: "/api/proxy/assets",
+        query: {
           limit: 10000,
-          _viewContext: viewContext,
           ...optionQueryFilter,
-        })}`
-      );
+        },
+      });
     }
-  }, [fetcher, optionQueryFilter, viewContext]);
+  }, [fetcher, optionQueryFilter]);
 
   useEffect(() => {
     if (value) preloadAssets();
@@ -132,7 +134,7 @@ export default function AssetCombobox({
         />
       ) : (
         <Dialog open={createNew.open} onOpenChange={createNew.setOpen}>
-          <DialogContent className="z-[51]">
+          <DialogContent className="z-51">
             <DialogHeader>
               <DialogTitle>Permission Required</DialogTitle>
             </DialogHeader>

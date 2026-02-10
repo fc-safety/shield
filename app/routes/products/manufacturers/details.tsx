@@ -14,6 +14,7 @@ import ProductCard from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { useAuth } from "~/contexts/auth-context";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
@@ -36,7 +37,7 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
   return api.manufacturers.get(request, id).then((manufacturer) => {
     return {
       manufacturer,
-      canEdit: isGlobalAdmin(user) || manufacturer.client?.externalId === user.clientId,
+      canEdit: isGlobalAdmin(user) || manufacturer.client?.id === user.activeClientId,
       optimizedProductImageUrls: new Map(
         (manufacturer.products ?? [])
           .filter(
@@ -58,8 +59,8 @@ export default function ProductManufacturerDetails({
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const canUpdate =
-    can(user, "update", "manufacturers") &&
-    (userIsGlobalAdmin || manufacturer.client?.externalId === user.clientId);
+    can(user, CAPABILITIES.CONFIGURE_PRODUCTS) &&
+    (userIsGlobalAdmin || manufacturer.client?.id === user.activeClientId);
 
   return (
     <div className="grid gap-4">

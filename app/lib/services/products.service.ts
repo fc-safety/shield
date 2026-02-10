@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { ViewContext } from "~/contexts/view-context";
+import type { ViewContext } from "~/contexts/requested-access-context";
 import type { Product, ResultsPage } from "../models";
 import { buildPath } from "../urls";
 

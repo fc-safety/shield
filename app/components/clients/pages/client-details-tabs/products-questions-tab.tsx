@@ -12,11 +12,12 @@ import EditProductButton from "~/components/products/edit-product-button";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { AssetQuestion, Product } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 
 export default function ClientDetailsTabsProductsQuestionsTag({
@@ -102,9 +103,9 @@ const ProductsTable = ({
   const { user } = useAuth();
   const viewContext = useViewContext();
 
-  const canCreate = !readOnly && can(user, "create", "products");
-  const canUpdate = !readOnly && can(user, "update", "products");
-  const canDelete = !readOnly && can(user, "delete", "products");
+  const canCreate = !readOnly && can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
+  const canUpdate = !readOnly && can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
+  const canDelete = !readOnly && can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
   const editProduct = useOpenData<Product>();
   const [deleteAction, setDeleteAction] = useConfirmAction({

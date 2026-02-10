@@ -1,20 +1,16 @@
 import { Pencil, Plus } from "lucide-react";
 import { useState, type ComponentProps } from "react";
-import type { ClientUser } from "~/lib/types";
+import type { UserResponse } from "~/lib/types";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
 import ClientUserDetailsForm from "./client-user-details-form";
 interface EditUserButtonProps
   extends Omit<ComponentProps<typeof ClientUserDetailsForm>, "onSubmitted"> {
-  user?: ClientUser;
+  user?: UserResponse;
   trigger?: React.ReactNode;
 }
 
-export default function EditUserButton({
-  user,
-  trigger,
-  ...props
-}: EditUserButtonProps) {
+export default function EditUserButton({ user, trigger, ...props }: EditUserButtonProps) {
   const [open, setOpen] = useState(false);
   return (
     <ResponsiveDialog
@@ -33,11 +29,7 @@ export default function EditUserButton({
         )
       }
     >
-      <ClientUserDetailsForm
-        onSubmitted={() => setOpen(false)}
-        user={user}
-        {...props}
-      />
+      <ClientUserDetailsForm onSubmitted={() => setOpen(false)} user={user} {...props} />
     </ResponsiveDialog>
   );
 }
