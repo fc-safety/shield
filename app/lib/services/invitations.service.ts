@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { Invitation, InvitationValidation } from "../types";
+import type { AcceptInvitationResult, Invitation, InvitationValidation } from "../types";
 import { buildPath } from "../urls";
 
 interface ListInvitationsOptions {
@@ -84,17 +84,6 @@ export const createInvitation = async (
 /**
  * Accept an invitation.
  */
-export interface AcceptInvitationResult {
-  success: boolean;
-  clientAccess: {
-    id: string;
-    clientId: string;
-    client: { id: string; name: string; externalId: string };
-    role?: { id: string; name: string };
-    site?: { id: string; name: string };
-  };
-}
-
 export const acceptInvitation = async (
   fetcher: typeof fetch,
   code: string

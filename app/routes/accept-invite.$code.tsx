@@ -1,8 +1,12 @@
 import { Building2, Check, Clock, XCircle } from "lucide-react";
 import { redirect, useFetcher } from "react-router";
 import { ApiFetcher } from "~/.server/api-utils";
-import { config } from "~/.server/config";
-import { getActiveUserSession } from "~/.server/user-sesssion";
+import {
+  applyAccessGrantToSession,
+  commitUserSession,
+  fetchCurrentUser,
+  getActiveUserSession,
+} from "~/.server/user-sesssion";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -47,7 +51,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
       validation,
       isAuthenticated,
       loginUrl: `/login?returnTo=${encodeURIComponent(`/accept-invite/${code}`)}`,
-      appHost: config.APP_HOST,
     };
   } catch (error) {
     // Handle 404 or 410 errors
@@ -59,7 +62,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           error: "not_found",
           isAuthenticated,
           loginUrl: `/login?returnTo=${encodeURIComponent(`/accept-invite/${code}`)}`,
-          appHost: config.APP_HOST,
         };
       }
       if (error.status === 410) {
@@ -69,7 +71,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
           error: "expired",
           isAuthenticated,
           loginUrl: `/login?returnTo=${encodeURIComponent(`/accept-invite/${code}`)}`,
-          appHost: config.APP_HOST,
         };
       }
     }
@@ -78,6 +79,12 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
+  const { session } = await getActiveUserSession(request);
+  const tokens = session?.get("tokens");
+  if (!session || !tokens) {
+    throw new Response("Not authenticated", { status: 401 });
+  }
+
   const code = params.code;
 
   if (!code) {
@@ -85,8 +92,20 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
   }
 
   try {
-    const result = await ApiFetcher.create(request, `/invitations/${code}/accept`)
-      .post<AcceptInvitationResult>();
+    const result = await ApiFetcher.create(
+      request,
+      `/invitations/${code}/accept`
+    ).post<AcceptInvitationResult>({ allowEmptyAccessGrant: true });
+
+    const currentUser = await fetchCurrentUser(tokens.accessToken, {
+      clientId: result.clientAccess.clientId,
+      siteId: result.clientAccess.siteId,
+    });
+
+    if (currentUser.accessGrant) {
+      applyAccessGrantToSession(session, currentUser.accessGrant);
+      await commitUserSession(session);
+    }
 
     // Redirect to the app after successful acceptance
     return redirect("/my-organization?welcome=true");
@@ -112,11 +131,11 @@ export default function AcceptInvite({
   // Error states
   if (error === "not_found") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-              <XCircle className="h-6 w-6 text-destructive" />
+            <div className="bg-destructive/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+              <XCircle className="text-destructive h-6 w-6" />
             </div>
             <CardTitle>Invitation Not Found</CardTitle>
             <CardDescription>
@@ -135,7 +154,7 @@ export default function AcceptInvite({
 
   if (error === "expired") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
@@ -165,20 +184,20 @@ export default function AcceptInvite({
   const acceptError = actionData?.error;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+    <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Building2 className="h-6 w-6 text-primary" />
+          <div className="bg-primary/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+            <Building2 className="text-primary h-6 w-6" />
           </div>
-          <CardTitle>You're Invited!</CardTitle>
+          <CardTitle className="self-center">You're Invited!</CardTitle>
           <CardDescription>
             You've been invited to join <strong>{validation.client.name}</strong>
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <div className="rounded-lg border bg-muted/50 p-4">
+          <div className="bg-muted/50 rounded-lg border p-4">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Organization</span>
@@ -200,13 +219,13 @@ export default function AcceptInvite({
           </div>
 
           {validation.restrictedToEmail && (
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-center text-sm">
               This invitation is restricted to a specific email address.
             </p>
           )}
 
           {acceptError && (
-            <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-center text-sm text-destructive">
+            <div className="border-destructive/50 bg-destructive/10 text-destructive rounded-lg border p-3 text-center text-sm">
               {acceptError}
             </div>
           )}
@@ -234,7 +253,7 @@ export default function AcceptInvite({
                   Sign in to Accept
                 </a>
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-center text-xs">
                 You need to sign in to accept this invitation.
               </p>
             </>
