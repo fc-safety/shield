@@ -5,7 +5,6 @@ import { CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Boxes, Pencil, Warehouse } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Site } from "~/lib/models";
@@ -28,7 +27,6 @@ export default function SiteDetailsCard({
   site: Site;
 }) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
   const userIsSuperAdmin = isSystemsAdmin(user);
   const canUpdateSite = isGlobalAdmin(user);
   const canDeleteSite = site.id !== user.activeSiteId && isGlobalAdmin(user);
@@ -163,7 +161,6 @@ export default function SiteDetailsCard({
                           {
                             method: "delete",
                             path: `/api/proxy/sites/${site.id}`,
-                            viewContext,
                           }
                         );
                       };

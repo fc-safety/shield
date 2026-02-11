@@ -10,7 +10,7 @@ import {
 } from "~/components/ui/navigation-menu";
 import { ScrollBar } from "~/components/ui/scroll-area";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import type { Client } from "~/lib/models";
 import { CAPABILITIES } from "~/lib/permissions";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
@@ -29,7 +29,7 @@ export default function ClientDetailsLayout({
   currentTab: Tab;
 }) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
 
   const tabs = useMemo(
     (): { label: string; value: string; disabled?: boolean; hide?: boolean }[] => [
@@ -64,7 +64,7 @@ export default function ClientDetailsLayout({
           {client.demoMode && (
             <div className="bg-primary/10 border-primary/50 text-primary w-full rounded-xl border px-2 py-1 text-xs">
               <span className="font-semibold">Demo mode enabled:</span>{" "}
-              {viewContext === "admin" ? "This client" : "Your organization"} has certain features
+              {accessIntent === "system" ? "This client" : "Your organization"} has certain features
               enabled and others disabled to facilitate product demonstrations.
             </div>
           )}

@@ -2,7 +2,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { SquareAsterisk, Trash2, UserPen, UserPlus } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -39,7 +38,6 @@ export function MembersTable({
   onMemberRemoved,
 }: MembersTableProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
   const canManageUsers = can(user, CAPABILITIES.MANAGE_USERS);
 
   const updateRole = useOpenData<string>();
@@ -81,13 +79,12 @@ export function MembersTable({
               method: "DELETE",
               path: buildPath(`/api/proxy/members/:id`, { id: member.id }),
               query: { clientId },
-              viewContext,
             }
           );
         };
       });
     },
-    [clientId, viewContext, submitRemoveMember, setConfirmAction]
+    [clientId, submitRemoveMember, setConfirmAction]
   );
 
   const columns: ColumnDef<Member>[] = useMemo(

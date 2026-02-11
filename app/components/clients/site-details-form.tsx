@@ -8,7 +8,6 @@ import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type ResultsPage, type Site } from "~/lib/models";
@@ -41,7 +40,6 @@ export default function SiteDetailsForm({
   isSiteGroup = false,
 }: SiteDetailsFormProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
   const userIsSuperAdmin = isSystemsAdmin(user);
 
   const isNew = !site;
@@ -193,7 +191,6 @@ export default function SiteDetailsForm({
         limit: 10000,
         clientId,
         _throw: "false",
-        _viewContext: viewContext,
       };
       if (site?.id) {
         query.OR = [
@@ -209,7 +206,7 @@ export default function SiteDetailsForm({
       }
       subsitesLoad({ path: "/api/proxy/sites", query });
     }
-  }, [site, subsitesLoad, viewContext, clientId, subsitesLoading, subsitesData]);
+  }, [site, subsitesLoad, clientId, subsitesLoading, subsitesData]);
 
   useEffect(() => {
     handleSubsitesLoad();
@@ -228,7 +225,6 @@ export default function SiteDetailsForm({
     submit(serializeFormJson(data), {
       path: "/api/proxy/sites",
       id: site?.id,
-      viewContext,
     });
   };
 

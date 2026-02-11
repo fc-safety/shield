@@ -2,7 +2,6 @@ import { ChevronDown, Copy, MoreHorizontal, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { CAPABILITIES } from "~/lib/permissions";
@@ -34,7 +33,6 @@ export function PendingInvitationsSection({
   onInvitationRevoked,
 }: PendingInvitationsSectionProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
   const canDeleteInvitation = can(user, CAPABILITIES.MANAGE_USERS);
   const [isOpen, setIsOpen] = useState(true);
 
@@ -60,7 +58,6 @@ export function PendingInvitationsSection({
           {
             method: "DELETE",
             path: `/api/proxy/invitations/${invitation.id}`,
-            viewContext,
           }
         );
       };

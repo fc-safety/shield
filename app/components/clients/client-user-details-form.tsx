@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createUserSchema, updateUserSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
@@ -35,7 +34,6 @@ export default function ClientUserDetailsForm({
   clientId,
   siteExternalId,
 }: ClientUserDetailsFormProps) {
-  const viewContext = useViewContext();
   const isNew = !user;
 
   const form = useForm({
@@ -61,7 +59,6 @@ export default function ClientUserDetailsForm({
       query: {
         clientId,
       },
-      viewContext,
     });
   };
 

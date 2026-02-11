@@ -8,7 +8,6 @@ import { useEffect, useMemo, useState } from "react";
 import type z from "zod";
 import ConditionPill from "~/components/assets/condition-pill";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -56,7 +55,6 @@ export default function AssetQuestionsDataTable({
   onColumnOrderChange,
   onPaginationChange,
 }: AssetQuestionsDataTableProps) {
-  const viewContext = useViewContext();
   const editQuestion = useOpenData<AssetQuestion>();
   const { labels, prefetchLabels, isLoading, getLabel } = useConditionLabels();
   const { fetchOrThrow } = useAuthenticatedFetch();
@@ -435,7 +433,6 @@ export default function AssetQuestionsDataTable({
                         submitDuplicateQuestion(payload as any, {
                           method: "post",
                           path: getResourcePath(),
-                          viewContext,
                         });
                       },
                     },
@@ -461,7 +458,6 @@ export default function AssetQuestionsDataTable({
                               {
                                 method: "delete",
                                 path: getResourcePath(question),
-                                viewContext,
                               }
                             );
                           };

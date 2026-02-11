@@ -19,7 +19,6 @@ import { Suspense, useCallback, useEffect, useMemo, useState, type ComponentProp
 import { Await } from "react-router";
 import { useImmer } from "use-immer";
 import { create } from "zustand";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { useProxyImage } from "~/hooks/use-proxy-image";
@@ -104,12 +103,11 @@ export default function ProductSelector({
   readOnly = false,
   clientId,
 }: ProductSelectorProps) {
-  const viewContext = useViewContext();
   const [open, setOpen] = useState(false);
 
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { data: products } = useSuspenseQuery(
-    getProductsQuery(fetchOrThrow, { clientId, viewContext })
+    getProductsQuery(fetchOrThrow, { clientId })
   );
 
   const {

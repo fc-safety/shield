@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ProductCategory } from "~/lib/models";
 import { createProductCategorySchema, updateProductCategorySchema } from "~/lib/schema";
@@ -42,7 +41,6 @@ export default function ProductCategoryDetailsForm({
   onSubmitted,
 }: ProductCategoryDetailsFormProps) {
   const isNew = !productCategory;
-  const viewContext = useViewContext();
 
   const form = useForm<TForm>({
     resolver: zodResolver(isNew ? createProductCategorySchema : updateProductCategorySchema),
@@ -76,7 +74,6 @@ export default function ProductCategoryDetailsForm({
     submit(serializeFormJson(data), {
       path: "/api/proxy/product-categories",
       id: productCategory?.id,
-      viewContext,
     });
   };
 

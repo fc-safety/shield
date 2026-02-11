@@ -2,7 +2,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronRight, Circle, Pencil, PhoneCall, Star, Trash } from "lucide-react";
 import { type To } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -31,7 +30,6 @@ export default function SitesTable({
   buildToSite,
 }: SitesTableProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
   const canCreateSite = isGlobalAdmin(user);
   const canUpdateSite = isGlobalAdmin(user);
   const canDeleteSite = isGlobalAdmin(user);
@@ -180,7 +178,6 @@ export default function SitesTable({
                             {
                               method: "delete",
                               path: `/api/proxy/sites/${site.id}`,
-                              viewContext,
                             }
                           );
                         };

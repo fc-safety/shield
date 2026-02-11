@@ -14,7 +14,6 @@ import CustomTag from "~/components/products/custom-tag";
 import NewManufacturerButton from "~/components/products/edit-manufacturer-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
@@ -73,8 +72,6 @@ function ManufacturersCard({
   showOwner?: boolean;
   canUpdate: boolean;
 }) {
-  const viewContext = useViewContext();
-
   const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete manufacturer",
   });
@@ -168,7 +165,6 @@ function ManufacturersCard({
                               {
                                 method: "delete",
                                 path: `/api/proxy/manufacturers/${manufacturer.id}`,
-                                viewContext,
                               }
                             );
                           };

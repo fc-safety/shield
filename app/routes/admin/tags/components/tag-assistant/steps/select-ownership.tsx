@@ -6,7 +6,7 @@ import ClientCombobox from "~/components/clients/client-combobox";
 import SiteCombobox from "~/components/clients/site-combobox";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { hasMultiClientVisibility } from "~/lib/users";
 import Step from "../../../../../../components/assistant/components/step";
 
@@ -37,7 +37,7 @@ export default function StepSelectOwnership({
   ownershipObjectName?: string;
 }) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
   const canReadClients = hasMultiClientVisibility(user);
 
   const form = useForm<TForm>({
@@ -101,7 +101,7 @@ export default function StepSelectOwnership({
                       onBlur={field.onBlur}
                       className="w-full"
                       showClear={false}
-                      disabled={clientIdInputDisabled || viewContext !== "admin"}
+                      disabled={clientIdInputDisabled || accessIntent !== "system"}
                     />
                   </FormControl>
                   <FormMessage />
@@ -127,7 +127,7 @@ export default function StepSelectOwnership({
                     className="w-full"
                     clientId={fieldClientId}
                     showClear={false}
-                    disabled={!fieldClientId && viewContext === "admin"}
+                    disabled={!fieldClientId && accessIntent === "system"}
                   />
                 </FormControl>
                 <FormMessage />

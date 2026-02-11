@@ -26,7 +26,6 @@ import EditProductCategoryButton from "~/components/products/edit-product-catego
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -103,8 +102,6 @@ function ProductCategoriesCard({
   TitleIcon?: LucideIcon;
   showOwner?: boolean;
 }) {
-  const viewContext = useViewContext();
-
   const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete product category",
   });
@@ -218,7 +215,6 @@ function ProductCategoriesCard({
                               {
                                 method: "delete",
                                 path: `/api/proxy/product-categories/${category.id}`,
-                                viewContext,
                               }
                             );
                           };

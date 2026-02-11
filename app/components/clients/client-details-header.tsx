@@ -11,7 +11,7 @@ import { Button } from "~/components/ui/button";
 import { ButtonGroup, ButtonGroupSeparator } from "~/components/ui/button-group";
 import { Card, CardHeader } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Client } from "~/lib/models";
@@ -23,7 +23,7 @@ import { Input } from "../ui/input";
 
 export default function ClientDetailsHeader({ client }: { client: Client }) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const canEditClient = isSystemsAdmin(user);
   const duplicateDemoClient = useOpenData();
@@ -54,13 +54,13 @@ export default function ClientDetailsHeader({ client }: { client: Client }) {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {viewContext === "admin" && (
+            {accessIntent === "system" && (
               <ActiveIndicatorBadge
                 active={client.status.toLowerCase() as Lowercase<Client["status"]>}
               />
             )}
             <ButtonGroup>
-              {viewContext === "admin" && canEditClient && (
+              {accessIntent === "system" && canEditClient && (
                 <EditClientButton
                   client={client}
                   trigger={
@@ -142,7 +142,7 @@ function DuplicateDemoClientDialog({
     submitDuplicateDemoClient(data, {
       method: "post",
       path: `/api/proxy/clients/${client.id}/duplicate-demo`,
-      viewContext: "admin",
+      accessIntent: "system",
     });
   };
 

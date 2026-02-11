@@ -15,7 +15,6 @@ import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Switch } from "~/components/ui/switch";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { ClientStatuses, type Client } from "~/lib/models";
 import { createClientSchema, updateClientSchema } from "~/lib/schema";
@@ -52,7 +51,6 @@ const FORM_DEFAULTS = {
 
 export default function ClientDetailsForm({ client, onSubmitted }: ClientDetailsFormProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
   const userIsGlobalAdmin = isGlobalAdmin(user);
 
   const isNew = !client;
@@ -122,7 +120,6 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
     submit(serializeFormJson(data), {
       path: "/api/proxy/clients",
       id: client?.id,
-      viewContext,
     });
   };
 

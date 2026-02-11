@@ -63,13 +63,6 @@ export const useRequestedAccessContext = () => {
   return useContext(RequestedAccessContextContext);
 };
 
-/** @deprecated Use `useAccessIntent` instead. */
-export function useViewContext(): ViewContext {
-  const { accessIntent } = useRequestedAccessContext();
-
-  return accessIntent === "system" ? "admin" : "user";
-}
-
 export function useAccessIntent(): AccessIntent {
   const { accessIntent } = useRequestedAccessContext();
 

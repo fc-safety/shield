@@ -14,7 +14,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { VISIBILITY } from "~/lib/permissions";
@@ -36,7 +35,6 @@ const FORM_DEFAULTS = {
 } satisfies TForm;
 
 export default function UpdateUserRoleForm({ user, clientId }: UpdateUserRoleFormProps) {
-  const viewContext = useViewContext();
   const form = useForm<TForm>({
     resolver: zodResolver(addUserRoleSchema),
     defaultValues: FORM_DEFAULTS,
@@ -101,7 +99,6 @@ export default function UpdateUserRoleForm({ user, clientId }: UpdateUserRoleFor
           query: {
             clientId,
           },
-          viewContext,
         }
       );
     };
@@ -146,7 +143,6 @@ export default function UpdateUserRoleForm({ user, clientId }: UpdateUserRoleFor
     user.id,
     user.email,
     clientId,
-    viewContext,
     submitAddRole,
     setAssignGlobalAdminAction,
   ]);
@@ -164,11 +160,10 @@ export default function UpdateUserRoleForm({ user, clientId }: UpdateUserRoleFor
           query: {
             clientId,
           },
-          viewContext,
         }
       );
     },
-    [user.id, clientId, viewContext, submitRemoveRole]
+    [user.id, clientId, submitRemoveRole]
   );
 
   const isSubmitting = isAddingRole || isRemovingRole;

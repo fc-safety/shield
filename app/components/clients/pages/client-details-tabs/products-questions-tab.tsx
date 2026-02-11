@@ -12,7 +12,7 @@ import EditProductButton from "~/components/products/edit-product-button";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
@@ -35,14 +35,14 @@ export default function ClientDetailsTabsProductsQuestionsTag({
   questionsTotalCount?: number;
   readOnly?: boolean;
 }) {
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
   return (
     <div className="flex flex-col gap-2">
       <BasicCard
         title="Products"
         icon={FireExtinguisher}
         description={
-          viewContext === "admin"
+          accessIntent === "system"
             ? "Products that are custom created by/for this particular client."
             : "Your custom products."
         }
@@ -54,7 +54,7 @@ export default function ClientDetailsTabsProductsQuestionsTag({
         title="Questions"
         icon={ShieldQuestion}
         description={
-          viewContext === "admin"
+          accessIntent === "system"
             ? "Questions that are custom created by/for this particular client."
             : "Your custom questions."
         }
@@ -101,7 +101,6 @@ const ProductsTable = ({
   readOnly?: boolean;
 }) => {
   const { user } = useAuth();
-  const viewContext = useViewContext();
 
   const canCreate = !readOnly && can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
   const canUpdate = !readOnly && can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
@@ -125,7 +124,6 @@ const ProductsTable = ({
       {
         method: "delete",
         path: `/api/proxy/products/${productId}`,
-        viewContext,
       }
     );
   };

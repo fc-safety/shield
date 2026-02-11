@@ -6,7 +6,6 @@ import { useCallback } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Member, MemberClientAccess } from "~/lib/types";
@@ -35,7 +34,6 @@ const FORM_DEFAULTS = {
 } satisfies TForm;
 
 export default function UpdateMemberRoleForm({ member, clientId }: UpdateMemberRoleFormProps) {
-  const viewContext = useViewContext();
   const form = useForm<TForm>({
     resolver: zodResolver(addMemberRoleSchema),
     defaultValues: FORM_DEFAULTS,
@@ -73,10 +71,9 @@ export default function UpdateMemberRoleForm({ member, clientId }: UpdateMemberR
         query: {
           clientId,
         },
-        viewContext,
       }
     );
-  }, [form, member.id, clientId, viewContext, submitAddRole]);
+  }, [form, member.id, clientId, submitAddRole]);
 
   const handleRemoveRole = useCallback(
     (access: MemberClientAccess) => {
@@ -103,13 +100,12 @@ export default function UpdateMemberRoleForm({ member, clientId }: UpdateMemberR
               query: {
                 clientId,
               },
-              viewContext,
             }
           );
         };
       });
     },
-    [member.id, clientId, viewContext, submitRemoveRole, setConfirmAction]
+    [member.id, clientId, submitRemoveRole, setConfirmAction]
   );
 
   const isSubmitting = isAddingRole || isRemovingRole;

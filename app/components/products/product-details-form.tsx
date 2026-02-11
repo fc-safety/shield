@@ -11,7 +11,6 @@ import { useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
@@ -52,8 +51,6 @@ export default function ProductDetailsForm({
   clientId,
 }: ProductDetailsFormProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const viewContext = useViewContext();
 
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
@@ -183,7 +180,6 @@ export default function ProductDetailsForm({
       return submit(serializeFormJson(data), {
         path: "/api/proxy/products",
         id: product?.id,
-        viewContext,
       });
     };
 
