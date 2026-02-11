@@ -1,10 +1,10 @@
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useFetcher } from "react-router";
 import type { DataOrError } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client, ResultsPage } from "~/lib/models";
-import { buildPath, type QueryParams } from "~/lib/urls";
+import { type QueryParams } from "~/lib/urls";
 import { ResponsiveCombobox } from "../responsive-combobox";
 
 interface ClientComboboxProps {
@@ -28,38 +28,33 @@ export default function ClientCombobox({
   showClear,
   nestDrawers,
 }: ClientComboboxProps) {
-  const viewContext = useViewContext();
-  const fetcher = useFetcher<DataOrError<ResultsPage<Client>>>();
-
-  const preloadClients = useCallback(() => {
-    if (fetcher.state === "idle" && !fetcher.data) {
-      const query: QueryParams = {
-        limit: 10000,
-        _throw: "false",
-      };
-      if (viewContext) {
-        query._viewContext = viewContext;
-      }
-      fetcher.load(buildPath("/api/proxy/clients", query));
-    }
-  }, [fetcher, viewContext]);
-
-  useEffect(() => {
-    if (value || viewContext !== "admin") preloadClients();
-  }, [value, viewContext, preloadClients]);
+  const accessIntent = useAccessIntent();
 
   const [clients, setClients] = useState<Client[]>([]);
-  const [search, setSearch] = useState("");
-  const [hasError, setHasError] = useState(false);
+  const {
+    load,
+    isLoading,
+    data: fetcherData,
+  } = useModalFetcher<DataOrError<ResultsPage<Client>>>({
+    onData: ({ data }) => setClients(data?.results ?? []),
+  });
+
+  const preloadClients = useCallback(() => {
+    const query: QueryParams = {
+      limit: 10000,
+      _throw: "false",
+    };
+    load({
+      path: "/api/proxy/clients",
+      query,
+    });
+  }, [load]);
 
   useEffect(() => {
-    if (fetcher.data?.data) {
-      setClients(fetcher.data.data.results);
-    } else if (fetcher.data?.error) {
-      console.error("Failed to fetch clients", fetcher.data.error);
-      setHasError(true);
-    }
-  }, [fetcher.data]);
+    if (value || accessIntent !== "system") preloadClients();
+  }, [value, accessIntent, preloadClients]);
+
+  const [search, setSearch] = useState("");
 
   const options = useMemo(() => {
     let filteredClients = clients;
@@ -74,10 +69,10 @@ export default function ClientCombobox({
   }, [clients, search]);
 
   useEffect(() => {
-    if (!value && viewContext !== "admin" && clients.length > 0) {
+    if (!value && accessIntent !== "system" && clients.length > 0) {
       onValueChange?.(clients[0].id);
     }
-  }, [value, viewContext, clients, onValueChange]);
+  }, [value, accessIntent, clients, onValueChange]);
 
   return (
     <ResponsiveCombobox
@@ -85,7 +80,7 @@ export default function ClientCombobox({
       onValueChange={onValueChange}
       onBlur={onBlur}
       displayValue={(value) => clients.find((c) => c.id === value)?.name ?? <>&mdash;</>}
-      loading={fetcher.state === "loading"}
+      loading={isLoading}
       options={options}
       disabled={disabled}
       onMouseOver={() => !disabled && preloadClients()}
@@ -100,7 +95,7 @@ export default function ClientCombobox({
       className={className}
       shouldFilter={false}
       showClear={showClear}
-      errorMessage={hasError ? "Something went wrong." : undefined}
+      errorMessage={fetcherData?.error ? "Something went wrong." : undefined}
       isNestedDrawer={nestDrawers}
     />
   );

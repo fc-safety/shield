@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link2, Loader2, Pencil, Search, SearchX } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer, ResultsPage } from "~/lib/models";
@@ -34,7 +34,7 @@ export default function ManufacturerSelector({
   className,
   clientId,
 }: ManufacturerSelectorProps) {
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
 
@@ -67,17 +67,17 @@ export default function ManufacturerSelector({
       let clientQuery: QueryParams = {};
       if (clientId) {
         clientQuery.OR = [{ clientId }, { clientId: "_NULL" }];
-      } else if (viewContext === "admin") {
+      } else if (accessIntent !== "user") {
         clientQuery.clientId = "_NULL";
       }
 
       load({
         path: "/api/proxy/manufacturers",
         query: { limit: 1000, ...clientQuery },
-        viewContext,
+        accessIntent,
       });
     }
-  }, [dataOrError, load, viewContext, clientId]);
+  }, [dataOrError, load, accessIntent, clientId]);
 
   // Preload the product manufacturers when a value is set.
   useEffect(() => {

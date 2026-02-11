@@ -21,11 +21,12 @@ import {
   Terminal,
   Users,
 } from "lucide-react";
-import { Outlet } from "react-router";
+import { Outlet, useSearchParams } from "react-router";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { requireUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
+import WelcomeOnboarding from "~/components/onboarding/welcome-onboarding";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
@@ -63,6 +64,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function Layout({
   loaderData: { user, apiUrl, appHost, googleMapsApiKey, authClientId },
 }: Route.ComponentProps) {
+  const [searchParams] = useSearchParams();
+  const showWelcome = searchParams.get("welcome") === "true";
+
   const groups: SidebarGroup[] = [
     {
       groupTitle: "My Shield",
@@ -222,6 +226,7 @@ export default function Layout({
       clientId={authClientId}
     >
       <ActiveAccessGrantProvider>
+        {showWelcome && <WelcomeOnboarding showWelcome={showWelcome} />}
         <SidebarProvider defaultOpenState={{ help: false }}>
           <HelpSidebarProvider>
             <AppSidebar groups={groups} />

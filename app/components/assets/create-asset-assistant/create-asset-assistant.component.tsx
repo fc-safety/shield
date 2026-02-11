@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Asset } from "~/lib/models";
 import { getAssetQuestionsByAssetPropertiesQueryOptions } from "~/lib/services/assets.service";
@@ -43,7 +43,7 @@ export const useCreateAssetAssistant = ({
 }) => {
   const [lastStepId, setLastStepId] = useState(DEFAULT_LAST_STEP_ID);
 
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
 
   const { user } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
@@ -99,8 +99,8 @@ export const useCreateAssetAssistant = ({
   ]);
 
   const shouldRequireClientId = useMemo(() => {
-    return viewContext === "admin" && !externalState.assetData?.clientId;
-  }, [viewContext, externalState.assetData?.clientId]);
+    return accessIntent === "system" && !externalState.assetData?.clientId;
+  }, [accessIntent, externalState.assetData?.clientId]);
   const shouldRequireSiteId = useMemo(() => {
     return userHasMultiSiteVisibility && !externalState.assetData?.siteId;
   }, [userHasMultiSiteVisibility, externalState.assetData?.siteId]);
@@ -167,7 +167,7 @@ export const useCreateAssetAssistant = ({
           return (
             <StepSelectCategoryOrExistingAsset
               clientId={createAssetAssistantState.assetData?.clientId}
-              viewContext={viewContext}
+              accessIntent={accessIntent}
               allowSelectExistingAsset={mode === "register-tag"}
               onStepBackward={
                 firstStepId === StepSelectOwnership.StepId
@@ -213,7 +213,7 @@ export const useCreateAssetAssistant = ({
           return (
             <StepSelectProduct
               clientId={createAssetAssistantState.assetData?.clientId}
-              viewContext={viewContext}
+              accessIntent={accessIntent}
               onStepBackward={() =>
                 context.stepTo(StepSelectCategoryOrExistingAsset.StepId, "backward")
               }

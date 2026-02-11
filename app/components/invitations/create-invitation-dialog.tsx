@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createInvitationSchema } from "~/lib/schema";
 import type { Invitation } from "~/lib/types";
@@ -122,7 +121,6 @@ export function CreateInvitationDialog({
   trigger,
   onCreated,
 }: CreateInvitationDialogProps) {
-  const viewContext = useViewContext();
   const [open, setOpen] = useState(false);
   const [createdInvitation, setCreatedInvitation] = useState<Invitation | null>(null);
 
@@ -135,9 +133,6 @@ export function CreateInvitationDialog({
 
   const { submitJson, isSubmitting } = useModalFetcher<Invitation | { data: Invitation }>({
     onSubmitted: (response) => {
-      // Debug: log the actual response structure
-      console.log("[CreateInvitationDialog] API response:", response);
-
       // Handle both direct response and wrapped response (e.g., { data: invitation })
       const invitation =
         "data" in response && response.data ? response.data : (response as Invitation);
@@ -159,7 +154,6 @@ export function CreateInvitationDialog({
     submitJson(payload, {
       method: "POST",
       path: "/api/proxy/invitations",
-      viewContext,
     });
   };
 

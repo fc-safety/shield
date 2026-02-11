@@ -23,10 +23,10 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 export default function ProductsLayout() {
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const viewContext = userIsGlobalAdmin ? "admin" : "user";
+  const accessIntent = userIsGlobalAdmin ? "system" : "user";
 
   return (
-    <RequestedAccessContextProvider viewContext={viewContext}>
+    <RequestedAccessContextProvider accessIntent={accessIntent}>
       <Outlet />
     </RequestedAccessContextProvider>
   );

@@ -106,6 +106,7 @@
   --color-status-new-foreground: hsl(var(--status-new-foreground));
 
   --animate-pop-once: pop 600ms ease-out forwards;
+  --animate-sway: sway 1.25s ease-in-out forwards;
 
   @keyframes pop {
     0% {
@@ -119,6 +120,27 @@
     100% {
       transform: scale(1);
       opacity: 1;
+    }
+  }
+
+  @keyframes sway {
+    0% {
+      transform: rotate(0deg);
+    }
+    15% {
+      transform: rotate(14deg);
+    }
+    35% {
+      transform: rotate(-8deg);
+    }
+    55% {
+      transform: rotate(6deg);
+    }
+    75% {
+      transform: rotate(-2deg);
+    }
+    100% {
+      transform: rotate(0deg);
     }
   }
 }

@@ -10,10 +10,10 @@ import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/login";
 
 const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
-  backend_unavailable: {
-    title: "Service Unavailable",
+  access_grant_fetch_failed: {
+    title: "Failed to Get Identity Details",
     description:
-      "We were able to verify your identity, but couldn't reach the Shield service. Please try again in a few moments.",
+      "We were able to verify your identity, but couldn't reach the Shield service to get your identity details. Please try again in a few moments.",
   },
 };
 
@@ -27,7 +27,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const error = getSearchParam(request, "error");
   if (error) {
-    return { error, returnTo };
+    return { error, returnTo, errorMessage: getSearchParam(request, "error_description") };
   }
 
   if (returnTo) {

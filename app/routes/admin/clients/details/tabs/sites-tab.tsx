@@ -21,7 +21,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     {
       limit: 1000,
     },
-    { clientId: id }
+    { clientId: id, accessIntent: "elevated" }
   );
 
   return {

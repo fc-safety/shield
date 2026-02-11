@@ -40,7 +40,7 @@ export default function AdminClientDetailsLayout({
   loaderData: { client, currentTab },
 }: Route.ComponentProps) {
   return (
-    <RequestedAccessContextProvider viewContext="admin" clientId={client.id}>
+    <RequestedAccessContextProvider accessIntent="elevated" clientId={client.id}>
       <ClientDetailsLayout client={client} currentTab={currentTab ?? "sites"} />
     </RequestedAccessContextProvider>
   );

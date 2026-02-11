@@ -61,6 +61,10 @@ export const AuthProvider = ({
 }>) => {
   const [user, setUser] = useState(userProp);
 
+  useEffect(() => {
+    setUser(userProp);
+  }, [userProp]);
+
   const resolveAuthRefresh = useRef<((user: User) => void) | null>(null);
   const { submitJson: submitRefreshAuth } = useModalFetcher<User>({
     onSubmitted: (user) => {

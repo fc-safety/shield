@@ -290,7 +290,7 @@ export default function AssetsTable({
         },
       },
     ],
-    [setDeleteAction, canManageAssets, submitDelete, canManageAssets]
+    [setDeleteAction, canManageAssets, submitDelete]
   );
 
   const allCategories = dedupById(assets.map((asset) => asset.product?.productCategory));

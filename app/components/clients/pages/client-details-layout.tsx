@@ -1,8 +1,6 @@
-import { PartyPopper } from "lucide-react";
 import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
 import GradientScrollArea from "~/components/gradient-scroll-area";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -26,11 +24,9 @@ export type Tab = (typeof TABS)[number];
 export default function ClientDetailsLayout({
   client,
   currentTab,
-  showWelcome = false,
 }: {
   client: Client;
   currentTab: Tab;
-  showWelcome?: boolean;
 }) {
   const { user } = useAuth();
   const viewContext = useViewContext();
@@ -71,16 +67,6 @@ export default function ClientDetailsLayout({
               {viewContext === "admin" ? "This client" : "Your organization"} has certain features
               enabled and others disabled to facilitate product demonstrations.
             </div>
-          )}
-          {showWelcome && (
-            <Alert className="bg-primary/10 border-primary/50 text-primary [&>svg]:text-primary">
-              <PartyPopper className="animate-pop-once size-4" />
-              <AlertTitle>Welcome to {client.name}!</AlertTitle>
-              <AlertDescription>
-                Your invitation has been accepted. You can now explore your organization's sites,
-                assets, and more using the tabs below.
-              </AlertDescription>
-            </Alert>
           )}
           <ClientDetailsHeader client={client} />
           <NavigationMenu className="flex-none">

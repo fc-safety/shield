@@ -22,10 +22,18 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const id = validateParam(params, "id");
 
-  //   const sitesResult = await api.sites.list(request, { clientId: id });
+  // Use the `clientId` both to filter and to specify intended context.
   const [productResults, questionResults] = await Promise.all([
-    api.products.list(request, { limit: 10000 }, { clientId: id }),
-    api.assetQuestions.list(request, { limit: 10000 }, { clientId: id }),
+    api.products.list(
+      request,
+      { limit: 10000, clientId: id },
+      { clientId: id, accessIntent: "elevated" }
+    ),
+    api.assetQuestions.list(
+      request,
+      { limit: 10000, clientId: id },
+      { clientId: id, accessIntent: "elevated" }
+    ),
   ]);
 
   return {

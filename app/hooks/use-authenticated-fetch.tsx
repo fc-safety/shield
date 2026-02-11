@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import type { AccessIntent } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useRequestedAccessContext } from "~/contexts/requested-access-context";
 import { buildUrl, isAbsoluteUrl } from "~/lib/urls";
@@ -7,7 +8,7 @@ import { isTokenExpired } from "~/lib/users";
 export function useAuthenticatedFetch() {
   const { user, apiUrl, refreshAuth } = useAuth();
 
-  const { currentClientId, currentSiteId } = useRequestedAccessContext();
+  const { currentClientId, currentSiteId, accessIntent } = useRequestedAccessContext();
 
   const fetchAuthenticated = useCallback(
     async (url: Parameters<typeof fetch>[0], options?: RequestInit) => {
@@ -27,10 +28,15 @@ export function useAuthenticatedFetch() {
       return doFetch(accessToken, url, options, {
         clientId: currentClientId ?? undefined,
         siteId: currentSiteId ?? undefined,
+        accessIntent,
       }).then(async (response) => {
         if (response.status === 401) {
           accessToken = (await refreshAuth()).tokens.accessToken;
-          return doFetch(accessToken, url, options);
+          return doFetch(accessToken, url, options, {
+            clientId: currentClientId ?? undefined,
+            siteId: currentSiteId ?? undefined,
+            accessIntent,
+          });
         }
 
         return response;
@@ -61,7 +67,11 @@ const doFetch = async (
   accessToken: string,
   url: Parameters<typeof fetch>[0],
   options: RequestInit = {},
-  { clientId, siteId }: { clientId?: string | null; siteId?: string | null } = {}
+  {
+    clientId,
+    siteId,
+    accessIntent,
+  }: { clientId?: string | null; siteId?: string | null; accessIntent?: AccessIntent } = {}
 ) => {
   options.headers = new Headers(options?.headers);
   options.headers.set("Authorization", `Bearer ${accessToken}`);
@@ -71,6 +81,10 @@ const doFetch = async (
   }
   if (siteId) {
     options.headers.set("X-Site-Id", siteId);
+  }
+
+  if (accessIntent && !options.headers.has("X-Access-Intent")) {
+    options.headers.set("X-Access-Intent", accessIntent);
   }
 
   return fetch(url, options);

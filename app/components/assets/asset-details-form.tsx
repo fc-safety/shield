@@ -6,7 +6,7 @@ import { useForm, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import type { Asset } from "~/lib/models";
@@ -57,7 +57,7 @@ export default function AssetDetailsForm({
   nestDrawers,
 }: AssetDetailsFormProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
 
   const isNew = !asset;
 
@@ -105,7 +105,6 @@ export default function AssetDetailsForm({
     submit(serializeFormJson(data), {
       path: "/api/proxy/assets",
       id: asset?.id,
-      viewContext,
     });
   };
 
@@ -120,11 +119,11 @@ export default function AssetDetailsForm({
       >
         <AssetDetailFormFields
           form={form}
-          showClientSelect={isGlobalAdmin(user) && viewContext === "admin" && !clientId}
+          showClientSelect={isGlobalAdmin(user) && accessIntent === "system" && !clientId}
           showSiteSelect={hasMultiSiteVisibility(user) && !siteId}
           clientId={formClientId}
           showProductSelect
-          productReadOnly={viewContext !== "admin" && !!asset?.setupOn}
+          productReadOnly={accessIntent !== "system" && !!asset?.setupOn}
           nestDrawers={nestDrawers}
         />
         <Button
@@ -160,7 +159,7 @@ export function AssetDetailFormFields({
 }) {
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -259,7 +258,7 @@ export function AssetDetailFormFields({
                   className="w-full"
                   showClear={false}
                   clientId={clientId}
-                  disabled={isGlobalAdmin(user) && viewContext === "admin" && !clientId}
+                  disabled={isGlobalAdmin(user) && accessIntent === "system" && !clientId}
                   nestDrawers={nestDrawers}
                 />
               </FormControl>

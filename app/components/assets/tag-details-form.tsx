@@ -14,7 +14,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Tag } from "~/lib/models";
 import { createTagSchema, updateTagSchema } from "~/lib/schema";
@@ -40,7 +39,6 @@ const FORM_DEFAULTS = {
 
 export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
   const { appHost } = useAuth();
-  const viewContext = useViewContext();
 
   const isNew = !tag;
 
@@ -128,7 +126,6 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
     submit(serializeFormJson(data), {
       path: "/api/proxy/tags",
       id: tag?.id,
-      viewContext,
     });
   };
 

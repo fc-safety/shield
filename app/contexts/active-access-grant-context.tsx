@@ -151,13 +151,13 @@ export function ActiveAccessGrantProvider({ children }: PropsWithChildren) {
 export function useActiveAccessGrant() {
   const context = useContext(ActiveAccessGrantContext);
   if (!context) {
-    throw new Error("useClientAccess must be used within a ClientAccessProvider");
+    throw new Error("useActiveAccessGrant must be used within an ActiveAccessGrantProvider");
   }
   return context;
 }
 
 /**
- * Returns the ClientAccessContext value, or null if not inside a ClientAccessProvider.
+ * Returns the ActiveAccessGrantContext value, or null if not inside a ActiveAccessGrantProvider.
  * Use this in components that may render outside the authenticated layout.
  */
 export function useOptionalActiveAccessGrant() {
@@ -172,7 +172,7 @@ export function useOptionalActiveAccessGrant() {
 export function useActiveClientHeader(): string | null {
   const context = useContext(ActiveAccessGrantContext);
 
-  // If not in a ClientAccessProvider, return null (no header)
+  // If not in a ActiveAccessGrantProvider, return null (no header)
   if (!context) {
     return null;
   }

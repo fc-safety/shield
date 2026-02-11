@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Pencil, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/requested-access-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ProductCategory, ResultsPage } from "~/lib/models";
@@ -34,7 +34,7 @@ export default function ProductCategorySelector({
   className,
   clientId,
 }: ProductCategorySelectorProps) {
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
 
@@ -64,7 +64,7 @@ export default function ProductCategorySelector({
       let clientQuery: QueryParams = {};
       if (clientId) {
         clientQuery.OR = [{ clientId }, { clientId: "_NULL" }];
-      } else if (viewContext === "admin") {
+      } else if (accessIntent !== "user") {
         clientQuery.clientId = "_NULL";
       }
 
@@ -74,10 +74,10 @@ export default function ProductCategorySelector({
           limit: 1000,
           ...clientQuery,
         },
-        viewContext,
+        accessIntent,
       });
     }
-  }, [dataOrError, load, viewContext, clientId]);
+  }, [dataOrError, load, accessIntent, clientId]);
 
   // Preload the product categories when a value is set.
   useEffect(() => {

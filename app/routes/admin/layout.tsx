@@ -20,7 +20,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
 export default function Admin() {
   return (
-    <RequestedAccessContextProvider viewContext="admin">
+    <RequestedAccessContextProvider accessIntent="system">
       <Outlet />
     </RequestedAccessContextProvider>
   );

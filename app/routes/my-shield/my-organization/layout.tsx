@@ -3,7 +3,7 @@ import { requireUserSession } from "~/.server/user-sesssion";
 import ClientDetailsLayout, { type Tab } from "~/components/clients/pages/client-details-layout";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
 import { RequestedAccessContextProvider } from "~/contexts/requested-access-context";
-import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
+import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
 export const handle = {
@@ -26,8 +26,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const clientIdPathIdx = pathParts.indexOf("my-organization");
   const currentTab = pathParts.at(clientIdPathIdx + 1) as Tab | undefined;
 
-  const showWelcome = getSearchParam(request, "welcome") === "true";
-
   const clientPromise = api.clients.getMyOrganization(request).then((r) => r.client);
 
   // Without an admin context, this should only get the user's own sites.
@@ -43,19 +41,15 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     throw new Error("No client found for user.");
   }
 
-  return { client, sites, currentTab, showWelcome };
+  return { client, sites, currentTab };
 };
 
 export default function MyOrganization({
-  loaderData: { client, currentTab, showWelcome },
+  loaderData: { client, currentTab },
 }: Route.ComponentProps) {
   return (
-    <RequestedAccessContextProvider viewContext="user">
-      <ClientDetailsLayout
-        client={client}
-        currentTab={currentTab ?? "sites"}
-        showWelcome={showWelcome}
-      />
+    <RequestedAccessContextProvider accessIntent="user">
+      <ClientDetailsLayout client={client} currentTab={currentTab ?? "sites"} />
     </RequestedAccessContextProvider>
   );
 }

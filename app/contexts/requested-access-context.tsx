@@ -1,9 +1,12 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
+import type { AccessIntent } from "~/.server/api-utils";
 import { useActiveAccessGrant } from "./active-access-grant-context";
 
 export type ViewContext = "admin" | "user";
 export interface RequestedAccessContextValue {
+  /** @deprecated Use `accessIntent` property instead. */
   viewContext: ViewContext;
+  accessIntent: AccessIntent;
   currentClientId: string | null;
   currentSiteId: string | null;
   setCurrentClientId: (clientId: string | null) => void;
@@ -12,6 +15,7 @@ export interface RequestedAccessContextValue {
 
 const RequestedAccessContextContext = createContext<RequestedAccessContextValue>({
   viewContext: "user",
+  accessIntent: "user",
   currentClientId: null,
   currentSiteId: null,
   setCurrentClientId: () => {},
@@ -20,12 +24,14 @@ const RequestedAccessContextContext = createContext<RequestedAccessContextValue>
 
 export function RequestedAccessContextProvider({
   children,
+  accessIntent,
   viewContext,
   clientId,
   siteId,
 }: {
   children: ReactNode;
-  viewContext: ViewContext;
+  accessIntent?: AccessIntent;
+  viewContext?: ViewContext;
   clientId?: string | null;
   siteId?: string | null;
 }) {
@@ -40,7 +46,8 @@ export function RequestedAccessContextProvider({
   return (
     <RequestedAccessContextContext.Provider
       value={{
-        viewContext,
+        viewContext: viewContext ?? "user",
+        accessIntent: accessIntent ?? "user",
         currentClientId,
         currentSiteId,
         setCurrentClientId: setSelectedClientId,
@@ -56,8 +63,15 @@ export const useRequestedAccessContext = () => {
   return useContext(RequestedAccessContextContext);
 };
 
+/** @deprecated Use `useAccessIntent` instead. */
 export function useViewContext(): ViewContext {
-  const { viewContext } = useRequestedAccessContext();
+  const { accessIntent } = useRequestedAccessContext();
 
-  return viewContext;
+  return accessIntent === "system" ? "admin" : "user";
+}
+
+export function useAccessIntent(): AccessIntent {
+  const { accessIntent } = useRequestedAccessContext();
+
+  return accessIntent;
 }

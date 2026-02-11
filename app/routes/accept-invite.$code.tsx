@@ -1,12 +1,7 @@
 import { Building2, Check, Clock, XCircle } from "lucide-react";
 import { redirect, useFetcher } from "react-router";
 import { ApiFetcher } from "~/.server/api-utils";
-import {
-  applyAccessGrantToSession,
-  commitUserSession,
-  fetchCurrentUser,
-  getActiveUserSession,
-} from "~/.server/user-sesssion";
+import { getUserSession, refreshUserSession } from "~/.server/user-sesssion";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -36,8 +31,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   }
 
   // Check if user is logged in
-  const session = await getActiveUserSession(request);
-  const isAuthenticated = !!session?.user;
+  const { isValid: isAuthenticated } = await getUserSession(request);
 
   // Validate the invitation (public endpoint)
   try {
@@ -79,12 +73,6 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 };
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
-  const { session } = await getActiveUserSession(request);
-  const tokens = session?.get("tokens");
-  if (!session || !tokens) {
-    throw new Response("Not authenticated", { status: 401 });
-  }
-
   const code = params.code;
 
   if (!code) {
@@ -97,18 +85,17 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       `/invitations/${code}/accept`
     ).post<AcceptInvitationResult>({ allowEmptyAccessGrant: true });
 
-    const currentUser = await fetchCurrentUser(tokens.accessToken, {
+    const refreshResult = await refreshUserSession(request, {
       clientId: result.clientAccess.clientId,
       siteId: result.clientAccess.siteId,
     });
 
-    if (currentUser.accessGrant) {
-      applyAccessGrantToSession(session, currentUser.accessGrant);
-      await commitUserSession(session);
+    if (!refreshResult.success) {
+      throw refreshResult.cause ?? new Error(refreshResult.message);
     }
 
     // Redirect to the app after successful acceptance
-    return redirect("/my-organization?welcome=true");
+    return redirect("/command-center?welcome=true");
   } catch (error) {
     if (error instanceof Response) {
       const body = await error.json().catch(() => ({}));

@@ -14,7 +14,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
 export default function MyShieldLayout() {
   return (
-    <RequestedAccessContextProvider viewContext="user">
+    <RequestedAccessContextProvider accessIntent="user">
       <Outlet />
     </RequestedAccessContextProvider>
   );

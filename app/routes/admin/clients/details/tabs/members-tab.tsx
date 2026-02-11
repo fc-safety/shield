@@ -31,10 +31,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const clientId = validateParam(params, "id");
 
   const [memberResults, siteResults, invitationsResponse] = await Promise.all([
-    api.members.list(request, { limit: 10000 }, { clientId }),
-    api.sites.list(request, { limit: 10000 }, { clientId }),
+    api.members.list(request, { limit: 10000 }, { clientId, accessIntent: "elevated" }),
+    api.sites.list(request, { limit: 10000 }, { clientId, accessIntent: "elevated" }),
     ApiFetcher.create(request, "/invitations", { limit: 100 }).get<InvitationsResponse>({
       clientId,
+      accessIntent: "elevated",
     }),
   ]);
 

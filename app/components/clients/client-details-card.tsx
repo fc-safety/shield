@@ -2,7 +2,6 @@ import { isAfter, startOfDay } from "date-fns";
 import { Building2 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/requested-access-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Client } from "~/lib/models";
@@ -27,7 +26,6 @@ export default function ClientDetailsCard({
   client: Client | undefined;
 }) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const canDeleteClient = client && client.id !== user.activeClientId && isSystemsAdmin(user);
 
@@ -152,7 +150,6 @@ export default function ClientDetailsCard({
                         {
                           method: "delete",
                           path: `/api/proxy/clients/${client.id}`,
-                          viewContext,
                         }
                       );
                     };
