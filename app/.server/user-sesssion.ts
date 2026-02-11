@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { addMinutes, addSeconds } from "date-fns";
+import pRetry, { AbortError } from "p-retry";
 import { redirect } from "react-router";
 import type { TCapability, TScope } from "~/lib/permissions";
 import type { ActiveAccessGrant } from "~/lib/types";
@@ -73,15 +74,30 @@ async function fetchCurrentUser(
   if (siteId) {
     headers.set("X-Site-Id", siteId);
   }
-  const response = await fetch(buildUrl("/auth/me", config.API_BASE_URL), {
-    headers,
-  });
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch current user: ${response.status}`);
-  }
+  return pRetry(
+    async () => {
+      const response = await fetch(buildUrl("/auth/me", config.API_BASE_URL), {
+        headers,
+      });
 
-  return response.json();
+      if (!response.ok) {
+        throw new AbortError(`Failed to fetch current user: ${response.status}`);
+      }
+
+      return response.json() as Promise<CurrentUserResponse>;
+    },
+    {
+      retries: 5,
+      minTimeout: 300,
+      randomize: true,
+      onFailedAttempt: (error) => {
+        logger.warn(
+          `fetchCurrentUser failed (attempt ${error.attemptNumber}/${error.attemptNumber + error.retriesLeft}): ${String(error.error)}`
+        );
+      },
+    }
+  );
 }
 
 /**
