@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Copy, Link2, Plus } from "lucide-react";
+import { ChevronDown, Copy, MailCheck, Plus } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import RoleCombobox from "../clients/role-combobox";
 import SiteCombobox from "../clients/site-combobox";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Button } from "../ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Field, FieldDescription, FieldError, FieldLabel } from "../ui/field";
 import { extractErrorMessage, Form as FormProvider } from "../ui/form";
 import { Input } from "../ui/input";
@@ -51,66 +52,59 @@ function CreatedInvitationDisplay({
     expiresDate && !isNaN(expiresDate.getTime()) ? expiresDate.toLocaleDateString() : null;
 
   const copyInviteLink = async () => {
-    if (inviteUrl) {
+    if (!inviteUrl) return;
+    try {
       await navigator.clipboard.writeText(inviteUrl);
       toast.success("Invite link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link to clipboard");
     }
   };
-
-  // If we don't have the necessary data, show an error state
-  if (!inviteUrl) {
-    return (
-      <div className="space-y-4 pt-4">
-        <div className="border-destructive/50 bg-destructive/10 rounded-lg border p-4">
-          <p className="text-destructive text-sm">
-            The invitation was created but we couldn't retrieve the invite link. Please check the
-            Members tab to copy the invitation link.
-          </p>
-        </div>
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-w-0 space-y-4 pt-4">
       <div className="bg-muted/50 rounded-lg border p-4">
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-          <Link2 className="h-4 w-4" />
-          Invitation Link
-        </div>
-        <div className="mt-2 flex items-center gap-2">
-          <code className="bg-background flex-1 truncate rounded px-2 py-1 text-sm">
-            {inviteUrl}
-          </code>
-          <Button size="sm" variant="outline" onClick={copyInviteLink}>
-            <Copy className="h-4 w-4" />
-          </Button>
+        <div className="flex items-start gap-3">
+          <div className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+            <MailCheck className="h-5 w-5" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium">
+              Invitation sent to <strong>{invitation.email ?? "the provided address"}</strong>
+            </p>
+            <p className="text-muted-foreground text-sm">
+              The recipient needs to open the email and accept the invitation to join.
+            </p>
+          </div>
         </div>
       </div>
-
-      {invitation.email && (
-        <p className="text-muted-foreground text-sm">
-          This invitation is restricted to: <strong>{invitation.email}</strong>
-        </p>
-      )}
 
       {expiresFormatted && (
         <p className="text-muted-foreground text-sm">Expires: {expiresFormatted}</p>
       )}
 
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onClose}>
-          Close
-        </Button>
-        <Button onClick={copyInviteLink}>
-          <Copy className="h-4 w-4" />
-          Copy Link
-        </Button>
+      {inviteUrl && (
+        <Collapsible>
+          <CollapsibleTrigger className="text-muted-foreground flex items-center gap-1 text-sm hover:underline [&[data-state=open]>svg]:rotate-180">
+            <ChevronDown className="h-4 w-4 transition-transform" />
+            You can also share the link directly
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mt-2 flex items-center gap-2">
+              <code className="bg-muted flex-1 truncate rounded px-2 py-1 text-sm">
+                {inviteUrl}
+              </code>
+              <Button size="sm" variant="outline" onClick={copyInviteLink}>
+                <Copy className="h-4 w-4" />
+                Copy Link
+              </Button>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+
+      <div className="flex justify-end">
+        <Button onClick={onClose}>Done</Button>
       </div>
     </div>
   );
@@ -183,7 +177,7 @@ export function CreateInvitationDialog({
       title={createdInvitation ? "Invitation Created" : "Invite Member"}
       description={
         createdInvitation
-          ? "Share this link with the person you want to invite."
+          ? "An invitation email has been sent."
           : "Invite someone to join your organization."
       }
     >
