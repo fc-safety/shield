@@ -23,11 +23,12 @@ export function ClientSwitcher({ className }: ClientSwitcherProps) {
     activeAccessGrant,
     setActiveAccessGrant,
     hasMultipleAccessGrants,
+    disableSwitching,
   } = useActiveAccessGrant();
   const [open, setOpen] = useState(false);
 
   // If user only has one client, just show the label (no dropdown)
-  if (!hasMultipleAccessGrants) {
+  if (!hasMultipleAccessGrants || disableSwitching) {
     return (
       <div
         className={cn(

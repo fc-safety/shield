@@ -14,7 +14,7 @@ import {
 import type { PropsWithChildren } from "react";
 import { redirect } from "react-router";
 import { config } from "~/.server/config";
-import { appStateSessionStorage } from "~/.server/sessions";
+import { setAppState } from "~/.server/sessions";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import { Button } from "~/components/ui/button";
@@ -38,18 +38,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
   let init: ResponseInit = {};
   const searchParams = getSearchParams(request);
   if (searchParams.has(MARK_LEGACY_REDIRECT_VIEWED_QUERY_KEY)) {
-    const appStateSession = await appStateSessionStorage.getSession(request.headers.get("cookie"));
-
-    // Mark the legacy redirect as viewed, unless set explicitly to false. This is used
-    // by other pages to prevent this page from being shown repeatedly.
-    appStateSession.set(
-      "show_legacy_redirect",
-      searchParams.get(MARK_LEGACY_REDIRECT_VIEWED_QUERY_KEY) === "false"
-    );
-
-    init.headers = {
-      "Set-Cookie": await appStateSessionStorage.commitSession(appStateSession),
-    };
+    await setAppState(request, {
+      show_legacy_redirect: searchParams.get(MARK_LEGACY_REDIRECT_VIEWED_QUERY_KEY) === "false",
+    });
   }
 
   return redirect(returnTo, init);

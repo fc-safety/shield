@@ -21,11 +21,13 @@ import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { DEFAULT_USER_ROUTES } from "~/components/user-dropdown-menu";
+import { ActiveAccessGrantProvider } from "~/contexts/active-access-grant-context";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
+import { RequestedAccessContextProvider } from "~/contexts/requested-access-context";
 import useMyOrganization from "~/hooks/use-my-organization";
-import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
 import { CAPABILITIES } from "~/lib/permissions";
+import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
 import { can } from "~/lib/users";
 import type { Route } from "./+types/layout";
 import { getUserOrHandleInspectLoginRedirect } from "./.server/inspect-auth";
@@ -81,34 +83,38 @@ export default function Layout({
       googleMapsApiKey={googleMapsApiKey}
       clientId={clientId}
     >
-      <SidebarProvider defaultOpenState={{ help: false }}>
-        <HelpSidebarProvider>
-          <InspectionSidebar />
-          <SidebarInset>
-            <Header
-              homeTo="/inspect"
-              showBreadcrumb={false}
-              user={user}
-              userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
-                ...r,
-                url: `/inspect${r.url}`,
-              }))}
-              logoutReturnTo="/inspect"
-              leftSlot={
-                <>
-                  <SidebarTrigger className="-ml-1.5" />
-                  <Separator orientation="vertical" className="mr-1 h-5 sm:mr-2" />
-                </>
-              }
-            />
-            <section className="flex w-full max-w-(--breakpoint-lg) grow flex-col self-center p-2 pt-2 pb-6 sm:p-4 sm:pb-12">
-              <Outlet />
-            </section>
-            <Footer />
-          </SidebarInset>
-          <HelpSidebar />
-        </HelpSidebarProvider>
-      </SidebarProvider>
+      <ActiveAccessGrantProvider disableSwitching>
+        <SidebarProvider defaultOpenState={{ help: false }}>
+          <HelpSidebarProvider>
+            <InspectionSidebar />
+            <SidebarInset>
+              <Header
+                homeTo="/inspect"
+                showBreadcrumb={false}
+                user={user}
+                userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
+                  ...r,
+                  url: `/inspect${r.url}`,
+                }))}
+                logoutReturnTo="/inspect"
+                leftSlot={
+                  <>
+                    <SidebarTrigger className="-ml-1.5" />
+                    <Separator orientation="vertical" className="mr-1 h-5 sm:mr-2" />
+                  </>
+                }
+              />
+              <section className="flex w-full max-w-(--breakpoint-lg) grow flex-col self-center p-2 pt-2 pb-6 sm:p-4 sm:pb-12">
+                <RequestedAccessContextProvider accessIntent="user">
+                  <Outlet />
+                </RequestedAccessContextProvider>
+              </section>
+              <Footer />
+            </SidebarInset>
+            <HelpSidebar />
+          </HelpSidebarProvider>
+        </SidebarProvider>
+      </ActiveAccessGrantProvider>
     </AuthProvider>
   );
 }

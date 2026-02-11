@@ -29,6 +29,7 @@ import {
 import type {
   CheckConfigurationByAssetResult,
   GetReportResult,
+  GetTagWithAccessContextResult,
   ListReportsResult,
   Member,
   Role,
@@ -75,15 +76,15 @@ export const api = {
     getForInspection: (request: Request, externalId: string) =>
       ApiFetcher.create(request, "/tags/for-inspection/:externalId", {
         externalId,
-      }).get<Tag>(),
+      }).get<GetTagWithAccessContextResult>(),
     checkRegistration: (request: Request, inspectionToken: string) =>
       ApiFetcher.create(request, "/tags/check-registration")
         .setHeader(INSPECTION_TOKEN_HEADER, inspectionToken)
-        .get<Tag>(),
+        .get<GetTagWithAccessContextResult>(),
     getForAssetSetup: (request: Request, externalId: string) =>
       ApiFetcher.create(request, "/tags/for-asset-setup/:externalId", {
         externalId,
-      }).get<Tag>(),
+      }).get<GetTagWithAccessContextResult>(),
   },
   inspections: {
     ...CRUD.for<Inspection>("/inspections").all(),

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
 import { getNextPointFromSession } from "~/.server/inspections";
-import { getSession, getSessionValue, inspectionSessionStorage } from "~/.server/sessions";
+import { commitInspectionSession, getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
 import DisplayInspectionValue from "~/components/assets/display-inspection-value";
 import {
@@ -47,14 +47,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   if (activeSessionId) {
     inspectionSession.set("activeSession", activeSessionId);
-    throw redirect(".", {
-      headers: {
-        "Set-Cookie": await inspectionSessionStorage.commitSession(inspectionSession),
-      },
-    });
+    await commitInspectionSession(inspectionSession);
+    throw redirect(".");
   }
 
-  activeSessionId = await getSessionValue(request, inspectionSessionStorage, "activeSession");
+  activeSessionId = inspectionSession.get("activeSession");
 
   let inspection: Inspection | null = null;
   if (inspectionId) {

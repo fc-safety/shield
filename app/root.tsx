@@ -12,7 +12,7 @@ import {
   useRouteLoaderData,
 } from "react-router";
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from "remix-themes";
-import { appStateSessionStorage, themeSessionResolver } from "~/.server/sessions";
+import { getAppState, themeSessionResolver } from "~/.server/sessions";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import { cookieStore } from "./.server/cookie-store";
@@ -43,7 +43,7 @@ export const middleware: Route.MiddlewareFunction[] = [cookieStore.createMiddlew
 export async function loader({ request }: Route.LoaderArgs) {
   const { getTheme } = await themeSessionResolver(request);
 
-  const appStateSession = await appStateSessionStorage.getSession(request.headers.get("cookie"));
+  const appState = await getAppState(request);
 
   const optimizedImageUrls: OptimizedImageUrls = {
     bannerLogoLight: {
@@ -56,7 +56,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   return data({
     theme: getTheme(),
-    appState: appStateSession.data,
+    appState,
     optimizedImageUrls,
   });
 }

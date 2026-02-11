@@ -18,7 +18,8 @@ import {
   fetchActiveInspectionRouteContext,
   validateInspectionSession,
 } from "~/.server/inspections";
-import { getSession, inspectionSessionStorage } from "~/.server/sessions";
+import { commitInspectionSession, getSession, inspectionSessionStorage } from "~/.server/sessions";
+import { refreshUserSession } from "~/.server/user-sesssion";
 import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionFieldLabel from "~/components/assets/asset-question-field-label";
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
@@ -46,10 +47,10 @@ import { useAlertOnApiError } from "~/hooks/use-alert-on-api-error";
 import { cleanErrorMessage, getErrorOrExtractResponseErrorMessage } from "~/lib/errors";
 import { getValidatedFormDataOrThrow } from "~/lib/forms";
 import type { Asset, AssetQuestion, InspectionRoute, InspectionSession, Tag } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { buildInspectionSchema, createInspectionSchema } from "~/lib/schema";
 import type { CheckConfigurationByAssetResult } from "~/lib/types";
 import { stringifyQuery, type QueryParams } from "~/lib/urls";
-import { CAPABILITIES } from "~/lib/permissions";
 import { can, getUserDisplayName } from "~/lib/users";
 import { buildTitle, getSearchParams, isNil } from "~/lib/utils";
 import { getClientIPAddress } from "~/lib/utils/get-client-ip-address";
@@ -113,17 +114,12 @@ export const action = async ({ request }: Route.ActionArgs) => {
       // If session object is returned, make sure to store it for later use.
       if (session) {
         inspectionSession.set("activeSession", session.id);
+        await commitInspectionSession(inspectionSession);
       }
 
       return { inspection };
     })
-    .then(async (data) =>
-      redirect(`next?success&inspectionId=${data.inspection.id}`, {
-        headers: {
-          "Set-Cookie": await inspectionSessionStorage.commitSession(inspectionSession),
-        },
-      })
-    )
+    .then(async (data) => redirect(`next?success&inspectionId=${data.inspection.id}`))
     .catch(async (error) => {
       const serializedError = await getErrorOrExtractResponseErrorMessage(error)
         .then(cleanErrorMessage)
@@ -133,7 +129,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await getUserOrHandleInspectLoginRedirect(request);
+  const user = await getUserOrHandleInspectLoginRedirect(request);
 
   // TODO: Redirect based on user access.
   // [✅] PUBLIC: View public inspection history.
@@ -144,7 +140,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const { tagExternalId } = await validateInspectionSession(request);
 
   const {
-    data: { data: tag },
+    data: { data: tagWithAccessContext },
   } = await catchResponse(api.tags.getForInspection(request, tagExternalId), {
     codes: [404],
   });
@@ -152,8 +148,24 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   // If tag isn't found, it means it hasn't been registered yet.
   // Redirect to registration page, which will handle completing tag
   // setup.
+  const { tag, accessContext } = tagWithAccessContext ?? {};
   if (!tag || !tag.asset) {
     throw redirect("/inspect/register/");
+  }
+
+  // Set auto-discovered access grant context. This prevents users from
+  // needing to manually select the correct access grant.
+  if (
+    accessContext &&
+    (accessContext.clientId !== user.activeClientId || accessContext.siteId !== user.activeSiteId)
+  ) {
+    await refreshUserSession(request, {
+      clientId: accessContext.clientId,
+      siteId: accessContext.siteId,
+      roleId: accessContext.roleId,
+    });
+    // Reload page with new access grant context.
+    throw redirect(request.url);
   }
 
   // If asset hasn't been setup yet, redirect to setup page.

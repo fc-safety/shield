@@ -1,9 +1,9 @@
 import type { SortingState } from "@tanstack/react-table";
 
 import type { QuickRangeId } from "~/components/date-range-select";
-import type { AssetQuestion } from "./models";
-import type { QueryParams } from "./urls";
+import type { AssetQuestion, Tag } from "./models";
 import type { TCapability, TScope } from "./permissions";
+import type { QueryParams } from "./urls";
 
 export interface ActiveAccessGrant {
   clientId: string;
@@ -23,9 +23,6 @@ export interface AppState {
 
   timeZone?: string;
   locale?: string;
-
-  // Multi-Client Access
-  activeClientId?: string;
 
   sidebarState?: Record<string, boolean>;
 
@@ -342,4 +339,16 @@ export interface Member {
 export interface AcceptInvitationResult {
   success: boolean;
   clientAccess: ClientAccess;
+}
+
+export interface GetTagWithAccessContextResult {
+  tag: Tag;
+  accessContext: {
+    clientId: string;
+    clientName: string;
+    siteId: string;
+    siteName: string;
+    roleId: string;
+    roleName: string;
+  } | null;
 }

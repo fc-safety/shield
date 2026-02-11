@@ -5,6 +5,7 @@ import type { TCapability, TScope } from "~/lib/permissions";
 import type { AppState } from "~/lib/types";
 import { type Tokens } from "./authenticator";
 import { config } from "./config";
+import { cookieStore } from "./cookie-store";
 
 const isProduction = process.env.NODE_ENV === "production";
 const domain = process.env.APP_DOMAIN;
@@ -55,9 +56,39 @@ export const appStateSessionStorage = createCookieSessionStorage<AppState>({
   },
 });
 
+export type AppStateSession = Awaited<ReturnType<typeof appStateSessionStorage.getSession>>;
+
+export const getAppStateSession = async (request: Request) => {
+  try {
+    // Try to use in-flight session first from previous commits.
+    const committedSession = cookieStore.get("appState");
+    if (committedSession) {
+      return appStateSessionStorage.getSession(committedSession);
+    } else {
+      throw new Error("No in-flight app state session found in cookies.");
+    }
+  } catch (e) {
+    return appStateSessionStorage.getSession(request.headers.get("cookie"));
+  }
+};
+
 export const getAppState = async (request: Request) => {
-  const session = await appStateSessionStorage.getSession(request.headers.get("cookie"));
+  const session = await getAppStateSession(request);
   return session.data;
+};
+
+export const setAppState = async (request: Request, data: Partial<AppState>) => {
+  const session = await getAppStateSession(request);
+  for (const [key, value] of Object.entries(data)) {
+    session.set(key as keyof AppState, value);
+  }
+  return await commitAppState(session);
+};
+
+export const commitAppState = async (session: AppStateSession) => {
+  const sessionCookie = await appStateSessionStorage.commitSession(session);
+  cookieStore.set("appState", sessionCookie);
+  return sessionCookie;
 };
 
 // INSPECTION STORAGE
@@ -80,6 +111,14 @@ export const inspectionSessionStorage = createCookieSessionStorage<InspectionCoo
     ...(isProduction ? { domain, secure: true } : {}),
   },
 });
+
+export type InspectionSession = Awaited<ReturnType<typeof inspectionSessionStorage.getSession>>;
+
+export const commitInspectionSession = async (session: InspectionSession) => {
+  const sessionCookie = await inspectionSessionStorage.commitSession(session);
+  cookieStore.set("inspection", sessionCookie);
+  return sessionCookie;
+};
 
 // USER SESSION MANAGEMENT
 

@@ -36,11 +36,16 @@ interface ActiveAccessGrantContextValue {
   hasMultipleAccessGrants: boolean;
   /** Refetch the accessible clients */
   refetchClients: () => Promise<void>;
+  /** Whether to disable the ability to switch access grants */
+  disableSwitching: boolean;
 }
 
 const ActiveAccessGrantContext = createContext<ActiveAccessGrantContextValue | null>(null);
 
-export function ActiveAccessGrantProvider({ children }: PropsWithChildren) {
+export function ActiveAccessGrantProvider({
+  children,
+  disableSwitching,
+}: PropsWithChildren<{ disableSwitching?: boolean }>) {
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { appState, setAppState } = useAppState();
   const { revalidate } = useRevalidator();
@@ -141,6 +146,7 @@ export function ActiveAccessGrantProvider({ children }: PropsWithChildren) {
     isLoading,
     hasMultipleAccessGrants,
     refetchClients,
+    disableSwitching: disableSwitching ?? false,
   };
 
   return (

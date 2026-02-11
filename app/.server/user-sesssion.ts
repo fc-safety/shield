@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { addMinutes, addSeconds } from "date-fns";
 import { redirect } from "react-router";
 import type { TCapability, TScope } from "~/lib/permissions";
+import type { ActiveAccessGrant } from "~/lib/types";
 import { buildPath, buildUrl } from "~/lib/urls";
 import { isTokenExpired, keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import type { Tokens, User } from "./authenticator";
@@ -9,7 +10,7 @@ import { buildUser, strategy } from "./authenticator";
 import { config } from "./config";
 import { cookieStore } from "./cookie-store";
 import { logger } from "./logger";
-import { getSession, userSessionStorage } from "./sessions";
+import { getAppState, getSession, setAppState, userSessionStorage } from "./sessions";
 
 declare global {
   var inFlightTokenRefresh: Map<string, Promise<Tokens>>;
@@ -202,15 +203,37 @@ export const getUserSession = async (
   if (options.session) {
     session = options.session;
   } else {
+    // Try to use in-flight session first from previous commits.
+    let inFlightSession: UserSession | null = null;
     try {
-      session = await getSession(request, userSessionStorage);
-    } catch (e) {
-      return {
-        isValid: false,
-        reason: "unavailable",
-        message: "Failed to get user session from request cookies.",
-      };
+      const committedSession = cookieStore.get("authSession");
+      if (committedSession) {
+        inFlightSession = await userSessionStorage.getSession(committedSession);
+      }
+    } catch (e) {}
+
+    if (inFlightSession) {
+      session = inFlightSession;
+    } else {
+      try {
+        session = await getSession(request, userSessionStorage);
+      } catch (e) {
+        return {
+          isValid: false,
+          reason: "unavailable",
+          message: "Failed to get user session from request cookies.",
+        };
+      }
     }
+  }
+
+  let appStateAccessGrant: ActiveAccessGrant | null = null;
+  try {
+    appStateAccessGrant = await getAppState(request).then(
+      (appState) => appState.activeAccessGrant ?? null
+    );
+  } catch (error) {
+    logger.error(error, "Failed to get app state session from request cookies.");
   }
 
   // Get or set unique session ID for this session.
@@ -237,8 +260,8 @@ export const getUserSession = async (
     capabilities: sessionData.capabilities ?? ([] as TCapability[]),
     hasMultiClientScope: sessionData.hasMultiClientScope ?? false,
     hasMultiSiteScope: sessionData.hasMultiSiteScope ?? false,
-    activeClientId: sessionData.activeClientId ?? null,
-    activeSiteId: sessionData.activeSiteId ?? null,
+    activeClientId: sessionData.activeClientId ?? appStateAccessGrant?.clientId ?? null,
+    activeSiteId: sessionData.activeSiteId ?? appStateAccessGrant?.siteId ?? null,
   });
 
   if (isTokenExpired(tokens.accessToken)) {
@@ -280,7 +303,8 @@ export const commitUserSession = async (session: UserSession) => {
   return sessionCookie;
 };
 
-export type RefreshUserSessionOptions = FetchCurrentUserOptions & GetUserSessionOptions;
+export type RefreshUserSessionOptions = FetchCurrentUserOptions &
+  GetUserSessionOptions & { roleId?: string };
 
 type RefreshUserSessionResult =
   | {
@@ -360,6 +384,18 @@ export const refreshUserSession = async (
       accessGrant = currentUser.accessGrant;
       applyAccessGrantToSession(session, currentUser.accessGrant);
       await commitUserSession(session);
+
+      // Additionally, set the app state to use the current users's access grant.
+      await setAppState(request, {
+        activeAccessGrant: {
+          clientId: accessGrant.clientId,
+          siteId: accessGrant.siteId,
+          roleId: options.roleId ?? accessGrant.roleId,
+        },
+      }).catch((error) => {
+        logger.error(error, "Failed to set app state to use the current users's access grant.");
+        // Don't throw error, as this is not critical. We don't want to interrupt or block the user's flow.
+      });
     }
   } catch (error) {
     const msg = "Failed to fetch access grant for current user.";

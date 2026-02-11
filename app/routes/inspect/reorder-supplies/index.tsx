@@ -23,10 +23,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const { inspectionToken } = await validateInspectionSession(request);
 
   const {
-    data: { data: tag },
+    data: { data: tagWithAccessContext },
   } = await catchResponse(api.tags.checkRegistration(request, inspectionToken), {
     codes: [404],
   });
+
+  const { tag } = tagWithAccessContext ?? {};
 
   if (tag?.asset) {
     const queryClient = new QueryClient();

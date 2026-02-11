@@ -4,7 +4,7 @@ import { parseISO } from "date-fns";
 import { AlertCircle, ArrowRight, Plus } from "lucide-react";
 import { useMemo } from "react";
 import { Controller, FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { Form, Link } from "react-router";
+import { Form, Link, redirect } from "react-router";
 import type { z } from "zod";
 import { api } from "~/.server/api";
 import type { DataOrError } from "~/.server/api-utils";
@@ -14,6 +14,7 @@ import {
   fetchActiveInspectionRouteContext,
   validateInspectionSession,
 } from "~/.server/inspections";
+import { refreshUserSession } from "~/.server/user-sesssion";
 import AssetCard from "~/components/assets/asset-card";
 import AssetQuestionFieldLabel from "~/components/assets/asset-question-field-label";
 import AssetQuestionResponseField from "~/components/assets/asset-question-response-field";
@@ -28,9 +29,9 @@ import { Input } from "~/components/ui/input";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { buildSetupAssetSchema, setupAssetSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
-import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { buildTitle, cn, isNil } from "~/lib/utils";
 import type { Route } from "./+types/setup";
@@ -38,9 +39,24 @@ import type { Route } from "./+types/setup";
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { tagExternalId } = await validateInspectionSession(request);
 
-  await guard(request, (user) => can(user, CAPABILITIES.PERFORM_INSPECTIONS));
+  const user = await guard(request, (user) => can(user, CAPABILITIES.PERFORM_INSPECTIONS));
 
-  const tag = await api.tags.getForAssetSetup(request, tagExternalId);
+  const { tag, accessContext } = await api.tags.getForAssetSetup(request, tagExternalId);
+
+  // Set auto-discovered access grant context. This prevents users from
+  // needing to manually select the correct access grant.
+  if (
+    accessContext &&
+    (accessContext.clientId !== user.activeClientId || accessContext.siteId !== user.activeSiteId)
+  ) {
+    await refreshUserSession(request, {
+      clientId: accessContext.clientId,
+      siteId: accessContext.siteId,
+      roleId: accessContext.roleId,
+    });
+    // Reload page with new access grant context.
+    throw redirect(request.url);
+  }
 
   if (tag.asset?.id) {
     const [routeContext, setupQuestions, configurationCheckResults] = await Promise.all([
