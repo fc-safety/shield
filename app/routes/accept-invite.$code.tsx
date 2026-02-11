@@ -1,6 +1,7 @@
 import { Building2, Check, Clock, XCircle } from "lucide-react";
 import { redirect, useFetcher } from "react-router";
 import { ApiFetcher } from "~/.server/api-utils";
+import { appStateSessionStorage, getSession } from "~/.server/sessions";
 import { getUserSession, refreshUserSession } from "~/.server/user-sesssion";
 import { Button } from "~/components/ui/button";
 import {
@@ -94,8 +95,25 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       throw refreshResult.cause ?? new Error(refreshResult.message);
     }
 
+    let setCookieValue: string | undefined = undefined;
+    if (refreshResult.accessGrant) {
+      const appStateSession = await getSession(request, appStateSessionStorage);
+      appStateSession.set("activeAccessGrant", {
+        clientId: refreshResult.accessGrant.clientId,
+        siteId: refreshResult.accessGrant.siteId,
+        roleId: refreshResult.accessGrant.roleId,
+      });
+      setCookieValue = await appStateSessionStorage.commitSession(appStateSession);
+    }
+
     // Redirect to the app after successful acceptance
-    return redirect("/command-center?welcome=true");
+    return redirect("/command-center?welcome=true", {
+      headers: setCookieValue
+        ? {
+            "Set-Cookie": setCookieValue,
+          }
+        : undefined,
+    });
   } catch (error) {
     if (error instanceof Response) {
       const body = await error.json().catch(() => ({}));

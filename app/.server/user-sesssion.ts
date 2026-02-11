@@ -50,6 +50,7 @@ export interface AccessGrant {
   capabilities: TCapability[];
   clientId: string;
   siteId: string;
+  roleId: string;
 }
 
 export interface FetchCurrentUserOptions {

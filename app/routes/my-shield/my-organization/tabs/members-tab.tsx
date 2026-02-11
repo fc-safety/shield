@@ -34,13 +34,14 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const [memberResults, invitationsResponse] = await Promise.all([
     api.members.list(request, { limit: 10000 }),
-    ApiFetcher.create(request, "/invitations", { limit: 100 }).get<InvitationsResponse>(),
+    ApiFetcher.create(request, "/invitations", {
+      limit: 100,
+      status: "PENDING",
+    }).get<InvitationsResponse>(),
   ]);
 
   // Filter to only pending invitations
-  const pendingInvitations = invitationsResponse.results.filter(
-    (inv) => inv.status === "PENDING"
-  );
+  const pendingInvitations = invitationsResponse.results.filter((inv) => inv.status === "PENDING");
 
   return {
     members: memberResults.results,
