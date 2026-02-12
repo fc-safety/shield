@@ -110,7 +110,15 @@ export default function UpdateMemberRoleForm({ member, clientId }: UpdateMemberR
     } else {
       doAdd();
     }
-  }, [form, selectedRoleForAdd, member.id, member.email, clientId, submitAddRole, setAssignHighPrivilegeAction]);
+  }, [
+    form,
+    selectedRoleForAdd,
+    member.id,
+    member.email,
+    clientId,
+    submitAddRole,
+    setAssignHighPrivilegeAction,
+  ]);
 
   const handleRemoveRole = useCallback(
     (access: MemberClientAccess) => {

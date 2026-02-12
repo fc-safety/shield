@@ -22,6 +22,18 @@ const fuse = new Fuse([] as Role[], {
   keys: ["name", "description", "friendlyName"],
 });
 
+function RoleOption({ role, isElevated = false }: { role: Role; isElevated?: boolean }) {
+  return (
+    <div className="flex gap-1.5">
+      {isElevated && <ShieldAlert className="mt-0.5 size-2.5 shrink-0" />}
+      <div className="flex flex-col gap-1">
+        <span>{role.name}</span>
+        <span className="text-muted-foreground text-xs">{role.description}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function RoleCombobox({
   value: valueProp,
   onValueChange,
@@ -74,7 +86,7 @@ export default function RoleCombobox({
     // If there are no elevated roles, return a flat list
     if (elevatedRoles.length === 0) {
       return standardRoles.map((role) => ({
-        label: role.name,
+        label: <RoleOption role={role} />,
         value: role.id,
       }));
     }
@@ -86,7 +98,7 @@ export default function RoleCombobox({
         key: "standard",
         groupLabel: "Client Roles",
         options: standardRoles.map((role) => ({
-          label: role.name,
+          label: <RoleOption role={role} />,
           value: role.id,
         })),
       });
@@ -95,12 +107,7 @@ export default function RoleCombobox({
       key: "elevated",
       groupLabel: "Global Roles",
       options: elevatedRoles.map((role) => ({
-        label: (
-          <span className="flex items-center gap-1">
-            <ShieldAlert className="size-2.5" />
-            {role.name}
-          </span>
-        ),
+        label: <RoleOption role={role} isElevated />,
         value: role.id,
       })),
     });
