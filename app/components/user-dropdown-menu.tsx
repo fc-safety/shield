@@ -1,7 +1,8 @@
-import { ChevronDown, LogOut, Moon, Sun, UserCog, UserRound } from "lucide-react";
+import { Building2, ChevronDown, LogOut, Moon, Sun, UserCog, UserRound } from "lucide-react";
 import { Link } from "react-router";
 import { Theme, useTheme } from "remix-themes";
 import type { User } from "~/.server/authenticator";
+import { useActiveAccessGrant } from "~/contexts/active-access-grant-context";
 import type { SidebarMenuItem } from "./app-sidebar";
 import { Button } from "./ui/button";
 import {
@@ -34,6 +35,7 @@ export function UserDropdownMenu({
   userRoutes?: (SidebarMenuItem & { type: "link" })[];
   logoutReturnTo?: string;
 }) {
+  const { activeClient } = useActiveAccessGrant();
   const accountLabel = user?.name ?? user?.email ?? "My Account";
 
   const [, setTheme] = useTheme();
@@ -45,7 +47,7 @@ export function UserDropdownMenu({
           <div className="bg-primary/20 border-primary text-primary flex size-5 shrink-0 items-end justify-center overflow-hidden rounded-full border">
             <UserRound className="size-4" />
           </div>
-          <div className="hidden sm:block">{accountLabel}</div>
+          <div className="hidden @md:block">{accountLabel}</div>
           <ChevronDown className="ml-auto" />
         </Button>
       </DropdownMenuTrigger>
@@ -55,10 +57,19 @@ export function UserDropdownMenu({
             {user?.name ?? user?.email ?? "My Account"}
           </div>
           {user.name && user.email && (
-            <div className="truncate text-xs font-normal">{user.email}</div>
+            <div className="text-muted-foreground truncate text-xs font-normal">{user.email}</div>
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {activeClient && (
+          <>
+            <DropdownMenuLabel className="flex items-center gap-x-2 text-xs tracking-tight">
+              <Building2 className="size-4 shrink-0" />
+              {activeClient.clientName}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+          </>
+        )}
         {userRoutes.map((route) => (
           <DropdownMenuItem asChild key={route.title}>
             <Link to={route.url}>

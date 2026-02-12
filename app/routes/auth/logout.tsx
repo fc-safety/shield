@@ -4,6 +4,7 @@ import { config } from "~/.server/config";
 import { cookieStore } from "~/.server/cookie-store";
 import { logger } from "~/.server/logger";
 import { userSessionStorage } from "~/.server/sessions";
+import { getUserSession } from "~/.server/user-sesssion";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/logout";
 
@@ -19,13 +20,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   // Clear any existing middleware set cookie values.
   cookieStore.unset("authSession");
 
-  let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
-  try {
-    session = await userSessionStorage.getSession(request.headers.get("cookie"));
-  } catch (e) {
+  const sessionResult = await getUserSession(request);
+  if (!sessionResult.session) {
     logger.warn(
       {
-        details: e,
+        error: sessionResult.cause ?? new Error(sessionResult.reason),
       },
       "Failed to get session"
     );
@@ -35,6 +34,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       },
     });
   }
+  const session = sessionResult.session;
 
   const tokens = session.get("tokens");
   if (tokens) {

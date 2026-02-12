@@ -1,8 +1,8 @@
 import { Hand } from "lucide-react";
 import { useCallback, useState } from "react";
-import { useNavigate } from "react-router";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { useActiveAccessGrant } from "~/contexts/active-access-grant-context";
+import { useQueryNavigate } from "~/hooks/use-query-navigate";
 import FirstTimeOnboarding from "./first-time-onboarding";
 import ReturningUserWelcome from "./returning-user-welcome";
 
@@ -12,14 +12,14 @@ interface WelcomeOnboardingProps {
 
 export default function WelcomeOnboarding({ showWelcome }: WelcomeOnboardingProps) {
   const { accessibleClients, activeClient, isLoading } = useActiveAccessGrant();
-  const navigate = useNavigate();
+  const { setQuery } = useQueryNavigate();
   const [open, setOpen] = useState(showWelcome);
 
   const handleDismiss = useCallback(() => {
     setOpen(false);
     // Remove ?welcome=true from URL
-    navigate(".", { replace: true });
-  }, [navigate]);
+    setQuery((prev) => prev.delete("welcome"), { replace: true });
+  }, [setQuery]);
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {

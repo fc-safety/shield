@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   type PropsWithChildren,
 } from "react";
 import { useRevalidator } from "react-router";
@@ -12,6 +13,7 @@ import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { getMyClientAccessQueryOptions } from "~/lib/services/client-access.service";
 import type { ActiveAccessGrant, MyClientAccess } from "~/lib/types";
 import { useAppState } from "./app-state-context";
+import { useAuth } from "./auth-context";
 
 function accessGrantMatches(a: ActiveAccessGrant, b: MyClientAccess): boolean {
   return a.clientId === b.clientId && a.siteId === b.siteId && a.roleId === b.roleId;
@@ -46,6 +48,7 @@ export function ActiveAccessGrantProvider({
   children,
   disableSwitching,
 }: PropsWithChildren<{ disableSwitching?: boolean }>) {
+  const { refreshAuth } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { appState, setAppState } = useAppState();
   const { revalidate } = useRevalidator();
@@ -53,13 +56,17 @@ export function ActiveAccessGrantProvider({
 
   // Fetch accessible clients
   const {
-    data: accessibleClients = [],
+    data: accessibleClients,
     isLoading,
     refetch,
   } = useQuery(getMyClientAccessQueryOptions(fetchOrThrow));
 
   // Get the active access grant from app state, or default to first client
   const activeAccessGrant = useMemo(() => {
+    if (!accessibleClients) {
+      return null;
+    }
+
     // If we have a stored active access grant, use it
     if (appState.activeAccessGrant) {
       // Verify the stored grant is still valid (user still has access)
@@ -76,10 +83,30 @@ export function ActiveAccessGrantProvider({
     return first ? toActiveAccessGrant(first) : null;
   }, [appState.activeAccessGrant, accessibleClients]);
 
+  // Refresh auth if stored access grant is no longer valid (must be in useEffect, not useMemo,
+  // because refreshAuth uses router.fetch() which is unavailable during SSR)
+  const storedGrantIsStale = Boolean(
+    appState.activeAccessGrant &&
+    accessibleClients &&
+    !accessibleClients.some((c) => accessGrantMatches(appState.activeAccessGrant!, c))
+  );
+  const hasRefreshedForStaleGrant = useRef(false);
+
+  useEffect(() => {
+    if (storedGrantIsStale && !hasRefreshedForStaleGrant.current) {
+      hasRefreshedForStaleGrant.current = true;
+      refreshAuth().catch((e) =>
+        console.error("ActiveAccessGrantProvider: failed to refresh auth", e)
+      );
+    } else if (!storedGrantIsStale) {
+      hasRefreshedForStaleGrant.current = false;
+    }
+  }, [storedGrantIsStale, refreshAuth]);
+
   // Get the full active client record
   const activeClient = useMemo(
     () =>
-      activeAccessGrant
+      activeAccessGrant && accessibleClients
         ? (accessibleClients.find((c) => accessGrantMatches(activeAccessGrant, c)) ?? null)
         : null,
     [accessibleClients, activeAccessGrant]
@@ -87,11 +114,8 @@ export function ActiveAccessGrantProvider({
 
   // When accessible clients load and no active access grant is set, set the default
   useEffect(() => {
-    if (!isLoading && accessibleClients.length > 0 && !appState.activeAccessGrant) {
-      const first = accessibleClients[0];
-      if (first) {
-        setAppState({ activeAccessGrant: toActiveAccessGrant(first) });
-      }
+    if (!appState.activeAccessGrant && activeAccessGrant) {
+      setAppState({ activeAccessGrant });
     }
   }, [isLoading, accessibleClients, appState.activeAccessGrant, setAppState]);
 
@@ -99,7 +123,7 @@ export function ActiveAccessGrantProvider({
   const setActiveAccessGrant = useCallback(
     async (grant: ActiveAccessGrant) => {
       // Verify user has access to this grant
-      const clientAccess = accessibleClients.find((c) => accessGrantMatches(grant, c));
+      const clientAccess = (accessibleClients ?? []).find((c) => accessGrantMatches(grant, c));
       if (!clientAccess) {
         throw new Error("You do not have access to this client");
       }
@@ -136,10 +160,10 @@ export function ActiveAccessGrantProvider({
     await refetch();
   }, [refetch]);
 
-  const hasMultipleAccessGrants = accessibleClients.length > 1;
+  const hasMultipleAccessGrants = (accessibleClients ?? []).length > 1;
 
   const value: ActiveAccessGrantContextValue = {
-    accessibleClients,
+    accessibleClients: accessibleClients ?? [],
     activeAccessGrant,
     activeClient,
     setActiveAccessGrant,

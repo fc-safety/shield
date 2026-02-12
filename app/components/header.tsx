@@ -52,31 +52,24 @@ export default function Header({
   return (
     <header
       className={cn(
-        "flex shrink-0 flex-col gap-y-1 px-2 pt-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2 sm:px-4 sm:pt-4",
+        "@container flex shrink-0 flex-col gap-y-1 px-2 pt-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:pt-2 sm:px-4 sm:pt-4",
         className
       )}
     >
-      {showBannerLogo && (
-        <LogoLink
-          to={homeTo}
-          logo={{ light: bannerLogoLightUrl, dark: bannerLogoDarkUrl }}
-          className="block shrink-0 py-1 sm:hidden"
-        />
-      )}
-      <div className="@container flex items-center gap-x-1 sm:gap-x-2">
-        <div className="flex flex-1 items-center gap-x-1 sm:gap-x-2">
+      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+        <div className="flex shrink-0 grow items-center gap-x-1 sm:gap-x-2">
           {leftSlot}
           {showBannerLogo && (
             <LogoLink
               to={homeTo}
               logo={{ light: bannerLogoLightUrl, dark: bannerLogoDarkUrl }}
-              className="hidden shrink-0 sm:block"
+              className="shrink-0"
             />
           )}
           <DemoLabel />
         </div>
-        <ClientSwitcherOrLabel className="px-4" />
-        <div className="flex flex-1 items-center justify-end gap-x-1 sm:gap-x-2">
+        <ClientSwitcherOrLabel className="hidden max-w-72 px-4 @2xl:flex" />
+        <div className="flex shrink-0 grow items-center justify-end gap-x-1 sm:gap-x-2">
           {rightSlot}
           {user && (
             <>
@@ -89,6 +82,7 @@ export default function Header({
           )}
         </div>
       </div>
+      <ClientSwitcherOrLabel className="flex self-stretch px-4 @md:self-end @2xl:hidden" />
       {showBreadcrumb && (
         <BreadcrumbResponsive
           items={[
@@ -126,25 +120,6 @@ const DemoLabel = ({ className }: { className?: string }) => {
   ) : null;
 };
 
-const ClientLabel = ({ className }: { className?: string }) => {
-  let client: GetMyOrganizationResult["client"] | undefined;
-  try {
-    ({ client } = useMyOrganization());
-  } catch (e) {}
-  return client?.name ? (
-    <div
-      className={cn(
-        "min-w-0 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
-        className
-      )}
-    >
-      {client.name}
-    </div>
-  ) : (
-    <div className={cn(className)}></div>
-  );
-};
-
 /**
  * Renders ClientSwitcher if ClientAccessContext is available,
  * otherwise falls back to the simple ClientLabel.
@@ -154,5 +129,5 @@ const ClientSwitcherOrLabel = ({ className }: { className?: string }) => {
   if (clientAccess) {
     return <ClientSwitcher className={className} />;
   }
-  return <ClientLabel className={className} />;
+  return null;
 };

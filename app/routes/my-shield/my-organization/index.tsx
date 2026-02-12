@@ -10,14 +10,12 @@ import {
 } from "~/components/ui/empty";
 import { CAPABILITIES } from "~/lib/permissions";
 import { can, hasMultiSiteVisibility } from "~/lib/users";
-import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
 
   let tabId: string | null = null;
-  const shouldWelcome = getSearchParam(request, "welcome") === "true";
 
   if (hasMultiSiteVisibility(user)) {
     tabId = "sites";
@@ -30,7 +28,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   }
 
   if (tabId) {
-    return redirect(`/my-organization/${tabId}?welcome=${shouldWelcome}`);
+    return redirect(`/my-organization/${tabId}`);
   }
 };
 

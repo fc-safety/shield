@@ -1,7 +1,7 @@
 import { redirect } from "react-router";
 import { authenticator, type Tokens } from "~/.server/authenticator";
-import { getSession, userSessionStorage } from "~/.server/sessions";
-import { commitUserSession, refreshUserSession } from "~/.server/user-sesssion";
+import { logger } from "~/.server/logger";
+import { commitUserSession, getUserSession, refreshUserSession } from "~/.server/user-sesssion";
 import { buildPath } from "~/lib/urls";
 import type { Route } from "./+types/callback";
 
@@ -13,7 +13,12 @@ export async function loader({ request }: Route.LoaderArgs) {
     return redirect("/login?error=authentication_failed");
   }
 
-  const session = await getSession(request, userSessionStorage);
+  const sessionResult = await getUserSession(request);
+  if (!sessionResult.session) {
+    return redirect(buildPath("/login", { error: sessionResult.reason }));
+  }
+  const session = sessionResult.session;
+
   session.set("tokens", tokens);
 
   // Get and clear the return to URL from the session.
@@ -24,9 +29,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   const refreshResult = await refreshUserSession(request, { session });
 
   if (!refreshResult.success) {
-    console.error(
-      "Failed to fetch current user on login:",
-      refreshResult.cause ?? new Error(refreshResult.message)
+    logger.error(
+      refreshResult.cause ?? new Error(refreshResult.message),
+      "Failed to fetch current user on login:"
     );
     // Clear tokens and redirect to login with error to prevent infinite loop
     // The user authenticated with the IdP but we can't reach our backend
@@ -35,5 +40,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     return redirect(buildPath("/login", { error: refreshResult.reason }));
   }
 
+  await commitUserSession(session);
   return redirect(returnTo);
 }

@@ -182,6 +182,7 @@ export type GetUserSessionResult =
       user: User;
       message?: never;
       reason?: never;
+      cause?: never;
     }
   | {
       isValid: false;
@@ -191,6 +192,7 @@ export type GetUserSessionResult =
       session: UserSession;
       tokens?: never;
       user?: never;
+      cause?: never;
     }
   | {
       isValid: false;
@@ -200,11 +202,13 @@ export type GetUserSessionResult =
       session: UserSession;
       tokens: Tokens;
       user: User;
+      cause?: never;
     }
   | {
       isValid: false;
       reason: "unavailable";
       message: string;
+      cause: unknown;
       sessionId?: never;
       session?: never;
       tokens?: never;
@@ -238,6 +242,7 @@ export const getUserSession = async (
           isValid: false,
           reason: "unavailable",
           message: "Failed to get user session from request cookies.",
+          cause: e,
         };
       }
     }
@@ -348,9 +353,12 @@ export const refreshUserSession = async (
   request: Request,
   options: RefreshUserSessionOptions = {}
 ): Promise<RefreshUserSessionResult> => {
-  const { session, sessionId, user, isValid, reason, tokens } = await getUserSession(request, {
-    session: options.session,
-  });
+  const { session, sessionId, user, isValid, reason, tokens, cause } = await getUserSession(
+    request,
+    {
+      session: options.session,
+    }
+  );
 
   let validTokens: Tokens;
 
@@ -384,6 +392,7 @@ export const refreshUserSession = async (
         user,
         reason: "invalid_session",
         message: "Session is invalid.",
+        cause: cause ?? new Error(reason),
       };
     }
   }
@@ -391,10 +400,16 @@ export const refreshUserSession = async (
   let accessGrant: AccessGrant | null = null;
 
   try {
-    const currentUser = await fetchCurrentUser(validTokens.accessToken, {
+    let currentUser = await fetchCurrentUser(validTokens.accessToken, {
       clientId: options.clientId ?? user.activeClientId,
       siteId: options.siteId ?? user.activeSiteId,
     });
+
+    if (!currentUser.accessGrant) {
+      // Try again without current client and site IDs. A non-existent access grant
+      // indicates the user no longer has access to the current client and site.
+      currentUser = await fetchCurrentUser(validTokens.accessToken);
+    }
 
     if (currentUser.accessGrant) {
       accessGrant = currentUser.accessGrant;
@@ -448,9 +463,14 @@ export const refreshUserSession = async (
 
 export const refreshUserSessionOrReauthenticate = async (
   request: Request,
-  options: LoginRedirectOptions = {}
+  options: LoginRedirectOptions & RefreshUserSessionOptions = {}
 ): Promise<RefreshUserSessionResult & { success: true }> => {
-  const result = await refreshUserSession(request);
+  const result = await refreshUserSession(request, {
+    clientId: options.clientId,
+    siteId: options.siteId,
+    roleId: options.roleId,
+    session: options.session,
+  });
   if (result.success) {
     return result;
   } else {
@@ -458,7 +478,11 @@ export const refreshUserSessionOrReauthenticate = async (
       options.errorCode = result.reason;
       options.errorMessage = result.message;
     }
-    throw await getLoginRedirect(request, result.session, options);
+    throw await getLoginRedirect(request, result.session, {
+      returnTo: options.returnTo,
+      errorCode: result.reason,
+      errorMessage: result.message,
+    });
   }
 };
 
@@ -488,6 +512,7 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
   return {
     user,
     session,
+    tokens,
   };
 };
 

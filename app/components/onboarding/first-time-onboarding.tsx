@@ -7,9 +7,12 @@ import {
   LayoutDashboard,
   MessageCircleMore,
   PartyPopper,
+  Rocket,
   Route as RouteIcon,
+  Settings,
   Shield,
   Sidebar,
+  Sparkles,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import AssistantProvider, { useAssistant } from "~/components/assistant/assistant.component";
@@ -17,14 +20,26 @@ import Step from "~/components/assistant/components/step";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
 import { useOptimizedImageUrls } from "~/contexts/optimized-image-context";
+import type { OnboardingPersona } from "~/lib/onboarding-personas";
+import {
+  getDashboardItems,
+  getDashboardSubtitle,
+  getFinishButtonText,
+  getQuickStartItems,
+  getQuickStartSubtitle,
+  getSectionDescription,
+  getWelcomeSubtitle,
+  inferPersona,
+} from "~/lib/onboarding-personas";
 import { CAPABILITIES } from "~/lib/permissions";
-import { can } from "~/lib/users";
+import { can, isGlobalAdmin } from "~/lib/users";
 import { cn } from "~/lib/utils";
 
 const STEP_IDS = {
   WELCOME: "welcome",
   DASHBOARD: "dashboard",
   KEY_SECTIONS: "key-sections",
+  QUICK_START: "quick-start",
   GETTING_HELP: "getting-help",
 } as const;
 
@@ -34,6 +49,9 @@ interface FirstTimeOnboardingProps {
 }
 
 export default function FirstTimeOnboarding({ clientName, onClose }: FirstTimeOnboardingProps) {
+  const { user } = useAuth();
+  const persona = inferPersona(user);
+
   const assistant = useAssistant({
     onClose,
     firstStepId: STEP_IDS.WELCOME,
@@ -48,12 +66,14 @@ export default function FirstTimeOnboarding({ clientName, onClose }: FirstTimeOn
             return (
               <StepWelcome
                 clientName={clientName}
+                persona={persona}
                 onContinue={() => stepTo(STEP_IDS.DASHBOARD, "forward")}
               />
             );
           case STEP_IDS.DASHBOARD:
             return (
               <StepDashboard
+                persona={persona}
                 onContinue={() => stepTo(STEP_IDS.KEY_SECTIONS, "forward")}
                 onStepBackward={() => stepTo(STEP_IDS.WELCOME, "backward")}
               />
@@ -61,15 +81,25 @@ export default function FirstTimeOnboarding({ clientName, onClose }: FirstTimeOn
           case STEP_IDS.KEY_SECTIONS:
             return (
               <StepKeySections
-                onContinue={() => stepTo(STEP_IDS.GETTING_HELP, "forward")}
+                persona={persona}
+                onContinue={() => stepTo(STEP_IDS.QUICK_START, "forward")}
                 onStepBackward={() => stepTo(STEP_IDS.DASHBOARD, "backward")}
+              />
+            );
+          case STEP_IDS.QUICK_START:
+            return (
+              <StepQuickStart
+                persona={persona}
+                onContinue={() => stepTo(STEP_IDS.GETTING_HELP, "forward")}
+                onStepBackward={() => stepTo(STEP_IDS.KEY_SECTIONS, "backward")}
               />
             );
           case STEP_IDS.GETTING_HELP:
             return (
               <StepGettingHelp
+                persona={persona}
                 onClose={onClose}
-                onStepBackward={() => stepTo(STEP_IDS.KEY_SECTIONS, "backward")}
+                onStepBackward={() => stepTo(STEP_IDS.QUICK_START, "backward")}
               />
             );
           default:
@@ -80,7 +110,15 @@ export default function FirstTimeOnboarding({ clientName, onClose }: FirstTimeOn
   );
 }
 
-function StepWelcome({ clientName, onContinue }: { clientName: string; onContinue: () => void }) {
+function StepWelcome({
+  clientName,
+  persona,
+  onContinue,
+}: {
+  clientName: string;
+  persona: OnboardingPersona;
+  onContinue: () => void;
+}) {
   const {
     bannerLogoDark: { h48px: bannerLogoDarkUrl },
     bannerLogoLight: { h48px: bannerLogoLightUrl },
@@ -98,27 +136,34 @@ function StepWelcome({ clientName, onContinue }: { clientName: string; onContinu
           <img src={bannerLogoDarkUrl} alt="FC Safety Shield" className="hidden dark:block" />
         </div>
       </div>
-      <p className="text-sm">
-        You now have access to the <span className="font-bold underline">{clientName}</span>{" "}
-        organization.
-      </p>
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-sm">
+          You now have access to the <span className="font-bold underline">{clientName}</span>{" "}
+          organization.
+        </p>
+        <p className="text-muted-foreground text-sm">{getWelcomeSubtitle(persona)}</p>
+      </div>
       <Button size="lg" onClick={onContinue}>
         Get Started <ArrowRight />
       </Button>
-      <div className="text-muted-foreground flex flex-col gap-2 text-sm">
+      <div className="flex flex-col gap-2 text-xs">
         <p className="italic">Here's what we'll cover:</p>
-        <ul className="flex flex-col text-left [&_li]:py-0.5">
+        <ul className="[&>li]:text-muted-foreground flex flex-col text-left [&_li]:py-0.5 [&_svg]:size-3">
           <li className="group flex items-center gap-2">
-            <LayoutDashboard className="group-hover:text-primary size-4 shrink-0 transition-colors" />{" "}
-            Your Command Center dashboard
+            <LayoutDashboard className="group-hover:text-primary shrink-0 transition-colors" /> Your
+            Command Center dashboard
           </li>
           <li className="group flex items-center gap-2">
-            <Shield className="group-hover:text-primary size-4 shrink-0 transition-colors" /> Key
-            sections you can access
+            <Shield className="group-hover:text-primary shrink-0 transition-colors" /> Key sections
+            you can access
           </li>
           <li className="group flex items-center gap-2">
-            <CircleHelp className="group-hover:text-primary size-4 shrink-0 transition-colors" />{" "}
-            Where to get help
+            <Rocket className="group-hover:text-primary shrink-0 transition-colors" /> Tips to get
+            started
+          </li>
+          <li className="group flex items-center gap-2">
+            <CircleHelp className="group-hover:text-primary shrink-0 transition-colors" /> Where to
+            get help
           </li>
         </ul>
       </div>
@@ -126,13 +171,23 @@ function StepWelcome({ clientName, onContinue }: { clientName: string; onContinu
   );
 }
 
+const DASHBOARD_ICON_MAP: Record<string, ReactNode> = {
+  compliance: <LayoutDashboard className="text-primary size-4" />,
+  inspections: <FileSpreadsheet className="text-primary size-4" />,
+  alerts: <Shield className="text-primary size-4" />,
+};
+
 function StepDashboard({
+  persona,
   onContinue,
   onStepBackward,
 }: {
+  persona: OnboardingPersona;
   onContinue: () => void;
   onStepBackward: () => void;
 }) {
+  const items = getDashboardItems(persona);
+
   return (
     <Step
       title={
@@ -141,26 +196,19 @@ function StepDashboard({
           Your Command Center
         </span>
       }
-      subtitle="Your at-a-glance overview of everything happening in your organization."
+      subtitle={getDashboardSubtitle(persona)}
       onContinue={onContinue}
       onStepBackward={onStepBackward}
     >
       <div className="flex flex-col gap-3 py-2">
-        <InfoItem
-          icon={<LayoutDashboard className="text-primary size-4" />}
-          title="Compliance Dashboard"
-          description="See your organization's overall compliance status and key metrics at a glance."
-        />
-        <InfoItem
-          icon={<FileSpreadsheet className="text-primary size-4" />}
-          title="Recent Inspections"
-          description="Quickly review the latest inspection activity across your sites."
-        />
-        <InfoItem
-          icon={<Shield className="text-primary size-4" />}
-          title="Alerts & Action Items"
-          description="Stay informed about failed inspections and items that need attention."
-        />
+        {items.map((item) => (
+          <InfoItem
+            key={item.title}
+            icon={DASHBOARD_ICON_MAP[item.icon]}
+            title={item.title}
+            description={item.description}
+          />
+        ))}
       </div>
       <p className="text-muted-foreground mt-2 flex items-center justify-center gap-1 text-center text-xs">
         <Sidebar className="size-4" />
@@ -171,9 +219,11 @@ function StepDashboard({
 }
 
 function StepKeySections({
+  persona,
   onContinue,
   onStepBackward,
 }: {
+  persona: OnboardingPersona;
   onContinue: () => void;
   onStepBackward: () => void;
 }) {
@@ -215,9 +265,48 @@ function StepKeySections({
       description: "Manage sites, members, and settings",
       show: true,
     },
+    {
+      icon: <Settings className="size-5" />,
+      title: "Admin",
+      description: "Platform administration and system settings",
+      show: persona === "system-admin",
+    },
+    {
+      icon: <Sparkles className="size-5" />,
+      title: "Products",
+      description: "Manage product catalog and categories",
+      show: isGlobalAdmin(user) && can(user, CAPABILITIES.CONFIGURE_PRODUCTS),
+    },
   ];
 
-  const visibleSections = sections.filter((s) => s.show);
+  // Apply persona-specific description overrides
+  const visibleSections = sections
+    .filter((s) => s.show)
+    .map((s) => ({
+      ...s,
+      description: getSectionDescription(persona, s.title) ?? s.description,
+    }));
+
+  // Reorder: put most relevant sections first per persona
+  const priorityTitles: Partial<Record<OnboardingPersona, string[]>> = {
+    inspector: ["Assets", "Inspection Routes", "Command Center"],
+    "compliance-manager": ["Command Center", "Reports"],
+    "organization-admin": ["My Organization", "Command Center"],
+    "system-admin": ["Admin", "Command Center", "My Organization"],
+  };
+
+  const priority = priorityTitles[persona];
+  if (priority) {
+    visibleSections.sort((a, b) => {
+      const aIdx = priority.indexOf(a.title);
+      const bIdx = priority.indexOf(b.title);
+      // Items in priority list come first; preserve original order for the rest
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return 0;
+    });
+  }
 
   return (
     <Step
@@ -248,10 +337,56 @@ function StepKeySections({
   );
 }
 
+function StepQuickStart({
+  persona,
+  onContinue,
+  onStepBackward,
+}: {
+  persona: OnboardingPersona;
+  onContinue: () => void;
+  onStepBackward: () => void;
+}) {
+  const items = getQuickStartItems(persona);
+
+  return (
+    <Step
+      title={
+        <span className="flex items-center justify-center gap-2">
+          <Rocket className="size-5" />
+          Quick Start
+        </span>
+      }
+      subtitle={getQuickStartSubtitle(persona)}
+      onContinue={onContinue}
+      onStepBackward={onStepBackward}
+    >
+      <div className="flex flex-col gap-3 py-2">
+        {items.map((item) => (
+          <div key={item.text} className="flex items-start gap-3 rounded-lg border p-3">
+            <div className="bg-primary/10 mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full">
+              <ArrowRight className="text-primary size-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium">{item.text}</p>
+              <p className="text-muted-foreground text-xs">{item.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-muted-foreground mt-2 flex items-center justify-center gap-1 text-center text-xs">
+        <Sidebar className="size-4" />
+        Navigate to any section using the sidebar on the left.
+      </p>
+    </Step>
+  );
+}
+
 function StepGettingHelp({
+  persona,
   onClose,
   onStepBackward,
 }: {
+  persona: OnboardingPersona;
   onClose: () => void;
   onStepBackward: () => void;
 }) {
@@ -260,7 +395,7 @@ function StepGettingHelp({
       title="Getting Help"
       subtitle="We're here to help whenever you need it."
       onContinue={onClose}
-      continueButtonText="Start Exploring"
+      continueButtonText={getFinishButtonText(persona)}
       onStepBackward={onStepBackward}
     >
       <div className="flex flex-col gap-3 py-2">

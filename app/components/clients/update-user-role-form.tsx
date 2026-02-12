@@ -16,7 +16,6 @@ import type { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import { VISIBILITY } from "~/lib/permissions";
 import { addUserRoleSchema } from "~/lib/schema";
 import type { Role, UserResponse, UserRole } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
@@ -107,11 +106,9 @@ export default function UpdateUserRoleForm({ user, clientId }: UpdateUserRoleFor
     if (
       selectedRoleForAdd &&
       selectedRoleForAdd.id === roleId &&
-      selectedRoleForAdd.capabilities.some(
-        (p) => p === VISIBILITY.GLOBAL || p === VISIBILITY.SUPER_ADMIN
-      )
+      (selectedRoleForAdd.scope === "GLOBAL" || selectedRoleForAdd.scope === "SYSTEM")
     ) {
-      if (selectedRoleForAdd.capabilities.some((p) => p === VISIBILITY.GLOBAL)) {
+      if (selectedRoleForAdd.scope === "GLOBAL") {
         setAssignGlobalAdminAction((draft) => {
           draft.open = true;
           draft.title = "Add Global Admin Role";
@@ -122,12 +119,12 @@ export default function UpdateUserRoleForm({ user, clientId }: UpdateUserRoleFor
             doAdd();
           };
         });
-      } else if (selectedRoleForAdd.capabilities.some((p) => p === VISIBILITY.SUPER_ADMIN)) {
+      } else if (selectedRoleForAdd.scope === "SYSTEM") {
         setAssignGlobalAdminAction((draft) => {
           draft.open = true;
-          draft.title = "Add Super Admin Role";
+          draft.title = "Add System Admin Role";
           draft.message =
-            "Are you sure you want to add a super admin role? Doing so will give the user full access to admin controls and the ability to view and manage data for all clients.";
+            "Are you sure you want to add a system admin role? Doing so will give the user full access to admin controls and the ability to view and manage data for all clients.";
           draft.requiredUserInput = user.email;
           draft.onConfirm = () => {
             doAdd();

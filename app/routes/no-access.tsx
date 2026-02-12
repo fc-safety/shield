@@ -1,6 +1,6 @@
 import { AlertCircle, LogIn, LogOut } from "lucide-react";
 import { redirect } from "react-router";
-import { userSessionStorage } from "~/.server/sessions";
+import { getUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -9,8 +9,7 @@ import { isTokenExpired, keycloakTokenPayloadSchema, parseToken } from "~/lib/us
 import type { Route } from "./+types/no-access";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const session = await userSessionStorage.getSession(request.headers.get("cookie"));
-  const tokens = session.get("tokens");
+  const { tokens } = await getUserSession(request);
 
   if (!tokens || isTokenExpired(tokens.accessToken)) {
     throw redirect("/login");

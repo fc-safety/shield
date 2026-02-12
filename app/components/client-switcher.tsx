@@ -1,7 +1,7 @@
 import { ArrowLeftRight, Building2, Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useActiveAccessGrant } from "~/contexts/active-access-grant-context";
-import { cn } from "~/lib/utils";
+import { cn, groupBy, isNil } from "~/lib/utils";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -29,28 +29,31 @@ export function ClientSwitcher({ className }: ClientSwitcherProps) {
 
   // If user only has one client, just show the label (no dropdown)
   if (!hasMultipleAccessGrants || disableSwitching) {
-    return (
-      <div
-        className={cn(
-          "min-w-0 truncate text-center text-xs font-extralight @2xl:text-sm @4xl:text-base @6xl:text-lg",
-          className
-        )}
-      >
-        {activeClient?.clientName}
-      </div>
-    );
+    return null;
   }
+
+  const accessGrantsPerClientId = groupBy(accessibleClients, (access) => access.clientId);
+
+  const renderTriggerContent = () => {
+    if (isNil(activeClient)) {
+      return "Switch Organization";
+    }
+    if (accessGrantsPerClientId[activeClient.clientId].length > 1) {
+      return activeClient.clientName + " / " + activeClient.siteName;
+    }
+    return activeClient.clientName;
+  };
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" className={className}>
           <Building2 />
-          <span className="truncate">{activeClient?.clientName}</span>
+          <span className="truncate">{renderTriggerContent()}</span>
           <ChevronDown />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-64">
+      <DropdownMenuContent align="center" className="w-84 max-w-dvw">
         <DropdownMenuItem disabled asChild>
           <DropdownMenuLabel className="text-muted-foreground flex items-center gap-2 text-xs font-normal">
             <ArrowLeftRight />

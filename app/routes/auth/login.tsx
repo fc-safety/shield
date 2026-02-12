@@ -1,7 +1,6 @@
 import { AlertCircle, LogIn } from "lucide-react";
 import { authenticator } from "~/.server/authenticator";
-import { userSessionStorage } from "~/.server/sessions";
-import { commitUserSession } from "~/.server/user-sesssion";
+import { commitUserSession, getUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -31,9 +30,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   if (returnTo) {
-    const session = await userSessionStorage.getSession(request.headers.get("cookie"));
-    session.set("returnTo", returnTo);
-    await commitUserSession(session);
+    const { session } = await getUserSession(request);
+    if (session) {
+      session.set("returnTo", returnTo);
+      await commitUserSession(session);
+    }
   }
 
   await authenticator.then((a) => a.authenticate("oauth2", request));

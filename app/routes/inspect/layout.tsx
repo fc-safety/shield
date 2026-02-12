@@ -27,6 +27,7 @@ import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
 import { RequestedAccessContextProvider } from "~/contexts/requested-access-context";
 import useMyOrganization from "~/hooks/use-my-organization";
 import { CAPABILITIES } from "~/lib/permissions";
+import { getMyClientAccessQueryOptions } from "~/lib/services/client-access.service";
 import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
 import { can } from "~/lib/users";
 import type { Route } from "./+types/layout";
@@ -37,7 +38,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const queryClient = new QueryClient();
   const fetcher = getAuthenticatedFetcher(request);
-  const prefetchPromises = [queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher))];
+  const prefetchPromises = [
+    queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher)),
+    queryClient.prefetchQuery(getMyClientAccessQueryOptions(fetcher)),
+  ];
 
   await Promise.all(prefetchPromises);
 

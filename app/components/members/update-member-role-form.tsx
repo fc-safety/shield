@@ -2,13 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Form as FormProvider } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import type { Member, MemberClientAccess } from "~/lib/types";
+import type { Member, MemberClientAccess, Role } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
 import RoleCombobox from "../clients/role-combobox";
 import SiteCombobox from "../clients/site-combobox";
@@ -44,7 +44,9 @@ export default function UpdateMemberRoleForm({ member, clientId }: UpdateMemberR
   } = form;
 
   const assignedAccess = member.clientAccess;
+  const [selectedRoleForAdd, setSelectedRoleForAdd] = useState<Role | undefined>();
   const [confirmAction, setConfirmAction] = useConfirmAction({});
+  const [assignHighPrivilegeAction, setAssignHighPrivilegeAction] = useConfirmAction({});
 
   const { submitJson: submitAddRole, isSubmitting: isAddingRole } = useModalFetcher<
     DataOrError<Member>
@@ -61,19 +63,54 @@ export default function UpdateMemberRoleForm({ member, clientId }: UpdateMemberR
       return;
     }
 
-    submitAddRole(
-      { roleId, siteId },
-      {
-        method: "POST",
-        path: buildPath(`/api/proxy/members/:id/roles`, {
-          id: member.id,
-        }),
-        query: {
-          clientId,
-        },
+    const doAdd = () => {
+      submitAddRole(
+        { roleId, siteId },
+        {
+          method: "POST",
+          path: buildPath(`/api/proxy/members/:id/roles`, {
+            id: member.id,
+          }),
+          query: {
+            clientId,
+          },
+        }
+      );
+    };
+
+    // Check if adding a high-privilege role
+    if (
+      selectedRoleForAdd &&
+      selectedRoleForAdd.id === roleId &&
+      (selectedRoleForAdd.scope === "GLOBAL" || selectedRoleForAdd.scope === "SYSTEM")
+    ) {
+      if (selectedRoleForAdd.scope === "GLOBAL") {
+        setAssignHighPrivilegeAction((draft) => {
+          draft.open = true;
+          draft.title = "Add Global Admin Role";
+          draft.message =
+            "Are you sure you want to add a global admin role? Doing so will give the member full access to view and manage data for all clients.";
+          draft.requiredUserInput = member.email;
+          draft.onConfirm = () => {
+            doAdd();
+          };
+        });
+      } else if (selectedRoleForAdd.scope === "SYSTEM") {
+        setAssignHighPrivilegeAction((draft) => {
+          draft.open = true;
+          draft.title = "Add System Admin Role";
+          draft.message =
+            "Are you sure you want to add a system admin role? Doing so will give the member full access to admin controls and the ability to view and manage data for all clients.";
+          draft.requiredUserInput = member.email;
+          draft.onConfirm = () => {
+            doAdd();
+          };
+        });
       }
-    );
-  }, [form, member.id, clientId, submitAddRole]);
+    } else {
+      doAdd();
+    }
+  }, [form, selectedRoleForAdd, member.id, member.email, clientId, submitAddRole, setAssignHighPrivilegeAction]);
 
   const handleRemoveRole = useCallback(
     (access: MemberClientAccess) => {
@@ -168,6 +205,7 @@ export default function UpdateMemberRoleForm({ member, clientId }: UpdateMemberR
                       value={field.value}
                       onValueChange={field.onChange}
                       onBlur={field.onBlur}
+                      onRoleChange={setSelectedRoleForAdd}
                       disabled={isSubmitting}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -206,6 +244,7 @@ export default function UpdateMemberRoleForm({ member, clientId }: UpdateMemberR
         </FormProvider>
       </div>
       <ConfirmationDialog {...confirmAction} />
+      <ConfirmationDialog {...assignHighPrivilegeAction} />
     </>
   );
 }

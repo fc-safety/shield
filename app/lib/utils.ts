@@ -39,6 +39,23 @@ export const countBy = <TKey extends string | number | symbol, T extends Record<
       }) as Record<TKey, T[TKey]> & { count: number; items: T[] }
   );
 
+export const groupBy = <T, K extends string>(
+  array: T[],
+  getKey: (item: T) => K
+): Record<K, T[]> => {
+  return array.reduce(
+    (acc, item) => {
+      const key = getKey(item);
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(item);
+      return acc;
+    },
+    {} as Record<K, T[]>
+  );
+};
+
 export const dedupById = <T extends { id: string }>(items: T[]) => [
   ...items
     .reduce((acc, item) => {
