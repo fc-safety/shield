@@ -236,7 +236,7 @@ export default function Layout({
                 leftSlot={
                   <>
                     <SidebarTrigger className="-ml-1.5 [&_svg:not([class*='size-'])]:size-5" />
-                    <Separator orientation="vertical" className="mr-2 h-5" />
+                    <Separator orientation="vertical" className="h-5" />
                   </>
                 }
               />

@@ -117,7 +117,7 @@ export function ActiveAccessGrantProvider({
     if (!appState.activeAccessGrant && activeAccessGrant) {
       setAppState({ activeAccessGrant });
     }
-  }, [isLoading, accessibleClients, appState.activeAccessGrant, setAppState]);
+  }, [appState.activeAccessGrant, activeAccessGrant, setAppState]);
 
   // Switch to a different access grant
   const setActiveAccessGrant = useCallback(
@@ -140,15 +140,24 @@ export function ActiveAccessGrantProvider({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error ?? "Failed to switch client");
+        let message = "Failed to switch client";
+        try {
+          const error = await response.json();
+          message = error.error ?? message;
+        } catch {
+          // response body was not JSON
+        }
+        throw new Error(message);
       }
 
       // Update app state
       await setAppState({ activeAccessGrant: grant });
 
-      // Invalidate all queries to refetch with new client context
-      queryClient.invalidateQueries();
+      // Cancel in-flight queries and clear the cache so stale queries from the
+      // previous (potentially more permissive) context don't refetch and 403.
+      // Mounted components will naturally re-trigger their own queries.
+      await queryClient.cancelQueries();
+      queryClient.removeQueries();
 
       // Revalidate React Router loaders
       revalidate();

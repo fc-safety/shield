@@ -3,23 +3,32 @@ import {
   BookOpenText,
   CircleHelp,
   FileSpreadsheet,
+  LogOut,
   MessageCircleMore,
   Package,
   RotateCcw,
   Route as RouteIcon,
   Trash,
 } from "lucide-react";
-import { data, Link, Outlet } from "react-router";
+import { data, Link, Outlet, useNavigate } from "react-router";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { AppSidebar, type SidebarGroup } from "~/components/app-sidebar";
+import ConfirmationDialog from "~/components/confirmation-dialog";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "~/components/ui/sidebar";
 import { DEFAULT_USER_ROUTES } from "~/components/user-dropdown-menu";
 import { ActiveAccessGrantProvider } from "~/contexts/active-access-grant-context";
 import { AuthProvider } from "~/contexts/auth-context";
@@ -103,8 +112,8 @@ export default function Layout({
                 logoutReturnTo="/inspect"
                 leftSlot={
                   <>
-                    <SidebarTrigger className="-ml-1.5" />
-                    <Separator orientation="vertical" className="mr-1 h-5 sm:mr-2" />
+                    <SidebarTrigger className="-ml-1.5 [&_svg:not([class*='size-'])]:size-5" />
+                    <Separator orientation="vertical" className="h-5" />
                   </>
                 }
               />
@@ -125,6 +134,26 @@ export default function Layout({
 
 const InspectionSidebar = () => {
   const { user, client } = useMyOrganization();
+  const navigate = useNavigate();
+
+  const header = (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <ConfirmationDialog
+          title="Exit Inspections?"
+          message="You'll need to tap on an asset's NFC tag to enter inspections again."
+          confirmText="Exit Inspections"
+          onConfirm={() => navigate("/")}
+          trigger={
+            <SidebarMenuButton>
+              <LogOut />
+              <span>Exit Inspections</span>
+            </SidebarMenuButton>
+          }
+        />
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
 
   const groups: SidebarGroup[] = [
     {
@@ -199,5 +228,5 @@ const InspectionSidebar = () => {
     },
   ];
 
-  return <AppSidebar groups={groups} />;
+  return <AppSidebar groups={groups} header={header} />;
 };

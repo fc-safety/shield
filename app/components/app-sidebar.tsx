@@ -12,6 +12,7 @@ import {
   SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -53,13 +54,20 @@ export interface SidebarMenuSubItem {
   exact?: boolean;
 }
 
-export function AppSidebar({ groups }: { groups: SidebarGroup[] }) {
+export function AppSidebar({
+  groups,
+  header,
+}: {
+  groups: SidebarGroup[];
+  header?: React.ReactNode;
+}) {
   const matches = useMatches();
 
   return (
     <Sidebar collapsible="icon" className="z-20">
       {({ open, closeMobile }) => (
         <>
+          {header && <SidebarHeader>{header}</SidebarHeader>}
           <SidebarContent>
             {groups
               .filter((g) => !g.hide)
