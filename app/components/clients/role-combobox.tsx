@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Role } from "~/lib/types";
+import { cn } from "~/lib/utils";
 import { ResponsiveCombobox } from "../responsive-combobox";
 
 interface RoleComboboxProps {
@@ -25,9 +26,9 @@ const fuse = new Fuse([] as Role[], {
 function RoleOption({ role, isElevated = false }: { role: Role; isElevated?: boolean }) {
   return (
     <div className="flex gap-1.5">
-      {isElevated && <ShieldAlert className="mt-0.5 size-2.5 shrink-0" />}
+      {isElevated && <ShieldAlert className="text-warning-foreground mt-0.5 size-2.5 shrink-0" />}
       <div className="flex flex-col gap-1">
-        <span>{role.name}</span>
+        <span className={cn(isElevated && "text-warning-foreground")}>{role.name}</span>
         <span className="text-muted-foreground text-xs">{role.description}</span>
       </div>
     </div>
@@ -49,19 +50,18 @@ export default function RoleCombobox({
   const {
     load,
     isLoading,
-    data: rolesData,
+    data: fetcherData,
   } = useModalFetcher<DataOrError<Role[]>>({
     onData: (d) => setRoles(d.data ?? []),
   });
 
   const preloadRoles = useCallback(() => {
-    if (rolesData) return;
     load({ path: "/api/proxy/roles" });
-  }, [load, rolesData]);
+  }, [load]);
 
   useEffect(() => {
-    if (valueProp || defaultByName) preloadRoles();
-  }, [valueProp, defaultByName, preloadRoles]);
+    if (!fetcherData && (valueProp || defaultByName)) preloadRoles();
+  }, [valueProp, defaultByName, preloadRoles, fetcherData]);
 
   const [search, setSearch] = useState("");
 

@@ -1,7 +1,6 @@
 import Fuse from "fuse.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
-import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ResultsPage, Site } from "~/lib/models";
 import { type QueryParams } from "~/lib/urls";
@@ -18,6 +17,7 @@ interface SiteComboboxProps {
   showClear?: boolean;
   includeSiteGroups?: boolean | "exclusively";
   nestDrawers?: boolean;
+  preloadOnMount?: boolean;
 }
 
 const fuse = new Fuse([] as Site[], { keys: ["name"] });
@@ -33,11 +33,12 @@ export default function SiteCombobox({
   showClear = true,
   includeSiteGroups = false,
   nestDrawers,
+  preloadOnMount = false,
 }: SiteComboboxProps) {
-  const accessIntent = useAccessIntent();
   const prevClientId = useRef<string | null>(null);
   const prevIncludeSiteGroups = useRef<boolean | "exclusively">(false);
 
+  const [sites, setSites] = useState<Site[]>([]);
   const {
     load,
     isLoading,
@@ -53,7 +54,8 @@ export default function SiteCombobox({
   const preloadSites = useCallback(
     (clientId?: string) => {
       if (
-        (clientId && clientId !== prevClientId.current) ||
+        !clientId ||
+        clientId !== prevClientId.current ||
         includeSiteGroups !== prevIncludeSiteGroups.current
       ) {
         prevIncludeSiteGroups.current = includeSiteGroups;
@@ -76,18 +78,26 @@ export default function SiteCombobox({
         load({
           path: "/api/proxy/sites",
           query,
-          accessIntent,
         });
       }
     },
-    [load, accessIntent, includeSiteGroups]
+    [load, includeSiteGroups]
   );
 
   useEffect(() => {
-    if (value) preloadSites(clientId);
-  }, [value, preloadSites, clientId]);
+    if (!fetcherData && value) preloadSites(clientId);
+  }, [value, preloadSites, clientId, fetcherData]);
 
-  const [sites, setSites] = useState<Site[]>([]);
+  useEffect(() => {
+    if (preloadOnMount && !fetcherData) preloadSites(clientId);
+  }, [preloadOnMount, clientId, fetcherData, preloadSites]);
+
+  useEffect(() => {
+    if (preloadOnMount && !value && sites.length > 0) {
+      onValueChange?.(sites[0].id);
+    }
+  }, [value, sites, onValueChange, preloadOnMount]);
+
   const [search, setSearch] = useState("");
 
   const options = useMemo(() => {

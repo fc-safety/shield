@@ -127,7 +127,8 @@ export const validateTagRequestAndBuildSession = async (request: Request, redire
 
 export const getNextPointFromSession = (
   session: InspectionSessionModel,
-  route?: InspectionRoute
+  route?: InspectionRoute,
+  options?: { skipAssetIds?: Set<string> }
 ) => {
   let thisRoute = route;
 
@@ -136,7 +137,7 @@ export const getNextPointFromSession = (
   }
 
   if (!thisRoute?.inspectionRoutePoints || !session.completedInspectionRoutePoints) {
-    return { nextPoint: null, routeCompleted: false };
+    return { nextPoint: null, allRemainingSkipped: false };
   }
 
   // Get all points sorted by order.
@@ -164,13 +165,20 @@ export const getNextPointFromSession = (
   for (let i = 0; i < sortedPoints.length; i++) {
     const candidateIdx = (i + lastCompletedIndex + 1) % sortedPoints.length;
     const candidatePoint = sortedPoints[candidateIdx];
-    if (!completedPointAssetIds.has(candidatePoint.assetId)) {
+    if (
+      !completedPointAssetIds.has(candidatePoint.assetId) &&
+      !options?.skipAssetIds?.has(candidatePoint.assetId)
+    ) {
       nextPoint = candidatePoint;
       break;
     }
   }
 
-  return { nextPoint };
+  const uncompletedCount = sortedPoints.filter(
+    (p) => !completedPointAssetIds.has(p.assetId)
+  ).length;
+
+  return { nextPoint, allRemainingSkipped: nextPoint === null && uncompletedCount > 0 };
 };
 
 /**

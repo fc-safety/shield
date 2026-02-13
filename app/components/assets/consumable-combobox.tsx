@@ -24,47 +24,43 @@ export default function ConsumableCombobox({
   disabled?: boolean;
   compactClearButton?: boolean;
 }) {
+  const [consumableProducts, setConsumableProducts] = useState<Product[]>([]);
   const {
     load,
-    data: dataOrError,
+    data: fetcherData,
     isLoading,
-  } = useModalFetcher<DataOrError<ResultsPage<Product>>>();
+  } = useModalFetcher<DataOrError<ResultsPage<Product>>>({
+    onData: (data) => {
+      setConsumableProducts(data.data?.results ?? []);
+    },
+  });
 
-  const [consumableProducts, setConsumableProducts] = useState<Product[]>([]);
   const [productSearch, setProductSearch] = useState("");
 
   const preloadConsumableProducts = useCallback(
     (parentId?: string) => {
-      if (!dataOrError) {
-        load({
-          path: "/api/proxy/products",
-          query: {
-            limit: 1000,
-            type: "CONSUMABLE",
-            include: {
-              parentProduct: true,
-            },
-            parentProductId: parentId
-              ? parentId
-              : {
-                  not: "_NULL",
-                },
+      load({
+        path: "/api/proxy/products",
+        query: {
+          limit: 1000,
+          type: "CONSUMABLE",
+          include: {
+            parentProduct: true,
           },
-        });
-      }
+          parentProductId: parentId
+            ? parentId
+            : {
+                not: "_NULL",
+              },
+        },
+      });
     },
-    [dataOrError, load]
+    [load]
   );
 
   useEffect(() => {
-    if (value) preloadConsumableProducts(parentProductId);
-  }, [parentProductId, preloadConsumableProducts, value]);
-
-  useEffect(() => {
-    if (dataOrError?.data) {
-      setConsumableProducts(dataOrError.data.results);
-    }
-  }, [dataOrError]);
+    if (!fetcherData && value) preloadConsumableProducts(parentProductId);
+  }, [parentProductId, preloadConsumableProducts, value, fetcherData]);
 
   const productOptionGroups = useMemo(() => {
     let filteredProducts = consumableProducts;

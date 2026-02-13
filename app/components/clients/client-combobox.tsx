@@ -51,8 +51,8 @@ export default function ClientCombobox({
   }, [load]);
 
   useEffect(() => {
-    if (value || accessIntent !== "system") preloadClients();
-  }, [value, accessIntent, preloadClients]);
+    if (!fetcherData && (value || accessIntent !== "system")) preloadClients();
+  }, [value, accessIntent, preloadClients, fetcherData]);
 
   const [search, setSearch] = useState("");
 

@@ -4,13 +4,17 @@ import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
+import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createInvitationSchema } from "~/lib/schema";
-import type { Invitation } from "~/lib/types";
+import type { Invitation, Role } from "~/lib/types";
 import { cn } from "~/lib/utils";
 import RoleCombobox from "../clients/role-combobox";
 import SiteCombobox from "../clients/site-combobox";
+import ConfirmationDialog from "../confirmation-dialog";
 import { ResponsiveDialog } from "../responsive-dialog";
+import { confirmHighPrivilegeRole } from "../roles/confirm-high-privilege-role";
+import RoleOverviewTable from "../roles/role-overview-table";
 import { Button } from "../ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Field, FieldDescription, FieldError, FieldLabel } from "../ui/field";
@@ -117,6 +121,8 @@ export function CreateInvitationDialog({
 }: CreateInvitationDialogProps) {
   const [open, setOpen] = useState(false);
   const [createdInvitation, setCreatedInvitation] = useState<Invitation | null>(null);
+  const [selectedRole, setSelectedRole] = useState<Role | undefined>();
+  const [assignHighPrivilegeAction, setAssignHighPrivilegeAction] = useConfirmAction({});
 
   const form = useForm({
     resolver: zodResolver(createInvitationSchema),
@@ -135,7 +141,7 @@ export function CreateInvitationDialog({
     },
   });
 
-  const handleSubmit = (data: TForm) => {
+  const doSubmit = (data: TForm) => {
     // Build payload, filtering out empty/undefined values for JSON compatibility
     const payload: Record<string, string | number> = {
       expiresInDays: data.expiresInDays,
@@ -151,6 +157,23 @@ export function CreateInvitationDialog({
     });
   };
 
+  const handleSubmit = (data: TForm) => {
+    if (
+      selectedRole &&
+      selectedRole.id === data.roleId &&
+      confirmHighPrivilegeRole({
+        role: selectedRole,
+        email: data.email,
+        action: "invite",
+        setAction: setAssignHighPrivilegeAction,
+        onConfirm: () => doSubmit(data),
+      })
+    ) {
+      return;
+    }
+    doSubmit(data);
+  };
+
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     if (!newOpen) {
@@ -161,132 +184,142 @@ export function CreateInvitationDialog({
   };
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={handleOpenChange}
-      trigger={
-        trigger ?? (
-          <Button size="sm">
-            <Plus className="h-4 w-4" />
-            Invite Member
-          </Button>
-        )
-      }
-      dialogClassName="sm:max-w-lg"
-      disableDisplayTable
-      title={createdInvitation ? "Invitation Created" : "Invite Member"}
-      description={
-        createdInvitation
-          ? "An invitation email has been sent."
-          : "Invite someone to join your organization."
-      }
-    >
-      {createdInvitation ? (
-        <CreatedInvitationDisplay
-          invitation={createdInvitation}
-          onClose={() => handleOpenChange(false)}
-        />
-      ) : (
-        <FormProvider {...form}>
-          <form
-            className="space-y-4 pt-4"
-            onSubmit={form.handleSubmit(handleSubmit, (e) => {
-              toast.error("Please fix the errors in the form.", {
-                description: extractErrorMessage(e),
-                duration: 10000,
-              });
-            })}
-          >
-            <Controller
-              control={form.control}
-              name="email"
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Email</FieldLabel>
-                  <Input
-                    {...field}
-                    type="email"
-                    inputMode="email"
-                    placeholder="user@example.com"
-                    required
-                  />
-                  <FieldDescription>
-                    The invitation will be sent to this email address.
-                  </FieldDescription>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+    <>
+      <ResponsiveDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        trigger={
+          trigger ?? (
+            <Button size="sm">
+              <Plus className="h-4 w-4" />
+              Invite Member
+            </Button>
+          )
+        }
+        dialogClassName="sm:max-w-2xl"
+        disableDisplayTable
+        title={createdInvitation ? "Invitation Created" : "Invite Member"}
+        description={
+          createdInvitation
+            ? "An invitation email has been sent."
+            : "Invite someone to join your organization."
+        }
+      >
+        {createdInvitation ? (
+          <CreatedInvitationDisplay
+            invitation={createdInvitation}
+            onClose={() => handleOpenChange(false)}
+          />
+        ) : (
+          <FormProvider {...form}>
+            <form
+              className="space-y-4 pt-4"
+              onSubmit={form.handleSubmit(handleSubmit, (e) => {
+                toast.error("Please fix the errors in the form.", {
+                  description: extractErrorMessage(e),
+                  duration: 10000,
+                });
+              })}
+            >
+              <Controller
+                control={form.control}
+                name="email"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Email</FieldLabel>
+                    <Input
+                      {...field}
+                      type="email"
+                      inputMode="email"
+                      placeholder="user@example.com"
+                      required
+                    />
+                    <FieldDescription>
+                      The invitation will be sent to this email address.
+                    </FieldDescription>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <Controller
-              control={form.control}
-              name="roleId"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Role</FieldLabel>
-                  <RoleCombobox value={value} onValueChange={onChange} className="w-full" />
-                  <FieldDescription>
-                    The role assigned to this member when they join.
-                  </FieldDescription>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                control={form.control}
+                name="roleId"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Role</FieldLabel>
+                    <RoleCombobox
+                      value={value}
+                      onValueChange={onChange}
+                      onRoleChange={setSelectedRole}
+                      className="w-full"
+                    />
+                    <FieldDescription>
+                      The role assigned to this member when they join.
+                    </FieldDescription>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <Controller
-              control={form.control}
-              name="siteId"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Site</FieldLabel>
-                  <SiteCombobox
-                    value={value}
-                    onValueChange={onChange}
-                    clientId={clientId}
-                    className="w-full"
-                  />
-                  <FieldDescription>
-                    The site assigned to this member when they join.
-                  </FieldDescription>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <RoleOverviewTable />
 
-            <Controller
-              control={form.control}
-              name="expiresInDays"
-              render={({ field: { value, onChange }, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Expires In</FieldLabel>
-                  <Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
-                    <SelectTrigger className={cn("w-full")}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 day</SelectItem>
-                      <SelectItem value="3">3 days</SelectItem>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="14">14 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
+              <Controller
+                control={form.control}
+                name="siteId"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Site</FieldLabel>
+                    <SiteCombobox
+                      value={value}
+                      onValueChange={onChange}
+                      clientId={clientId}
+                      className="w-full"
+                    />
+                    <FieldDescription>
+                      The site assigned to this member when they join.
+                    </FieldDescription>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : "Send Invitation"}
-              </Button>
-            </div>
-          </form>
-        </FormProvider>
-      )}
-    </ResponsiveDialog>
+              <Controller
+                control={form.control}
+                name="expiresInDays"
+                render={({ field: { value, onChange }, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel>Expires In</FieldLabel>
+                    <Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
+                      <SelectTrigger className={cn("w-full")}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 day</SelectItem>
+                        <SelectItem value="3">3 days</SelectItem>
+                        <SelectItem value="7">7 days</SelectItem>
+                        <SelectItem value="14">14 days</SelectItem>
+                        <SelectItem value="30">30 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Sending..." : "Send Invitation"}
+                </Button>
+              </div>
+            </form>
+          </FormProvider>
+        )}
+      </ResponsiveDialog>
+      <ConfirmationDialog {...assignHighPrivilegeAction} />
+    </>
   );
 }

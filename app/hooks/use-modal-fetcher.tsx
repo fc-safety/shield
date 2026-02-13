@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { toast } from "sonner";
 import type { AccessIntent, ViewContext } from "~/.server/api-utils";
@@ -24,25 +24,19 @@ export function useModalFetcher<T>({
 
   const { accessIntent, currentClientId, currentSiteId } = useRequestedAccessContext();
 
-  const submit = useCallback(
-    (...args: Parameters<typeof fetcher.submit>) => {
-      errorReported.current = false;
-      setIsSubmitting(true);
-      dataCaptured.current = false;
-      fetcher.submit(...args);
-    },
-    [fetcher.submit]
-  );
+  const rawSubmit = useEffectEvent((...args: Parameters<typeof fetcher.submit>) => {
+    errorReported.current = false;
+    setIsSubmitting(true);
+    dataCaptured.current = false;
+    fetcher.submit(...args);
+  });
 
-  const rawLoad = useCallback(
-    (...args: Parameters<typeof fetcher.load>) => {
-      if (fetcher.state !== "idle") return;
-      errorReported.current = false;
-      dataCaptured.current = false;
-      fetcher.load(...args);
-    },
-    [fetcher.state, fetcher.load]
-  );
+  const rawLoad = useEffectEvent((...args: Parameters<typeof fetcher.load>) => {
+    if (fetcher.state !== "idle") return;
+    errorReported.current = false;
+    dataCaptured.current = false;
+    fetcher.load(...args);
+  });
 
   const load = useCallback(
     (options: {
@@ -65,7 +59,7 @@ export function useModalFetcher<T>({
       });
       rawLoad(cleanedPath);
     },
-    [rawLoad, accessIntent, currentClientId, currentSiteId]
+    [accessIntent, currentClientId, currentSiteId]
   );
 
   const submitJson = useCallback(
@@ -95,13 +89,13 @@ export function useModalFetcher<T>({
 
       localOnSubmitted.current = options.onSubmitted;
 
-      return submit(data, {
+      return rawSubmit(data, {
         method: options.method ?? "post",
         action: cleanedPath,
         encType: "application/json",
       });
     },
-    [submit, accessIntent, currentClientId, currentSiteId]
+    [accessIntent, currentClientId, currentSiteId]
   );
 
   const createOrUpdateJson = useCallback(
@@ -154,7 +148,7 @@ export function useModalFetcher<T>({
 
   return {
     fetcher,
-    submit,
+    submit: rawSubmit,
     submitJson,
     createOrUpdateJson,
     isSubmitting,
