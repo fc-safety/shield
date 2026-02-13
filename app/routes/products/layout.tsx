@@ -1,8 +1,6 @@
 import { Outlet } from "react-router";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
-import { useAuth } from "~/contexts/auth-context";
 import { RequestedAccessContextProvider } from "~/contexts/requested-access-context";
-import { isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
@@ -21,12 +19,8 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export default function ProductsLayout() {
-  const { user } = useAuth();
-  const userIsGlobalAdmin = isGlobalAdmin(user);
-  const accessIntent = userIsGlobalAdmin ? "system" : "user";
-
   return (
-    <RequestedAccessContextProvider accessIntent={accessIntent}>
+    <RequestedAccessContextProvider>
       <Outlet />
     </RequestedAccessContextProvider>
   );
