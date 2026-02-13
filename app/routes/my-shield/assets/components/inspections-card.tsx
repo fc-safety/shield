@@ -7,8 +7,10 @@ import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { useAuth } from "~/contexts/auth-context";
 import type { Asset, Inspection } from "~/lib/models";
-import { getUserDisplayName } from "~/lib/users";
+import { CAPABILITIES } from "~/lib/permissions";
+import { can, getUserDisplayName } from "~/lib/users";
 import { cn, dateSort } from "~/lib/utils";
 
 export default function InspectionsCard({
@@ -18,6 +20,9 @@ export default function InspectionsCard({
   inspections: Inspection[];
   asset: Asset;
 }) {
+  const { user } = useAuth();
+  const canSendNotificationsToTeam = can(user, CAPABILITIES.MANAGE_USERS);
+
   const sortedInspections = useMemo(() => {
     return [...(inspections ?? [])].sort(dateSort("createdOn", true));
   }, [inspections]);
@@ -28,7 +33,7 @@ export default function InspectionsCard({
         <CardTitle>
           <SearchCheck /> Inspection History
           <div className="flex-1"></div>
-          <NotifyTeamButton asset={asset} />
+          {canSendNotificationsToTeam && <NotifyTeamButton asset={asset} />}
         </CardTitle>
       </CardHeader>
       <CardContent>

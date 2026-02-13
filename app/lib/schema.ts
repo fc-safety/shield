@@ -917,9 +917,12 @@ export const buildSetupAssetSchema = (
 };
 
 // Admin interactions
+export const roleScopeSchema = z.enum(["SYSTEM", "GLOBAL", "CLIENT", "SITE_GROUP", "SITE", "SELF"]);
+
 export const createRoleSchema = z.object({
   name: z.string().nonempty(),
   description: z.string().optional(),
+  scope: roleScopeSchema.default("SITE"),
   clientAssignable: z.boolean().default(false),
 });
 
@@ -948,3 +951,16 @@ export const createVaultOwnershipSchema = z.object({
 });
 
 export const updateVaultOwnershipSchema = createVaultOwnershipSchema.partial();
+
+// Invitation schemas
+export const createInvitationSchema = z.object({
+  clientId: z.string().optional(),
+  email: z.email({ message: "A valid email address is required" }),
+  roleId: z.string({ message: "Role is required" }).nonempty("Role is required"),
+  siteId: z.string({ message: "Site is required" }).nonempty("Site is required"),
+  expiresInDays: z.coerce.number().min(1).max(30).default(7),
+});
+
+export const acceptInvitationSchema = z.object({
+  code: z.string().nonempty(),
+});

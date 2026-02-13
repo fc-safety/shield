@@ -62,7 +62,7 @@ export default function ConfirmationDialog({
     <AlertDialog
       open={open}
       onOpenChange={(openState) => {
-        onOpenChange?.(openState);
+        setOpen(openState);
         if (!openState) {
           setUserInput("");
         }

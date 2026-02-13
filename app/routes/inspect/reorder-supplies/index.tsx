@@ -7,7 +7,9 @@ import {
   getSuppliesForProductQuery,
   ProductRequestForm,
 } from "~/components/assets/product-requests";
+import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { useAuth } from "~/contexts/auth-context";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/index";
 
@@ -23,10 +25,12 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const { inspectionToken } = await validateInspectionSession(request);
 
   const {
-    data: { data: tag },
+    data: { data: tagWithAccessContext },
   } = await catchResponse(api.tags.checkRegistration(request, inspectionToken), {
     codes: [404],
   });
+
+  const { tag } = tagWithAccessContext ?? {};
 
   if (tag?.asset) {
     const queryClient = new QueryClient();
@@ -42,6 +46,15 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   throw redirect("/inspect/register/");
 };
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const { user } = useAuth();
+  return (
+    <main className="grid grow place-items-center px-6 py-24 sm:py-32 lg:px-8">
+      <InspectErrorBoundary error={error} user={user} />
+    </main>
+  );
+}
 
 export default function ReorderSupplies({ loaderData: { asset } }: Route.ComponentProps) {
   const navigate = useNavigate();

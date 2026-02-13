@@ -10,8 +10,7 @@ import {
 import { config } from "./config";
 import { logger } from "./logger";
 import {
-  commitUserSession,
-  refreshTokensOrRelogin,
+  refreshUserSessionOrReauthenticate,
   requireUserSession,
   type LoginRedirectOptions,
 } from "./user-sesssion";
@@ -43,8 +42,16 @@ type NativeFetchParameters = Parameters<typeof fetch>;
 const VIEW_CONTEXTS = ["admin", "user"] as const;
 export type ViewContext = (typeof VIEW_CONTEXTS)[number];
 
+const ACCESS_INTENTS = ["system", "elevated", "user"] as const;
+export type AccessIntent = (typeof ACCESS_INTENTS)[number];
+
 export type FetchBuildOptions = {
+  /** @deprecated Use X-Access-Intent header instead. */
   context?: ViewContext;
+  /** Access intent for the request. */
+  accessIntent?: AccessIntent;
+  /** Client ID for multi-client access. Sets X-Client-Id header. */
+  clientId?: string;
   params?: QueryParams;
   headers?: HeadersInit;
   method?: NonNullable<NativeFetchParameters[1]>["method"];
@@ -162,8 +169,14 @@ export class FetchOptions {
       this.options.method = options.method;
     }
 
-    if (options.context) {
+    if (options.accessIntent) {
+      this.options.headers.set("X-Access-Intent", options.accessIntent);
+    } else if (options.context) {
       this.options.headers.set("X-View-Context", options.context);
+    }
+
+    if (options.clientId) {
+      this.options.headers.set("X-Client-Id", options.clientId);
     }
 
     if (options.headers) {
@@ -270,10 +283,15 @@ export const fetchAuthenticated = async (
   authOptions: LoginRedirectOptions = {}
 ) => {
   const { user, session } = await requireUserSession(request, authOptions);
+  const activeClientId = session.get("activeClientId");
 
   const getResponse = (accessToken: string) => {
     fetchOptions.headers = new Headers(fetchOptions?.headers);
     fetchOptions.headers.set("Authorization", `Bearer ${accessToken}`);
+
+    if (activeClientId && !fetchOptions.headers.has("X-Client-Id")) {
+      fetchOptions.headers.set("X-Client-Id", activeClientId);
+    }
 
     return fetch(url, fetchOptions);
   };
@@ -286,12 +304,9 @@ export const fetchAuthenticated = async (
   // any other token validation. Only on a 401 do we take the time to refresh
   // or reinitiate login.
   if (response.status === 401) {
-    user.tokens = await refreshTokensOrRelogin(request, session, user.tokens);
+    const { tokens } = await refreshUserSessionOrReauthenticate(request, authOptions);
 
-    // Update session using request context middleware.
-    await commitUserSession(session);
-
-    response = await getResponse(user.tokens.accessToken);
+    response = await getResponse(tokens.accessToken);
   }
 
   return response;

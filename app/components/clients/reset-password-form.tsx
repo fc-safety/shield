@@ -16,7 +16,8 @@ import { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import useConfirmAction from "~/hooks/use-confirm-action";
-import type { ClientUser } from "~/lib/types";
+import { CAPABILITIES } from "~/lib/permissions";
+import type { UserResponse } from "~/lib/types";
 import { buildPath } from "~/lib/urls";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
@@ -29,7 +30,7 @@ import { extractErrorMessage } from "../ui/form";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "../ui/input-group";
 
 interface ResetPasswordFormProps {
-  user: ClientUser;
+  user: UserResponse;
   clientId?: string;
   onSubmitted: () => void;
 }
@@ -38,7 +39,7 @@ export default function ResetPasswordForm({ user, clientId, onSubmitted }: Reset
   const { clientId: appClientId, user: currentUser } = useAuth();
   const { fetchOrThrow } = useAuthenticatedFetch();
 
-  const canSendResetPasswordEmail = can(currentUser, "notify", "users");
+  const canSendResetPasswordEmail = can(currentUser, CAPABILITIES.MANAGE_USERS);
 
   const {
     mutate: sendResetPasswordEmailMutation,
@@ -111,7 +112,7 @@ export default function ResetPasswordForm({ user, clientId, onSubmitted }: Reset
             "Content-Type": "application/json",
             "x-view-context": "admin",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({ password: data.password, sendEmail: data.sendEmail }),
         }
       );
 

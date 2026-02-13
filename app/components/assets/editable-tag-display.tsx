@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/comp
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import type { Asset, Tag } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import { generateSignedTagUrl } from "~/routes/admin/tags/services/tags.service";
@@ -28,8 +29,8 @@ export default function EditableTagDisplay({
   const { fetchOrThrow } = useAuthenticatedFetch();
   const [modelOpen, setModelOpen] = useState(false);
 
-  const canCreateTags = can(user, "create", "tags");
-  const canProgramTags = can(user, "program", "tags");
+  const canCreateTags = can(user, CAPABILITIES.MANAGE_ASSETS);
+  const canProgramTags = can(user, CAPABILITIES.PROGRAM_TAGS);
 
   const { mutate: handleCopyTagUrl, isPending: isCopyingTagUrl } = useMutation({
     mutationFn: ({ serialNumber, externalId }: { serialNumber: string; externalId: string }) =>

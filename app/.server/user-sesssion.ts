@@ -1,22 +1,148 @@
 import { createId } from "@paralleldrive/cuid2";
 import { addMinutes, addSeconds } from "date-fns";
+import pRetry, { AbortError } from "p-retry";
 import { redirect } from "react-router";
+import type { TCapability, TScope } from "~/lib/permissions";
+import type { ActiveAccessGrant } from "~/lib/types";
+import { buildPath, buildUrl } from "~/lib/urls";
 import { isTokenExpired, keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import type { Tokens, User } from "./authenticator";
 import { buildUser, strategy } from "./authenticator";
+import { config } from "./config";
 import { cookieStore } from "./cookie-store";
 import { logger } from "./logger";
-import { userSessionStorage } from "./sessions";
+import { getAppState, getSession, setAppState, userSessionStorage } from "./sessions";
 
 declare global {
-  var REFRESH_SESSION_TOKEN_MAP: Map<string, Promise<Tokens>>;
+  var inFlightTokenRefresh: Map<string, Promise<Tokens>>;
 }
 
-globalThis.REFRESH_SESSION_TOKEN_MAP = globalThis.REFRESH_SESSION_TOKEN_MAP ?? new Map();
+globalThis.inFlightTokenRefresh = globalThis.inFlightTokenRefresh ?? new Map();
+
+export interface ClientAccessEntry {
+  clientId: string;
+  clientName: string;
+  clientExternalId: string;
+  siteId: string;
+  siteName: string;
+  isPrimary: boolean;
+  role: {
+    id: string;
+    name: string;
+    scope: TScope;
+    capabilities: TCapability[];
+  };
+}
+
+export interface CurrentUserResponse {
+  // Identity info from token
+  idpId: string;
+  email: string;
+  username: string;
+  name?: string;
+  givenName?: string;
+  familyName?: string;
+  picture?: string;
+  personId: string | null;
+  accessGrant: AccessGrant | null;
+}
+
+export interface AccessGrant {
+  scope: TScope;
+  capabilities: TCapability[];
+  clientId: string;
+  siteId: string;
+  roleId: string;
+}
+
+export interface FetchCurrentUserOptions {
+  clientId?: string | null;
+  siteId?: string | null;
+}
+
+async function fetchCurrentUser(
+  accessToken: string,
+  { clientId, siteId }: FetchCurrentUserOptions = {}
+): Promise<CurrentUserResponse> {
+  const headers = new Headers({
+    Authorization: `Bearer ${accessToken}`,
+    Accept: "application/json",
+  });
+  if (clientId) {
+    headers.set("X-Client-Id", clientId);
+  }
+  if (siteId) {
+    headers.set("X-Site-Id", siteId);
+  }
+
+  return pRetry(
+    async () => {
+      const response = await fetch(buildUrl("/auth/me", config.API_BASE_URL), {
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new AbortError(`Failed to fetch current user: ${response.status}`);
+      }
+
+      return response.json() as Promise<CurrentUserResponse>;
+    },
+    {
+      retries: 5,
+      minTimeout: 300,
+      randomize: true,
+      onFailedAttempt: (error) => {
+        logger.warn(
+          `fetchCurrentUser failed (attempt ${error.attemptNumber}/${error.attemptNumber + error.retriesLeft}): ${String(error.error)}`
+        );
+      },
+    }
+  );
+}
+
+/**
+ * Apply access grant data to the user session. Handles null accessGrant gracefully
+ * (defaults to SELF scope with no capabilities). Accepts optional overrides for
+ * activeClientId/activeSiteId (used by switch-client to set these from the request body
+ * rather than the fetched user response).
+ *
+ * Returns the computed values so callers can use them for buildUser() without
+ * re-reading the session.
+ */
+export function applyAccessGrantToSession(
+  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
+  accessGrant: AccessGrant
+) {
+  const scope = accessGrant.scope;
+  const capabilities = accessGrant.capabilities;
+  const hasMultiClientScope = ["SYSTEM", "GLOBAL"].includes(scope);
+  const hasMultiSiteScope = ["SYSTEM", "GLOBAL", "CLIENT"].includes(scope);
+  const activeClientId = accessGrant.clientId;
+  const activeSiteId = accessGrant.siteId;
+
+  session.set("scope", scope);
+  session.set("capabilities", capabilities);
+  session.set("hasMultiClientScope", hasMultiClientScope);
+  session.set("hasMultiSiteScope", hasMultiSiteScope);
+  session.set("activeClientId", activeClientId);
+  session.set("activeSiteId", activeSiteId);
+
+  return {
+    scope,
+    capabilities,
+    hasMultiClientScope,
+    hasMultiSiteScope,
+    activeClientId,
+    activeSiteId,
+  };
+}
 
 export interface LoginRedirectOptions {
+  allowEmptyAccessGrant?: boolean;
   returnTo?: string;
   loginRoute?: string;
+  errorCode?: string;
+  errorMessage?: string;
 }
 
 export const getLoginRedirect = async (
@@ -33,42 +159,154 @@ export const getLoginRedirect = async (
     cookieStore.unset("authSession");
   }
 
-  return redirect(options.loginRoute ?? "/login");
+  const loginUrl = buildPath(options.loginRoute ?? "/login", {
+    error: options.errorCode,
+    error_description: options.errorMessage,
+  });
+
+  return redirect(loginUrl);
 };
 
-export const getActiveUserSession = async (
-  request: Request
-): Promise<{
-  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>> | null;
-  user: User | null;
-}> => {
-  let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
-  try {
-    session = await userSessionStorage.getSession(request.headers.get("cookie"));
-  } catch (e) {
-    return {
-      session: null,
-      user: null,
+export type UserSession = Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
+
+export type GetUserSessionOptions = {
+  session?: UserSession;
+};
+
+export type GetUserSessionResult =
+  | {
+      isValid: true;
+      sessionId: string;
+      session: UserSession;
+      tokens: Tokens;
+      user: User;
+      message?: never;
+      reason?: never;
+      cause?: never;
+    }
+  | {
+      isValid: false;
+      reason: "missing_tokens";
+      message: string;
+      sessionId: string;
+      session: UserSession;
+      tokens?: never;
+      user?: never;
+      cause?: never;
+    }
+  | {
+      isValid: false;
+      reason: "expired_tokens";
+      message: string;
+      sessionId: string;
+      session: UserSession;
+      tokens: Tokens;
+      user: User;
+      cause?: never;
+    }
+  | {
+      isValid: false;
+      reason: "unavailable";
+      message: string;
+      cause: unknown;
+      sessionId?: never;
+      session?: never;
+      tokens?: never;
+      user?: never;
     };
+
+export const getUserSession = async (
+  request: Request,
+  options: GetUserSessionOptions = {}
+): Promise<GetUserSessionResult> => {
+  let session: UserSession;
+  if (options.session) {
+    session = options.session;
+  } else {
+    // Try to use in-flight session first from previous commits.
+    let inFlightSession: UserSession | null = null;
+    try {
+      const committedSession = cookieStore.get("authSession");
+      if (committedSession) {
+        inFlightSession = await userSessionStorage.getSession(committedSession);
+      }
+    } catch (e) {}
+
+    if (inFlightSession) {
+      session = inFlightSession;
+    } else {
+      try {
+        session = await getSession(request, userSessionStorage);
+      } catch (e) {
+        return {
+          isValid: false,
+          reason: "unavailable",
+          message: "Failed to get user session from request cookies.",
+          cause: e,
+        };
+      }
+    }
+  }
+
+  let appStateAccessGrant: ActiveAccessGrant | null = null;
+  try {
+    appStateAccessGrant = await getAppState(request).then(
+      (appState) => appState.activeAccessGrant ?? null
+    );
+  } catch (error) {
+    logger.error(error, "Failed to get app state session from request cookies.");
+  }
+
+  // Get or set unique session ID for this session.
+  let sessionId = session.get("id");
+  if (!sessionId) {
+    sessionId = createId();
+    session.set("id", sessionId);
   }
 
   const tokens = session.get("tokens");
-  if (!tokens || isTokenExpired(tokens.accessToken)) {
+  if (!tokens) {
     return {
-      session: null,
-      user: null,
+      isValid: false,
+      reason: "missing_tokens",
+      message: "No tokens found in user session.",
+      session,
+      sessionId,
+    };
+  }
+
+  const sessionData = session.data;
+  const user = buildUser(tokens, {
+    scope: sessionData.scope ?? "SELF",
+    capabilities: sessionData.capabilities ?? ([] as TCapability[]),
+    hasMultiClientScope: sessionData.hasMultiClientScope ?? false,
+    hasMultiSiteScope: sessionData.hasMultiSiteScope ?? false,
+    activeClientId: sessionData.activeClientId ?? appStateAccessGrant?.clientId ?? null,
+    activeSiteId: sessionData.activeSiteId ?? appStateAccessGrant?.siteId ?? null,
+  });
+
+  if (isTokenExpired(tokens.accessToken)) {
+    return {
+      isValid: false,
+      reason: "expired_tokens",
+      message: "Access token is expired.",
+      session,
+      sessionId,
+      tokens,
+      user,
     };
   }
 
   return {
-    user: buildUser(tokens),
+    isValid: true,
+    user,
     session,
+    sessionId,
+    tokens,
   };
 };
 
-export const commitUserSession = async (
-  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>
-) => {
+export const commitUserSession = async (session: UserSession) => {
   const tokens = session.get("tokens");
   // Default expire in 10 minutes of no tokens are present.
   let expiresAt = addMinutes(new Date(), 10);
@@ -86,40 +324,195 @@ export const commitUserSession = async (
   return sessionCookie;
 };
 
-export const requireUserSession = async (request: Request, options: LoginRedirectOptions = {}) => {
-  let session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>;
+export type RefreshUserSessionOptions = FetchCurrentUserOptions &
+  GetUserSessionOptions & { roleId?: string };
+
+type RefreshUserSessionResult =
+  | {
+      success: true;
+      session: UserSession;
+      user: User;
+      tokens: Tokens;
+      accessGrant: AccessGrant | null;
+      message?: never;
+      reason?: never;
+      cause?: never;
+    }
+  | {
+      success: false;
+      session?: UserSession;
+      tokens?: Tokens;
+      user?: User;
+      accessGrant?: never;
+      reason: "token_refresh_failed" | "invalid_session" | "access_grant_fetch_failed";
+      message: string;
+      cause?: unknown;
+    };
+
+export const refreshUserSession = async (
+  request: Request,
+  options: RefreshUserSessionOptions = {}
+): Promise<RefreshUserSessionResult> => {
+  const { session, sessionId, user, isValid, reason, tokens, cause } = await getUserSession(
+    request,
+    {
+      session: options.session,
+    }
+  );
+
+  let validTokens: Tokens;
+
+  if (isValid) {
+    validTokens = tokens;
+  } else {
+    if (reason === "expired_tokens") {
+      try {
+        const refreshedTokens = await getRefreshedTokens(tokens.refreshToken, sessionId);
+        session.set("tokens", refreshedTokens);
+        validTokens = refreshedTokens;
+      } catch (error) {
+        // Token refresh failure is often a result of invalid or expired refresh token.
+        // The solution is usually to re-authenticate the user.
+        return {
+          success: false,
+          session,
+          tokens,
+          user,
+          reason: "token_refresh_failed",
+          message: "Failed to refresh tokens.",
+          cause: error,
+        };
+      }
+    } else {
+      // Session is invalid, so we need to re-authenticate the user.
+      return {
+        success: false,
+        session,
+        tokens,
+        user,
+        reason: "invalid_session",
+        message: "Session is invalid.",
+        cause: cause ?? new Error(reason),
+      };
+    }
+  }
+
+  let accessGrant: AccessGrant | null = null;
+
   try {
-    session = await userSessionStorage.getSession(request.headers.get("cookie"));
-  } catch (e) {
-    throw redirect("/logout");
+    let currentUser = await fetchCurrentUser(validTokens.accessToken, {
+      clientId: options.clientId ?? user.activeClientId,
+      siteId: options.siteId ?? user.activeSiteId,
+    });
+
+    if (!currentUser.accessGrant) {
+      // Try again without current client and site IDs. A non-existent access grant
+      // indicates the user no longer has access to the current client and site.
+      currentUser = await fetchCurrentUser(validTokens.accessToken);
+    }
+
+    if (currentUser.accessGrant) {
+      accessGrant = currentUser.accessGrant;
+      applyAccessGrantToSession(session, currentUser.accessGrant);
+      await commitUserSession(session);
+
+      // Additionally, set the app state to use the current users's access grant.
+      await setAppState(request, {
+        activeAccessGrant: {
+          clientId: accessGrant.clientId,
+          siteId: accessGrant.siteId,
+          roleId: options.roleId ?? accessGrant.roleId,
+        },
+      }).catch((error) => {
+        logger.error(error, "Failed to set app state to use the current users's access grant.");
+        // Don't throw error, as this is not critical. We don't want to interrupt or block the user's flow.
+      });
+    }
+  } catch (error) {
+    const msg = "Failed to fetch access grant for current user.";
+    logger.error(error, msg);
+
+    return {
+      success: false,
+      session,
+      tokens,
+      user,
+      reason: "access_grant_fetch_failed",
+      message: msg,
+      cause: error,
+    };
   }
 
-  let tokens = session.get("tokens");
-  if (!tokens) {
-    throw await getLoginRedirect(request, session, options);
+  const refreshedUser = buildUser(validTokens, {
+    scope: session.get("scope") ?? "SELF",
+    capabilities: session.get("capabilities") ?? ([] as TCapability[]),
+    hasMultiClientScope: session.get("hasMultiClientScope") ?? false,
+    hasMultiSiteScope: session.get("hasMultiSiteScope") ?? false,
+    activeClientId: session.get("activeClientId") ?? null,
+    activeSiteId: session.get("activeSiteId") ?? null,
+  });
+
+  return {
+    success: true,
+    session,
+    user: refreshedUser,
+    tokens: validTokens,
+    accessGrant,
+  };
+};
+
+export const refreshUserSessionOrReauthenticate = async (
+  request: Request,
+  options: LoginRedirectOptions & RefreshUserSessionOptions = {}
+): Promise<RefreshUserSessionResult & { success: true }> => {
+  const result = await refreshUserSession(request, {
+    clientId: options.clientId,
+    siteId: options.siteId,
+    roleId: options.roleId,
+    session: options.session,
+  });
+  if (result.success) {
+    return result;
+  } else {
+    if (result.reason === "access_grant_fetch_failed") {
+      options.errorCode = result.reason;
+      options.errorMessage = result.message;
+    }
+    throw await getLoginRedirect(request, result.session, {
+      returnTo: options.returnTo,
+      errorCode: options.errorCode,
+      errorMessage: options.errorMessage,
+    });
   }
+};
 
-  // Preemptively check token to provide a more consistent and earlier reauth
-  // experience if needed. If a page requires the user session but makes no API calls,
-  // the reauth woudln't happen until after the first API call, which was somewhat jarring.
-  // Now both checks are made: 1) refresh preemptively if token is expired or 2) refresh
-  // if 401 is received from API.
-  if (isTokenExpired(tokens.accessToken)) {
-    // Refresh tokens and update session.
-    tokens = await refreshTokensOrRelogin(request, session, tokens, options);
-    session.set("tokens", tokens);
+export const requireUserSession = async (request: Request, options: LoginRedirectOptions = {}) => {
+  let session: UserSession;
+  let user: User;
+  let tokens: Tokens;
 
-    // Update session cookie.
-    await commitUserSession(session);
+  const result = await getUserSession(request);
+  if (!result.isValid) {
+    const refreshResult = await refreshUserSessionOrReauthenticate(request, options);
+
+    session = refreshResult.session;
+    user = refreshResult.user;
+    tokens = refreshResult.tokens;
+
+    if (!refreshResult.accessGrant && !options.allowEmptyAccessGrant) {
+      throw redirect("/no-access");
+    }
+  } else {
+    session = result.session;
+    user = result.user;
+    tokens = result.tokens;
   }
-
-  // Get user, refreshing tokens if needed.
-  const user = buildUser(tokens);
 
   // Return user with updated session token;
   return {
     user,
     session,
+    tokens,
   };
 };
 
@@ -128,82 +521,29 @@ export const requireUserSession = async (request: Request, options: LoginRedirec
 // requests can share the same refresh promise.
 const REFRESH_TOKEN_PROMISE_TIMEOUT_MS = 10000;
 
-export const refreshTokensOrRelogin = async (
-  request: Request,
-  session: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
-  tokens: Tokens,
-  options: LoginRedirectOptions = {}
-) => {
-  const { refreshToken } = tokens;
-  let sessionId = session.get("id");
+const getRefreshedTokens = async (refreshToken: string, sessionId: string): Promise<Tokens> => {
+  let promise = globalThis.inFlightTokenRefresh.get(sessionId);
 
-  if (!sessionId) {
-    sessionId = createId();
-    session.set("id", sessionId);
-  }
+  if (!promise) {
+    promise = strategy
+      .then((s) => s.refreshToken(refreshToken))
+      .then((refreshedTokens) => {
+        setTimeout(() => {
+          globalThis.inFlightTokenRefresh.delete(sessionId);
+        }, REFRESH_TOKEN_PROMISE_TIMEOUT_MS);
 
-  try {
-    // Check if there's already a refresh in progress for this session
-    let tokenPromise = globalThis.REFRESH_SESSION_TOKEN_MAP.get(sessionId);
-
-    if (!tokenPromise) {
-      // Create a placeholder promise that we'll set immediately to prevent
-      // race conditions where multiple calls check and create promises simultaneously.
-      // We'll resolve/reject it in the async operation below.
-      let resolvePromise: (tokens: Tokens) => void = () => {};
-      let rejectPromise: (error: unknown) => void = () => {};
-
-      tokenPromise = new Promise<Tokens>((resolve, reject) => {
-        resolvePromise = resolve;
-        rejectPromise = reject;
+        return {
+          accessToken: refreshedTokens.accessToken(),
+          refreshToken: refreshedTokens.refreshToken(),
+        };
+      })
+      .catch((e) => {
+        globalThis.inFlightTokenRefresh.delete(sessionId);
+        throw e;
       });
 
-      // Set the promise in the map BEFORE starting the async operation
-      // to ensure other concurrent calls will see it and reuse it.
-      globalThis.REFRESH_SESSION_TOKEN_MAP.set(sessionId, tokenPromise);
-
-      // Now perform the actual refresh operation
-      doRefreshToken(refreshToken)
-        .then((refreshedTokens) => {
-          resolvePromise(refreshedTokens);
-          // Keep promise for REFRESH_TOKEN_PROMISE_TIMEOUT_MS to allow near-simultaneous requests to reuse
-          // the same promise. This is especially important for parallel loaders.
-          setTimeout(
-            () => globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId),
-            REFRESH_TOKEN_PROMISE_TIMEOUT_MS
-          );
-        })
-        .catch((e) => {
-          logger.warn({ details: e, sessionId, url: request.url }, "Token refresh failed");
-          // Remove from map on error so subsequent calls can retry
-          globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId);
-          rejectPromise(e);
-        });
-    }
-
-    const tokensResponse = await tokenPromise;
-
-    // Update session
-    session.set("tokens", tokensResponse);
-
-    // Return new tokens
-    return tokensResponse;
-  } catch (e) {
-    // In case of an error preventing promise cleanup, make sure it's done now. Otherwise
-    // subsequent refreshes will always result in a login redirect (usually resets the user
-    // page, which is jarring).
-    if (globalThis.REFRESH_SESSION_TOKEN_MAP.has(sessionId)) {
-      globalThis.REFRESH_SESSION_TOKEN_MAP.delete(sessionId);
-    }
-    throw await getLoginRedirect(request, session, options);
+    globalThis.inFlightTokenRefresh.set(sessionId, promise);
   }
-};
 
-const doRefreshToken = async (refreshToken: string): Promise<Tokens> => {
-  const refreshedTokens = await strategy.then((s) => s.refreshToken(refreshToken));
-
-  return {
-    accessToken: refreshedTokens.accessToken(),
-    refreshToken: refreshedTokens.refreshToken(),
-  };
+  return promise;
 };

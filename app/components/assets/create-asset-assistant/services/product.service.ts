@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { ViewContext } from "~/contexts/view-context";
+import type { AccessIntent } from "~/.server/api-utils";
+import type { ViewContext } from "~/contexts/requested-access-context";
 import type { Product, ResultsPage } from "~/lib/models";
 import { buildPath } from "~/lib/urls";
 import { dedupById } from "~/lib/utils";
@@ -8,7 +9,9 @@ interface GetProductsOptions {
   productCategoryId?: string;
   manufacturerId?: string;
   clientId?: string;
+  /** @deprecated Use `accessIntent` instead. */
   viewContext?: ViewContext;
+  accessIntent?: AccessIntent;
 }
 
 export const getPrimaryProductsFn = async (
@@ -23,7 +26,7 @@ export const getPrimaryProductsFn = async (
       manufacturer: options.manufacturerId ? { id: options.manufacturerId } : undefined,
       ...(options.clientId ? { OR: [{ clientId: options.clientId }, { clientId: "_NULL" }] } : {}),
     }),
-    { headers: { "x-view-context": options.viewContext ?? "user" } }
+    { headers: { "x-access-intent": options.accessIntent ?? "user" } }
   )
     .then((r) => r.json() as Promise<ResultsPage<Product>>)
     .then((r) => r.results);

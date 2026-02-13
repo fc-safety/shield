@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
 import { getNextPointFromSession } from "~/.server/inspections";
-import { getSession, getSessionValue, inspectionSessionStorage } from "~/.server/sessions";
+import { commitInspectionSession, getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
 import DisplayInspectionValue from "~/components/assets/display-inspection-value";
 import {
@@ -22,6 +22,7 @@ import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, Inspection } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
 import RouteProgressCard from "~/routes/inspect/components/route-progress-card";
@@ -46,14 +47,11 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   if (activeSessionId) {
     inspectionSession.set("activeSession", activeSessionId);
-    throw redirect(".", {
-      headers: {
-        "Set-Cookie": await inspectionSessionStorage.commitSession(inspectionSession),
-      },
-    });
+    await commitInspectionSession(inspectionSession);
+    throw redirect(".");
   }
 
-  activeSessionId = await getSessionValue(request, inspectionSessionStorage, "activeSession");
+  activeSessionId = inspectionSession.get("activeSession");
 
   let inspection: Inspection | null = null;
   if (inspectionId) {
@@ -110,7 +108,7 @@ export default function InspectNext({
   },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canCreateProductRequests = can(user, "create", "product-requests");
+  const canCreateProductRequests = can(user, CAPABILITIES.SUBMIT_REQUESTS);
   const { fetchOrThrow } = useAuthenticatedFetch();
 
   const { queryKey: suppliesCountQueryKey, queryFn: suppliesCountQueryFn } =

@@ -1,10 +1,10 @@
 import { redirect } from "react-router";
-import { commitUserSession, requireUserSession } from "~/.server/user-sesssion";
+import { commitUserSession, refreshUserSessionOrReauthenticate } from "~/.server/user-sesssion";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/refresh-auth";
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const { user, session } = await requireUserSession(request, {
+  const { user, session } = await refreshUserSessionOrReauthenticate(request, {
     returnTo: getSearchParam(request, "returnTo") ?? undefined,
   });
 

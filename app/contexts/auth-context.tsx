@@ -21,8 +21,12 @@ export const ANONYMOUS_USER: User = {
   givenName: "Anonymous",
   familyName: "Anonymous",
   picture: "https://shield.com/anonymous.png",
-  clientId: "",
-  siteId: "",
+  scope: "SELF",
+  capabilities: [],
+  hasMultiClientScope: false,
+  hasMultiSiteScope: false,
+  activeClientId: null,
+  activeSiteId: null,
   tokens: {
     accessToken: "anonymous",
     refreshToken: "anonymous",
@@ -56,6 +60,10 @@ export const AuthProvider = ({
   clientId: string;
 }>) => {
   const [user, setUser] = useState(userProp);
+
+  useEffect(() => {
+    setUser(userProp);
+  }, [userProp]);
 
   const resolveAuthRefresh = useRef<((user: User) => void) | null>(null);
   const { submitJson: submitRefreshAuth } = useModalFetcher<User>({

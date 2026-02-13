@@ -5,6 +5,7 @@ import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { getAppState } from "~/.server/sessions";
 import { useAuth } from "~/contexts/auth-context";
 import { useServerSentEvents } from "~/hooks/use-server-sent-events";
+import { CAPABILITIES } from "~/lib/permissions";
 import { getSitesQueryOptions } from "~/lib/services/clients.service";
 import {
   COMPLIANCE_HISTORY_QUERY_KEY_PREFIX,
@@ -38,7 +39,7 @@ export const handle = {
   }),
 };
 
-export const meta: Route.MetaFunction = ({ matches }) => {
+export const meta: Route.MetaFunction = ({ matches }: Route.MetaArgs) => {
   return [{ title: buildTitleFromBreadcrumb(matches) }];
 };
 
@@ -86,11 +87,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function Dashboard() {
   const { user } = useAuth();
 
-  const canReadAssets = can(user, "read", "assets");
-  const canReadInspections = can(user, "read", "inspections");
-  const canReadProductRequests = can(user, "read", "product-requests");
-  const canReadAlerts = can(user, "read", "alerts");
-  const canReadSites = can(user, "read", "sites");
+  const canPerformInspections = can(user, CAPABILITIES.PERFORM_INSPECTIONS);
+  const canSubmitRequests = can(user, CAPABILITIES.SUBMIT_REQUESTS);
+  const canResolveAlerts = can(user, CAPABILITIES.RESOLVE_ALERTS);
   const canViewMultipleSites = hasMultiSiteVisibility(user);
 
   const queryClient = useQueryClient();
@@ -133,21 +132,20 @@ export default function Dashboard() {
     },
   });
 
-  const canReadDashboard =
-    canReadAssets || canReadInspections || canReadProductRequests || canReadAlerts;
+  const canReadDashboard = canPerformInspections || canSubmitRequests || canResolveAlerts;
 
   return (
     <div className="h-[calc(100vh-110px)] overflow-y-auto">
       <div className="grid h-full auto-rows-[minmax(400px,1fr)] grid-cols-1 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(375px,1fr))] sm:gap-4 2xl:grid-cols-3">
-        {canReadAssets && <OverallComplianceChart />}
-        {canReadAssets && canViewMultipleSites && canReadSites && <ComplianceBySiteChart />}
-        {canReadAssets && <ComplianceByCategoryChart />}
-        {canReadProductRequests && <ProductRequestsOverview />}
-        {canReadAssets && <ComplianceHistoryChart />}
-        {/* {canReadInspections && (
+        {canPerformInspections && <OverallComplianceChart />}
+        {canPerformInspections && canViewMultipleSites && <ComplianceBySiteChart />}
+        {canPerformInspections && <ComplianceByCategoryChart />}
+        {canSubmitRequests && <ProductRequestsOverview />}
+        {canPerformInspections && <ComplianceHistoryChart />}
+        {/* {canPerformInspections && (
         <InspectionsOverview refreshKey={inspectionsRefreshKey} />
       )} */}
-        {canReadAlerts && <InspectionAlertsOverview />}
+        {canResolveAlerts && <InspectionAlertsOverview />}
         {!canReadDashboard && (
           <div className="col-span-full flex h-full flex-col items-center justify-center">
             <div className="text-muted-foreground">

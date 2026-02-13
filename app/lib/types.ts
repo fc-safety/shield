@@ -1,8 +1,15 @@
 import type { SortingState } from "@tanstack/react-table";
 
 import type { QuickRangeId } from "~/components/date-range-select";
-import type { AssetQuestion } from "./models";
+import type { AssetQuestion, Tag } from "./models";
+import type { TCapability, TScope } from "./permissions";
 import type { QueryParams } from "./urls";
+
+export interface ActiveAccessGrant {
+  clientId: string;
+  siteId: string;
+  roleId: string;
+}
 
 export type BaseUIComponentProps = {
   className?: string;
@@ -11,6 +18,9 @@ export type BaseUIComponentProps = {
 // Use flat structure to ease data access and updates. This should be kept relatively
 // small to avoid reaching cookie size limits.
 export interface AppState {
+  // Multi-Client Access
+  activeAccessGrant?: ActiveAccessGrant;
+
   timeZone?: string;
   locale?: string;
 
@@ -77,7 +87,8 @@ export interface Role {
   groupId: string;
   name: string;
   description?: string;
-  permissions: string[];
+  scope: "SYSTEM" | "GLOBAL" | "CLIENT" | "SITE_GROUP" | "SITE" | "SELF";
+  capabilities: string[];
   notificationGroups: string[];
   createdOn: string;
   updatedOn: string;
@@ -121,6 +132,12 @@ export interface NotificationGroup {
   description: string;
 }
 
+export interface Capability {
+  name: string;
+  label: string;
+  description: string;
+}
+
 export interface ClientUser {
   id: string;
   createdOn: string;
@@ -138,7 +155,16 @@ export interface ClientUser {
   roleName?: string; // Deprecated: Use roles array instead. Kept for backward compatibility.
   roles: UserRole[]; // Array of roles assigned to the user
   position?: string;
+  clientAccess: Array<{
+    id: string;
+    isPrimary: boolean;
+    client: { id: string; externalId: string; name: string };
+    site: { id: string; externalId: string; name: string };
+    role: { id: string; name: string; scope: TScope };
+  }>;
 }
+
+export type UserResponse = ClientUser;
 
 export interface ResponseValueImage {
   urls: string[];
@@ -205,4 +231,124 @@ export interface AssetQuestionCheckResult {
 export interface CheckConfigurationByAssetResult {
   checkResults: AssetQuestionCheckResult[];
   isConfigurationMet: boolean;
+}
+
+// Multi-Client Access Types
+
+export interface ClientAccessClient {
+  id: string;
+  externalId: string;
+  name: string;
+}
+
+export interface ClientAccessSite {
+  id: string;
+  externalId: string;
+  name: string;
+}
+
+export interface ClientAccessRole {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface ClientAccess {
+  id: string;
+  personId: string;
+  clientId: string;
+  siteId: string;
+  roleId: string;
+  isPrimary: boolean;
+  createdOn: string;
+  client: ClientAccessClient;
+  site: ClientAccessSite;
+  role: ClientAccessRole;
+}
+
+export const InvitationStatuses = ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"] as const;
+export type InvitationStatus = (typeof InvitationStatuses)[number];
+
+export interface Invitation {
+  id: string;
+  code: string;
+  clientId: string;
+  createdById: string;
+  email?: string;
+  roleId?: string;
+  siteId?: string;
+  status: InvitationStatus;
+  expiresOn: string;
+  acceptedById?: string;
+  acceptedOn?: string;
+  createdOn: string;
+  modifiedOn: string;
+  inviteUrl?: string;
+  client?: ClientAccessClient;
+  createdBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  role?: ClientAccessRole;
+  site?: ClientAccessSite;
+}
+
+export interface InvitationValidation {
+  valid: boolean;
+  client: { name: string };
+  expiresOn: string;
+  restrictedToEmail: boolean;
+  hasPreassignedRole: boolean;
+}
+
+export interface MyClientAccess {
+  clientId: string;
+  clientName: string;
+  siteId: string;
+  siteName: string;
+  roleId: string;
+  roleName: string;
+  scope: TScope;
+  capabilities: TCapability[];
+}
+
+// Member Types (new /members API)
+
+export interface MemberClientAccess {
+  id: string;
+  isPrimary: boolean;
+  role: { id: string; name: string };
+  site: { id: string; name: string };
+}
+
+export interface Member {
+  id: string;
+  createdOn: string;
+  modifiedOn: string;
+  idpId?: string;
+  active: boolean;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  position?: string;
+  clientAccess: MemberClientAccess[];
+}
+
+export interface AcceptInvitationResult {
+  success: boolean;
+  clientAccess: ClientAccess;
+}
+
+export interface GetTagWithAccessContextResult {
+  tag: Tag;
+  accessContext: {
+    clientId: string;
+    clientName: string;
+    siteId: string;
+    siteName: string;
+    roleId: string;
+    roleName: string;
+  } | null;
 }

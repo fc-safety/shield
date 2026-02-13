@@ -1,5 +1,5 @@
 import type { QueryOptions } from "@tanstack/react-query";
-import type { ViewContext } from "~/.server/api-utils";
+import type { AccessIntent } from "~/.server/api-utils";
 import type { Asset, ResultsPage } from "~/lib/models";
 import { buildPath } from "~/lib/urls";
 
@@ -8,7 +8,7 @@ export const getAssetsFn = async (
   options: {
     siteId?: string;
     clientId?: string;
-    context?: ViewContext;
+    accessIntent?: AccessIntent;
     noTag?: boolean;
   } = {}
 ) => {
@@ -21,7 +21,7 @@ export const getAssetsFn = async (
     }),
     {
       headers: {
-        "X-View-Context": options.context ?? "user",
+        "X-Access-Intent": options.accessIntent ?? "user",
       },
     }
   );

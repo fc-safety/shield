@@ -1,7 +1,7 @@
 import { Outlet } from "react-router";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
 import { useAuth } from "~/contexts/auth-context";
-import { ViewContextProvider } from "~/contexts/view-context";
+import { RequestedAccessContextProvider } from "~/contexts/requested-access-context";
 import { isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
@@ -23,11 +23,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 export default function ProductsLayout() {
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const viewContext = userIsGlobalAdmin ? "admin" : "user";
+  const accessIntent = userIsGlobalAdmin ? "system" : "user";
 
   return (
-    <ViewContextProvider value={viewContext}>
+    <RequestedAccessContextProvider accessIntent={accessIntent}>
       <Outlet />
-    </ViewContextProvider>
+    </RequestedAccessContextProvider>
   );
 }

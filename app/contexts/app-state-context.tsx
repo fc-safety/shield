@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useState, type PropsWithChildren } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type PropsWithChildren,
+} from "react";
 import { useRevalidator } from "react-router";
 import type { AppState } from "~/lib/types";
 
@@ -20,6 +27,10 @@ export const AppStateProvider = ({
 }: PropsWithChildren<{ appState: AppState }>) => {
   const [localAppState, setLocalAppState] = useState(appState);
   const { revalidate } = useRevalidator();
+
+  useEffect(() => {
+    setLocalAppState(appState);
+  }, [appState]);
 
   const setAppState = useCallback(
     async (

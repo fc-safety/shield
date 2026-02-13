@@ -11,22 +11,13 @@ const handleGuard = async (
   if (!condition(user)) {
     throw fallback();
   }
+  return user;
 };
 
-export const guard = async (
-  request: Request,
-  condition: (user: User) => boolean
-) => {
-  await handleGuard(
-    request,
-    condition,
-    () => new Response("Forbidden", { status: 403 })
-  );
+export const guard = async (request: Request, condition: (user: User) => boolean) => {
+  return await handleGuard(request, condition, () => new Response("Forbidden", { status: 403 }));
 };
 
-export const guardOrSendHome = async (
-  request: Request,
-  condition: (user: User) => boolean
-) => {
-  await handleGuard(request, condition, () => redirect("/"));
+export const guardOrSendHome = async (request: Request, condition: (user: User) => boolean) => {
+  return await handleGuard(request, condition, () => redirect("/"));
 };

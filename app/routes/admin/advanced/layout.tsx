@@ -1,6 +1,6 @@
 import { Outlet } from "react-router";
 import { guardOrSendHome } from "~/.server/guard";
-import { isSuperAdmin } from "~/lib/users";
+import { isSystemsAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
@@ -15,7 +15,7 @@ export const meta: Route.MetaFunction = ({ matches }) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await guardOrSendHome(request, (user) => isSuperAdmin(user));
+  await guardOrSendHome(request, (user) => isSystemsAdmin(user));
   return null;
 };
 

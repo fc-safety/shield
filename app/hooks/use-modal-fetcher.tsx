@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 import { toast } from "sonner";
-import type { ViewContext } from "~/.server/api-utils";
+import type { AccessIntent, ViewContext } from "~/.server/api-utils";
+import { useRequestedAccessContext } from "~/contexts/requested-access-context";
 import { buildErrorDisplay } from "~/lib/error-handling";
 import { cleanErrorMessage } from "~/lib/errors";
 import { buildPath, type QueryParams } from "~/lib/urls";
@@ -20,6 +21,8 @@ export function useModalFetcher<T>({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dataCaptured = useRef(false);
   const localOnSubmitted = useRef<((data: T) => void) | undefined>(undefined);
+
+  const { accessIntent, currentClientId, currentSiteId } = useRequestedAccessContext();
 
   const submit = useCallback(
     (...args: Parameters<typeof fetcher.submit>) => {
@@ -46,16 +49,23 @@ export function useModalFetcher<T>({
       path: string;
       query?: QueryParams;
       throw?: boolean;
+      /** @deprecated Use `accessIntent` instead. */
       viewContext?: ViewContext;
+      accessIntent?: AccessIntent;
+      clientId?: string | null;
+      siteId?: string | null;
     }) => {
       const cleanedPath = buildPath(options.path, {
         _throw: String(!!options.throw),
         _viewContext: options.viewContext,
+        _accessIntent: options.accessIntent ?? accessIntent,
+        _clientId: options.clientId ?? currentClientId ?? undefined,
+        _siteId: options.siteId ?? currentSiteId ?? undefined,
         ...options.query,
       });
       rawLoad(cleanedPath);
     },
-    [rawLoad]
+    [rawLoad, accessIntent, currentClientId, currentSiteId]
   );
 
   const submitJson = useCallback(
@@ -66,13 +76,20 @@ export function useModalFetcher<T>({
         query?: QueryParams;
         throw?: boolean;
         method?: NonNullable<Parameters<typeof fetcher.submit>[1]>["method"];
+        /** @deprecated Use `accessIntent` instead. */
         viewContext?: ViewContext;
+        accessIntent?: AccessIntent;
+        clientId?: string | null;
+        siteId?: string | null;
         onSubmitted?: (data: T) => void;
       }
     ) => {
       const cleanedPath = buildPath(options.path, {
         _throw: String(!!options.throw),
         _viewContext: options.viewContext,
+        _accessIntent: options.accessIntent ?? accessIntent,
+        _clientId: options.clientId ?? currentClientId ?? undefined,
+        _siteId: options.siteId ?? currentSiteId ?? undefined,
         ...options.query,
       });
 
@@ -84,7 +101,7 @@ export function useModalFetcher<T>({
         encType: "application/json",
       });
     },
-    [submit]
+    [submit, accessIntent, currentClientId, currentSiteId]
   );
 
   const createOrUpdateJson = useCallback(

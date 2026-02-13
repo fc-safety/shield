@@ -1,6 +1,7 @@
 import { type ShouldRevalidateFunctionArgs, type UIMatch } from "react-router";
 import { api } from "~/.server/api";
 import ClientDetailsLayout, { type Tab } from "~/components/clients/pages/client-details-layout";
+import { RequestedAccessContextProvider } from "~/contexts/requested-access-context";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/layout";
 
@@ -38,5 +39,9 @@ export const loader = async ({ params, request }: Route.LoaderArgs) => {
 export default function AdminClientDetailsLayout({
   loaderData: { client, currentTab },
 }: Route.ComponentProps) {
-  return <ClientDetailsLayout client={client} currentTab={currentTab ?? "sites"} />;
+  return (
+    <RequestedAccessContextProvider accessIntent="elevated" clientId={client.id}>
+      <ClientDetailsLayout client={client} currentTab={currentTab ?? "sites"} />
+    </RequestedAccessContextProvider>
+  );
 }

@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { data, Link, Outlet, useLocation } from "react-router";
 import type { User } from "~/.server/authenticator";
-import { getActiveUserSession } from "~/.server/user-sesssion";
+import { getUserSession } from "~/.server/user-sesssion";
 import DefaultErrorBoundary from "~/components/default-error-boundary";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
@@ -21,7 +21,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { user } = await getActiveUserSession(request);
+  const { user } = await getUserSession(request);
   return data({
     user,
   });

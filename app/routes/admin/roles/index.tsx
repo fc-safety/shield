@@ -9,18 +9,17 @@ import { DataTableColumnHeader } from "~/components/data-table/data-table-column
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Role } from "~/lib/types";
-import { isSuperAdmin } from "~/lib/users";
+import { isSystemsAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  await guardOrSendHome(request, (user) => isSuperAdmin(user));
+  await guardOrSendHome(request, (user) => isSystemsAdmin(user));
 
-  return ApiFetcher.create(request, "/roles").get<Role[]>();
+  const roles = await ApiFetcher.create(request, "/roles").get<Role[]>();
+  return roles;
 };
 
-export default function AdminRoles({
-  loaderData: roles,
-}: Route.ComponentProps) {
+export default function AdminRoles({ loaderData: roles }: Route.ComponentProps) {
   return (
     <div className="grid gap-4">
       <Card>
@@ -40,9 +39,7 @@ export default function AdminRoles({
 const roleColumns: ColumnDef<Role>[] = [
   {
     accessorKey: "name",
-    header: ({ column, table }) => (
-      <DataTableColumnHeader column={column} table={table} />
-    ),
+    header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
     cell: ({ getValue, row }) => (
       <Link to={row.original.id} className="hover:underline">
         {getValue() as string}
@@ -51,48 +48,37 @@ const roleColumns: ColumnDef<Role>[] = [
   },
   {
     accessorKey: "description",
-    header: ({ column, table }) => (
-      <DataTableColumnHeader column={column} table={table} />
-    ),
+    header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
     cell: ({ getValue }) => (getValue() as string) || <>&mdash;</>,
   },
   {
     accessorKey: "clientAssignable",
-    header: ({ column, table }) => (
-      <DataTableColumnHeader column={column} table={table} />
-    ),
+    header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
     cell: ({ getValue }) => ((getValue() as boolean) ? "Yes" : "No"),
   },
   {
-    accessorFn: (role) => {
-      const p = role.permissions.find((p) => p.startsWith("visibility"));
-      return p ? p.replace("visibility:", "") : "self";
+    accessorKey: "scope",
+    header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+    cell: ({ getValue }) => {
+      const scope = getValue() as Role["scope"];
+      return <span className="capitalize">{scope.toLowerCase()}</span>;
     },
-    id: "visibility",
-    header: ({ column, table }) => (
-      <DataTableColumnHeader column={column} table={table} />
-    ),
-    cell: ({ getValue }) => (
-      <span className="capitalize">{getValue() as string}</span>
-    ),
   },
   {
-    accessorKey: "permissions",
+    accessorKey: "capabilities",
     header: "Permissions",
     cell: ({ getValue }) => {
-      const permissions = (getValue() as string[]).filter(
-        (p) => !p.startsWith("visibility")
-      );
-      return permissions.length > 0 ? (
+      const capabilities = getValue() as string[];
+      return capabilities.length > 0 ? (
         <ul>
-          {permissions.slice(0, MAX_PERMISSIONS_DISPLAY).map((permission) => (
+          {capabilities.slice(0, MAX_PERMISSIONS_DISPLAY).map((permission) => (
             <li key={permission} className="capitalize">
               {formatActionPermission(permission)}
             </li>
           ))}
-          {permissions.length > MAX_PERMISSIONS_DISPLAY && (
+          {capabilities.length > MAX_PERMISSIONS_DISPLAY && (
             <li className="text-muted-foreground italic">
-              + {permissions.length - MAX_PERMISSIONS_DISPLAY} permissions
+              + {capabilities.length - MAX_PERMISSIONS_DISPLAY} permissions
             </li>
           )}
         </ul>
@@ -125,11 +111,12 @@ function RolesTable({ roles }: { roles: Role[] }) {
 }
 
 const formatActionPermission = (p: string) => {
-  if (p.includes(":")) {
-    const [action, resource] = p.split(":");
+  const formatted = p.replace(/[-_]/g, " ");
+  if (formatted.includes(":")) {
+    const [action, resource] = formatted.split(":");
     return `${action} ${resource}`;
   }
-  return p;
+  return formatted;
 };
 
 const MAX_PERMISSIONS_DISPLAY = 3;

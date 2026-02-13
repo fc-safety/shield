@@ -21,18 +21,22 @@ import {
   Terminal,
   Users,
 } from "lucide-react";
-import { Outlet } from "react-router";
+import { Outlet, useSearchParams } from "react-router";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { requireUserSession } from "~/.server/user-sesssion";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
+import WelcomeOnboarding from "~/components/onboarding/welcome-onboarding";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import { ActiveAccessGrantProvider } from "~/contexts/active-access-grant-context";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
+import { CAPABILITIES } from "~/lib/permissions";
+import { getMyClientAccessQueryOptions } from "~/lib/services/client-access.service";
 import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
-import { can, isGlobalAdmin, isSuperAdmin } from "~/lib/users";
+import { can, isGlobalAdmin, isSystemsAdmin } from "~/lib/users";
 import type { Route } from "./+types/layout";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -40,7 +44,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const queryClient = new QueryClient();
   const fetcher = getAuthenticatedFetcher(request);
-  const prefetchPromises = [queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher))];
+  const prefetchPromises = [
+    queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher)),
+    queryClient.prefetchQuery(getMyClientAccessQueryOptions(fetcher)),
+  ];
 
   await Promise.all(prefetchPromises);
 
@@ -57,6 +64,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function Layout({
   loaderData: { user, apiUrl, appHost, googleMapsApiKey, authClientId },
 }: Route.ComponentProps) {
+  const [searchParams] = useSearchParams();
+  const showWelcome = searchParams.get("welcome") === "true";
+
   const groups: SidebarGroup[] = [
     {
       groupTitle: "My Shield",
@@ -72,14 +82,14 @@ export default function Layout({
           title: "Assets",
           url: "assets",
           icon: Shield,
-          hide: !can(user, "read", "assets"),
+          hide: !can(user, CAPABILITIES.PERFORM_INSPECTIONS),
         },
         {
           type: "link",
           title: "Inspection Routes",
           url: "inspection-routes",
           icon: RouteIcon,
-          hide: !can(user, "read", "inspection-routes"),
+          hide: !can(user, CAPABILITIES.MANAGE_ROUTES),
         },
         {
           type: "link",
@@ -92,13 +102,13 @@ export default function Layout({
           title: "My Organization",
           url: "my-organization",
           icon: Building,
-          hide: !can(user, "read", "clients"),
         },
       ],
+      hide: !user.activeClientId,
     },
     {
       groupTitle: "Products",
-      hide: !isGlobalAdmin(user) || !can(user, "read", "products"),
+      hide: !isGlobalAdmin(user) || !can(user, CAPABILITIES.CONFIGURE_PRODUCTS),
       items: [
         {
           type: "link",
@@ -111,21 +121,18 @@ export default function Layout({
           title: "Categories",
           url: "products/categories",
           icon: Shapes,
-          hide: !can(user, "read", "product-categories"),
         },
         {
           type: "link",
           title: "Manufacturers",
           url: "products/manufacturers",
           icon: Factory,
-          hide: !can(user, "read", "manufacturers"),
         },
         {
           type: "link",
           title: "Questions",
           url: "products/questions",
           icon: ShieldQuestion,
-          hide: !can(user, "read", "asset-questions"),
         },
       ],
     },
@@ -137,27 +144,33 @@ export default function Layout({
           title: "Clients",
           url: "admin/clients",
           icon: Building2,
-          hide: !can(user, "read", "clients"),
         },
         {
           type: "link",
           title: "Supply Requests",
           url: "admin/product-requests",
           icon: Package,
-          hide: !can(user, "read", "product-requests"),
         },
         {
           type: "link",
           title: "Tags",
           url: "admin/tags",
           icon: Nfc,
-          hide: !can(user, "read", "tags"),
         },
         {
-          type: "link",
-          title: "Roles",
-          url: "admin/roles",
+          type: "group",
+          title: "Users",
           icon: Users,
+          children: [
+            {
+              title: "All Users",
+              url: "admin/users",
+            },
+            {
+              title: "Roles",
+              url: "admin/roles",
+            },
+          ],
         },
         {
           type: "link",
@@ -177,7 +190,7 @@ export default function Layout({
           ],
         },
       ],
-      hide: !user || !isSuperAdmin(user),
+      hide: !user || !isSystemsAdmin(user),
     },
     {
       groupTitle: "Support",
@@ -212,27 +225,30 @@ export default function Layout({
       googleMapsApiKey={googleMapsApiKey}
       clientId={authClientId}
     >
-      <SidebarProvider defaultOpenState={{ help: false }}>
-        <HelpSidebarProvider>
-          <AppSidebar groups={groups} />
-          <SidebarInset className="min-w-0">
-            <Header
-              user={user}
-              leftSlot={
-                <>
-                  <SidebarTrigger className="-ml-1.5 [&_svg:not([class*='size-'])]:size-5" />
-                  <Separator orientation="vertical" className="mr-2 h-5" />
-                </>
-              }
-            />
-            <section className="flex grow flex-col p-2 pb-6 sm:p-4 sm:pb-12">
-              <Outlet />
-            </section>
-            <Footer />
-          </SidebarInset>
-          <HelpSidebar />
-        </HelpSidebarProvider>
-      </SidebarProvider>
+      <ActiveAccessGrantProvider>
+        {showWelcome && <WelcomeOnboarding showWelcome={showWelcome} />}
+        <SidebarProvider defaultOpenState={{ help: false }}>
+          <HelpSidebarProvider>
+            <AppSidebar groups={groups} />
+            <SidebarInset className="min-w-0">
+              <Header
+                user={user}
+                leftSlot={
+                  <>
+                    <SidebarTrigger className="-ml-1.5 [&_svg:not([class*='size-'])]:size-5" />
+                    <Separator orientation="vertical" className="h-5" />
+                  </>
+                }
+              />
+              <section className="flex grow flex-col p-2 pb-6 sm:p-4 sm:pb-12">
+                <Outlet />
+              </section>
+              <Footer />
+            </SidebarInset>
+            <HelpSidebar />
+          </HelpSidebarProvider>
+        </SidebarProvider>
+      </ActiveAccessGrantProvider>
     </AuthProvider>
   );
 }

@@ -16,6 +16,7 @@ import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { useAuth } from "~/contexts/auth-context";
 import type { Manufacturer, Product, ProductCategory } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
@@ -70,8 +71,8 @@ export default function ProductCategoryDetails({
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const canUpdate =
-    can(user, "update", "product-categories") &&
-    (userIsGlobalAdmin || productCategory.client?.externalId === user.clientId);
+    can(user, CAPABILITIES.CONFIGURE_PRODUCTS) &&
+    (userIsGlobalAdmin || productCategory.client?.id === user.activeClientId);
 
   return (
     <div className="grid gap-4">
@@ -220,11 +221,11 @@ function ProductsCard({
   optimizedProductImageUrls: Map<string, string>;
 }) {
   const { user } = useAuth();
-  const canCreate = can(user, "create", "products");
+  const canCreate = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
   const userIsGlobalAdmin = isGlobalAdmin(user);
   const getCanUpdate = (product: Omit<Product, "productCategory">) =>
-    can(user, "update", "products") &&
-    (userIsGlobalAdmin || product.client?.externalId === user.clientId);
+    can(user, CAPABILITIES.CONFIGURE_PRODUCTS) &&
+    (userIsGlobalAdmin || product.client?.id === user.activeClientId);
 
   return (
     <Card>

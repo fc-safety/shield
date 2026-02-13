@@ -25,6 +25,7 @@ import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Product } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, isGlobalAdmin } from "~/lib/users";
 import { buildTitleFromBreadcrumb, validateParam } from "~/lib/utils";
 import type { Route } from "./+types/details";
@@ -71,9 +72,9 @@ export default function ProductDetails({
   const { user } = useAuth();
   const globalAdmin = isGlobalAdmin(user);
 
-  const hasOwnership = globalAdmin || product.client?.externalId === user.clientId;
-  const canUpdate = can(user, "update", "products") && hasOwnership;
-  const canDelete = can(user, "delete", "products") && hasOwnership;
+  const hasOwnership = globalAdmin || product.client?.id === user.activeClientId;
+  const canUpdate = can(user, CAPABILITIES.CONFIGURE_PRODUCTS) && hasOwnership;
+  const canDelete = can(user, CAPABILITIES.CONFIGURE_PRODUCTS) && hasOwnership;
   const navigate = useNavigate();
 
   const [deleteAction, setDeleteAction] = useConfirmAction({
@@ -301,9 +302,10 @@ function SuppliesTable({
 }) {
   const { user } = useAuth();
   const globalAdmin = isGlobalAdmin(user);
-  const canCreate = can(user, "create", "products");
-  const canUpdate = can(user, "update", "products");
-  const canDelete = can(user, "delete", "products");
+  const canConfigureProducts = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
+  const canCreate = canConfigureProducts;
+  const canUpdate = canConfigureProducts;
+  const canDelete = canConfigureProducts;
 
   const editSupply = useOpenData<Product>();
 
