@@ -480,8 +480,8 @@ export const refreshUserSessionOrReauthenticate = async (
     }
     throw await getLoginRedirect(request, result.session, {
       returnTo: options.returnTo,
-      errorCode: result.reason,
-      errorMessage: result.message,
+      errorCode: options.errorCode,
+      errorMessage: options.errorMessage,
     });
   }
 };
