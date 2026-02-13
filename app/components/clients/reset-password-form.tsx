@@ -55,9 +55,6 @@ export default function ResetPasswordForm({ user, clientId, onSubmitted }: Reset
         }),
         {
           method: "POST",
-          headers: {
-            "x-view-context": "admin",
-          },
         }
       );
       return true;
@@ -110,7 +107,6 @@ export default function ResetPasswordForm({ user, clientId, onSubmitted }: Reset
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-view-context": "admin",
           },
           body: JSON.stringify({ password: data.password, sendEmail: data.sendEmail }),
         }

@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import {
   AssetQuestionConditionTypes,
@@ -47,7 +48,7 @@ const fuse = new Fuse([] as { label: string; value: string }[], {
 });
 
 export const ConditionConfigurator = () => {
-  const { data: contextData, clientId, viewContext } = useAssetQuestionDetailFormContext();
+  const { data: contextData, clientId } = useAssetQuestionDetailFormContext();
 
   const idx = (contextData.idx ?? 0) as number;
   const conditionAction = contextData.action as "create" | "update";
@@ -300,8 +301,8 @@ function MatchingValueInput({
   className?: string;
   clientId?: string | null;
 }) {
-  const { viewContext } = useAssetQuestionDetailFormContext();
   const { fetchOrThrow } = useAuthenticatedFetch();
+  const accessIntent = useAccessIntent();
 
   const [optionsSearchQuery, setOptionsSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -311,10 +312,9 @@ function MatchingValueInput({
       "asset-question-condition-value-options",
       conditionType,
       clientId,
-      viewContext,
+      accessIntent,
     ] as const,
-    queryFn: ({ queryKey }) =>
-      getValueOptionsForType(fetchOrThrow, queryKey[1], queryKey[2], queryKey[3]),
+    queryFn: ({ queryKey }) => getValueOptionsForType(fetchOrThrow, queryKey[1], queryKey[2]),
     enabled: !!conditionType && conditionType !== "METADATA",
   });
 
@@ -357,13 +357,7 @@ function MatchingValueInput({
   }, [valueOptionsRaw, value]);
 
   if (conditionType === "METADATA") {
-    return (
-      <MetadataKeyCombobox
-        value={value}
-        onValueChange={onValueChange}
-        onBlur={onBlur}
-      />
-    );
+    return <MetadataKeyCombobox value={value} onValueChange={onValueChange} onBlur={onBlur} />;
   }
 
   return (
@@ -444,8 +438,7 @@ interface ValueOptionGroup {
 const getValueOptionsForType = async (
   fetcher: typeof fetch,
   conditionType: AssetQuestionConditionType | undefined,
-  clientId: string | null = null,
-  viewContext: "admin" | "user" = "admin"
+  clientId: string | null = null
 ): Promise<ValueOption[]> => {
   let options = [] as ValueOption[];
 
@@ -466,12 +459,7 @@ const getValueOptionsForType = async (
         buildPath("/manufacturers", {
           limit: 1000,
           ...(clientId ? { OR: [{ clientId }, { clientId: "_NULL" }] } : {}),
-        }),
-        {
-          headers: {
-            "x-view-context": viewContext,
-          },
-        }
+        })
       )
         .then((r) => r.json() as Promise<ResultsPage<Manufacturer>>)
         .then((r) =>
@@ -487,12 +475,7 @@ const getValueOptionsForType = async (
         buildPath("/product-categories", {
           limit: 1000,
           ...(clientId ? { OR: [{ clientId }, { clientId: "_NULL" }] } : {}),
-        }),
-        {
-          headers: {
-            "x-view-context": viewContext,
-          },
-        }
+        })
       )
         .then((r) => r.json() as Promise<ResultsPage<ProductCategory>>)
         .then((r) =>
@@ -509,12 +492,7 @@ const getValueOptionsForType = async (
           limit: 1000,
           type: "PRIMARY",
           ...(clientId ? { OR: [{ clientId }, { clientId: "_NULL" }] } : {}),
-        }),
-        {
-          headers: {
-            "x-view-context": viewContext,
-          },
-        }
+        })
       )
         .then((r) => r.json() as Promise<ResultsPage<Product>>)
         .then((r) =>
@@ -529,11 +507,7 @@ const getValueOptionsForType = async (
         );
       break;
     case "METADATA":
-      options = await fetcher(buildPath("/assets/metadata-keys"), {
-        headers: {
-          "x-view-context": viewContext,
-        },
-      })
+      options = await fetcher(buildPath("/assets/metadata-keys"))
         .then((r) => r.json() as Promise<string[]>)
         .then((r) =>
           r.map((key) => ({

@@ -40,9 +40,6 @@ export default function SendResetPasswordEmailButton({
         }),
         {
           method: "POST",
-          headers: {
-            "x-view-context": "admin",
-          },
         }
       );
       return true;
