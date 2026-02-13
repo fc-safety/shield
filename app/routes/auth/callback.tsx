@@ -10,6 +10,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   try {
     tokens = await authenticator.then((a) => a.authenticate("oauth2", request));
   } catch (e) {
+    logger.error(e, "Failed to finish authentication and fetch access tokens.");
     return redirect("/login?error=authentication_failed");
   }
 
