@@ -953,12 +953,16 @@ export const createVaultOwnershipSchema = z.object({
 export const updateVaultOwnershipSchema = createVaultOwnershipSchema.partial();
 
 // Invitation schemas
-export const createInvitationSchema = z.object({
-  clientId: z.string().optional(),
+export const invitationRowSchema = z.object({
   email: z.email({ message: "A valid email address is required" }),
   roleId: z.string({ message: "Role is required" }).nonempty("Role is required"),
   siteId: z.string({ message: "Site is required" }).nonempty("Site is required"),
-  expiresInDays: z.coerce.number().min(1).max(30).default(7),
+});
+
+export const createInvitationsSchema = z.object({
+  clientId: z.string().optional(),
+  expiresInDays: z.number().min(1).max(30),
+  invitations: z.array(invitationRowSchema).min(1, "At least one invitation is required"),
 });
 
 export const acceptInvitationSchema = z.object({

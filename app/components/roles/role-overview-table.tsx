@@ -86,6 +86,7 @@ export default function RoleOverviewTable() {
     <div>
       <Button
         variant="ghost"
+        type="button"
         size="sm"
         className="text-muted-foreground gap-1.5 px-0 pr-1"
         onClick={() => handleOpenChange(!open)}

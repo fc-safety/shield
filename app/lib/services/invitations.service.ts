@@ -58,10 +58,8 @@ export const getInvitationValidationQueryOptions = (
  */
 export interface CreateInvitationInput {
   clientId?: string;
-  email?: string;
-  roleId?: string;
-  siteId?: string;
   expiresInDays?: number;
+  invitations: { email: string; roleId: string; siteId: string }[];
 }
 
 export const createInvitation = async (
