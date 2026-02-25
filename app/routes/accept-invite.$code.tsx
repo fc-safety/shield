@@ -110,7 +110,6 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 
 export default function AcceptInvite({
   loaderData: { code, validation, error, isAuthenticated, loginUrl },
-  actionData,
 }: Route.ComponentProps) {
   const fetcher = useFetcher();
   const isAccepting = fetcher.state === "submitting";
@@ -168,7 +167,7 @@ export default function AcceptInvite({
   }
 
   // Action error
-  const acceptError = actionData?.error;
+  const acceptError = fetcher.data?.error;
 
   return (
     <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
