@@ -236,11 +236,12 @@ export default function AcceptInvite({
               <Button asChild className="w-full">
                 <a href={loginUrl}>
                   <Check className="mr-2 h-4 w-4" />
-                  Sign in to Accept
+                  Create Account or Sign In
                 </a>
               </Button>
               <p className="text-muted-foreground text-center text-xs">
-                You need to sign in to accept this invitation.
+                You'll need an account to accept this invitation. If you already have one, just
+                sign in.
               </p>
             </>
           )}
