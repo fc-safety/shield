@@ -14,6 +14,7 @@ import {
 import { Skeleton } from "~/components/ui/skeleton";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { cn, isNil } from "~/lib/utils";
 import EditRoutePointButton from "../../../components/inspections/edit-route-point-button";
@@ -49,7 +50,7 @@ export default function RouteProgressCard({
   className?: string;
 }) {
   const { user } = useAuth();
-  const canUpdateInspectionRoutes = can(user, "update", "inspection-routes");
+  const canUpdateInspectionRoutes = can(user, CAPABILITIES.MANAGE_ROUTES);
 
   const activeRoute = useMemo(
     () => activeRouteProp ?? activeSession?.inspectionRoute,

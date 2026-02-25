@@ -19,6 +19,7 @@ import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Tag } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
 import type { Route } from "./+types/index";
@@ -36,9 +37,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function AdminTagsIndex({ loaderData: { tags, appHost } }: Route.ComponentProps) {
   const { user } = useAuth();
 
-  const canProgram = useMemo(() => can(user, "program", "tags"), [user]);
-  const canUpdate = useMemo(() => can(user, "update", "tags"), [user]);
-  const canDelete = useMemo(() => can(user, "delete", "tags"), [user]);
+  const canProgram = useMemo(() => can(user, CAPABILITIES.PROGRAM_TAGS), [user]);
+  const canUpdate = useMemo(() => can(user, CAPABILITIES.MANAGE_ASSETS), [user]);
+  const canDelete = useMemo(() => can(user, CAPABILITIES.MANAGE_ASSETS), [user]);
 
   const editTag = useOpenData<Tag>();
 

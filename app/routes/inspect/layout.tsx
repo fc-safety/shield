@@ -3,27 +3,40 @@ import {
   BookOpenText,
   CircleHelp,
   FileSpreadsheet,
+  LogOut,
   MessageCircleMore,
   Package,
   RotateCcw,
   Route as RouteIcon,
   Trash,
 } from "lucide-react";
-import { data, Link, Outlet } from "react-router";
+import { data, Link, Outlet, useNavigate } from "react-router";
 import { getAuthenticatedFetcher } from "~/.server/api-utils";
 import { config } from "~/.server/config";
 import { AppSidebar, type SidebarGroup } from "~/components/app-sidebar";
+import ConfirmationDialog from "~/components/confirmation-dialog";
 import Footer from "~/components/footer";
 import Header from "~/components/header";
 import HelpSidebar from "~/components/help-sidebar";
 import InspectErrorBoundary from "~/components/inspections/inspect-error-boundary";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "~/components/ui/sidebar";
 import { DEFAULT_USER_ROUTES } from "~/components/user-dropdown-menu";
+import { ActiveAccessGrantProvider } from "~/contexts/active-access-grant-context";
 import { AuthProvider } from "~/contexts/auth-context";
 import { HelpSidebarProvider } from "~/contexts/help-sidebar-context";
+import { RequestedAccessContextProvider } from "~/contexts/requested-access-context";
 import useMyOrganization from "~/hooks/use-my-organization";
+import { CAPABILITIES } from "~/lib/permissions";
+import { getMyClientAccessQueryOptions } from "~/lib/services/client-access.service";
 import { getMyOrganizationQueryOptions } from "~/lib/services/clients.service";
 import { can } from "~/lib/users";
 import type { Route } from "./+types/layout";
@@ -34,7 +47,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const queryClient = new QueryClient();
   const fetcher = getAuthenticatedFetcher(request);
-  const prefetchPromises = [queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher))];
+  const prefetchPromises = [
+    queryClient.prefetchQuery(getMyOrganizationQueryOptions(fetcher)),
+    queryClient.prefetchQuery(getMyClientAccessQueryOptions(fetcher)),
+  ];
 
   await Promise.all(prefetchPromises);
 
@@ -80,40 +96,64 @@ export default function Layout({
       googleMapsApiKey={googleMapsApiKey}
       clientId={clientId}
     >
-      <SidebarProvider defaultOpenState={{ help: false }}>
-        <HelpSidebarProvider>
-          <InspectionSidebar />
-          <SidebarInset>
-            <Header
-              homeTo="/inspect"
-              showBreadcrumb={false}
-              user={user}
-              userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
-                ...r,
-                url: `/inspect${r.url}`,
-              }))}
-              logoutReturnTo="/inspect"
-              leftSlot={
-                <>
-                  <SidebarTrigger className="-ml-1.5" />
-                  <Separator orientation="vertical" className="mr-1 h-5 sm:mr-2" />
-                </>
-              }
-            />
-            <section className="flex w-full max-w-(--breakpoint-lg) grow flex-col self-center p-2 pt-2 pb-6 sm:p-4 sm:pb-12">
-              <Outlet />
-            </section>
-            <Footer />
-          </SidebarInset>
-          <HelpSidebar />
-        </HelpSidebarProvider>
-      </SidebarProvider>
+      <ActiveAccessGrantProvider disableSwitching>
+        <SidebarProvider defaultOpenState={{ help: false }}>
+          <HelpSidebarProvider>
+            <InspectionSidebar />
+            <SidebarInset>
+              <Header
+                homeTo="/inspect"
+                showBreadcrumb={false}
+                user={user}
+                userRoutes={DEFAULT_USER_ROUTES.map((r) => ({
+                  ...r,
+                  url: `/inspect${r.url}`,
+                }))}
+                logoutReturnTo="/inspect"
+                leftSlot={
+                  <>
+                    <SidebarTrigger className="-ml-1.5 [&_svg:not([class*='size-'])]:size-5" />
+                    <Separator orientation="vertical" className="h-5" />
+                  </>
+                }
+              />
+              <section className="flex w-full max-w-(--breakpoint-lg) grow flex-col self-center p-2 pt-2 pb-6 sm:p-4 sm:pb-12">
+                <RequestedAccessContextProvider accessIntent="user">
+                  <Outlet />
+                </RequestedAccessContextProvider>
+              </section>
+              <Footer />
+            </SidebarInset>
+            <HelpSidebar />
+          </HelpSidebarProvider>
+        </SidebarProvider>
+      </ActiveAccessGrantProvider>
     </AuthProvider>
   );
 }
 
 const InspectionSidebar = () => {
   const { user, client } = useMyOrganization();
+  const navigate = useNavigate();
+
+  const header = (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <ConfirmationDialog
+          title="Exit Inspections?"
+          message="You'll need to tap on an asset's NFC tag to enter inspections again."
+          confirmText="Exit Inspections"
+          onConfirm={() => navigate("/")}
+          trigger={
+            <SidebarMenuButton>
+              <LogOut />
+              <span>Exit Inspections</span>
+            </SidebarMenuButton>
+          }
+        />
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
 
   const groups: SidebarGroup[] = [
     {
@@ -132,7 +172,7 @@ const InspectionSidebar = () => {
           url: "/inspect/routes",
           icon: RouteIcon,
           exact: true,
-          hide: !can(user, "read", "inspection-routes"),
+          hide: !can(user, CAPABILITIES.MANAGE_ROUTES),
         },
         {
           type: "link",
@@ -188,5 +228,5 @@ const InspectionSidebar = () => {
     },
   ];
 
-  return <AppSidebar groups={groups} />;
+  return <AppSidebar groups={groups} header={header} />;
 };

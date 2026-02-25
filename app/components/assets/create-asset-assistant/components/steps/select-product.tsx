@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, Factory } from "lucide-react";
 import { useMemo, type ComponentProps } from "react";
+import type { AccessIntent } from "~/.server/api-utils";
 import Step from "~/components/assistant/components/step";
 import { ProductImage } from "~/components/products/product-card";
 import { Button } from "~/components/ui/button";
@@ -8,7 +9,6 @@ import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
 import URLFavicon from "~/components/url-favicon";
-import type { ViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useProxyImage } from "~/hooks/use-proxy-image";
 import type { Product } from "~/lib/models";
@@ -20,7 +20,7 @@ export default function StepSelectProduct({
   setProductId,
   productCategoryId,
   clientId,
-  viewContext,
+  accessIntent,
   onStepBackward,
   onContinue,
 }: {
@@ -28,13 +28,13 @@ export default function StepSelectProduct({
   setProductId: (productId: string) => void;
   productCategoryId?: string;
   clientId?: string;
-  viewContext?: ViewContext;
+  accessIntent?: AccessIntent;
   onStepBackward: () => void;
   onContinue: () => void;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { data: products, isLoading } = useQuery(
-    getProductsQuery(fetchOrThrow, { productCategoryId, clientId, viewContext })
+    getProductsQuery(fetchOrThrow, { productCategoryId, clientId, accessIntent })
   );
 
   const productsByManufacturer = useMemo(() => {

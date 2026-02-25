@@ -2,13 +2,13 @@ import { Link } from "react-router";
 import { requireUserSession } from "~/.server/user-sesssion";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { isSuperAdmin } from "~/lib/users";
+import { isSystemsAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
 import { Paragraph } from "./components/Paragraph";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const { user } = await requireUserSession(request);
-  const userIsSuperAdmin = isSuperAdmin(user);
+  const userIsSuperAdmin = isSystemsAdmin(user);
 
   const docLinks: {
     label: string;

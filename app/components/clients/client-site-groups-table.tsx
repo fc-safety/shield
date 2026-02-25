@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 import { Link } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
 import type { Client, Site } from "~/lib/models";
-import { can } from "~/lib/users";
+import { isGlobalAdmin } from "~/lib/users";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import EditSiteButton from "./edit-site-button";
@@ -20,7 +20,7 @@ export default function ClientSiteGroupsTable({
   buildToSiteGroup,
 }: ClientSiteGroupsTableProps) {
   const { user } = useAuth();
-  const canCreateSiteGroup = can(user, "create", "sites");
+  const canCreateSiteGroup = isGlobalAdmin(user);
 
   const columns: ColumnDef<Exclude<Client["sites"], undefined>[number]>[] = [
     {

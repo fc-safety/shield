@@ -14,10 +14,10 @@ import CustomTag from "~/components/products/custom-tag";
 import NewManufacturerButton from "~/components/products/edit-manufacturer-button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Manufacturer } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import type { QueryParams } from "~/lib/urls";
 import { can, isGlobalAdmin } from "~/lib/users";
 import type { Route } from "./+types/index";
@@ -36,9 +36,7 @@ export default function ProductManufacturers({
   const { user } = useAuth();
 
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const hasCreatePermission = can(user, "create", "manufacturers");
-  const hasDeletePermission = can(user, "delete", "manufacturers");
-  const hasUpdatePermission = can(user, "update", "manufacturers");
+  const hasConfigureProducts = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
   return (
     <div className="grid gap-4">
@@ -47,9 +45,9 @@ export default function ProductManufacturers({
         description="Manufacturers accessible to all clients."
         TitleIcon={Factory}
         manufacturers={manufacturers}
-        canCreate={hasCreatePermission && userIsGlobalAdmin}
-        canDelete={hasDeletePermission && userIsGlobalAdmin}
-        canUpdate={hasUpdatePermission && userIsGlobalAdmin}
+        canCreate={hasConfigureProducts && userIsGlobalAdmin}
+        canDelete={hasConfigureProducts && userIsGlobalAdmin}
+        canUpdate={hasConfigureProducts && userIsGlobalAdmin}
       />
     </div>
   );
@@ -74,8 +72,6 @@ function ManufacturersCard({
   showOwner?: boolean;
   canUpdate: boolean;
 }) {
-  const viewContext = useViewContext();
-
   const { submitJson: submitDelete } = useModalFetcher({
     defaultErrorMessage: "Error: Failed to delete manufacturer",
   });
@@ -169,7 +165,6 @@ function ManufacturersCard({
                               {
                                 method: "delete",
                                 path: `/api/proxy/manufacturers/${manufacturer.id}`,
-                                viewContext,
                               }
                             );
                           };

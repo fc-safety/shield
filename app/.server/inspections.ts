@@ -1,15 +1,20 @@
 import { redirect } from "react-router";
-import { appStateSessionStorage, inspectionSessionStorage } from "~/.server/sessions";
-import type { InspectionRoute, InspectionSession } from "~/lib/models";
+import {
+  commitInspectionSession,
+  getSession,
+  inspectionSessionStorage,
+  setAppState,
+  type InspectionSession as InspectionCookieSession,
+} from "~/.server/sessions";
+import type { InspectionRoute, InspectionSession as InspectionSessionModel } from "~/lib/models";
 import { dateSort, getSearchParams } from "../lib/utils";
 import { api } from "./api";
 
 export const validateInspectionSession = async (
   request: Request,
-  session?: Awaited<ReturnType<typeof inspectionSessionStorage.getSession>>
+  session?: InspectionCookieSession
 ) => {
-  const inspectionSession =
-    session ?? (await inspectionSessionStorage.getSession(request.headers.get("cookie")));
+  const inspectionSession = session ?? (await getSession(request, inspectionSessionStorage));
 
   const inspectionToken = inspectionSession.get("inspectionToken");
 
@@ -72,9 +77,7 @@ export const validateTagRequestAndBuildSession = async (request: Request, redire
     inspectionToken = inspectionTokenFromSignature;
   }
 
-  const inspectionSession = await inspectionSessionStorage.getSession(
-    request.headers.get("cookie")
-  );
+  const inspectionSession = await getSession(request, inspectionSessionStorage);
 
   if (extId) {
     // Step 3 (part A): If there is no valid signature, but the tag ID is present, validate the tag ID.
@@ -91,8 +94,6 @@ export const validateTagRequestAndBuildSession = async (request: Request, redire
       throw new Response("Tag not found", { status: 404 });
     }
 
-    const headers = new Headers();
-
     // Step 3 (part B): If this is a valid new tag URL, set session data and redirect
     // to remove the tag params from the URL.
     inspectionSession.set("activeTag", extId);
@@ -102,22 +103,16 @@ export const validateTagRequestAndBuildSession = async (request: Request, redire
     // When referred to from the legacy Tags page, we want to show the legacy redirect
     // landing page (unless it's been explicitly marked as viewed).
     if (requestQuery.get("ref") === "legacy") {
-      const appStateSession = await appStateSessionStorage.getSession(
-        request.headers.get("cookie")
-      );
-      if (appStateSession.get("show_legacy_redirect") !== false) {
-        appStateSession.set("show_legacy_redirect", true);
-      }
-      headers.append("Set-Cookie", await appStateSessionStorage.commitSession(appStateSession));
+      await setAppState(request, {
+        show_legacy_redirect: true,
+      });
     }
 
-    headers.append("Set-Cookie", await inspectionSessionStorage.commitSession(inspectionSession));
+    await commitInspectionSession(inspectionSession);
 
     // Redirect to remove the tag params from the URL. This prevents users from bookmarking or
     // sharing the tag URL.
-    throw redirect(redirectTo, {
-      headers,
-    });
+    throw redirect(redirectTo);
   }
 
   // Step 4: If pulling from session, validate session and get tag ID.
@@ -130,7 +125,11 @@ export const validateTagRequestAndBuildSession = async (request: Request, redire
   return validatedInspectionSessionContext;
 };
 
-export const getNextPointFromSession = (session: InspectionSession, route?: InspectionRoute) => {
+export const getNextPointFromSession = (
+  session: InspectionSessionModel,
+  route?: InspectionRoute,
+  options?: { skipAssetIds?: Set<string> }
+) => {
   let thisRoute = route;
 
   if (!thisRoute?.inspectionRoutePoints) {
@@ -138,7 +137,7 @@ export const getNextPointFromSession = (session: InspectionSession, route?: Insp
   }
 
   if (!thisRoute?.inspectionRoutePoints || !session.completedInspectionRoutePoints) {
-    return { nextPoint: null, routeCompleted: false };
+    return { nextPoint: null, allRemainingSkipped: false };
   }
 
   // Get all points sorted by order.
@@ -166,13 +165,20 @@ export const getNextPointFromSession = (session: InspectionSession, route?: Insp
   for (let i = 0; i < sortedPoints.length; i++) {
     const candidateIdx = (i + lastCompletedIndex + 1) % sortedPoints.length;
     const candidatePoint = sortedPoints[candidateIdx];
-    if (!completedPointAssetIds.has(candidatePoint.assetId)) {
+    if (
+      !completedPointAssetIds.has(candidatePoint.assetId) &&
+      !options?.skipAssetIds?.has(candidatePoint.assetId)
+    ) {
       nextPoint = candidatePoint;
       break;
     }
   }
 
-  return { nextPoint };
+  const uncompletedCount = sortedPoints.filter(
+    (p) => !completedPointAssetIds.has(p.assetId)
+  ).length;
+
+  return { nextPoint, allRemainingSkipped: nextPoint === null && uncompletedCount > 0 };
 };
 
 /**

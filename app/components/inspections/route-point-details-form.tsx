@@ -1,14 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ExternalLink, Loader2, RotateCw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useFetcher, type To } from "react-router";
+import { Link, type To } from "react-router";
 import type { z } from "zod";
+import type { DataOrError } from "~/.server/api-utils";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Asset, InspectionRoute, InspectionRoutePoint, ResultsPage } from "~/lib/models";
 import { createInspectionRoutePointSchema, updateInspectionRoutePointSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
-import { buildPath } from "~/lib/urls";
 import AssetCombobox from "../assets/asset-combobox";
 import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
@@ -43,40 +43,35 @@ export default function RoutePointDetailsForm({
   linkToRoutes = "routes",
 }: RoutePointDetailsFormProps) {
   const isNew = !routePoint;
-  const fetcher = useFetcher<ResultsPage<InspectionRoute>>();
-  const [routesLoading, setRoutesLoading] = useState(true);
 
-  const loadRoutes = useCallback(() => {
-    if (fetcher.state === "idle") {
-      fetcher.load(
-        buildPath("/api/proxy/inspection-routes", {
-          limit: 10000,
-          siteId: assetProp?.siteId,
-        })
-      );
-    }
-  }, [fetcher]);
-
-  const preloadRoutes = useCallback(() => {
-    if (!fetcher.data) {
-      loadRoutes();
-    }
-  }, [fetcher, loadRoutes]);
-
-  useEffect(() => {
-    if (!routeProp) {
-      preloadRoutes();
-    }
-  }, [preloadRoutes, routeProp]);
+  const filterRouteFn = useEffectEvent((route: InspectionRoute) => {
+    return filterRoute?.(route) ?? true;
+  });
 
   const [routes, setRoutes] = useState<InspectionRoute[]>([]);
+  const {
+    load,
+    data: fetcherData,
+    isLoading: routesLoading,
+  } = useModalFetcher<DataOrError<ResultsPage<InspectionRoute>>>({
+    onData: (data) => setRoutes(data.data?.results.filter(filterRouteFn) ?? []),
+  });
+
+  const preloadRoutes = useCallback(() => {
+    load({
+      path: "/api/proxy/inspection-routes",
+      query: {
+        limit: 10000,
+        siteId: assetProp?.siteId,
+      },
+    });
+  }, [load]);
 
   useEffect(() => {
-    if (fetcher.data) {
-      setRoutes(fetcher.data.results.filter(filterRoute ?? (() => true)));
-      setRoutesLoading(false);
+    if (!fetcherData && !routeProp) {
+      preloadRoutes();
     }
-  }, [fetcher.data, filterRoute]);
+  }, [preloadRoutes, routeProp, fetcherData]);
 
   const form = useForm<TForm>({
     resolver: zodResolver(
@@ -163,7 +158,7 @@ export default function RoutePointDetailsForm({
                     title="Refresh"
                     variant="outline"
                     size="xs"
-                    onClick={loadRoutes}
+                    onClick={preloadRoutes}
                   >
                     Refresh Routes
                     <RotateCw />
@@ -180,7 +175,7 @@ export default function RoutePointDetailsForm({
                 title="Refresh"
                 variant="outline"
                 size="xs"
-                onClick={loadRoutes}
+                onClick={preloadRoutes}
               >
                 Refresh Routes
                 <RotateCw />

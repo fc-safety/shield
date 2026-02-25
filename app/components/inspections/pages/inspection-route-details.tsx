@@ -45,13 +45,14 @@ import {
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import type { InspectionRoute, InspectionRoutePoint } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can, getUserDisplayName } from "~/lib/users";
 import { cn } from "~/lib/utils";
 
 export default function InspectionRouteDetails({ route }: { route: InspectionRoute }) {
   const { user } = useAuth();
-  const canUpdate = can(user, "update", "inspection-routes");
-  const canDelete = can(user, "delete", "inspection-routes");
+  const canUpdate = can(user, CAPABILITIES.MANAGE_ROUTES);
+  const canDelete = can(user, CAPABILITIES.MANAGE_ROUTES);
 
   const deleteRouteFetcher = useFetcher();
   const [deleteRouteAction, setDeleteRouteAction] = useConfirmAction({
@@ -418,7 +419,7 @@ const RoutePointItem = forwardRef<HTMLDivElement, RoutePointItemProps>(
     ref
   ) => {
     const { user } = useAuth();
-    const canUpdate = can(user, "update", "inspection-routes");
+    const canUpdate = can(user, CAPABILITIES.MANAGE_ROUTES);
 
     const getNextOrder = (idx: number) => {
       if (!allPoints) return 0;

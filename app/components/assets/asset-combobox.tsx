@@ -1,13 +1,13 @@
 import Fuse from "fuse.js";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useFetcher } from "react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Asset, ResultsPage } from "~/lib/models";
-import { stringifyQuery, type QueryParams } from "~/lib/urls";
+import { CAPABILITIES } from "~/lib/permissions";
+import { type QueryParams } from "~/lib/urls";
 import { can } from "~/lib/users";
-import { objectsEqual } from "~/lib/utils";
 import { ResponsiveCombobox } from "../responsive-combobox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog";
 import CreateAssetButton from "./create-asset-assistant/create-asset-button";
@@ -42,41 +42,37 @@ export default function AssetCombobox({
   nestDrawers,
 }: AssetComboboxProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
-  const canCreate = useMemo(() => can(user, "create", "assets"), [user]);
 
-  const fetcher = useFetcher<ResultsPage<Asset>>();
-  const prevQueryFilter = useRef<QueryParams | null>(null);
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const {
+    load,
+    isLoading,
+    data: fetcherData,
+  } = useModalFetcher<DataOrError<ResultsPage<Asset>>>({
+    onData: (data) => {
+      setAssets(data.data?.results ?? []);
+    },
+  });
+
+  const canCreate = useMemo(() => can(user, CAPABILITIES.MANAGE_ASSETS), [user]);
+
   const createNew = useOpenData();
 
   const preloadAssets = useCallback(() => {
-    const queryFilterChanged = !objectsEqual(optionQueryFilter ?? null, prevQueryFilter.current);
-    if (fetcher.state === "idle" && (queryFilterChanged || !fetcher.data)) {
-      if (optionQueryFilter) {
-        prevQueryFilter.current = optionQueryFilter;
-      }
-      fetcher.load(
-        `/api/proxy/assets?${stringifyQuery({
-          limit: 10000,
-          _viewContext: viewContext,
-          ...optionQueryFilter,
-        })}`
-      );
-    }
-  }, [fetcher, optionQueryFilter, viewContext]);
+    load({
+      path: "/api/proxy/assets",
+      query: {
+        limit: 10000,
+        ...optionQueryFilter,
+      },
+    });
+  }, [load, optionQueryFilter]);
 
   useEffect(() => {
-    if (value) preloadAssets();
-  }, [value, preloadAssets]);
+    if (!fetcherData && value) preloadAssets();
+  }, [value, preloadAssets, fetcherData]);
 
-  const [assets, setAssets] = useState<Asset[]>([]);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    if (fetcher.data) {
-      setAssets(fetcher.data.results);
-    }
-  }, [fetcher.data]);
 
   const options = useMemo(() => {
     let filteredAssets = assets;
@@ -103,7 +99,7 @@ export default function AssetCombobox({
           }
           return <>&mdash;</>;
         }}
-        loading={fetcher.state === "loading"}
+        loading={isLoading}
         options={options}
         onMouseOver={() => !disabled && preloadAssets()}
         onTouchStart={() => !disabled && preloadAssets()}
@@ -125,14 +121,20 @@ export default function AssetCombobox({
         <CreateAssetButton
           trigger={null}
           open={createNew.open}
-          onOpenChange={createNew.setOpen}
+          onOpenChange={(openState) => {
+            createNew.setOpen(openState);
+            if (!openState) {
+              preloadAssets();
+            }
+          }}
           clientId={clientId}
           siteId={siteId}
           nestDrawers
+          dialogClassName="z-51"
         />
       ) : (
         <Dialog open={createNew.open} onOpenChange={createNew.setOpen}>
-          <DialogContent className="z-[51]">
+          <DialogContent className="z-51">
             <DialogHeader>
               <DialogTitle>Permission Required</DialogTitle>
             </DialogHeader>

@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2 } from "lucide-react";
+import type { AccessIntent } from "~/.server/api-utils";
 import Step from "~/components/assistant/components/step";
 import Icon from "~/components/icons/icon";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
-import type { ViewContext } from "~/contexts/view-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { cn } from "~/lib/utils";
 import { getCategoriesByProductQuery } from "../../services/product.service";
@@ -18,7 +18,7 @@ export default function StepSelectCategoryOrExistingAsset({
   onStepBackward,
   allowSelectExistingAsset,
   clientId,
-  viewContext,
+  accessIntent,
 }: {
   onStepBackward?: () => void;
   onContinue: (options: { skipToSelectExistingAsset?: boolean }) => void;
@@ -26,11 +26,11 @@ export default function StepSelectCategoryOrExistingAsset({
   setProductCategoryId: (productCategoryId: string) => void;
   allowSelectExistingAsset?: boolean;
   clientId?: string;
-  viewContext?: ViewContext;
+  accessIntent?: AccessIntent;
 }) {
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { data: categories, isLoading } = useQuery(
-    getCategoriesByProductQuery(fetchOrThrow, { clientId, viewContext })
+    getCategoriesByProductQuery(fetchOrThrow, { clientId, accessIntent })
   );
 
   return (

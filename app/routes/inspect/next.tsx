@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { AlertCircle, Plus, RefreshCw } from "lucide-react";
+import { AlertCircle, Plus, RefreshCw, SkipForward } from "lucide-react";
 import { redirect } from "react-router";
 import { Fragment } from "react/jsx-runtime";
 import { toast } from "sonner";
 import { api } from "~/.server/api";
 import { buildImageProxyUrl } from "~/.server/images";
 import { getNextPointFromSession } from "~/.server/inspections";
-import { getSession, getSessionValue, inspectionSessionStorage } from "~/.server/sessions";
+import { commitInspectionSession, getSession, inspectionSessionStorage } from "~/.server/sessions";
 import AssetCard from "~/components/assets/asset-card";
 import DisplayInspectionValue from "~/components/assets/display-inspection-value";
 import {
@@ -15,13 +15,16 @@ import {
   NewSupplyRequestButton,
 } from "~/components/assets/product-requests";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import VaultUploadInput from "~/components/vault-upload-input";
 import { useAuth } from "~/contexts/auth-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
+import { useQueryNavigate } from "~/hooks/use-query-navigate";
 import type { Asset, Inspection } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { buildTitleFromBreadcrumb, getSearchParam } from "~/lib/utils";
 import RouteProgressCard from "~/routes/inspect/components/route-progress-card";
@@ -46,26 +49,28 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
   if (activeSessionId) {
     inspectionSession.set("activeSession", activeSessionId);
-    throw redirect(".", {
-      headers: {
-        "Set-Cookie": await inspectionSessionStorage.commitSession(inspectionSession),
-      },
-    });
+    await commitInspectionSession(inspectionSession);
+    throw redirect(".");
   }
 
-  activeSessionId = await getSessionValue(request, inspectionSessionStorage, "activeSession");
+  activeSessionId = inspectionSession.get("activeSession");
 
   let inspection: Inspection | null = null;
   if (inspectionId) {
     inspection = await api.inspections.get(request, inspectionId);
   }
 
+  const skipAssetIdsParam = getSearchParam(request, "skipAssetIds");
+  const skipAssetIds = skipAssetIdsParam
+    ? new Set(skipAssetIdsParam.split(",").filter(Boolean))
+    : undefined;
+
   if (activeSessionId) {
-    const { session, nextPoint } = await api.inspections
+    const { session, nextPoint, allRemainingSkipped } = await api.inspections
       .getSession(request, activeSessionId)
       .then((session) => ({
         session,
-        ...getNextPointFromSession(session),
+        ...getNextPointFromSession(session, undefined, { skipAssetIds }),
       }));
 
     let nextAsset: Asset | null = null;
@@ -87,6 +92,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       showSuccessfulInspection,
       inspection,
       processedProductImageUrl,
+      allRemainingSkipped,
+      currentSkipAssetIds: skipAssetIdsParam ?? "",
     };
   }
 
@@ -97,6 +104,8 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     showSuccessfulInspection,
     inspection,
     processedProductImageUrl: null,
+    allRemainingSkipped: false,
+    currentSkipAssetIds: "",
   };
 };
 
@@ -107,10 +116,13 @@ export default function InspectNext({
     session,
     inspection,
     processedProductImageUrl,
+    allRemainingSkipped,
+    currentSkipAssetIds,
   },
 }: Route.ComponentProps) {
   const { user } = useAuth();
-  const canCreateProductRequests = can(user, "create", "product-requests");
+  const { setQuery } = useQueryNavigate();
+  const canCreateProductRequests = can(user, CAPABILITIES.SUBMIT_REQUESTS);
   const { fetchOrThrow } = useAuthenticatedFetch();
 
   const { queryKey: suppliesCountQueryKey, queryFn: suppliesCountQueryFn } =
@@ -135,6 +147,15 @@ export default function InspectNext({
         path: `/api/proxy/alerts/${alertId}/attach-inspection-image`,
       }
     );
+  };
+
+  const handleSkip = (assetId: string) => {
+    const skipIds = currentSkipAssetIds ? `${currentSkipAssetIds},${assetId}` : assetId;
+    setQuery((prev) => prev.set("skipAssetIds", skipIds));
+  };
+
+  const handleResetSkipped = () => {
+    setQuery((prev) => prev.delete("skipAssetIds"));
   };
 
   return (
@@ -248,6 +269,30 @@ export default function InspectNext({
           </CardHeader>
           <CardContent className="grid gap-4">
             <AssetCard asset={nextAsset} processedProductImageUrl={processedProductImageUrl} />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => handleSkip(nextAsset.id)}
+            >
+              <SkipForward className="mr-2 size-4" />
+              Can&apos;t reach this asset? Skip to next
+            </Button>
+          </CardContent>
+        </Card>
+      ) : allRemainingSkipped ? (
+        <Card className="text-center">
+          <CardHeader>
+            <CardTitle className="justify-center">No Reachable Assets</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 text-sm">
+            <p>
+              All remaining assets in the route have been skipped. You can reset and try again, or
+              scan an asset&apos;s NFC tag to continue inspecting.
+            </p>
+            <Button variant="outline" onClick={handleResetSkipped}>
+              Reset skipped assets
+            </Button>
           </CardContent>
         </Card>
       ) : session ? (

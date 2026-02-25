@@ -5,11 +5,10 @@ import { CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Boxes, Pencil, Warehouse } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Site } from "~/lib/models";
-import { can, isSuperAdmin } from "~/lib/users";
+import { isGlobalAdmin, isSystemsAdmin } from "~/lib/users";
 import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import ConfirmationDialog from "../confirmation-dialog";
 import { CopyableText } from "../copyable-text";
@@ -28,10 +27,9 @@ export default function SiteDetailsCard({
   site: Site;
 }) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
-  const userIsSuperAdmin = isSuperAdmin(user);
-  const canUpdateSite = can(user, "update", "sites");
-  const canDeleteSite = site.externalId !== user.siteId && can(user, "delete", "sites");
+  const userIsSuperAdmin = isSystemsAdmin(user);
+  const canUpdateSite = isGlobalAdmin(user);
+  const canDeleteSite = site.id !== user.activeSiteId && isGlobalAdmin(user);
 
   const navigate = useNavigate();
 
@@ -163,7 +161,6 @@ export default function SiteDetailsCard({
                           {
                             method: "delete",
                             path: `/api/proxy/sites/${site.id}`,
-                            viewContext,
                           }
                         );
                       };

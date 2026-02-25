@@ -8,14 +8,13 @@ import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
 import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type ResultsPage, type Site } from "~/lib/models";
 import { getSiteSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import { type QueryParams } from "~/lib/urls";
-import { isSuperAdmin } from "~/lib/users";
+import { isSystemsAdmin } from "~/lib/users";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { CopyableInput } from "../copyable-input";
 import ActiveToggleField from "../ui-custom/forms/active-toggle-field";
@@ -41,8 +40,7 @@ export default function SiteDetailsForm({
   isSiteGroup = false,
 }: SiteDetailsFormProps) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
-  const userIsSuperAdmin = isSuperAdmin(user);
+  const userIsSuperAdmin = isSystemsAdmin(user);
 
   const isNew = !site;
   const currentlyPopulatedZip = useRef<string | null>(null);
@@ -193,7 +191,6 @@ export default function SiteDetailsForm({
         limit: 10000,
         clientId,
         _throw: "false",
-        _viewContext: viewContext,
       };
       if (site?.id) {
         query.OR = [
@@ -209,7 +206,7 @@ export default function SiteDetailsForm({
       }
       subsitesLoad({ path: "/api/proxy/sites", query });
     }
-  }, [site, subsitesLoad, viewContext, clientId, subsitesLoading, subsitesData]);
+  }, [site, subsitesLoad, clientId, subsitesLoading, subsitesData]);
 
   useEffect(() => {
     handleSubsitesLoad();
@@ -228,7 +225,6 @@ export default function SiteDetailsForm({
     submit(serializeFormJson(data), {
       path: "/api/proxy/sites",
       id: site?.id,
-      viewContext,
     });
   };
 

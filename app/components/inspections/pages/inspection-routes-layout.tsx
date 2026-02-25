@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/com
 import { Separator } from "~/components/ui/separator";
 import { useAuth } from "~/contexts/auth-context";
 import type { InspectionRoute } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import EditRouteButton from "../edit-route-button";
@@ -18,7 +19,7 @@ export default function InspectionRoutesLayout({
   buildDetailsTo: (id: string) => To;
 }) {
   const { user } = useAuth();
-  const canCreate = can(user, "create", "inspection-routes");
+  const canCreate = can(user, CAPABILITIES.MANAGE_ROUTES);
 
   return (
     <div className="@container flex flex-col gap-4">

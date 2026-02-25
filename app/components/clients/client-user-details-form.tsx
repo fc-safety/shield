@@ -4,11 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { createUserSchema, updateUserSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
-import type { ClientUser } from "~/lib/types";
+import type { UserResponse } from "~/lib/types";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
@@ -16,7 +15,7 @@ import SiteCombobox from "./site-combobox";
 
 type TForm = z.infer<typeof createUserSchema | typeof updateUserSchema>;
 interface ClientUserDetailsFormProps {
-  user?: ClientUser;
+  user?: UserResponse;
   onSubmitted?: () => void;
   clientId?: string;
   siteExternalId?: string;
@@ -35,7 +34,6 @@ export default function ClientUserDetailsForm({
   clientId,
   siteExternalId,
 }: ClientUserDetailsFormProps) {
-  const viewContext = useViewContext();
   const isNew = !user;
 
   const form = useForm({
@@ -61,7 +59,6 @@ export default function ClientUserDetailsForm({
       query: {
         clientId,
       },
-      viewContext,
     });
   };
 

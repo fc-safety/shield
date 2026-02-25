@@ -101,6 +101,7 @@ export default function RouteDetailsForm({ route, onSubmitted }: RouteDetailsFor
                 <FormLabel>Site</FormLabel>
                 <FormControl>
                   <SiteCombobox
+                    preloadOnMount
                     value={field.value}
                     onValueChange={field.onChange}
                     onBlur={field.onBlur}

@@ -11,10 +11,10 @@ import { useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import type { z } from "zod";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import { type Manufacturer, type Product, type ProductCategory } from "~/lib/models";
+import { CAPABILITIES } from "~/lib/permissions";
 import { createProductSchema, updateProductSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import { buildPath } from "~/lib/urls";
@@ -52,11 +52,9 @@ export default function ProductDetailsForm({
 }: ProductDetailsFormProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const viewContext = useViewContext();
-
   const { user } = useAuth();
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const canReadAnsiCategories = can(user, "read", "ansi-categories");
+  const canReadAnsiCategories = can(user, CAPABILITIES.CONFIGURE_PRODUCTS);
 
   const isNew = !product;
   const requireConsumable = Boolean(consumable || parentProduct);
@@ -182,7 +180,6 @@ export default function ProductDetailsForm({
       return submit(serializeFormJson(data), {
         path: "/api/proxy/products",
         id: product?.id,
-        viewContext,
       });
     };
 

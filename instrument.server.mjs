@@ -6,4 +6,5 @@ Sentry.init({
   // https://docs.sentry.io/platforms/javascript/guides/react-router/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
   environment: process.env.SENTRY_ENVIRONMENT ?? "local",
+  integrations: [Sentry.pinoIntegration()],
 });

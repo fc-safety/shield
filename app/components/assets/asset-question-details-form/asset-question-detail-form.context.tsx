@@ -21,18 +21,15 @@ export const AssetQuestionDetailFormContext = createContext<TAssetQuestionDetail
   data: {},
   setData: () => {},
   clientId: undefined,
-  viewContext: "user",
 });
 
 export function AssetQuestionDetailFormProvider({
   action,
   children,
   clientId,
-  viewContext,
 }: {
   action: "create" | "update";
   clientId?: string | null;
-  viewContext?: ViewContext;
   children: React.ReactNode;
 }) {
   const [sidepanelId, setSidepanelId] = useState<string | null>(null);
@@ -48,7 +45,6 @@ export function AssetQuestionDetailFormProvider({
         data,
         setData,
         clientId,
-        viewContext,
       }}
     >
       {children}

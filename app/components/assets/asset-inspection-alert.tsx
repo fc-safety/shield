@@ -20,6 +20,7 @@ import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Alert } from "~/lib/models";
 import { resolveAlertSchema } from "~/lib/schema";
+import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { isNil } from "~/lib/utils";
 import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
@@ -75,7 +76,7 @@ type TForm = z.infer<typeof resolveAlertSchema>;
 
 function InspectionAlert({ alert, loading = false }: { alert: Alert; loading?: boolean }) {
   const { user } = useAuth();
-  const canResolve = can(user, "resolve", "alerts");
+  const canResolve = can(user, CAPABILITIES.RESOLVE_ALERTS);
 
   const { submitJson: submit, isSubmitting } = useModalFetcher();
 

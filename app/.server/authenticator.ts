@@ -1,9 +1,8 @@
 import { Authenticator } from "remix-auth";
 import { OAuth2Strategy } from "remix-auth-oauth2";
-import type { z } from "zod";
 import { keycloakTokenPayloadSchema, parseToken } from "~/lib/users";
 import { getSearchParams } from "~/lib/utils";
-import { type TPermission } from "../lib/permissions";
+import type { TCapability, TScope } from "../lib/permissions";
 import { config } from "./config";
 
 export interface Tokens {
@@ -19,16 +18,32 @@ export type User = {
   givenName?: string;
   familyName?: string;
   picture?: string;
-  permissions?: TPermission[];
-  clientId: string;
-  siteId: string;
+  scope: TScope;
+  capabilities: TCapability[];
+  hasMultiClientScope: boolean;
+  hasMultiSiteScope: boolean;
+  /** The currently selected/active client ID (may differ from token's clientId) */
+  activeClientId: string | null;
+  activeSiteId: string | null;
   tokens: Tokens;
 };
 
-export const buildUser = (tokens: {
-  accessToken: string | (() => string);
-  refreshToken: string | (() => string);
-}): User => {
+export interface UserPermissions {
+  scope: TScope;
+  capabilities: TCapability[];
+  hasMultiClientScope: boolean;
+  hasMultiSiteScope: boolean;
+  activeClientId: string | null;
+  activeSiteId: string | null;
+}
+
+export const buildUser = (
+  tokens: {
+    accessToken: string | (() => string);
+    refreshToken: string | (() => string);
+  },
+  permissions: UserPermissions
+): User => {
   const retrieve = (value: string | (() => string)) =>
     typeof value === "string" ? value : value();
   const accessToken = retrieve(tokens.accessToken);
@@ -36,16 +51,28 @@ export const buildUser = (tokens: {
 
   const parsedToken = parseToken(accessToken, keycloakTokenPayloadSchema);
 
-  return buildUserFromToken(parsedToken, { accessToken, refreshToken });
+  return {
+    idpId: parsedToken.sub,
+    email: parsedToken.email,
+    username: parsedToken.preferred_username,
+    name: parsedToken.name,
+    givenName: parsedToken.given_name,
+    familyName: parsedToken.family_name,
+    picture: parsedToken.picture,
+    scope: permissions.scope,
+    capabilities: permissions.capabilities,
+    hasMultiClientScope: permissions.hasMultiClientScope,
+    hasMultiSiteScope: permissions.hasMultiSiteScope,
+    activeClientId: permissions.activeClientId,
+    activeSiteId: permissions.activeSiteId,
+    tokens: { accessToken, refreshToken },
+  };
 };
 
 class KeycloakOAuth2Strategy<User> extends OAuth2Strategy<User> {
   override name = "keycloak-oauth2";
 
-  protected authorizationParams(
-    params: URLSearchParams,
-    request: Request
-  ): URLSearchParams {
+  protected authorizationParams(params: URLSearchParams, request: Request): URLSearchParams {
     const newParams = super.authorizationParams(params, request);
 
     const queryParams = getSearchParams(request);
@@ -78,23 +105,3 @@ export const authenticator = strategy.then((s) => {
   authn.use(s, "oauth2");
   return authn;
 });
-
-const buildUserFromToken = (
-  payload: z.infer<typeof keycloakTokenPayloadSchema>,
-  tokens: Tokens
-): User => {
-  return {
-    idpId: payload.sub,
-    email: payload.email,
-    username: payload.preferred_username,
-    name: payload.name,
-    givenName: payload.given_name,
-    familyName: payload.family_name,
-    picture: payload.picture,
-    permissions:
-      payload.permissions ?? payload.resource_access?.["shield-api"]?.roles,
-    clientId: payload.client_id,
-    siteId: payload.site_id,
-    tokens,
-  };
-};

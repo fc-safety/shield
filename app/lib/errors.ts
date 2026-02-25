@@ -31,6 +31,9 @@ export const cleanErrorMessage = (error: unknown) => {
       if ("error" in err) {
         return String(err.error);
       }
+      if (Object.keys(err).length === 0) {
+        return "Unknown error";
+      }
       return JSON.stringify(err, null, 2);
     }
     return String(err).replace(/^./, (str) => str.toUpperCase());

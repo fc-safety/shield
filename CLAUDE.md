@@ -58,6 +58,20 @@ shield/
 └── tests/           # Test files
 ```
 
+## MCP Tools Configuration
+
+### Serena
+
+When using Serena MCP tools, always activate the project using the Docker path:
+
+```
+/workspace/shield
+```
+
+**Do NOT use the local macOS path** (`/Users/my-name/Projects/...`). Serena runs in a Docker container and requires the container path.
+
+---
+
 ## Common Development Tasks
 
 ### Creating a New Component

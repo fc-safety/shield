@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { useViewContext } from "~/contexts/view-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 
 interface LabelCache {
@@ -23,7 +23,7 @@ export function useConditionLabels() {
   const [loading, setLoading] = useState<LoadingState>({});
   const pendingFetches = useRef<PendingFetch>({});
   const { fetchOrThrow } = useAuthenticatedFetch();
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
 
   const setLabel = (type: string, id: string, label?: string) => {
     const cacheKey = `${type}:${id}`;
@@ -91,7 +91,6 @@ export function useConditionLabels() {
           const response = await fetchOrThrow(path, {
             headers: {
               Accept: "application/json",
-              "x-view-context": viewContext,
             },
           });
 

@@ -7,7 +7,6 @@ import { AssetDetailFormFields } from "~/components/assets/asset-details-form";
 import Step from "~/components/assistant/components/step";
 import { Button } from "~/components/ui/button";
 import { Form } from "~/components/ui/form";
-import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { connectOrEmpty } from "~/lib/model-form-converters";
 import type { Asset } from "~/lib/models";
@@ -31,7 +30,6 @@ export default function StepAssetDetailsForm({
   setAssetData?: (data: Partial<Asset>) => void;
   continueLabel?: string;
 }) {
-  const viewContext = useViewContext();
   const form = useForm({
     resolver: zodResolver(assetData?.id ? updateAssetSchema : createAssetSchema),
     defaultValues: {
@@ -64,7 +62,6 @@ export default function StepAssetDetailsForm({
     const newAsset = data ?? form.getValues();
     submit(newAsset, {
       path: "/api/proxy/assets",
-      viewContext,
       onSubmitted: (data) => {
         if (data.data) {
           setAssetData?.(data.data);

@@ -4,7 +4,7 @@ import { useId } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { useAuth } from "~/contexts/auth-context";
-import { isSuperAdmin } from "~/lib/users";
+import { isSystemsAdmin } from "~/lib/users";
 
 interface LegacyIdFieldProps {
   form: UseFormReturn<any>;
@@ -22,7 +22,7 @@ export default function LegacyIdField({
   readOnly = false,
 }: LegacyIdFieldProps) {
   const { user } = useAuth();
-  const userIsSuperAdmin = isSuperAdmin(user);
+  const userIsSuperAdmin = isSystemsAdmin(user);
 
   const id = useId();
   const fieldId = `legacy-id-${id}`;

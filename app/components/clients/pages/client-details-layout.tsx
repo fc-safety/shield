@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
+import GradientScrollArea from "~/components/gradient-scroll-area";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -7,15 +8,17 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "~/components/ui/navigation-menu";
+import { ScrollBar } from "~/components/ui/scroll-area";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import type { Client } from "~/lib/models";
-import { can } from "~/lib/users";
+import { CAPABILITIES } from "~/lib/permissions";
+import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { cn } from "~/lib/utils";
 import ClientDetailsCard from "../client-details-card";
 import ClientDetailsHeader from "../client-details-header";
 
-export const TABS = ["sites", "users", "assets", "products-questions"] as const;
+export const TABS = ["sites", "members", "assets", "products-questions"] as const;
 export type Tab = (typeof TABS)[number];
 
 export default function ClientDetailsLayout({
@@ -26,29 +29,29 @@ export default function ClientDetailsLayout({
   currentTab: Tab;
 }) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
 
   const tabs = useMemo(
     (): { label: string; value: string; disabled?: boolean; hide?: boolean }[] => [
       {
         label: "Sites",
         value: "sites",
-        disabled: !can(user, "read", "sites"),
+        disabled: !hasMultiSiteVisibility(user),
       },
       {
-        label: "Users",
-        value: "users",
-        disabled: !can(user, "read", "users"),
+        label: "Members",
+        value: "members",
+        disabled: !can(user, CAPABILITIES.MANAGE_USERS),
       },
       {
         label: "Assets",
         value: "assets",
-        disabled: !can(user, "read", "assets"),
+        disabled: !can(user, CAPABILITIES.PERFORM_INSPECTIONS),
       },
       {
         label: "Products & Questions",
         value: "products-questions",
-        disabled: !can(user, "read", "products") || !can(user, "read", "asset-questions"),
+        disabled: !can(user, CAPABILITIES.CONFIGURE_PRODUCTS),
       },
     ],
     [user]
@@ -61,37 +64,40 @@ export default function ClientDetailsLayout({
           {client.demoMode && (
             <div className="bg-primary/10 border-primary/50 text-primary w-full rounded-xl border px-2 py-1 text-xs">
               <span className="font-semibold">Demo mode enabled:</span>{" "}
-              {viewContext === "admin" ? "This client" : "Your organization"} has certain features
+              {accessIntent === "system" ? "This client" : "Your organization"} has certain features
               enabled and others disabled to facilitate product demonstrations.
             </div>
           )}
           <ClientDetailsHeader client={client} />
           <NavigationMenu className="flex-none">
-            <NavigationMenuList>
-              {tabs
-                .filter((tab) => !tab.hide)
-                .map((tab) => (
-                  <NavigationMenuItem
-                    key={tab.value}
-                    className={cn({
-                      "cursor-not-allowed": tab.disabled,
-                    })}
-                    title={
-                      tab.disabled ? "You do not have permission to access this tab" : undefined
-                    }
-                  >
-                    <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                      <NavLink
-                        to={`./${tab.value}`}
-                        data-is-active={currentTab === tab.value}
-                        aria-disabled={tab.disabled}
-                      >
-                        {tab.label}
-                      </NavLink>
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                ))}
-            </NavigationMenuList>
+            <GradientScrollArea>
+              <NavigationMenuList>
+                {tabs
+                  .filter((tab) => !tab.hide)
+                  .map((tab) => (
+                    <NavigationMenuItem
+                      key={tab.value}
+                      className={cn({
+                        "cursor-not-allowed": tab.disabled,
+                      })}
+                      title={
+                        tab.disabled ? "You do not have permission to access this tab" : undefined
+                      }
+                    >
+                      <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                        <NavLink
+                          to={`./${tab.value}`}
+                          data-is-active={currentTab === tab.value}
+                          aria-disabled={tab.disabled}
+                        >
+                          {tab.label}
+                        </NavLink>
+                      </NavigationMenuLink>
+                    </NavigationMenuItem>
+                  ))}
+              </NavigationMenuList>
+              <ScrollBar orientation="horizontal" />
+            </GradientScrollArea>
           </NavigationMenu>
           <Outlet />
         </div>

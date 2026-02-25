@@ -8,59 +8,46 @@ export const VISIBILITY = {
   SELF: "visibility:self",
 } as const;
 
-export type TVisibilityPermissions =
-  (typeof VISIBILITY)[keyof typeof VISIBILITY];
-export type TVisibility = TVisibilityPermissions extends `visibility:${infer R}`
-  ? R
-  : never;
+export type TVisibilityPermissions = (typeof VISIBILITY)[keyof typeof VISIBILITY];
+export type TVisibility = TVisibilityPermissions extends `visibility:${infer R}` ? R : never;
 
-export const PERMISSION_ACTIONS = [
-  "create",
-  "read",
-  "update",
-  "delete",
-  "manage",
-  "setup",
-  "update-status",
-  "cancel",
-  "resolve",
-  "review",
-  "notify",
-  "program",
-  "register",
-] as const;
+// New types for backend permission model
+export type TScope = "SYSTEM" | "GLOBAL" | "CLIENT" | "SITE_GROUP" | "SITE" | "SELF";
 
-export type TAction = (typeof PERMISSION_ACTIONS)[number];
+// Simplified capabilities that replace fine-grained permissions
+export const CAPABILITIES = {
+  /** Read tags/assets/questions and create inspection records */
+  PERFORM_INSPECTIONS: "perform-inspections",
 
-export const RESOURCES = [
-  "assets",
-  "consumables",
-  "tags",
-  "inspections",
-  "inspection-routes",
-  "asset-questions",
-  "alerts",
-  "product-requests",
-  "clients",
-  "sites",
-  "people",
-  "product-categories",
-  "manufacturers",
-  "products",
-  "ansi-categories",
-  "users",
-] as const;
+  /** Create product and supply requests */
+  SUBMIT_REQUESTS: "submit-requests",
 
-export type TResource = (typeof RESOURCES)[number];
+  /** Create, edit, and delete assets, consumables, and tags */
+  MANAGE_ASSETS: "manage-assets",
 
-export type TActionPermissions = `${TAction}:${TResource}`;
+  /** Create and edit inspection routes and schedules */
+  MANAGE_ROUTES: "manage-routes",
 
-export type TPermission = TVisibilityPermissions | TActionPermissions;
+  /** Review and resolve alerts from failed inspections */
+  RESOLVE_ALERTS: "resolve-alerts",
 
-export const VALID_PERMISSIONS = [
-  ...Object.values(VISIBILITY),
-  ...PERMISSION_ACTIONS.flatMap((a) => RESOURCES.map((r) => `${a}:${r}`)),
-] as const;
+  /** Access compliance reports and statistics */
+  VIEW_REPORTS: "view-reports",
 
-export const isValidPermission = (p: string): p is TPermission =>
-  VALID_PERMISSIONS.includes(p as TPermission);
+  /** Create users, assign roles, and send invitations */
+  MANAGE_USERS: "manage-users",
+
+  /** Manage product catalog, categories, questions, and manufacturers */
+  CONFIGURE_PRODUCTS: "configure-products",
+
+  /** Approve or reject product and supply requests */
+  APPROVE_REQUESTS: "approve-requests",
+
+  /** Generate tag URLs and program NFC tags (global/paid resource) */
+  PROGRAM_TAGS: "program-tags",
+
+  /** Register assets to tags */
+  REGISTER_TAGS: "register-tags",
+} as const;
+
+export type TCapability = (typeof CAPABILITIES)[keyof typeof CAPABILITIES];

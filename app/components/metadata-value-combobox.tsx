@@ -3,8 +3,8 @@ import Fuse from "fuse.js";
 import { ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useImmer } from "use-immer";
-import type { ViewContext } from "~/.server/api-utils";
-import { useViewContext } from "~/contexts/view-context";
+import type { AccessIntent } from "~/.server/api-utils";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
 import { cn } from "~/lib/utils";
@@ -38,7 +38,7 @@ export default function MetadataValueCombobox({
   placeholder?: string;
   autoFocus?: boolean;
 }) {
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
 
   const { fetchOrThrow } = useAuthenticatedFetch();
 
@@ -52,7 +52,7 @@ export default function MetadataValueCombobox({
 
   const queryClient = useQueryClient();
   const { data: valueOptionsRaw, isLoading } = useQuery({
-    queryKey: ["metadata-values", metadataKey, viewContext] as const,
+    queryKey: ["metadata-values", metadataKey, accessIntent] as const,
     queryFn: ({ queryKey }) => getMetadataValues(fetchOrThrow, queryKey[1], queryKey[2]),
     enabled: !!metadataKey,
     staleTime: 0,
@@ -173,11 +173,11 @@ export default function MetadataValueCombobox({
 const getMetadataValues = async (
   fetcher: typeof fetch,
   metadataKey: string,
-  viewContext: ViewContext
+  accessIntent: AccessIntent
 ): Promise<string[]> => {
   return await fetcher(`/assets/metadata-values/${metadataKey}`, {
     headers: {
-      "x-view-context": viewContext,
+      "x-access-intent": accessIntent,
     },
   }).then((r) => r.json() as Promise<string[]>);
 };

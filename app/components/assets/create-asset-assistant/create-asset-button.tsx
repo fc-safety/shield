@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 import { ResponsiveDialog } from "~/components/responsive-dialog";
 import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 import CreateAssetAssistant from "./create-asset-assistant.component";
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
   clientId?: string;
   siteId?: string;
   nestDrawers?: boolean;
+  dialogClassName?: string;
 }
 
 export default function CreateAssetButton({
@@ -21,6 +23,7 @@ export default function CreateAssetButton({
   clientId,
   siteId,
   nestDrawers,
+  dialogClassName,
 }: Props) {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -37,7 +40,7 @@ export default function CreateAssetButton({
         </div>
       }
       description=""
-      dialogClassName="sm:max-w-2xl"
+      dialogClassName={cn("sm:max-w-2xl", dialogClassName)}
       disableScrollArea
       trigger={
         trigger !== undefined ? (

@@ -11,11 +11,11 @@ import { Button } from "~/components/ui/button";
 import { ButtonGroup, ButtonGroupSeparator } from "~/components/ui/button-group";
 import { Card, CardHeader } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
-import { useViewContext } from "~/contexts/view-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Client } from "~/lib/models";
-import { can, isGlobalAdmin } from "~/lib/users";
+import { isGlobalAdmin, isSystemsAdmin } from "~/lib/users";
 import { ResponsiveDialog } from "../responsive-dialog";
 import { Badge } from "../ui/badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../ui/form";
@@ -23,9 +23,9 @@ import { Input } from "../ui/input";
 
 export default function ClientDetailsHeader({ client }: { client: Client }) {
   const { user } = useAuth();
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
   const userIsGlobalAdmin = isGlobalAdmin(user);
-  const canEditClient = can(user, "update", "clients");
+  const canEditClient = isSystemsAdmin(user);
   const duplicateDemoClient = useOpenData();
 
   return (
@@ -54,13 +54,13 @@ export default function ClientDetailsHeader({ client }: { client: Client }) {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {viewContext === "admin" && (
+            {accessIntent !== "user" && (
               <ActiveIndicatorBadge
                 active={client.status.toLowerCase() as Lowercase<Client["status"]>}
               />
             )}
             <ButtonGroup>
-              {viewContext === "admin" && canEditClient && (
+              {accessIntent !== "user" && canEditClient && (
                 <EditClientButton
                   client={client}
                   trigger={
@@ -104,7 +104,6 @@ export default function ClientDetailsHeader({ client }: { client: Client }) {
 const duplicateDemoClientSchema = z.object({
   name: z.string().min(1),
   emailDomain: z.string().min(1),
-  password: z.string().min(8),
 });
 type TDuplicateDemoClientForm = z.infer<typeof duplicateDemoClientSchema>;
 function DuplicateDemoClientDialog({
@@ -120,7 +119,6 @@ function DuplicateDemoClientDialog({
     resolver: zodResolver(duplicateDemoClientSchema),
     defaultValues: {
       name: "(Copy of) " + client.name,
-      password: "safetydemo1",
     },
   });
 
@@ -142,7 +140,7 @@ function DuplicateDemoClientDialog({
     submitDuplicateDemoClient(data, {
       method: "post",
       path: `/api/proxy/clients/${client.id}/duplicate-demo`,
-      viewContext: "admin",
+      accessIntent: "system",
     });
   };
 
@@ -176,19 +174,6 @@ function DuplicateDemoClientDialog({
                 <FormDescription>
                   This will be the new domain used for new user email addresses.
                 </FormDescription>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormDescription>This will be the password for all new users.</FormDescription>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>

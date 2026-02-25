@@ -1,6 +1,5 @@
 import { Pencil } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { cn } from "~/lib/utils";
 import { Textarea } from "./ui/textarea";
@@ -28,7 +27,6 @@ export default function SubmittingTextarea({
   onEditingChange,
   displayClassName,
 }: SubmittingTextareaProps) {
-  const viewContext = useViewContext();
   const [currentValue, setCurrentValue] = useState(() => value);
   const { submitJson: updateValue, isLoading } = useModalFetcher();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -56,7 +54,6 @@ export default function SubmittingTextarea({
         {
           method: "patch",
           path,
-          viewContext,
         }
       );
     }

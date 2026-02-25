@@ -16,7 +16,7 @@ import {
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Skeleton } from "~/components/ui/skeleton";
-import { useViewContext } from "~/contexts/view-context";
+import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useProxyImage } from "~/hooks/use-proxy-image";
 import type { Asset } from "~/lib/models";
@@ -40,11 +40,11 @@ export default function StepSelectExistingAsset({
   clientId?: string;
   continueLabel?: string;
 }) {
-  const viewContext = useViewContext();
+  const accessIntent = useAccessIntent();
 
   const { fetchOrThrow } = useAuthenticatedFetch();
   const { data: assets, isLoading } = useQuery(
-    getAssetsQuery(fetchOrThrow, { siteId, clientId, context: viewContext, noTag: true })
+    getAssetsQuery(fetchOrThrow, { siteId, clientId, accessIntent, noTag: true })
   );
 
   const selectedAsset = useMemo(() => {

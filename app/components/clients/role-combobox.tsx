@@ -1,7 +1,10 @@
 import Fuse from "fuse.js";
+import { ShieldAlert } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useFetcher } from "react-router";
+import type { DataOrError } from "~/.server/api-utils";
+import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Role } from "~/lib/types";
+import { cn } from "~/lib/utils";
 import { ResponsiveCombobox } from "../responsive-combobox";
 
 interface RoleComboboxProps {
@@ -20,6 +23,18 @@ const fuse = new Fuse([] as Role[], {
   keys: ["name", "description", "friendlyName"],
 });
 
+function RoleOption({ role, isElevated = false }: { role: Role; isElevated?: boolean }) {
+  return (
+    <div className="flex gap-1.5">
+      {isElevated && <ShieldAlert className="text-warning-foreground mt-0.5 size-2.5 shrink-0" />}
+      <div className="flex flex-col gap-1">
+        <span className={cn(isElevated && "text-warning-foreground")}>{role.name}</span>
+        <span className="text-muted-foreground text-xs">{role.description}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function RoleCombobox({
   value: valueProp,
   onValueChange,
@@ -31,45 +46,73 @@ export default function RoleCombobox({
   onRoleChange,
   excludeRoles = [],
 }: RoleComboboxProps) {
-  const fetcher = useFetcher<Role[]>();
+  const [roles, setRoles] = useState<Role[]>([]);
+  const {
+    load,
+    isLoading,
+    data: fetcherData,
+  } = useModalFetcher<DataOrError<Role[]>>({
+    onData: (d) => setRoles(d.data ?? []),
+  });
 
   const preloadRoles = useCallback(() => {
-    if (fetcher.state === "idle" && !fetcher.data) {
-      fetcher.load("/api/proxy/roles");
-    }
-  }, [fetcher]);
+    load({ path: "/api/proxy/roles" });
+  }, [load]);
 
   useEffect(() => {
-    if (valueProp || defaultByName) preloadRoles();
-  }, [valueProp, defaultByName, preloadRoles]);
+    if (!fetcherData && (valueProp || defaultByName)) preloadRoles();
+  }, [valueProp, defaultByName, preloadRoles, fetcherData]);
 
-  const [roles, setRoles] = useState<Role[]>([]);
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    if (fetcher.data) {
-      setRoles(fetcher.data);
-    }
-  }, [fetcher.data]);
 
   const options = useMemo(() => {
     let filteredRoles = roles;
 
     // Filter out excluded roles
     if (excludeRoles.length > 0) {
-      filteredRoles = filteredRoles.filter(
-        (role) => !excludeRoles.includes(role.id)
-      );
+      filteredRoles = filteredRoles.filter((role) => !excludeRoles.includes(role.id));
     }
 
     if (search) {
       fuse.setCollection(filteredRoles);
       filteredRoles = fuse.search(search).map((result) => result.item);
     }
-    return filteredRoles.map((role) => ({
-      label: role.name,
-      value: role.id,
-    }));
+
+    const isElevatedRole = (role: Role) => role.scope === "GLOBAL" || role.scope === "SYSTEM";
+
+    const standardRoles = filteredRoles.filter((r) => !isElevatedRole(r));
+    const elevatedRoles = filteredRoles.filter((r) => isElevatedRole(r));
+
+    // If there are no elevated roles, return a flat list
+    if (elevatedRoles.length === 0) {
+      return standardRoles.map((role) => ({
+        label: <RoleOption role={role} />,
+        value: role.id,
+      }));
+    }
+
+    // Return grouped options with elevated roles separated
+    const groups = [];
+    if (standardRoles.length > 0) {
+      groups.push({
+        key: "standard",
+        groupLabel: "Client Roles",
+        options: standardRoles.map((role) => ({
+          label: <RoleOption role={role} />,
+          value: role.id,
+        })),
+      });
+    }
+    groups.push({
+      key: "elevated",
+      groupLabel: "Global Roles",
+      options: elevatedRoles.map((role) => ({
+        label: <RoleOption role={role} isElevated />,
+        value: role.id,
+      })),
+    });
+
+    return groups;
   }, [roles, search, excludeRoles]);
 
   const value = useMemo(() => {
@@ -97,7 +140,7 @@ export default function RoleCombobox({
       onValueChange={onValueChange}
       onBlur={onBlur}
       displayValue={(value) => roles.find((c) => c.id === value)?.name ?? <>&mdash;</>}
-      loading={fetcher.state === "loading"}
+      loading={isLoading}
       options={options}
       disabled={disabled}
       onMouseOver={() => !disabled && preloadRoles()}

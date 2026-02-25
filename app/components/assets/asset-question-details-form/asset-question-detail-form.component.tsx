@@ -29,7 +29,6 @@ import ActiveToggleFormInput from "~/components/active-toggle-form-input";
 import HelpPopover from "~/components/help-popover";
 import LegacyIdField from "~/components/legacy-id-field";
 import QuestionResponseTypeDisplay from "~/components/products/question-response-type-display";
-import { useViewContext } from "~/contexts/view-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { RESPONSE_TYPE_LABELS } from "~/lib/asset-questions/constants";
 import { ASSET_QUESTION_TONE_OPTIONS, ASSET_QUESTION_TONES } from "~/lib/constants";
@@ -83,8 +82,6 @@ function AssetQuestionDetailsFormContent({
   onSubmitted,
   clientId,
 }: AssetQuestionDetailFormProps) {
-  const viewContext = useViewContext();
-
   const isNew = !assetQuestion;
   const { closeSidepanel } = useAssetQuestionDetailFormContext();
 
@@ -255,7 +252,6 @@ function AssetQuestionDetailsFormContent({
     submit(serializeFormJson(data), {
       path: `/api/proxy/asset-questions`,
       id: assetQuestion?.id,
-      viewContext,
     });
   };
 
