@@ -312,17 +312,10 @@ function ClientAccessGroupSection({
       <div className="space-y-1.5">
         {entries.map((entry) => (
           <div key={entry.id} className="flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <SiteCombobox
-                value={entry.site.id}
-                clientId={clientId}
-                readOnly
-                showClear={false}
-                placeholder="Site"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <RoleCombobox value={entry.role.id} readOnly placeholder="Role" />
+            <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md border px-3 py-2 text-sm">
+              <span className="font-medium">{entry.role.name}</span>
+              <span className="text-muted-foreground">@</span>
+              <span className="text-muted-foreground">{entry.site.name}</span>
             </div>
             <ResponsiveActions
               actionGroups={[
@@ -357,6 +350,25 @@ function ClientAccessGroupSection({
             <div className="min-w-0 flex-1">
               <Controller
                 control={form.control}
+                name="roleId"
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <RoleCombobox
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      onRoleChange={setSelectedRoleForAdd}
+                      disabled={isSubmitting}
+                      placeholder="Select role..."
+                    />
+                  </Field>
+                )}
+              />
+            </div>
+            <span className="text-muted-foreground text-sm">@</span>
+            <div className="min-w-0 flex-1">
+              <Controller
+                control={form.control}
                 name="siteId"
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
@@ -368,25 +380,8 @@ function ClientAccessGroupSection({
                       disabled={isSubmitting}
                       showClear={false}
                       nestDrawers
+                      includeSiteGroups
                       placeholder="Select site..."
-                    />
-                  </Field>
-                )}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <Controller
-                control={form.control}
-                name="roleId"
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <RoleCombobox
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      onBlur={field.onBlur}
-                      onRoleChange={setSelectedRoleForAdd}
-                      disabled={isSubmitting}
-                      placeholder="Select role..."
                     />
                   </Field>
                 )}
