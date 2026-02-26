@@ -211,7 +211,7 @@ export function MembersTable({
               trigger={
                 <Button size="sm">
                   <UserPlus className="h-4 w-4" />
-                  Invite Member
+                  Invite Members
                 </Button>
               }
               onCreated={() => onInvitationCreated?.()}
