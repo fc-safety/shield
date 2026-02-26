@@ -121,9 +121,11 @@ function AllUsersTable({ users }: AllUsersTableProps) {
       },
       {
         accessorFn: (user) =>
-          user.clientAccess.map((a) => `${a.role.name} (${a.site.name})`).join(", "),
-        id: "roles",
-        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+          user.clientAccess.map((a) => `${a.role.name} ${a.site.name} ${a.client.name}`).join(", "),
+        id: "access",
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} title="Access" />
+        ),
         cell: ({ row }) => {
           const access = row.original.clientAccess;
 
@@ -131,14 +133,48 @@ function AllUsersTable({ users }: AllUsersTableProps) {
             return <>&mdash;</>;
           }
 
+          const maxVisible = 4;
+          const overflow = access.length - maxVisible;
+
+          // Group access entries by client
+          const byClient = new Map<string, typeof access>();
+          for (const a of access) {
+            const key = a.client.id;
+            if (!byClient.has(key)) byClient.set(key, []);
+            byClient.get(key)!.push(a);
+          }
+
+          let count = 0;
+
           return (
-            <div className="flex flex-col gap-1">
-              {access.map((a) => (
-                <span key={a.id} className="text-sm">
-                  <span className="font-medium">{a.role.name}</span>
-                  <span className="text-muted-foreground"> @ {a.site.name}</span>
+            <div className="flex min-w-48 flex-col gap-1.5">
+              {Array.from(byClient.entries()).map(([clientId, entries]) => {
+                const visibleEntries: typeof entries = [];
+                for (const entry of entries) {
+                  if (count >= maxVisible) break;
+                  visibleEntries.push(entry);
+                  count++;
+                }
+                if (visibleEntries.length === 0) return null;
+                return (
+                  <div key={clientId}>
+                    <span className="text-muted-foreground text-xs">{entries[0].client.name}</span>
+                    <div className="flex flex-col">
+                      {visibleEntries.map((a) => (
+                        <span key={a.id} className="text-sm">
+                          <span className="font-medium">{a.role.name}</span>
+                          <span className="text-muted-foreground"> @ {a.site.name}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {overflow > 0 && (
+                <span className="text-muted-foreground text-xs">
+                  +{overflow} more {overflow === 1 ? "role" : "roles"}
                 </span>
-              ))}
+              )}
             </div>
           );
         },
@@ -149,7 +185,9 @@ function AllUsersTable({ users }: AllUsersTableProps) {
           return primaryAccess?.client.name;
         },
         id: "client",
-        header: ({ column, table }) => <DataTableColumnHeader column={column} table={table} />,
+        header: ({ column, table }) => (
+          <DataTableColumnHeader column={column} table={table} title="Primary Client" />
+        ),
         cell: ({ row }) => {
           const primaryAccess =
             row.original.clientAccess.find((a) => a.isPrimary) ?? row.original.clientAccess[0];
