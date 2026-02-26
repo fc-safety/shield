@@ -36,6 +36,7 @@ interface ResponsiveComboboxProps extends Omit<SelectOptionsProps, "setOpen" | "
   className?: string;
   showClear?: boolean;
   disabled?: boolean;
+  readOnly?: boolean;
   compactClearButton?: boolean;
   isNestedDrawer?: boolean;
 }
@@ -54,6 +55,7 @@ export function ResponsiveCombobox({
   className,
   showClear = false,
   disabled,
+  readOnly = false,
   compactClearButton = false,
   isNestedDrawer = false,
   ...selectOptionsProps
@@ -79,6 +81,37 @@ export function ResponsiveCombobox({
   useEffect(() => {
     setInternalValue(valueProp);
   }, [valueProp]);
+
+  if (readOnly) {
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          compactClearButton && "flex-col items-start gap-0.5",
+          className
+        )}
+      >
+        <Button
+          type="button"
+          variant="outline"
+          className={cn(
+            "border-input/70 pointer-events-none flex-1 justify-between text-start",
+            compactClearButton && "w-full",
+            className
+          )}
+          tabIndex={-1}
+        >
+          <div className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+            {value ? (
+              <>{displayValue ? displayValue(value) : value}</>
+            ) : (
+              <>{placeholder ?? "Select"}</>
+            )}
+          </div>
+        </Button>
+      </div>
+    );
+  }
 
   const renderInput = ({ renderTrigger }: { renderTrigger: (trigger: ReactNode) => ReactNode }) => (
     <div

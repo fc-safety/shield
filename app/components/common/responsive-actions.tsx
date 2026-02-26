@@ -1,5 +1,5 @@
 import { DropdownMenuGroup } from "@radix-ui/react-dropdown-menu";
-import { MoreHorizontal, type LucideIcon } from "lucide-react";
+import { Loader2, MoreHorizontal, type LucideIcon } from "lucide-react";
 import type { ComponentProps, PropsWithChildren } from "react";
 import { Link, type To } from "react-router";
 import { Fragment } from "react/jsx-runtime";
@@ -22,6 +22,7 @@ interface TAction {
   linkTo?: To;
   onAction?: () => void;
   disabled?: boolean;
+  pending?: boolean;
   hide?: boolean;
   variant?: ButtonProps["variant"];
 }
@@ -54,9 +55,10 @@ export default function ResponsiveActions({ actionGroups }: { actionGroups: TAct
               {group.actions
                 .filter((action) => !action.hide)
                 .map((action) => {
+                  const ActionIcon = action.pending ? Loader2 : action.Icon;
                   const displayContent = (
                     <>
-                      <action.Icon />
+                      <ActionIcon className={action.pending ? "animate-spin" : undefined} />
                       {action.text}
                     </>
                   );
@@ -65,7 +67,7 @@ export default function ResponsiveActions({ actionGroups }: { actionGroups: TAct
                     <DropdownMenuItem
                       key={action.key}
                       onSelect={action.onAction}
-                      disabled={action.disabled}
+                      disabled={action.disabled || action.pending}
                       asChild={!!action.linkTo}
                     >
                       {!!action.linkTo ? (
@@ -97,9 +99,10 @@ const ActionButtonGroup = ({ actionGroup }: { actionGroup: TActionGroup }) => {
         const Comp = action.linkTo
           ? ({ children }: PropsWithChildren) => <Link to={action.linkTo!}>{children}</Link>
           : Fragment;
+        const ActionIcon = action.pending ? Loader2 : action.Icon;
         const displayContent = (
           <>
-            <action.Icon />
+            <ActionIcon className={action.pending ? "animate-spin" : undefined} />
             {defaultSize !== "icon" && defaultSize !== "icon-sm" && action.text}
           </>
         );
@@ -112,7 +115,7 @@ const ActionButtonGroup = ({ actionGroup }: { actionGroup: TActionGroup }) => {
               size={defaultSize}
               variant={action.variant ?? defaultVariant}
               title={action.text}
-              disabled={action.disabled}
+              disabled={action.disabled || action.pending}
             >
               {action.linkTo ? <Link to={action.linkTo!}>{displayContent}</Link> : displayContent}
             </Button>

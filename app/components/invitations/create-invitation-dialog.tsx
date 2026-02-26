@@ -73,9 +73,7 @@ const InvitationRow = memo(function InvitationRow({
                 className={cn(fieldState.invalid && "border-destructive")}
               />
               {fieldState.error && (
-                <p className="text-destructive mt-1 text-xs">
-                  {fieldState.error.message}
-                </p>
+                <p className="text-destructive mt-1 text-xs">{fieldState.error.message}</p>
               )}
             </div>
           )}
@@ -94,9 +92,7 @@ const InvitationRow = memo(function InvitationRow({
                 className="w-full"
               />
               {fieldState.error && (
-                <p className="text-destructive mt-1 text-xs">
-                  {fieldState.error.message}
-                </p>
+                <p className="text-destructive mt-1 text-xs">{fieldState.error.message}</p>
               )}
             </div>
           )}
@@ -115,9 +111,7 @@ const InvitationRow = memo(function InvitationRow({
                 className="w-full"
               />
               {fieldState.error && (
-                <p className="text-destructive mt-1 text-xs">
-                  {fieldState.error.message}
-                </p>
+                <p className="text-destructive mt-1 text-xs">{fieldState.error.message}</p>
               )}
             </div>
           )}
@@ -302,7 +296,9 @@ export function CreateInvitationDialog({
     name: "invitations",
   });
 
-  const { submitJson, isSubmitting } = useModalFetcher<Invitation | Invitation[] | { data: Invitation | Invitation[] }>({
+  const { submitJson, isSubmitting } = useModalFetcher<
+    Invitation | Invitation[] | { data: Invitation | Invitation[] }
+  >({
     onSubmitted: (response) => {
       const data = "data" in response && response.data ? response.data : response;
       const list = Array.isArray(data) ? data : [data as Invitation];
@@ -389,7 +385,7 @@ export function CreateInvitationDialog({
           trigger ?? (
             <Button size="sm">
               <Plus className="h-4 w-4" />
-              Invite Member
+              Invite Members
             </Button>
           )
         }

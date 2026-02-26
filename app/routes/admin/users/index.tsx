@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { Pencil, Shield, ShieldOff, SquareAsterisk, Users } from "lucide-react";
+import { Pencil, Shield, ShieldOff, SquareAsterisk, UserPen, Users } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Link } from "react-router";
 import type { z } from "zod";
@@ -7,6 +7,7 @@ import { api } from "~/.server/api";
 import { guardOrSendHome } from "~/.server/guard";
 import ActiveIndicator2 from "~/components/active-indicator-2";
 import AdminEditUserForm from "~/components/admin/admin-edit-user-form";
+import ManageUserAccessForm from "~/components/admin/manage-user-access-form";
 import ResetPasswordForm from "~/components/clients/reset-password-form";
 import ResponsiveActions from "~/components/common/responsive-actions";
 import ConfirmationDialog from "~/components/confirmation-dialog";
@@ -70,6 +71,7 @@ function AllUsersTable({ users }: AllUsersTableProps) {
 
   const editUser = useOpenData<UserResponse>();
   const resetPassword = useOpenData<UserResponse>();
+  const manageAccess = useOpenData<UserResponse>();
 
   const { createOrUpdateJson: submit } = useModalFetcher();
   const setUserActive = useCallback(
@@ -186,6 +188,13 @@ function AllUsersTable({ users }: AllUsersTableProps) {
                       disabled: !canManageUsers,
                     },
                     {
+                      key: "manage-access",
+                      text: "Manage Access",
+                      Icon: UserPen,
+                      onAction: () => manageAccess.openData(user),
+                      disabled: !canManageUsers,
+                    },
+                    {
                       key: "reset-password",
                       text: "Reset Password",
                       Icon: SquareAsterisk,
@@ -236,7 +245,7 @@ function AllUsersTable({ users }: AllUsersTableProps) {
         },
       },
     ],
-    [editUser, resetPassword, setUserActive, canManageUsers, setConfirmAction]
+    [editUser, resetPassword, manageAccess, setUserActive, canManageUsers, setConfirmAction]
   );
 
   // Get unique clients for filtering
@@ -301,6 +310,14 @@ function AllUsersTable({ users }: AllUsersTableProps) {
           />
         </ResponsiveDialog>
       )}
+      <ResponsiveDialog
+        title={`Manage Access${manageAccess.data ? ` — ${manageAccess.data.firstName} ${manageAccess.data.lastName}`.trim() : ""}`}
+        open={manageAccess.open}
+        onOpenChange={manageAccess.setOpen}
+        className="sm:max-w-2xl"
+      >
+        {manageAccess.data && <ManageUserAccessForm user={manageAccess.data} />}
+      </ResponsiveDialog>
       <ConfirmationDialog {...confirmAction} />
     </>
   );
