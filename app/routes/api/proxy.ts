@@ -50,6 +50,13 @@ const proxy = async ({ request, params }: Route.ActionArgs | Route.LoaderArgs) =
     headers.set("x-client-id", clientId);
   }
 
+  const siteId = query.get("_siteId");
+  query.delete("_siteId");
+
+  if (siteId) {
+    headers.set("x-site-id", siteId);
+  }
+
   const inspectionToken = query.get("_inspectionToken");
   query.delete("_inspectionToken");
 

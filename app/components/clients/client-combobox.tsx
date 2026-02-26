@@ -1,5 +1,5 @@
 import Fuse from "fuse.js";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DataOrError } from "~/.server/api-utils";
 import { useAccessIntent } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -15,6 +15,8 @@ interface ClientComboboxProps {
   disabled?: boolean;
   showClear?: boolean;
   nestDrawers?: boolean;
+  onClientChange?: (client: Client | undefined) => void;
+  placeholder?: string;
 }
 
 const fuse = new Fuse([] as Client[], { keys: ["name"] });
@@ -27,8 +29,12 @@ export default function ClientCombobox({
   disabled,
   showClear,
   nestDrawers,
+  onClientChange,
+  placeholder,
 }: ClientComboboxProps) {
   const accessIntent = useAccessIntent();
+  const onClientChangeRef = useRef(onClientChange);
+  onClientChangeRef.current = onClientChange;
 
   const [clients, setClients] = useState<Client[]>([]);
   const {
@@ -74,6 +80,10 @@ export default function ClientCombobox({
     }
   }, [value, accessIntent, clients, onValueChange]);
 
+  useEffect(() => {
+    onClientChangeRef.current?.(clients.find((c) => value && c.id === value));
+  }, [value, clients]);
+
   return (
     <ResponsiveCombobox
       value={value}
@@ -97,6 +107,7 @@ export default function ClientCombobox({
       showClear={showClear}
       errorMessage={fetcherData?.error ? "Something went wrong." : undefined}
       isNestedDrawer={nestDrawers}
+      placeholder={placeholder}
     />
   );
 }

@@ -15,6 +15,8 @@ interface RoleComboboxProps {
   defaultByName?: string;
   showClear?: boolean;
   disabled?: boolean;
+  readOnly?: boolean;
+  placeholder?: string;
   onRoleChange?: (role: Role | undefined) => void;
   excludeRoles?: string[]; // Filter out these role IDs from the options
 }
@@ -43,6 +45,8 @@ export default function RoleCombobox({
   defaultByName,
   showClear = false,
   disabled,
+  readOnly,
+  placeholder,
   onRoleChange,
   excludeRoles = [],
 }: RoleComboboxProps) {
@@ -155,6 +159,8 @@ export default function RoleCombobox({
       className={className}
       shouldFilter={false}
       showClear={showClear}
+      readOnly={readOnly}
+      placeholder={placeholder}
     />
   );
 }

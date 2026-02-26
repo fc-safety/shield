@@ -14,7 +14,9 @@ interface SiteComboboxProps {
   clientId?: string;
   valueKey?: "id" | "externalId";
   disabled?: boolean;
+  readOnly?: boolean;
   showClear?: boolean;
+  placeholder?: string;
   includeSiteGroups?: boolean | "exclusively";
   nestDrawers?: boolean;
   preloadOnMount?: boolean;
@@ -31,6 +33,8 @@ export default function SiteCombobox({
   valueKey = "id",
   disabled,
   showClear = true,
+  readOnly,
+  placeholder,
   includeSiteGroups = false,
   nestDrawers,
   preloadOnMount = false,
@@ -134,6 +138,8 @@ export default function SiteCombobox({
       shouldFilter={false}
       showClear={showClear}
       disabled={disabled}
+      readOnly={readOnly}
+      placeholder={placeholder}
       errorMessage={fetcherData?.error ? "Something went wrong." : undefined}
       isNestedDrawer={nestDrawers}
     />
