@@ -1,5 +1,10 @@
 import { deflate, inflate } from "pako";
-import { createCookieSessionStorage, type SessionData, type SessionStorage } from "react-router";
+import {
+  createCookie,
+  createCookieSessionStorage,
+  type SessionData,
+  type SessionStorage,
+} from "react-router";
 import { createThemeSessionResolver } from "remix-themes";
 import type { TCapability, TScope } from "~/lib/permissions";
 import type { AppState } from "~/lib/types";
@@ -156,4 +161,16 @@ export const userSessionStorage = createCookieSessionStorage<{
       return compress(value);
     },
   },
+});
+
+// AUTH RETRY COOKIE
+// Short-lived cookie used to track a single automatic retry of the OAuth
+// callback when the first attempt fails (e.g. state mismatch on first IdP login).
+
+export const authRetryCookie = createCookie("__auth_retry", {
+  path: "/",
+  httpOnly: true,
+  sameSite: "lax",
+  maxAge: 60, // 60 seconds — just long enough for the retry round-trip
+  ...(isProduction ? { domain, secure: true } : {}),
 });

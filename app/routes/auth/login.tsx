@@ -10,6 +10,11 @@ import type { Route } from "./+types/login";
 import { buildPath } from "~/lib/urls";
 
 const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
+  authentication_failed: {
+    title: "Sign-in Unsuccessful",
+    description:
+      "Something went wrong during sign-in. Please try again — it usually works on the next attempt.",
+  },
   access_grant_fetch_failed: {
     title: "Failed to Get Identity Details",
     description:
@@ -67,14 +72,10 @@ export default function Login({
           )}
           <Button asChild className="w-full">
             <a
-              href={
-                returnTo
-                  ? buildPath("/login", {
-                      returnTo,
-                      login_hint: loginHint ?? undefined,
-                    })
-                  : "/login"
-              }
+              href={buildPath("/login", {
+                returnTo: returnTo ?? undefined,
+                login_hint: loginHint ?? undefined,
+              })}
             >
               <LogIn />
               Try Again
