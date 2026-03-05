@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { getSearchParam } from "~/lib/utils";
 import type { Route } from "./+types/login";
+import { buildPath } from "~/lib/urls";
 
 const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
   access_grant_fetch_failed: {
@@ -23,10 +24,16 @@ const DEFAULT_ERROR = {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const returnTo = getSearchParam(request, "returnTo");
+  const loginHint = getSearchParam(request, "login_hint");
 
   const error = getSearchParam(request, "error");
   if (error) {
-    return { error, returnTo, errorMessage: getSearchParam(request, "error_description") };
+    return {
+      error,
+      returnTo,
+      loginHint,
+      errorMessage: getSearchParam(request, "error_description"),
+    };
   }
 
   if (returnTo) {
@@ -41,7 +48,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { error: null };
 }
 
-export default function Login({ loaderData: { error, returnTo } }: Route.ComponentProps) {
+export default function Login({
+  loaderData: { error, returnTo, loginHint },
+}: Route.ComponentProps) {
   const errorInfo = error ? (ERROR_MESSAGES[error] ?? DEFAULT_ERROR) : null;
 
   return (
@@ -57,7 +66,16 @@ export default function Login({ loaderData: { error, returnTo } }: Route.Compone
             </Alert>
           )}
           <Button asChild className="w-full">
-            <a href={returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login"}>
+            <a
+              href={
+                returnTo
+                  ? buildPath("/login", {
+                      returnTo,
+                      login_hint: loginHint ?? undefined,
+                    })
+                  : "/login"
+              }
+            >
               <LogIn />
               Try Again
             </a>

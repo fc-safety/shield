@@ -150,10 +150,13 @@ export const getLoginRedirect = async (
   session?: Awaited<ReturnType<(typeof userSessionStorage)["getSession"]>>,
   options: LoginRedirectOptions = {}
 ) => {
+  let loginHint: string | undefined = undefined;
   if (session) {
     // If auth session exists, set return to and commit session.
     session.set("returnTo", options.returnTo ?? request.url);
     await commitUserSession(session);
+
+    loginHint = session.get("email") ?? undefined;
   } else {
     // Otherwise, reset the auth session.
     cookieStore.unset("authSession");
@@ -162,6 +165,7 @@ export const getLoginRedirect = async (
   const loginUrl = buildPath(options.loginRoute ?? "/login", {
     error: options.errorCode,
     error_description: options.errorMessage,
+    login_hint: loginHint,
   });
 
   return redirect(loginUrl);
@@ -411,10 +415,11 @@ export const refreshUserSession = async (
       currentUser = await fetchCurrentUser(validTokens.accessToken);
     }
 
+    session.set("email", currentUser.email);
+
     if (currentUser.accessGrant) {
       accessGrant = currentUser.accessGrant;
       applyAccessGrantToSession(session, currentUser.accessGrant);
-      await commitUserSession(session);
 
       // Additionally, set the app state to use the current users's access grant.
       await setAppState(request, {
@@ -428,6 +433,8 @@ export const refreshUserSession = async (
         // Don't throw error, as this is not critical. We don't want to interrupt or block the user's flow.
       });
     }
+
+    await commitUserSession(session);
   } catch (error) {
     const msg = "Failed to fetch access grant for current user.";
     logger.error(error, msg);
