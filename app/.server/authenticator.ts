@@ -79,6 +79,9 @@ class KeycloakOAuth2Strategy<User> extends OAuth2Strategy<User> {
     if (queryParams.has("action")) {
       newParams.set("kc_action", queryParams.get("action")!);
     }
+    if (queryParams.has("login_hint")) {
+      newParams.set("login_hint", queryParams.get("login_hint")!);
+    }
 
     return newParams;
   }

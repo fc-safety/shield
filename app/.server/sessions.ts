@@ -125,6 +125,7 @@ export const commitInspectionSession = async (session: InspectionSession) => {
 export const userSessionStorage = createCookieSessionStorage<{
   id?: string;
   tokens?: Tokens | null;
+  email?: string | null;
   returnTo?: string;
   scope?: TScope | null;
   capabilities?: TCapability[] | null;
