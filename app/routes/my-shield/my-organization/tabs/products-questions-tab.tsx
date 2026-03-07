@@ -1,7 +1,7 @@
-import type { ShouldRevalidateFunctionArgs } from "react-router";
+import { useRouteLoaderData, type ShouldRevalidateFunctionArgs } from "react-router";
 import { api } from "~/.server/api.js";
-import { requireUserSession } from "~/.server/user-sesssion.js";
 import ClientDetailsTabsProductsQuestionsTag from "~/components/clients/pages/client-details-tabs/products-questions-tab";
+import type { loader as layoutLoader } from "../layout";
 import type { Route } from "./+types/products-questions-tab.tsx";
 
 export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
@@ -20,22 +20,12 @@ export const shouldRevalidate = (arg: ShouldRevalidateFunctionArgs) => {
 };
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { user } = await requireUserSession(request);
-  const clientId = await api.clients
-    .list(request, {
-      limit: 1,
-      id: user.activeClientId,
-    })
-    .then((r) => r.results.at(0)?.id);
-
-  //   const sitesResult = await api.sites.list(request, { clientId: id });
   const [productResults, questionResults] = await Promise.all([
-    api.products.list(request, { limit: 10000, clientId }),
-    api.assetQuestions.list(request, { limit: 10000, clientId }),
+    api.products.list(request, { limit: 10000, clientId: { not: "_NULL" } }),
+    api.assetQuestions.list(request, { limit: 10000, clientId: { not: "_NULL" } }),
   ]);
 
   return {
-    clientId,
     products: productResults.results,
     productsTotalCount: productResults.count,
     questions: questionResults.results,
@@ -44,16 +34,20 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 };
 
 export default function ProductsQuestionsTab({
-  loaderData: { clientId, products, productsTotalCount, questions, questionsTotalCount },
+  loaderData: { products, productsTotalCount, questions, questionsTotalCount },
 }: Route.ComponentProps) {
+  const layoutData = useRouteLoaderData<typeof layoutLoader>(
+    "routes/my-shield/my-organization/layout"
+  );
+
   return (
     <ClientDetailsTabsProductsQuestionsTag
-      clientId={clientId}
+      clientId={layoutData?.client?.id}
       products={products}
       productsTotalCount={productsTotalCount}
       questions={questions}
       questionsTotalCount={questionsTotalCount}
-      readOnly
+      readOnly={false}
     />
   );
 }

@@ -116,12 +116,7 @@ export default function ProductCategorySelector({
         />
       ) : (
         <ResponsiveModalTrigger>
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled}
-            className={cn(className)}
-          >
+          <Button type="button" size="sm" disabled={disabled} className={cn(className)}>
             <Search />
             Select Category
           </Button>
@@ -242,6 +237,7 @@ export default function ProductCategorySelector({
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={() => {
                 if (tempValue) {
                   onValueChange?.(tempValue);

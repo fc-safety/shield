@@ -53,7 +53,9 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function MembersTabRoute({
   loaderData: { members, membersTotalCount, pendingInvitations },
 }: Route.ComponentProps) {
-  const layoutData = useRouteLoaderData<typeof layoutLoader>("routes/my-organization/layout");
+  const layoutData = useRouteLoaderData<typeof layoutLoader>(
+    "routes/my-shield/my-organization/layout"
+  );
   const { revalidate } = useRevalidator();
 
   return (

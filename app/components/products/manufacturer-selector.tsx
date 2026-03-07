@@ -116,12 +116,7 @@ export default function ManufacturerSelector({
         />
       ) : (
         <ResponsiveModalTrigger>
-          <Button
-            type="button"
-            size="sm"
-            disabled={disabled}
-            className={cn(className)}
-          >
+          <Button type="button" size="sm" disabled={disabled} className={cn(className)}>
             <Search />
             Select Manufacturer
           </Button>
@@ -239,6 +234,7 @@ export default function ManufacturerSelector({
               Cancel
             </Button>
             <Button
+              type="button"
               onClick={() => {
                 if (tempValue) {
                   onValueChange?.(tempValue);

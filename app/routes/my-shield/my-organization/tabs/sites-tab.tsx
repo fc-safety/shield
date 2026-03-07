@@ -25,7 +25,9 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 };
 
 export default function SitesTab({ loaderData: { sites, sitesTotalCount } }: Route.ComponentProps) {
-  const layoutData = useRouteLoaderData<typeof layoutLoader>("routes/my-organization/layout");
+  const layoutData = useRouteLoaderData<typeof layoutLoader>(
+    "routes/my-shield/my-organization/layout"
+  );
 
   return (
     <ClientDetailsTabsSitesTab
