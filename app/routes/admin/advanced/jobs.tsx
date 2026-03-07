@@ -6,7 +6,14 @@ import { toast } from "sonner";
 import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import VirtualizedTable from "~/components/data-table/virtualized-data-table";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "~/components/responsive-modal";
 import { Button } from "~/components/ui/button";
 import { ButtonGroup } from "~/components/ui/button-group";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -95,9 +102,19 @@ export default function AdminAdvancedJobs() {
         cell: ({ getValue }) => {
           const data = getValue() as Record<string, unknown>;
           return (
-            <ResponsiveDialog title="Data" trigger={<Button variant="secondary">View data</Button>}>
-              <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(data, null, 2)}</pre>
-            </ResponsiveDialog>
+            <ResponsiveModal>
+              <ResponsiveModalTrigger>
+                <Button variant="secondary">View data</Button>
+              </ResponsiveModalTrigger>
+              <ResponsiveModalContent>
+                <ResponsiveModalHeader>
+                  <ResponsiveModalTitle>Data</ResponsiveModalTitle>
+                </ResponsiveModalHeader>
+                <ResponsiveModalBody>
+                  <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(data, null, 2)}</pre>
+                </ResponsiveModalBody>
+              </ResponsiveModalContent>
+            </ResponsiveModal>
           );
         },
       },
@@ -118,12 +135,19 @@ export default function AdminAdvancedJobs() {
         cell: ({ getValue }) => {
           const stacktrace = getValue() as string[];
           return (
-            <ResponsiveDialog
-              title="Stacktrace"
-              trigger={<Button variant="secondary">View stacktrace</Button>}
-            >
-              <pre className="text-xs whitespace-pre-wrap">{stacktrace.join("\n")}</pre>
-            </ResponsiveDialog>
+            <ResponsiveModal>
+              <ResponsiveModalTrigger>
+                <Button variant="secondary">View stacktrace</Button>
+              </ResponsiveModalTrigger>
+              <ResponsiveModalContent>
+                <ResponsiveModalHeader>
+                  <ResponsiveModalTitle>Stacktrace</ResponsiveModalTitle>
+                </ResponsiveModalHeader>
+                <ResponsiveModalBody>
+                  <pre className="text-xs whitespace-pre-wrap">{stacktrace.join("\n")}</pre>
+                </ResponsiveModalBody>
+              </ResponsiveModalContent>
+            </ResponsiveModal>
           );
         },
       },

@@ -1,7 +1,15 @@
 import { WandSparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "~/components/responsive-modal";
 import { Button } from "~/components/ui/button";
 import { TagAssistant } from "./tag-assistant";
 
@@ -18,31 +26,33 @@ export default function TagAssistantButton({ trigger, open: openProp, onOpenChan
   const setOpen = onOpenChange ?? setInternalOpen;
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={setOpen}
-      title={
-        <div className="flex items-center gap-1">
-          <WandSparkles className="size-5" /> Tag Assistant
-        </div>
-      }
-      description="Use this assistant to guide you through the process of programming new tags."
-      dialogClassName="sm:max-w-2xl"
-      disableScrollArea
-      trigger={
-        trigger !== undefined ? (
+    <ResponsiveModal open={open} onOpenChange={setOpen}>
+      <ResponsiveModalTrigger>
+        {trigger !== undefined ? (
           trigger
         ) : (
           <Button type="button" size="sm">
             <WandSparkles /> Tag Assistant
           </Button>
-        )
-      }
-      render={({ drawerContentHeight }) => (
-        <div className="overflow-hidden" style={{ height: drawerContentHeight ?? "32rem" }}>
-          <TagAssistant onClose={() => setOpen(false)} />
-        </div>
-      )}
-    />
+        )}
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-2xl" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>
+            <div className="flex items-center gap-1">
+              <WandSparkles className="size-5" /> Tag Assistant
+            </div>
+          </ResponsiveModalTitle>
+          <ResponsiveModalDescription>
+            Use this assistant to guide you through the process of programming new tags.
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
+        <ResponsiveModalBody disableScrollArea>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <TagAssistant onClose={() => setOpen(false)} />
+          </div>
+        </ResponsiveModalBody>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

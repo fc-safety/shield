@@ -11,11 +11,18 @@ import { getSelectColumn } from "~/components/data-table/columns";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
 import DisplayRelativeDate from "~/components/display-relative-date";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "~/components/responsive-modal";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { DialogFooter } from "~/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -228,37 +235,38 @@ function UpdateStatusDialog({
   openData: ReturnType<typeof useOpenData<ProductRequest[]>>;
 }) {
   return (
-    <ResponsiveDialog
-      open={updateStatus.open}
-      onOpenChange={updateStatus.setOpen}
-      title={`Update ${
-        updateStatus.data && updateStatus.data.length === 1
-          ? "Status"
-          : `Statuses (${updateStatus.data?.length || 0})`
-      }`}
-      description={`Update the status of ${
-        updateStatus.data && updateStatus.data.length === 1
-          ? "the selected order request"
-          : "the selected order requests"
-      }.`}
-      render={({ isDesktop }) => (
+    <ResponsiveModal open={updateStatus.open} onOpenChange={updateStatus.setOpen}>
+      <ResponsiveModalContent>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>
+            {`Update ${
+              updateStatus.data && updateStatus.data.length === 1
+                ? "Status"
+                : `Statuses (${updateStatus.data?.length || 0})`
+            }`}
+          </ResponsiveModalTitle>
+          <ResponsiveModalDescription>
+            {`Update the status of ${
+              updateStatus.data && updateStatus.data.length === 1
+                ? "the selected order request"
+                : "the selected order requests"
+            }.`}
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
         <UpdateStatusForm
-          isDesktop={isDesktop}
           productRequests={updateStatus.data || []}
           onSubmitted={updateStatus.close}
         />
-      )}
-    />
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }
 
 function UpdateStatusForm({
   onSubmitted,
-  isDesktop,
   productRequests,
 }: {
   onSubmitted: () => void;
-  isDesktop: boolean;
   productRequests: ProductRequest[];
 }) {
   const form = useForm<TUpdateStatusesForm>({
@@ -299,43 +307,45 @@ function UpdateStatusForm({
 
   return (
     <Form {...form}>
-      <form className="mt-4 flex flex-col gap-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
-        {nonupdatableRequests.length > 0 && (
-          <Alert variant="default">
-            <AlertCircle className="size-4" />
-            <AlertDescription>
-              Status will not be updated for {nonupdatableRequests.length}{" "}
-              {nonupdatableRequests.length === 1
-                ? "request because the request is complete or cancelled."
-                : "requests because these requests are complete or cancelled."}
-            </AlertDescription>
-          </Alert>
-        )}
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Status</FormLabel>
-              <FormControl>
-                <Select {...field} onValueChange={field.onChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ValidUpdateStatuses.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {humanize(status)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
+        <ResponsiveModalBody className="mt-4 flex flex-col gap-y-4">
+          {nonupdatableRequests.length > 0 && (
+            <Alert variant="default">
+              <AlertCircle className="size-4" />
+              <AlertDescription>
+                Status will not be updated for {nonupdatableRequests.length}{" "}
+                {nonupdatableRequests.length === 1
+                  ? "request because the request is complete or cancelled."
+                  : "requests because these requests are complete or cancelled."}
+              </AlertDescription>
+            </Alert>
           )}
-        />
-        {isDesktop ? <DialogFooter>{submitButton}</DialogFooter> : submitButton}
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Status</FormLabel>
+                <FormControl>
+                  <Select {...field} onValueChange={field.onChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ValidUpdateStatuses.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {humanize(status)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>{submitButton}</ResponsiveModalFooter>
       </form>
     </Form>
   );

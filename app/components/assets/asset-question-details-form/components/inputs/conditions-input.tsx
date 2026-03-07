@@ -1,13 +1,14 @@
 import { Columns3Cog, Eraser, Loader2, Pencil, Plus } from "lucide-react";
 import { useEffect, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import type z from "zod";
 import ConditionPill from "~/components/assets/condition-pill";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { useConditionLabels } from "~/hooks/use-condition-labels";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
+import { cn } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
 import { ConditionConfigurator } from "../sidepanel-inserts/condition-configurator";
 
@@ -92,92 +93,92 @@ export default function ConditionsInput() {
   };
 
   return (
-    <FormField
+    <Controller
       control={control}
       name="conditions"
-      render={() => {
-        return (
-          <FormItem className="gap-0">
-            <FormLabel className="inline-flex items-center gap-2 text-base font-medium">
-              <Columns3Cog className="size-4" />
-              Conditions
-              <HelpPopover>
-                <p>
-                  These conditions are used to determine if or when this question will be presented
-                  to the inspector.
-                </p>
-              </HelpPopover>
-              <Button size="sm" variant="outline" type="button" onClick={handleAddCondition}>
-                <Plus /> Add Condition
-              </Button>
-            </FormLabel>
-            <FormControl>
-              <div className="divide-y-border divide-y">
-                {conditions.flatMap(({ idx, key, action, data: condition }) => (
-                  <div className="flex flex-row items-center gap-2 py-1" key={`${key}-${idx}`}>
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      type="button"
-                      onClick={
-                        action === "create"
-                          ? () => handleCancelAddCondition(idx)
-                          : () =>
-                              handleDeleteCondition(
-                                (condition as z.infer<typeof updateAssetQuestionSchema>).id
-                              )
-                      }
-                    >
-                      <Eraser className="text-destructive" />
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      type="button"
-                      onClick={() => {
-                        setConfiguratorData(idx, action);
-                        openSidepanel(ConditionConfigurator.Id);
-                      }}
-                    >
-                      <Pencil />
-                    </Button>
-                    <ConditionPill
-                      condition={condition}
-                      label={
-                        <div>
-                          {condition.value.map((v, idx) => {
-                            const label = getLabel(condition.conditionType, v, "–");
-                            const isValueLoading = isLoading(condition.conditionType, v);
+      render={({ fieldState }) => (
+        <Field
+          data-invalid={fieldState.invalid}
+          className={cn(
+            "-m-2 gap-0 rounded-md border p-2 transition-colors",
+            conditions.length === 0 ? "border-warning bg-warning/5" : "border-transparent"
+          )}
+        >
+          <FieldLabel className="inline-flex items-center gap-2 text-base font-medium">
+            <Columns3Cog className="size-4" />
+            Conditions
+            <HelpPopover>
+              <p>
+                These conditions are used to determine if or when this question will be presented to
+                the inspector.
+              </p>
+            </HelpPopover>
+            <Button size="sm" variant="outline" type="button" onClick={handleAddCondition}>
+              <Plus /> Add Condition
+            </Button>
+          </FieldLabel>
+          <div className="divide-y-border divide-y">
+            {conditions.flatMap(({ idx, key, action, data: condition }) => (
+              <div className="flex flex-row items-center gap-2 py-1" key={`${key}-${idx}`}>
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  type="button"
+                  onClick={
+                    action === "create"
+                      ? () => handleCancelAddCondition(idx)
+                      : () =>
+                          handleDeleteCondition(
+                            (condition as z.infer<typeof updateAssetQuestionSchema>).id
+                          )
+                  }
+                >
+                  <Eraser className="text-destructive" />
+                </Button>
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    setConfiguratorData(idx, action);
+                    openSidepanel(ConditionConfigurator.Id);
+                  }}
+                >
+                  <Pencil />
+                </Button>
+                <ConditionPill
+                  condition={condition}
+                  label={
+                    <div>
+                      {condition.value.map((v, idx) => {
+                        const label = getLabel(condition.conditionType, v, "–");
+                        const isValueLoading = isLoading(condition.conditionType, v);
 
-                            return (
-                              <span key={`{${idx}}${v}`}>
-                                {isValueLoading ? (
-                                  <Loader2 className="inline size-3 animate-spin" />
-                                ) : (
-                                  label
-                                )}
-                                {condition.value.length > 1 &&
-                                  idx < condition.value.length - 1 &&
-                                  ", "}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      }
-                      className="cursor-pointer"
-                      onClick={() => {
-                        setConfiguratorData(idx, action);
-                        openSidepanel(ConditionConfigurator.Id);
-                      }}
-                    />
-                  </div>
-                ))}
+                        return (
+                          <span key={`{${idx}}${v}`}>
+                            {isValueLoading ? (
+                              <Loader2 className="inline size-3 animate-spin" />
+                            ) : (
+                              label
+                            )}
+                            {condition.value.length > 1 && idx < condition.value.length - 1 && ", "}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  }
+                  className="cursor-pointer"
+                  onClick={() => {
+                    setConfiguratorData(idx, action);
+                    openSidepanel(ConditionConfigurator.Id);
+                  }}
+                />
               </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+            ))}
+          </div>
+          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+        </Field>
+      )}
     />
   );
 }

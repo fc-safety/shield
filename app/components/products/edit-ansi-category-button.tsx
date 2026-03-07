@@ -2,7 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { AnsiCategory } from "~/lib/models";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import AnsiCategoryDetailsForm from "./ansi-category-details-form";
 
 interface EditAnsiCategoryButtonProps {
@@ -21,28 +27,28 @@ export default function EditAnsiCategoryButton({
   const [open, setOpen] = useState(false);
 
   return (
-    <ResponsiveDialog
-      open={openProp ?? open}
-      onOpenChange={onOpenChange ?? setOpen}
-      title={`${ansiCategory ? "Edit" : "Add New"} ANSI Category`}
-      dialogClassName="sm:max-w-lg"
-      trigger={
-        trigger !== undefined ? (
+    <ResponsiveModal open={openProp ?? open} onOpenChange={onOpenChange ?? setOpen}>
+      <ResponsiveModalTrigger>
+        {trigger !== undefined ? (
           trigger
         ) : (
           <Button type="button" size="sm">
             {ansiCategory ? <Pencil /> : <Plus />}
             {ansiCategory ? "Edit" : "Add"} ANSI Category
           </Button>
-        )
-      }
-    >
-      <AnsiCategoryDetailsForm
-        onSubmitted={() =>
-          onOpenChange ? onOpenChange(false) : setOpen(false)
-        }
-        ansiCategory={ansiCategory}
-      />
-    </ResponsiveDialog>
+        )}
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>
+            {`${ansiCategory ? "Edit" : "Add New"} ANSI Category`}
+          </ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <AnsiCategoryDetailsForm
+          onSubmitted={() => (onOpenChange ? onOpenChange(false) : setOpen(false))}
+          ansiCategory={ansiCategory}
+        />
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

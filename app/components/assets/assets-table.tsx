@@ -20,7 +20,12 @@ import { can, hasMultiSiteVisibility } from "~/lib/users";
 import { dedupById } from "~/lib/utils";
 import ActiveToggle from "../active-toggle";
 import ResponsiveActions from "../common/responsive-actions";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "../responsive-modal";
 import AssetDetailsForm from "./asset-details-form";
 import CreateAssetButton from "./create-asset-assistant/create-asset-button";
 import EditableTagDisplay from "./editable-tag-display";
@@ -402,18 +407,18 @@ export default function AssetsTable({
       />
       <ConfirmationDialog {...deleteAction} />
       {canManageAssets && editAsset.data && (
-        <ResponsiveDialog
-          title="Edit Asset"
-          open={editAsset.open}
-          onOpenChange={editAsset.setOpen}
-          dialogClassName="sm:max-w-lg"
-        >
-          <AssetDetailsForm
-            asset={editAsset.data}
-            onSubmitted={() => editAsset.setOpen(false)}
-            clientId={clientId}
-          />
-        </ResponsiveDialog>
+        <ResponsiveModal open={editAsset.open} onOpenChange={editAsset.setOpen}>
+          <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+            <ResponsiveModalHeader>
+              <ResponsiveModalTitle>Edit Asset</ResponsiveModalTitle>
+            </ResponsiveModalHeader>
+            <AssetDetailsForm
+              asset={editAsset.data}
+              onSubmitted={() => editAsset.setOpen(false)}
+              clientId={clientId}
+            />
+          </ResponsiveModalContent>
+        </ResponsiveModal>
       )}
     </>
   );

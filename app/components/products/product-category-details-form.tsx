@@ -12,13 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
+import { useRequestedAccessContext } from "~/contexts/requested-access-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { ProductCategory } from "~/lib/models";
 import { createProductCategorySchema, updateProductCategorySchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import ActiveToggleFormInput from "../active-toggle-form-input";
 import IconSelector from "../icons/icon-selector";
-import LegacyIdField from "../legacy-id-field";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 
 type TForm = z.infer<typeof createProductCategorySchema | typeof updateProductCategorySchema>;
 interface ProductCategoryDetailsFormProps {
@@ -41,6 +42,7 @@ export default function ProductCategoryDetailsForm({
   onSubmitted,
 }: ProductCategoryDetailsFormProps) {
   const isNew = !productCategory;
+  const { currentClientId, accessIntent } = useRequestedAccessContext();
 
   const form = useForm<TForm>({
     resolver: zodResolver(isNew ? createProductCategorySchema : updateProductCategorySchema),
@@ -55,12 +57,19 @@ export default function ProductCategoryDetailsForm({
             ? { connect: { id: productCategory.client.id } }
             : undefined,
         }
-      : FORM_DEFAULTS,
-    mode: "onBlur",
+      : {
+          ...FORM_DEFAULTS,
+          client:
+            accessIntent !== "system" && currentClientId
+              ? {
+                  connect: { id: currentClientId },
+                }
+              : undefined,
+        },
   });
 
   const {
-    formState: { isDirty, isValid },
+    formState: { isDirty },
     watch,
   } = form;
 
@@ -79,89 +88,87 @@ export default function ProductCategoryDetailsForm({
 
   return (
     <FormProvider {...form}>
-      <form className="space-y-4" method="post" onSubmit={form.handleSubmit(handleSubmit)}>
-        <Input type="hidden" {...form.register("id")} hidden />
-        <ActiveToggleFormInput />
-        <LegacyIdField
-          form={form}
-          fieldName="legacyCategoryId"
-          label="Legacy Category ID"
-          description="Category ID from the legacy Shield system"
-        />
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="shortName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Code</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Color</FormLabel>
-              <FormControl>
-                <Input {...field} type="color" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="icon"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Icon</FormLabel>
-              <FormControl>
-                <IconSelector
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  onBlur={field.onBlur}
-                  color={color}
-                  className="flex"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+      <form className="flex min-h-0 flex-1 flex-col" method="post" onSubmit={form.handleSubmit(handleSubmit)}>
+        <ResponsiveModalBody className="space-y-4">
+          <Input type="hidden" {...form.register("id")} hidden />
+          <ActiveToggleFormInput />
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="shortName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Code</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Color</FormLabel>
+                <FormControl>
+                  <Input {...field} type="color" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="icon"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Icon</FormLabel>
+                <FormControl>
+                  <IconSelector
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    color={color}
+                    className="flex"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>
+          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </ResponsiveModalFooter>
       </form>
     </FormProvider>
   );

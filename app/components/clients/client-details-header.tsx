@@ -16,7 +16,15 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { useOpenData } from "~/hooks/use-open-data";
 import type { Client } from "~/lib/models";
 import { isGlobalAdmin, isSystemsAdmin } from "~/lib/users";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "../responsive-modal";
 import { Badge } from "../ui/badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "../ui/form";
 import { Input } from "../ui/input";
@@ -145,47 +153,60 @@ function DuplicateDemoClientDialog({
   };
 
   return (
-    <ResponsiveDialog
-      title="Duplicate Demo Client"
-      description="This will create a new client with the same sites and assets as the current client. Only for clients with demo mode enabled."
-      open={open}
-      onOpenChange={onOpenChange}
-    >
-      <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 pt-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>New Client Name</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="emailDomain"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email Domain</FormLabel>
-                <FormDescription>
-                  This will be the new domain used for new user email addresses.
-                </FormDescription>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="animate-spin" /> : <CopyPlus />}
-            {isSubmitting ? "Duplicating..." : "Duplicate Client"}
-          </Button>
-        </form>
-      </FormProvider>
-    </ResponsiveDialog>
+    <ResponsiveModal open={open} onOpenChange={onOpenChange}>
+      <ResponsiveModalContent>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Duplicate Demo Client</ResponsiveModalTitle>
+          <ResponsiveModalDescription>
+            This will create a new client with the same sites and assets as the current client. Only
+            for clients with demo mode enabled.
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
+        <FormProvider {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <ResponsiveModalBody>
+              <div className="grid gap-4 pt-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Client Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emailDomain"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Domain</FormLabel>
+                      <FormDescription>
+                        This will be the new domain used for new user email addresses.
+                      </FormDescription>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </ResponsiveModalBody>
+            <ResponsiveModalFooter>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="animate-spin" /> : <CopyPlus />}
+                {isSubmitting ? "Duplicating..." : "Duplicate Client"}
+              </Button>
+            </ResponsiveModalFooter>
+          </form>
+        </FormProvider>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

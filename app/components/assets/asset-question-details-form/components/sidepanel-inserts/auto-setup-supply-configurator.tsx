@@ -1,24 +1,18 @@
 import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import type z from "zod";
 import ConsumableCombobox from "~/components/assets/consumable-combobox";
+import { Field, FieldDescription, FieldError, FieldLabel } from "~/components/ui/field";
 import { ConsumableMappingTypes } from "~/lib/models";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { humanize } from "~/lib/utils";
+import { EmptySidepanel } from "../empty-sidepanel";
 
 export const AutoSetupSupplyConfigurator = () => {
   const { watch, control } = useFormContext<{
@@ -34,66 +28,62 @@ export const AutoSetupSupplyConfigurator = () => {
           inspection.
         </p>
       </div>
-      <FormField
+      <Controller
         control={control}
         name={
           autoSetupSupplyConfigInput.create
             ? "consumableConfig.create.consumableProduct.connect.id"
             : "consumableConfig.update.consumableProduct.connect.id"
         }
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Supply</FormLabel>
-            <FormControl>
-              <ConsumableCombobox
-                value={field.value}
-                onValueChange={(v) => field.onChange(v ?? "")}
-                onBlur={field.onBlur}
-                compactClearButton
-              />
-            </FormControl>
-            <FormDescription>
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel>Supply</FieldLabel>
+            <ConsumableCombobox
+              value={field.value}
+              onValueChange={(v) => field.onChange(v ?? "")}
+              onBlur={field.onBlur}
+              compactClearButton
+            />
+            <FieldDescription>
               This is the supply that will be added once the asset setup is complete.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
+            </FieldDescription>
+            <FieldError errors={[fieldState.error]} />
+          </Field>
         )}
       />
-      <FormField
+      <Controller
         control={control}
         name={
           autoSetupSupplyConfigInput.create
             ? "consumableConfig.create.mappingType"
             : "consumableConfig.update.mappingType"
         }
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Mapping Type</FormLabel>
-            <FormControl>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger onBlur={field.onBlur}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ConsumableMappingTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {humanize(type)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormDescription>
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel>Mapping Type</FieldLabel>
+            <Select value={field.value} onValueChange={field.onChange}>
+              <SelectTrigger onBlur={field.onBlur}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ConsumableMappingTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {humanize(type)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FieldDescription>
               This mapping type determines how the data from the inspector's response will be used
               when configuring the new supply.
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
+            </FieldDescription>
+            <FieldError errors={[fieldState.error]} />
+          </Field>
         )}
       />
     </div>
   ) : (
-    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
+    <EmptySidepanel />
   );
 };
 

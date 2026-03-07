@@ -17,10 +17,16 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useCustomInput } from "~/hooks/use-custom-input";
 import { formatDateAsTimestamp, formatTimestampAsDate } from "~/lib/utils";
 import GradientScrollArea from "./gradient-scroll-area";
-import { ResponsiveDialog } from "./responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalClose,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "./responsive-modal";
 import { Button } from "./ui/button";
-import { DialogClose } from "./ui/dialog";
-import { DrawerClose } from "./ui/drawer";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { ScrollBar } from "./ui/scroll-area";
@@ -143,9 +149,8 @@ export default function DateRangeSelect<
   }, [quickRangeIdProp, valueProp, onValueChange]);
 
   return (
-    <ResponsiveDialog
-      title={title}
-      trigger={
+    <ResponsiveModal>
+      <ResponsiveModalTrigger>
         <Button type="button" variant="outline" size="sm" className="gap-2">
           {iconOnly ? <Calendar /> : <span className="font-semibold">Date Range</span>}
           <div className="border-border h-4 border-r"></div>
@@ -160,88 +165,85 @@ export default function DateRangeSelect<
               "None"
             ))}
         </Button>
-      }
-      className="w-full max-w-md"
-      render={({ isDesktop }) => (
-        <div className="mt-2 flex flex-col gap-4">
-          <GradientScrollArea className="w-full">
-            <div className="flex gap-2">
-              {filteredQuickDateRanges.map((quickDateRange) => {
-                const isActive = quickRangeId === quickDateRange.id;
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "w-full max-w-md" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>{title}</ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <ResponsiveModalBody>
+          <div className="mt-2 flex flex-col gap-4">
+            <GradientScrollArea className="w-full">
+              <div className="flex gap-2">
+                {filteredQuickDateRanges.map((quickDateRange) => {
+                  const isActive = quickRangeId === quickDateRange.id;
 
-                return (
-                  <Button
-                    key={quickDateRange.label}
-                    variant={isActive ? "default" : "outline"}
-                    onClick={() => {
-                      setQuickRangeId(quickDateRange.id);
-                    }}
-                    size="sm"
-                    type="button"
-                  >
-                    {quickDateRange.label}
-                  </Button>
-                );
-              })}
+                  return (
+                    <Button
+                      key={quickDateRange.label}
+                      variant={isActive ? "default" : "outline"}
+                      onClick={() => {
+                        setQuickRangeId(quickDateRange.id);
+                      }}
+                      size="sm"
+                      type="button"
+                    >
+                      {quickDateRange.label}
+                    </Button>
+                  );
+                })}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </GradientScrollArea>
+            <div className="grid w-full grid-cols-2 gap-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="date-range-from">From</Label>
+                <Input
+                  id="date-range-from"
+                  type="date"
+                  value={value && formatTimestampAsDate(value.from)}
+                  onChange={(e) => {
+                    setQuickRangeId(undefined);
+                    setValue({
+                      ...value,
+                      from: formatDateAsTimestamp(e.target.value, false),
+                    });
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="date-range-to">To</Label>
+                <Input
+                  id="date-range-to"
+                  type="date"
+                  value={value && formatTimestampAsDate(value.to ?? "")}
+                  onChange={(e) => {
+                    setQuickRangeId(undefined);
+                    setValue({
+                      // Provide default in case value is somehow empty.
+                      from: new Date().toISOString(),
+                      ...value,
+                      to: formatDateAsTimestamp(e.target.value, true),
+                    });
+                  }}
+                />
+              </div>
             </div>
-            <ScrollBar orientation="horizontal" />
-          </GradientScrollArea>
-          <div className="grid w-full grid-cols-2 gap-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="date-range-from">From</Label>
-              <Input
-                id="date-range-from"
-                type="date"
-                value={value && formatTimestampAsDate(value.from)}
-                onChange={(e) => {
-                  setQuickRangeId(undefined);
-                  setValue({
-                    ...value,
-                    from: formatDateAsTimestamp(e.target.value, false),
-                  });
-                }}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="date-range-to">To</Label>
-              <Input
-                id="date-range-to"
-                type="date"
-                value={value && formatTimestampAsDate(value.to ?? "")}
-                onChange={(e) => {
-                  setQuickRangeId(undefined);
-                  setValue({
-                    // Provide default in case value is somehow empty.
-                    from: new Date().toISOString(),
-                    ...value,
-                    to: formatDateAsTimestamp(e.target.value, true),
-                  });
-                }}
-              />
+            <div className="flex justify-end gap-2">
+              <ResponsiveModalClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </ResponsiveModalClose>
+              <ResponsiveModalClose asChild>
+                <Button type="button" onClick={handleApplyChange}>
+                  Apply
+                </Button>
+              </ResponsiveModalClose>
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            {(() => {
-              const CloseWrapper = isDesktop ? DialogClose : DrawerClose;
-              return (
-                <>
-                  <CloseWrapper asChild>
-                    <Button type="button" variant="outline">
-                      Cancel
-                    </Button>
-                  </CloseWrapper>
-                  <CloseWrapper asChild>
-                    <Button type="button" onClick={handleApplyChange}>
-                      Apply
-                    </Button>
-                  </CloseWrapper>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      )}
-    />
+        </ResponsiveModalBody>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }
 

@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import ProductDetailsForm, { type ProductDetailsFormProps } from "./product-details-form";
 
 interface EditProductButtonProps extends Omit<ProductDetailsFormProps, "onSubmitted"> {
@@ -23,33 +29,38 @@ export default function EditProductButton({
 }: EditProductButtonProps) {
   const [open, setOpen] = useState(false);
 
+  const title = `${product ? "Edit" : "Add New"} ${
+    consumable || parentProduct ? "Supply" : "Product"
+  }`;
+
   return (
-    <ResponsiveDialog
+    <ResponsiveModal
       open={openProp ?? open}
       onOpenChange={onOpenChange ?? setOpen}
-      title={`${product ? "Edit" : "Add New"} ${
-        consumable || parentProduct ? "Supply" : "Product"
-      }`}
-      dialogClassName="sm:max-w-lg"
-      isNestedDrawer={nestDrawers}
-      trigger={
-        trigger !== undefined ? (
+      isNested={nestDrawers}
+    >
+      <ResponsiveModalTrigger>
+        {trigger !== undefined ? (
           trigger
         ) : (
           <Button type="button" size="sm">
             {product ? <Pencil /> : <Plus />}
             {product ? "Edit" : "Add"} {consumable || parentProduct ? "Supply" : "Product"}
           </Button>
-        )
-      }
-    >
-      <ProductDetailsForm
-        onSubmitted={() => (onOpenChange ? onOpenChange(false) : setOpen(false))}
-        product={product}
-        parentProduct={parentProduct}
-        consumable={consumable}
-        {...passThroughProps}
-      />
-    </ResponsiveDialog>
+        )}
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>{title}</ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <ProductDetailsForm
+          onSubmitted={() => (onOpenChange ? onOpenChange(false) : setOpen(false))}
+          product={product}
+          parentProduct={parentProduct}
+          consumable={consumable}
+          {...passThroughProps}
+        />
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

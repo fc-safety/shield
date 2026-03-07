@@ -9,6 +9,7 @@ import { createUserSchema, updateUserSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import type { UserResponse } from "~/lib/types";
 import { beautifyPhone, stripPhone } from "~/lib/utils";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
 import SiteCombobox from "./site-combobox";
@@ -65,7 +66,7 @@ export default function ClientUserDetailsForm({
   return (
     <FormProvider {...form}>
       <form
-        className="space-y-4"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={form.handleSubmit(handleSubmit, (e) => {
           toast.error("Please fix the errors in the form.", {
             description: extractErrorMessage(e),
@@ -73,6 +74,7 @@ export default function ClientUserDetailsForm({
           });
         })}
       >
+        <ResponsiveModalBody className="space-y-4">
         <Controller
           control={form.control}
           name="firstName"
@@ -155,9 +157,12 @@ export default function ClientUserDetailsForm({
             )}
           />
         )}
-        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>
+          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </ResponsiveModalFooter>
       </form>
     </FormProvider>
   );

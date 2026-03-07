@@ -1,4 +1,11 @@
-import { ResponsiveDialog } from "@/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "~/components/responsive-modal";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -54,21 +61,25 @@ export default function AssetInspectionAlert({
   }, [alert, assetId, alertId, load]);
 
   return (
-    <ResponsiveDialog
-      title="Inspection Alert"
-      trigger={
+    <ResponsiveModal>
+      <ResponsiveModalTrigger>
         <div onMouseEnter={handlePreloadAlerts} onTouchStart={handlePreloadAlerts}>
           {trigger}
         </div>
-      }
-      dialogClassName="sm:max-w-lg"
-    >
-      {alert ? (
-        <InspectionAlert alert={alert} loading={isLoading} />
-      ) : (
-        <Skeleton className="h-64 w-full rounded" />
-      )}
-    </ResponsiveDialog>
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Inspection Alert</ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <ResponsiveModalBody>
+          {alert ? (
+            <InspectionAlert alert={alert} loading={isLoading} />
+          ) : (
+            <Skeleton className="h-64 w-full rounded" />
+          )}
+        </ResponsiveModalBody>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }
 

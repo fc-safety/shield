@@ -18,7 +18,15 @@ import { CAPABILITIES } from "~/lib/permissions";
 import { can } from "~/lib/users";
 import { cn, isNil } from "~/lib/utils";
 import EditRoutePointButton from "../../../components/inspections/edit-route-point-button";
-import { ResponsiveDialog } from "../../../components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../../../components/responsive-modal";
 import { Button } from "../../../components/ui/button";
 import { Progress } from "../../../components/ui/progress";
 import {
@@ -251,27 +259,31 @@ function ViewRouteProgressDetails({
   });
 
   return (
-    <ResponsiveDialog
-      title={route.name}
-      description={`Viewing route progress details.`}
-      trigger={
+    <ResponsiveModal>
+      <ResponsiveModalTrigger>
         <Button variant="secondary" size="icon">
           <ListTodo />
         </Button>
-      }
-      render={({ isDesktop }) =>
-        isLoading || !routeDetails ? (
-          <Skeleton className="w-full h-48" />
-        ) : (
-          <RoutePointDetails
-            route={routeDetails}
-            completedPointIds={completedPointIds}
-            className={cn(isDesktop && "pt-4")}
-            currentAssetId={currentAssetId}
-          />
-        )
-      }
-    />
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>{route.name}</ResponsiveModalTitle>
+          <ResponsiveModalDescription>Viewing route progress details.</ResponsiveModalDescription>
+        </ResponsiveModalHeader>
+        <ResponsiveModalBody>
+          {isLoading || !routeDetails ? (
+            <Skeleton className="w-full h-48" />
+          ) : (
+            <RoutePointDetails
+              route={routeDetails}
+              completedPointIds={completedPointIds}
+              className="pt-4"
+              currentAssetId={currentAssetId}
+            />
+          )}
+        </ResponsiveModalBody>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }
 

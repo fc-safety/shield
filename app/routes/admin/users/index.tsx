@@ -13,7 +13,12 @@ import ResponsiveActions from "~/components/common/responsive-actions";
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import { DataTable } from "~/components/data-table/data-table";
 import { DataTableColumnHeader } from "~/components/data-table/data-table-column-header";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "~/components/responsive-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { useAuth } from "~/contexts/auth-context";
 import useConfirmAction from "~/hooks/use-confirm-action";
@@ -330,32 +335,40 @@ function AllUsersTable({ users }: AllUsersTableProps) {
           },
         ]}
       />
-      <ResponsiveDialog title="Edit User" open={editUser.open} onOpenChange={editUser.setOpen}>
-        {editUser.data && (
-          <AdminEditUserForm user={editUser.data} onSubmitted={() => editUser.setOpen(false)} />
-        )}
-      </ResponsiveDialog>
+      <ResponsiveModal open={editUser.open} onOpenChange={editUser.setOpen}>
+        <ResponsiveModalContent>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>Edit User</ResponsiveModalTitle>
+          </ResponsiveModalHeader>
+          {editUser.data && (
+            <AdminEditUserForm user={editUser.data} onSubmitted={() => editUser.setOpen(false)} />
+          )}
+        </ResponsiveModalContent>
+      </ResponsiveModal>
       {canManageUsers && resetPassword.data && (
-        <ResponsiveDialog
-          title="Reset Password"
-          open={resetPassword.open}
-          onOpenChange={resetPassword.setOpen}
-        >
-          <ResetPasswordForm
-            user={resetPassword.data}
-            clientId={getSelectedUserClientId(resetPassword.data)}
-            onSubmitted={() => resetPassword.setOpen(false)}
-          />
-        </ResponsiveDialog>
+        <ResponsiveModal open={resetPassword.open} onOpenChange={resetPassword.setOpen}>
+          <ResponsiveModalContent>
+            <ResponsiveModalHeader>
+              <ResponsiveModalTitle>Reset Password</ResponsiveModalTitle>
+            </ResponsiveModalHeader>
+            <ResetPasswordForm
+              user={resetPassword.data}
+              clientId={getSelectedUserClientId(resetPassword.data)}
+              onSubmitted={() => resetPassword.setOpen(false)}
+            />
+          </ResponsiveModalContent>
+        </ResponsiveModal>
       )}
-      <ResponsiveDialog
-        title={`Manage Access${manageAccess.data ? ` — ${manageAccess.data.firstName} ${manageAccess.data.lastName}`.trim() : ""}`}
-        open={manageAccess.open}
-        onOpenChange={manageAccess.setOpen}
-        className="sm:max-w-2xl"
-      >
-        {manageAccess.data && <ManageUserAccessForm user={manageAccess.data} />}
-      </ResponsiveDialog>
+      <ResponsiveModal open={manageAccess.open} onOpenChange={manageAccess.setOpen}>
+        <ResponsiveModalContent classNames={{ dialog: "sm:max-w-2xl" }}>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>
+              {`Manage Access${manageAccess.data ? ` — ${manageAccess.data.firstName} ${manageAccess.data.lastName}`.trim() : ""}`}
+            </ResponsiveModalTitle>
+          </ResponsiveModalHeader>
+          {manageAccess.data && <ManageUserAccessForm user={manageAccess.data} />}
+        </ResponsiveModalContent>
+      </ResponsiveModal>
       <ConfirmationDialog {...confirmAction} />
     </>
   );

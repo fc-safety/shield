@@ -284,6 +284,19 @@ function SelectOptions({
     return null;
   }, [optionsOrOptionGroups]);
 
+  const createTrigger = useMemo(() => {
+    if (onCreate) {
+      return (
+        <CommandItem onSelect={() => { setOpen(false); onCreate(); }}>
+          <Plus />
+          Create New
+        </CommandItem>
+      );
+    }
+
+    return null;
+  }, [onCreate, setOpen]);
+
   return (
     <Command shouldFilter={shouldFilter}>
       <CommandInput
@@ -293,14 +306,9 @@ function SelectOptions({
       />
       <CommandList>
         <CommandEmpty>{noResultsText}</CommandEmpty>
-        {(onCreate || loading || (options && options.length === 0 && errorMessage)) && (
+        {(createTrigger || loading || (options && options.length === 0 && errorMessage)) && (
           <CommandGroup>
-            {onCreate && (
-              <CommandItem onSelect={onCreate}>
-                <Plus />
-                Create New
-              </CommandItem>
-            )}
+            {createTrigger}
             {loading ? (
               <CommandItem disabled>
                 <Loader2 className="animate-spin" />

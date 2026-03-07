@@ -1,11 +1,11 @@
 import { Eraser, ExternalLink, FolderCog, Pencil, Plus } from "lucide-react";
 import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { Link } from "react-router";
 import type z from "zod";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
 import FileConfigurator from "../sidepanel-inserts/file-configurator";
@@ -76,66 +76,62 @@ export default function FilesInput() {
   };
 
   return (
-    <FormField
+    <Controller
       control={control}
       name="files"
-      render={() => {
-        return (
-          <FormItem className="gap-0">
-            <FormLabel className="inline-flex items-center gap-2 text-base font-medium">
-              <FolderCog className="size-4" />
-              Files
-              <HelpPopover>
-                <p>Files can be added here and shown to inspectors, usually for reference.</p>
-              </HelpPopover>
-              <Button size="sm" variant="outline" type="button" onClick={handleAddFile}>
-                <Plus /> Add File
-              </Button>
-            </FormLabel>
-            <FormControl>
-              <div className="divide-y-border divide-y">
-                {files.map(({ idx, key, action, data }) => (
-                  <div className="flex flex-row items-center gap-2 py-1" key={key}>
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      type="button"
-                      onClick={
-                        action === "create"
-                          ? () => handleCancelAddFile(idx)
-                          : () =>
-                              handleDeleteFile(
-                                (data as z.infer<typeof updateAssetQuestionSchema>).id
-                              )
-                      }
-                    >
-                      <Eraser className="text-destructive" />
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      type="button"
-                      onClick={() => {
-                        setConfiguratorData(idx, action);
-                        openSidepanel(FileConfigurator.Id);
-                      }}
-                    >
-                      <Pencil />
-                    </Button>
-                    <Button variant="link" asChild disabled={!data.url}>
-                      <Link to={data.url ?? "#"} target="_blank" rel="noopener noreferrer">
-                        {data.name || "Untitled"}
-                        <ExternalLink />
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
+      render={({ fieldState }) => (
+        <Field data-invalid={fieldState.invalid} className="gap-0">
+          <FieldLabel className="inline-flex items-center gap-2 text-base font-medium">
+            <FolderCog className="size-4" />
+            Files
+            <HelpPopover>
+              <p>Files can be added here and shown to inspectors, usually for reference.</p>
+            </HelpPopover>
+            <Button size="sm" variant="outline" type="button" onClick={handleAddFile}>
+              <Plus /> Add File
+            </Button>
+          </FieldLabel>
+          <div className="divide-y-border divide-y">
+            {files.map(({ idx, key, action, data }) => (
+              <div className="flex flex-row items-center gap-2 py-1" key={key}>
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  type="button"
+                  onClick={
+                    action === "create"
+                      ? () => handleCancelAddFile(idx)
+                      : () =>
+                          handleDeleteFile(
+                            (data as z.infer<typeof updateAssetQuestionSchema>).id
+                          )
+                  }
+                >
+                  <Eraser className="text-destructive" />
+                </Button>
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    setConfiguratorData(idx, action);
+                    openSidepanel(FileConfigurator.Id);
+                  }}
+                >
+                  <Pencil />
+                </Button>
+                <Button variant="link" asChild disabled={!data.url}>
+                  <Link to={data.url ?? "#"} target="_blank" rel="noopener noreferrer">
+                    {data.name || "Untitled"}
+                    <ExternalLink />
+                  </Link>
+                </Button>
               </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+            ))}
+          </div>
+          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+        </Field>
+      )}
     />
   );
 }

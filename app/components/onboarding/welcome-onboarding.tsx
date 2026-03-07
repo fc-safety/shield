@@ -1,6 +1,12 @@
 import { Hand } from "lucide-react";
 import { useCallback, useState } from "react";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "~/components/responsive-modal";
 import { useActiveAccessGrant } from "~/contexts/active-access-grant-context";
 import { useQueryNavigate } from "~/hooks/use-query-navigate";
 import FirstTimeOnboarding from "./first-time-onboarding";
@@ -39,26 +45,25 @@ export default function WelcomeOnboarding({ showWelcome }: WelcomeOnboardingProp
   const isFirstTime = accessibleClients.length <= 1;
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={handleOpenChange}
-      title={
-        <span className="flex items-center gap-1">
-          <Hand className="animate-sway size-5 rotate-45" /> Welcome{isFirstTime ? "!" : " back!"}
-        </span>
-      }
-      dialogClassName="sm:max-w-2xl"
-      disableScrollArea
-      trigger={<div className="absolute hidden"></div>}
-      render={({ drawerContentHeight }) => (
-        <div className="overflow-hidden" style={{ height: drawerContentHeight ?? "28rem" }}>
-          {isFirstTime ? (
-            <FirstTimeOnboarding clientName={clientName} onClose={handleDismiss} />
-          ) : (
-            <ReturningUserWelcome clientName={clientName} onClose={handleDismiss} />
-          )}
-        </div>
-      )}
-    />
+    <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-2xl" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>
+            <span className="flex items-center gap-1">
+              <Hand className="animate-sway size-5 rotate-45" /> Welcome{isFirstTime ? "!" : " back!"}
+            </span>
+          </ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <ResponsiveModalBody disableScrollArea>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {isFirstTime ? (
+              <FirstTimeOnboarding clientName={clientName} onClose={handleDismiss} />
+            ) : (
+              <ReturningUserWelcome clientName={clientName} onClose={handleDismiss} />
+            )}
+          </div>
+        </ResponsiveModalBody>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }
