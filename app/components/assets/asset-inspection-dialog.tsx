@@ -4,7 +4,14 @@ import type { DataOrError } from "~/.server/api-utils";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Inspection } from "~/lib/models";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import { Button } from "../ui/button";
 import InspectionDetails from "./inspection-details";
 
@@ -37,14 +44,9 @@ export default function AssetInspectionDialog({
   );
 
   return (
-    <ResponsiveDialog
-      title="Inspection Details"
-      dialogClassName="sm:max-w-lg"
-      minWidth="578px"
-      open={open}
-      onOpenChange={setOpen}
-      trigger={
-        trigger?.(isLoading, preloadInspection, setOpen) ?? (
+    <ResponsiveModal open={open} onOpenChange={setOpen}>
+      <ResponsiveModalTrigger>
+        {trigger?.(isLoading, preloadInspection, setOpen) ?? (
           <Button
             variant="secondary"
             size="sm"
@@ -56,19 +58,25 @@ export default function AssetInspectionDialog({
             <CornerDownRight />
             Details
           </Button>
-        )
-      }
-    >
-      {isLoading || !data?.data ? (
-        <div className="flex h-full w-full items-center justify-center">
-          <Loader2 className="animate-spin" />
-        </div>
-      ) : (
-        <InspectionDetails
-          inspection={data.data}
-          googleMapsApiKey={googleMapsApiKey}
-        />
-      )}
-    </ResponsiveDialog>
+        )}
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Inspection Details</ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <ResponsiveModalBody>
+          {isLoading || !data?.data ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <Loader2 className="animate-spin" />
+            </div>
+          ) : (
+            <InspectionDetails
+              inspection={data.data}
+              googleMapsApiKey={googleMapsApiKey}
+            />
+          )}
+        </ResponsiveModalBody>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

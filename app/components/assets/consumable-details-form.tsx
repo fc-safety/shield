@@ -6,6 +6,7 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Consumable } from "~/lib/models";
 import { createConsumableSchema, updateConsumableSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
@@ -81,76 +82,79 @@ export default function ConsumableDetailsForm({
 
   return (
     <Form {...form}>
-      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
-        <Input type="hidden" {...form.register("id")} hidden />
-        <Input type="hidden" {...form.register("asset.connect.id")} hidden />
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
+        <ResponsiveModalBody className="space-y-4">
+          <Input type="hidden" {...form.register("id")} hidden />
+          <Input type="hidden" {...form.register("asset.connect.id")} hidden />
 
-        <FormField
-          control={form.control}
-          name="product.connect.id"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Supply</FormLabel>
-              <FormControl>
-                <ConsumableCombobox
-                  parentProductId={parentProductId}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  onBlur={field.onBlur}
-                  className="flex w-full"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="product.connect.id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Supply</FormLabel>
+                <FormControl>
+                  <ConsumableCombobox
+                    parentProductId={parentProductId}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    className="flex w-full"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="quantity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Quantity</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} min={1} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="quantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Quantity</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} min={1} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="expiresOn"
-          render={({ field: { value, onChange, ...field } }) => (
-            <FormItem>
-              <FormLabel>Expires On</FormLabel>
-              <FormControl>
-                <Input
-                  type="date"
-                  {...field}
-                  value={
-                    isValidDate(parseISO(String(value)))
-                      ? format(parseISO(String(value)), "yyyy-MM-dd")
-                      : ""
-                  }
-                  onChange={(e) => {
-                    onChange(
-                      isValidDate(parseISO(e.target.value))
-                        ? parseISO(e.target.value).toISOString()
+          <FormField
+            control={form.control}
+            name="expiresOn"
+            render={({ field: { value, onChange, ...field } }) => (
+              <FormItem>
+                <FormLabel>Expires On</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    {...field}
+                    value={
+                      isValidDate(parseISO(String(value)))
+                        ? format(parseISO(String(value)), "yyyy-MM-dd")
                         : ""
-                    );
-                  }}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+                    }
+                    onChange={(e) => {
+                      onChange(
+                        isValidDate(parseISO(e.target.value))
+                          ? parseISO(e.target.value).toISOString()
+                          : ""
+                      );
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>
+          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </ResponsiveModalFooter>
       </form>
     </Form>
   );

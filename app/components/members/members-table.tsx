@@ -17,7 +17,14 @@ import ConfirmationDialog from "../confirmation-dialog";
 import { DataTable } from "../data-table/data-table";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { CreateInvitationDialog } from "../invitations/create-invitation-dialog";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "../responsive-modal";
 import { Button } from "../ui/button";
 import SendResetPasswordEmailButton from "./send-reset-password-email-button";
 import UpdateMemberRoleForm from "./update-member-role-form";
@@ -230,35 +237,41 @@ export function MembersTable({
         ]}
       />
       {canManageUsers && updateRoleMember && (
-        <ResponsiveDialog
-          title="Manage Roles"
-          description="Manage the roles and sites for this member."
-          open={updateRole.open}
-          onOpenChange={updateRole.setOpen}
-          disableDisplayTable
-          dialogClassName="sm:max-w-3xl"
-        >
-          <div className="h-4"></div>
-          <UpdateMemberRoleForm member={updateRoleMember} clientId={clientId} />
-          <div className="flex justify-end pt-4">
-            <Button type="button" variant="outline" onClick={() => updateRole.setOpen(false)}>
-              Close
-            </Button>
-          </div>
-        </ResponsiveDialog>
+        <ResponsiveModal open={updateRole.open} onOpenChange={updateRole.setOpen}>
+          <ResponsiveModalContent classNames={{ dialog: "sm:max-w-3xl" }}>
+            <ResponsiveModalHeader>
+              <ResponsiveModalTitle>Manage Roles</ResponsiveModalTitle>
+              <ResponsiveModalDescription>
+                Manage the roles and sites for this member.
+              </ResponsiveModalDescription>
+            </ResponsiveModalHeader>
+            <ResponsiveModalBody disableScrollArea>
+              <div className="h-4"></div>
+              <UpdateMemberRoleForm member={updateRoleMember} clientId={clientId} />
+              <div className="flex justify-end pt-4">
+                <Button type="button" variant="outline" onClick={() => updateRole.setOpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </ResponsiveModalBody>
+          </ResponsiveModalContent>
+        </ResponsiveModal>
       )}
       {canManageUsers && resetPassword.data && (
-        <ResponsiveDialog
-          title="Reset Password"
-          open={resetPassword.open}
-          onOpenChange={resetPassword.setOpen}
-        >
-          <SendResetPasswordEmailButton
-            member={resetPassword.data}
-            clientId={clientId}
-            onSent={() => resetPassword.setOpen(false)}
-          />
-        </ResponsiveDialog>
+        <ResponsiveModal open={resetPassword.open} onOpenChange={resetPassword.setOpen}>
+          <ResponsiveModalContent>
+            <ResponsiveModalHeader>
+              <ResponsiveModalTitle>Reset Password</ResponsiveModalTitle>
+            </ResponsiveModalHeader>
+            <ResponsiveModalBody>
+              <SendResetPasswordEmailButton
+                member={resetPassword.data}
+                clientId={clientId}
+                onSent={() => resetPassword.setOpen(false)}
+              />
+            </ResponsiveModalBody>
+          </ResponsiveModalContent>
+        </ResponsiveModal>
       )}
       <ConfirmationDialog {...confirmAction} />
     </>

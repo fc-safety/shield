@@ -1,7 +1,14 @@
 import { CirclePlus } from "lucide-react";
 import { useState } from "react";
 import type z from "zod";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "~/components/responsive-modal";
 import { Button } from "~/components/ui/button";
 import { useAuth } from "~/contexts/auth-context";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
@@ -52,43 +59,45 @@ export default function EditableAssetDisplay({
       ) : (
         <>&mdash;</>
       )}
-      <ResponsiveDialog
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        title={
-          <div className="flex items-center gap-1">
-            <CirclePlus className="size-5" /> Registering tag to asset...
-          </div>
-        }
-        description="Follow the steps below to register this tag to an asset."
-        trigger={null}
-        dialogClassName="sm:max-w-2xl"
-        children={
-          <div className="h-128">
-            <RegisterTagAssistant
-              canRegister={canRegiserTag}
-              isRegistered={!!asset}
-              isRegisteredRecently={recentlyRegistered}
-              onRegister={(asset) =>
-                handleSubmit({
-                  client: { connect: { id: asset.clientId } },
-                  site: { connect: { id: asset.siteId } },
-                  asset: {
-                    connect: {
-                      id: asset.id,
+      <ResponsiveModal open={modalOpen} onOpenChange={setModalOpen}>
+        <ResponsiveModalContent classNames={{ dialog: "sm:max-w-2xl" }}>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>
+              <div className="flex items-center gap-1">
+                <CirclePlus className="size-5" /> Registering tag to asset...
+              </div>
+            </ResponsiveModalTitle>
+            <ResponsiveModalDescription>
+              Follow the steps below to register this tag to an asset.
+            </ResponsiveModalDescription>
+          </ResponsiveModalHeader>
+          <ResponsiveModalBody>
+            <div className="h-128">
+              <RegisterTagAssistant
+                canRegister={canRegiserTag}
+                isRegistered={!!asset}
+                isRegisteredRecently={recentlyRegistered}
+                onRegister={(asset) =>
+                  handleSubmit({
+                    client: { connect: { id: asset.clientId } },
+                    site: { connect: { id: asset.siteId } },
+                    asset: {
+                      connect: {
+                        id: asset.id,
+                      },
                     },
-                  },
-                })
-              }
-              isRegistering={isSubmitting}
-              siteId={tag.siteId}
-              clientId={tag.clientId}
-              onClose={() => setModalOpen(false)}
-              hideInspectionPrompt
-            />
-          </div>
-        }
-      />
+                  })
+                }
+                isRegistering={isSubmitting}
+                siteId={tag.siteId}
+                clientId={tag.clientId}
+                onClose={() => setModalOpen(false)}
+                hideInspectionPrompt
+              />
+            </div>
+          </ResponsiveModalBody>
+        </ResponsiveModalContent>
+      </ResponsiveModal>
     </div>
   );
 }

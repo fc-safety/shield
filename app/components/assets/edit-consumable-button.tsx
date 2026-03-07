@@ -2,7 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import type { Consumable } from "~/lib/models";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import ConsumableDetailsForm from "./consumable-details-form";
 
 interface EditConsumableButtonProps {
@@ -26,29 +32,34 @@ export default function EditConsumableButton({
 }: EditConsumableButtonProps) {
   const [open, setOpen] = useState(false);
   return (
-    <ResponsiveDialog
+    <ResponsiveModal
       open={openProp ?? open}
       onOpenChange={onOpenChange ?? setOpen}
-      title={consumable ? "Edit Supply" : "Add New Supply"}
-      dialogClassName="sm:max-w-lg"
-      trigger={
-        trigger !== undefined ? (
+      isNested={nestDrawers}
+    >
+      <ResponsiveModalTrigger>
+        {trigger !== undefined ? (
           trigger
         ) : (
           <Button type="button" size="sm">
             {consumable ? <Pencil /> : <Plus />}
             {consumable ? "Edit" : "Add"} Supply
           </Button>
-        )
-      }
-      isNestedDrawer={nestDrawers}
-    >
-      <ConsumableDetailsForm
-        onSubmitted={() => (onOpenChange ? onOpenChange(false) : setOpen(false))}
-        consumable={consumable}
-        assetId={assetId}
-        parentProductId={parentProductId}
-      />
-    </ResponsiveDialog>
+        )}
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>
+            {consumable ? "Edit Supply" : "Add New Supply"}
+          </ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <ConsumableDetailsForm
+          onSubmitted={() => (onOpenChange ? onOpenChange(false) : setOpen(false))}
+          consumable={consumable}
+          assetId={assetId}
+          parentProductId={parentProductId}
+        />
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

@@ -4,7 +4,14 @@ import AssetInspectionAlert from "~/components/assets/asset-inspection-alert";
 import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
 import DisplayRelativeDate from "~/components/display-relative-date";
 import AlertLevelBadge from "~/components/inspections/alert-level-badge";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "~/components/responsive-modal";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Alert } from "~/lib/models";
 import { cn, dateSort } from "~/lib/utils";
@@ -51,9 +58,8 @@ export default function AlertsCard({ assetId, alerts }: { assetId: string; alert
           </div>
         )}
 
-        <ResponsiveDialog
-          title="Alert History"
-          trigger={
+        <ResponsiveModal>
+          <ResponsiveModalTrigger>
             <button
               className={cn(
                 "text-primary self-center text-sm",
@@ -62,14 +68,20 @@ export default function AlertsCard({ assetId, alerts }: { assetId: string; alert
             >
               View alert history &rarr;
             </button>
-          }
-        >
-          <div>
-            {sortedAlerts.map((alert, idx) => (
-              <AlertItem key={alert.id} alert={alert} idx={idx} assetId={assetId} />
-            ))}
-          </div>
-        </ResponsiveDialog>
+          </ResponsiveModalTrigger>
+          <ResponsiveModalContent>
+            <ResponsiveModalHeader>
+              <ResponsiveModalTitle>Alert History</ResponsiveModalTitle>
+            </ResponsiveModalHeader>
+            <ResponsiveModalBody>
+              <div>
+                {sortedAlerts.map((alert, idx) => (
+                  <AlertItem key={alert.id} alert={alert} idx={idx} assetId={assetId} />
+                ))}
+              </div>
+            </ResponsiveModalBody>
+          </ResponsiveModalContent>
+        </ResponsiveModal>
       </CardContent>
     </Card>
   );

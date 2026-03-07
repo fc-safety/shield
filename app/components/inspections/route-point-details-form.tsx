@@ -10,6 +10,7 @@ import type { Asset, InspectionRoute, InspectionRoutePoint, ResultsPage } from "
 import { createInspectionRoutePointSchema, updateInspectionRoutePointSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import AssetCombobox from "../assets/asset-combobox";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
@@ -125,102 +126,106 @@ export default function RoutePointDetailsForm({
 
   return (
     <Form {...form}>
-      <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
-        <Input type="hidden" {...form.register("id")} hidden />
-        <Input type="hidden" {...form.register("order")} hidden />
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
+        <ResponsiveModalBody className="space-y-4">
+          <Input type="hidden" {...form.register("id")} hidden />
+          <Input type="hidden" {...form.register("order")} hidden />
 
-        {!routeProp &&
-          (routesLoading ? (
-            <Loader2 className="mx-auto animate-spin" />
-          ) : routes.length > 0 ? (
+          {!routeProp &&
+            (routesLoading ? (
+              <Loader2 className="mx-auto animate-spin" />
+            ) : routes.length > 0 ? (
+              <FormField
+                control={form.control}
+                name="routeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Route</FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a route" onBlur={field.onBlur} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {routes.map((route) => (
+                            <SelectItem key={route.id} value={route.id}>
+                              {route.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <Button
+                      type="button"
+                      title="Refresh"
+                      variant="outline"
+                      size="xs"
+                      onClick={preloadRoutes}
+                    >
+                      Refresh Routes
+                      <RotateCw />
+                    </Button>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ) : (
+              <div className="text-muted-foreground my-4 flex flex-col items-center text-sm">
+                <div>No new routes available for this asset.</div>
+                <Button
+                  type="button"
+                  title="Refresh"
+                  variant="outline"
+                  size="xs"
+                  onClick={preloadRoutes}
+                >
+                  Refresh Routes
+                  <RotateCw />
+                </Button>
+                <Button variant="link" asChild>
+                  <Link to={linkToRoutes} target="_blank" rel="noreferrer">
+                    Create a new route <ExternalLink />
+                  </Link>
+                </Button>
+              </div>
+            ))}
+
+          {!assetProp && (
             <FormField
               control={form.control}
-              name="routeId"
+              name="assetId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Route</FormLabel>
+                  <FormLabel>Asset</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a route" onBlur={field.onBlur} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {routes.map((route) => (
-                          <SelectItem key={route.id} value={route.id}>
-                            {route.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <AssetCombobox
+                      className="w-full"
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      onBlur={field.onBlur}
+                      optionFilter={(asset) => !includedAssetIds.has(asset.id)}
+                      disabled={!route}
+                      siteId={route?.siteId}
+                      optionQueryFilter={{
+                        siteId: route?.siteId,
+                      }}
+                    />
                   </FormControl>
-                  <Button
-                    type="button"
-                    title="Refresh"
-                    variant="outline"
-                    size="xs"
-                    onClick={preloadRoutes}
-                  >
-                    Refresh Routes
-                    <RotateCw />
-                  </Button>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          ) : (
-            <div className="text-muted-foreground my-4 flex flex-col items-center text-sm">
-              <div>No new routes available for this asset.</div>
-              <Button
-                type="button"
-                title="Refresh"
-                variant="outline"
-                size="xs"
-                onClick={preloadRoutes}
-              >
-                Refresh Routes
-                <RotateCw />
-              </Button>
-              <Button variant="link" asChild>
-                <Link to={linkToRoutes} target="_blank" rel="noreferrer">
-                  Create a new route <ExternalLink />
-                </Link>
-              </Button>
-            </div>
-          ))}
+          )}
+        </ResponsiveModalBody>
 
-        {!assetProp && (
-          <FormField
-            control={form.control}
-            name="assetId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Asset</FormLabel>
-                <FormControl>
-                  <AssetCombobox
-                    className="w-full"
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    onBlur={field.onBlur}
-                    optionFilter={(asset) => !includedAssetIds.has(asset.id)}
-                    disabled={!route}
-                    siteId={route?.siteId}
-                    optionQueryFilter={{
-                      siteId: route?.siteId,
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        <Button
-          type="submit"
-          disabled={!routeId || isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+        <ResponsiveModalFooter>
+          <Button
+            type="submit"
+            disabled={!routeId || isSubmitting || (!isNew && !isDirty) || !isValid}
+          >
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </ResponsiveModalFooter>
       </form>
     </Form>
   );

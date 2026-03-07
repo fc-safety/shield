@@ -23,6 +23,7 @@ import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
 import { CopyableText } from "../copyable-text";
 import DataList from "../data-list";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 import { Card, CardHeader } from "../ui/card";
 import AssetCombobox from "./asset-combobox";
 
@@ -131,146 +132,150 @@ export default function TagDetailsForm({ tag, onClose }: TagDetailsFormProps) {
   return (
     <FormProvider {...form}>
       <form
-        className="space-y-4"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={(e) => {
           setIsAddingSequentialTag(false);
           form.handleSubmit(handleSubmit)(e);
         }}
       >
-        {recentlySavedTag && (
-          <Card className="mt-4">
-            <CardHeader>
-              <DataList
-                title="Recently Saved Tag"
-                details={[
-                  {
-                    label: "Serial Number",
-                    value: recentlySavedTag.serialNumber,
-                  },
-                  {
-                    label: "Inspection URL",
-                    value: (
-                      <CopyableText
-                        text={buildUrl("/inspect", appHost, {
-                          extId: recentlySavedTag.externalId,
-                        }).toString()}
-                      />
-                    ),
-                  },
-                ]}
-                fluid
-              />
-            </CardHeader>
-          </Card>
-        )}
-        <Input type="hidden" {...form.register("id")} hidden />
-        <FormField
-          control={form.control}
-          name="serialNumber"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Serial Number</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="client"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                {field.value?.connect?.id ? "Assigned client" : "Assign client"}
-              </FormLabel>
-              <FormControl>
-                <ClientCombobox
-                  value={field.value?.connect?.id}
-                  onValueChange={(id) =>
-                    field.onChange(
-                      id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
-                    )
-                  }
-                  onBlur={field.onBlur}
-                  className="w-full"
-                  showClear
+        <ResponsiveModalBody className="space-y-4">
+          {recentlySavedTag && (
+            <Card className="mt-4">
+              <CardHeader>
+                <DataList
+                  title="Recently Saved Tag"
+                  details={[
+                    {
+                      label: "Serial Number",
+                      value: recentlySavedTag.serialNumber,
+                    },
+                    {
+                      label: "Inspection URL",
+                      value: (
+                        <CopyableText
+                          text={buildUrl("/inspect", appHost, {
+                            extId: recentlySavedTag.externalId,
+                          }).toString()}
+                        />
+                      ),
+                    },
+                  ]}
+                  fluid
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+              </CardHeader>
+            </Card>
           )}
-        />
-        <FormField
-          control={form.control}
-          name="site"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{field.value?.connect?.id ? "Assigned site" : "Assign site"}</FormLabel>
-              <FormControl>
-                <SiteCombobox
-                  value={field.value?.connect?.id}
-                  onValueChange={(id) =>
-                    field.onChange(
-                      id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
-                    )
-                  }
-                  onBlur={field.onBlur}
-                  className="w-full"
-                  clientId={clientId}
-                  disabled={!clientId}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="asset"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{field.value?.connect?.id ? "Assigned asset" : "Assign asset"}</FormLabel>
-              <FormControl>
-                <AssetCombobox
-                  value={field.value?.connect?.id}
-                  onValueChange={(id) =>
-                    field.onChange(
-                      id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
-                    )
-                  }
-                  onBlur={field.onBlur}
-                  className="w-full"
-                  optionQueryFilter={getAssetOptionQueryFilter(siteId, field.value?.connect?.id)}
-                  disabled={!siteId}
-                  clientId={clientId}
-                  siteId={siteId}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="flex gap-2">
-          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
-            {isSubmitting ? "Saving..." : "Save"}
-          </Button>
-          <div className="flex-1"></div>
-          {isNew && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-              onClick={() => {
-                setIsAddingSequentialTag(true);
-                form.handleSubmit(handleSubmit)();
-              }}
-            >
-              Save and add another
+          <Input type="hidden" {...form.register("id")} hidden />
+          <FormField
+            control={form.control}
+            name="serialNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Serial Number</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="client"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  {field.value?.connect?.id ? "Assigned client" : "Assign client"}
+                </FormLabel>
+                <FormControl>
+                  <ClientCombobox
+                    value={field.value?.connect?.id}
+                    onValueChange={(id) =>
+                      field.onChange(
+                        id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
+                      )
+                    }
+                    onBlur={field.onBlur}
+                    className="w-full"
+                    showClear
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="site"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{field.value?.connect?.id ? "Assigned site" : "Assign site"}</FormLabel>
+                <FormControl>
+                  <SiteCombobox
+                    value={field.value?.connect?.id}
+                    onValueChange={(id) =>
+                      field.onChange(
+                        id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
+                      )
+                    }
+                    onBlur={field.onBlur}
+                    className="w-full"
+                    clientId={clientId}
+                    disabled={!clientId}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="asset"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{field.value?.connect?.id ? "Assigned asset" : "Assign asset"}</FormLabel>
+                <FormControl>
+                  <AssetCombobox
+                    value={field.value?.connect?.id}
+                    onValueChange={(id) =>
+                      field.onChange(
+                        id ? { connect: { id } } : isNew ? undefined : { disconnect: true }
+                      )
+                    }
+                    onBlur={field.onBlur}
+                    className="w-full"
+                    optionQueryFilter={getAssetOptionQueryFilter(siteId, field.value?.connect?.id)}
+                    disabled={!siteId}
+                    clientId={clientId}
+                    siteId={siteId}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty) || !isValid}>
+              {isSubmitting ? "Saving..." : "Save"}
             </Button>
-          )}
-        </div>
+            <div className="flex-1"></div>
+            {isNew && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
+                onClick={() => {
+                  setIsAddingSequentialTag(true);
+                  form.handleSubmit(handleSubmit)();
+                }}
+              >
+                Save and add another
+              </Button>
+            )}
+          </div>
+        </ResponsiveModalFooter>
       </form>
     </FormProvider>
   );

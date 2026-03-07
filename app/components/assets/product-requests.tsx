@@ -39,9 +39,18 @@ import { cn, dateSort, dedupById } from "~/lib/utils";
 import HydrationSafeFormattedDate from "../common/hydration-safe-formatted-date";
 import Icon from "../icons/icon";
 import { AnsiCategoryDisplay } from "../products/ansi-category-combobox";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import {
   Empty,
   EmptyContent,
@@ -82,39 +91,34 @@ export function NewSupplyRequestButton({ ...props }: ComponentProps<typeof Produ
   const [open, setOpen] = useState(false);
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={setOpen}
-      trigger={
+    <ResponsiveModal open={open} onOpenChange={setOpen}>
+      <ResponsiveModalTrigger>
         <Button type="submit" variant="default" size="sm" className="justify-self-end">
           <NotepadText />
           New Supply Request
         </Button>
-      }
-      title="Building Supply Request"
-      description="Please select which supplies and the quantities you would like to order."
-      dialogClassName="sm:max-w-3xl"
-      classNames={{
-        header: "mb-4",
-      }}
-      disableDisplayTable
-      render={({ isDesktop }) => (
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-3xl" }}>
+        <ResponsiveModalHeader className="mb-4">
+          <ResponsiveModalTitle>Building Supply Request</ResponsiveModalTitle>
+          <ResponsiveModalDescription>
+            Please select which supplies and the quantities you would like to order.
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
         <ProductRequestForm
           {...props}
           onClose={() => setOpen(false)}
           renderFormFooter={({ renderDefault }) => {
-            return isDesktop ? (
-              <DialogFooter>{renderDefault({ align: "end" })}</DialogFooter>
-            ) : (
-              renderDefault()
+            return (
+              <ResponsiveModalFooter>{renderDefault({ align: "end" })}</ResponsiveModalFooter>
             );
           }}
           onSubmitted={() => {
             setOpen(false);
           }}
         />
-      )}
-    />
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }
 

@@ -11,7 +11,15 @@ import HydrationSafeFormattedDate from "~/components/common/hydration-safe-forma
 import ConfirmationDialog from "~/components/confirmation-dialog";
 import DisplayRelativeDate from "~/components/display-relative-date";
 import Icon from "~/components/icons/icon";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "~/components/responsive-modal";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
@@ -280,65 +288,71 @@ function ClearInspectionsByDateRangeButton({ clientId }: { clientId: string }) {
 
   return (
     <>
-      <ResponsiveDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        trigger={
+      <ResponsiveModal open={dialogOpen} onOpenChange={setDialogOpen}>
+        <ResponsiveModalTrigger>
           <Button type="button" variant="outline">
             Clear Custom
           </Button>
-        }
-        title="Clear Inspections By Date Range"
-        dialogClassName="sm:max-w-lg"
-      >
-        <Form {...form}>
-          <form className="flex flex-col gap-2" onSubmit={(e) => e.preventDefault()}>
-            <FormField
-              control={form.control}
-              name="startDate"
-              render={({ field: { onChange, value, ...field } }) => (
-                <FormItem>
-                  <FormLabel>Start Date</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      value={value ? format(parseISO(value), "yyyy-MM-dd") : undefined}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        onChange(startOfDay(parseISO(value)).toISOString());
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="endDate"
-              render={({ field: { onChange, value, ...field } }) => (
-                <FormItem>
-                  <FormLabel>End Date</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="date"
-                      {...field}
-                      value={value ? format(parseISO(value), "yyyy-MM-dd") : undefined}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        onChange(endOfDay(parseISO(value)).toISOString());
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DeleteButton />
-          </form>
-        </Form>
-      </ResponsiveDialog>
+        </ResponsiveModalTrigger>
+        <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>Clear Inspections By Date Range</ResponsiveModalTitle>
+          </ResponsiveModalHeader>
+          <Form {...form}>
+            <form className="flex min-h-0 flex-1 flex-col" onSubmit={(e) => e.preventDefault()}>
+              <ResponsiveModalBody>
+                <div className="flex flex-col gap-2">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field: { onChange, value, ...field } }) => (
+                      <FormItem>
+                        <FormLabel>Start Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            value={value ? format(parseISO(value), "yyyy-MM-dd") : undefined}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              onChange(startOfDay(parseISO(value)).toISOString());
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field: { onChange, value, ...field } }) => (
+                      <FormItem>
+                        <FormLabel>End Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                            value={value ? format(parseISO(value), "yyyy-MM-dd") : undefined}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              onChange(endOfDay(parseISO(value)).toISOString());
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </ResponsiveModalBody>
+              <ResponsiveModalFooter>
+                <DeleteButton />
+              </ResponsiveModalFooter>
+            </form>
+          </Form>
+        </ResponsiveModalContent>
+      </ResponsiveModal>
       <ConfirmDeleteDialog />
     </>
   );

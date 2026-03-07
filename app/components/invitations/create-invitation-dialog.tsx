@@ -12,7 +12,15 @@ import { cn } from "~/lib/utils";
 import RoleCombobox from "../clients/role-combobox";
 import SiteCombobox from "../clients/site-combobox";
 import ConfirmationDialog from "../confirmation-dialog";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import RoleOverviewTable from "../roles/role-overview-table";
 import { Button } from "../ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
@@ -378,119 +386,122 @@ export function CreateInvitationDialog({
 
   return (
     <>
-      <ResponsiveDialog
-        open={open}
-        onOpenChange={handleOpenChange}
-        trigger={
-          trigger ?? (
+      <ResponsiveModal open={open} onOpenChange={handleOpenChange}>
+        <ResponsiveModalTrigger>
+          {trigger ?? (
             <Button size="sm">
               <Plus className="h-4 w-4" />
               Invite Members
             </Button>
-          )
-        }
-        dialogClassName="sm:max-w-4xl"
-        disableDisplayTable
-        title={createdInvitations ? "Invitations Created" : "Invite Members"}
-        description={
-          createdInvitations
-            ? "Invitation emails have been sent."
-            : "Invite people to join your organization."
-        }
-      >
-        {createdInvitations ? (
-          <CreatedInvitationsDisplay
-            invitations={createdInvitations}
-            onClose={() => handleOpenChange(false)}
-          />
-        ) : (
-          <FormProvider {...form}>
-            <form
-              className="space-y-4 pt-4"
-              onSubmit={form.handleSubmit(handleSubmit, (e) => {
-                toast.error("Please fix the errors in the form.", {
-                  description: extractErrorMessage(e),
-                  duration: 10000,
-                });
-              })}
-            >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[35%]">Email</TableHead>
-                    <TableHead className="w-[25%]">Role</TableHead>
-                    <TableHead className="w-[25%]">Site</TableHead>
-                    <TableHead className="w-10">
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fields.map((field, index) => (
-                    <InvitationRow
-                      key={field.id}
-                      index={index}
-                      control={control}
-                      clientId={clientId}
-                      onRoleChange={handleRoleChange}
-                      onRemove={handleRemoveRow}
-                      canRemove={fields.length > 1}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => append({ email: "", roleId: "", siteId: "" })}
-              >
-                <Plus className="h-4 w-4" />
-                Add Another
-              </Button>
-
-              <RoleOverviewTable />
-
-              <Controller
-                control={control}
-                name="expiresInDays"
-                render={({ field: { value, onChange }, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Expires In</FieldLabel>
-                    <Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
-                      <SelectTrigger className={cn("w-full")}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 day</SelectItem>
-                        <SelectItem value="3">3 days</SelectItem>
-                        <SelectItem value="7">7 days</SelectItem>
-                        <SelectItem value="14">14 days</SelectItem>
-                        <SelectItem value="30">30 days</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )}
+          )}
+        </ResponsiveModalTrigger>
+        <ResponsiveModalContent classNames={{ dialog: "sm:max-w-4xl" }}>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>
+              {createdInvitations ? "Invitations Created" : "Invite Members"}
+            </ResponsiveModalTitle>
+            <ResponsiveModalDescription>
+              {createdInvitations
+                ? "Invitation emails have been sent."
+                : "Invite people to join your organization."}
+            </ResponsiveModalDescription>
+          </ResponsiveModalHeader>
+          <ResponsiveModalBody disableScrollArea>
+            {createdInvitations ? (
+              <CreatedInvitationsDisplay
+                invitations={createdInvitations}
+                onClose={() => handleOpenChange(false)}
               />
+            ) : (
+              <FormProvider {...form}>
+                <form
+                  className="space-y-4 pt-4"
+                  onSubmit={form.handleSubmit(handleSubmit, (e) => {
+                    toast.error("Please fix the errors in the form.", {
+                      description: extractErrorMessage(e),
+                      duration: 10000,
+                    });
+                  })}
+                >
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[35%]">Email</TableHead>
+                        <TableHead className="w-[25%]">Role</TableHead>
+                        <TableHead className="w-[25%]">Site</TableHead>
+                        <TableHead className="w-10">
+                          <span className="sr-only">Actions</span>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {fields.map((field, index) => (
+                        <InvitationRow
+                          key={field.id}
+                          index={index}
+                          control={control}
+                          clientId={clientId}
+                          onRoleChange={handleRoleChange}
+                          onRemove={handleRemoveRow}
+                          canRemove={fields.length > 1}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting
-                    ? "Sending..."
-                    : invitationCount === 1
-                      ? "Send Invitation"
-                      : `Send ${invitationCount} Invitations`}
-                </Button>
-              </div>
-            </form>
-          </FormProvider>
-        )}
-      </ResponsiveDialog>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => append({ email: "", roleId: "", siteId: "" })}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Another
+                  </Button>
+
+                  <RoleOverviewTable />
+
+                  <Controller
+                    control={control}
+                    name="expiresInDays"
+                    render={({ field: { value, onChange }, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel>Expires In</FieldLabel>
+                        <Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
+                          <SelectTrigger className={cn("w-full")}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 day</SelectItem>
+                            <SelectItem value="3">3 days</SelectItem>
+                            <SelectItem value="7">7 days</SelectItem>
+                            <SelectItem value="14">14 days</SelectItem>
+                            <SelectItem value="30">30 days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting
+                        ? "Sending..."
+                        : invitationCount === 1
+                          ? "Send Invitation"
+                          : `Send ${invitationCount} Invitations`}
+                    </Button>
+                  </div>
+                </form>
+              </FormProvider>
+            )}
+          </ResponsiveModalBody>
+        </ResponsiveModalContent>
+      </ResponsiveModal>
       <ConfirmationDialog {...assignHighPrivilegeAction} />
     </>
   );

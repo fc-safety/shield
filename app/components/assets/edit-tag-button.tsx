@@ -2,7 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import React, { useState, type ComponentProps } from "react";
 import type { Tag } from "~/lib/models";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import TagDetailsForm from "./tag-details-form";
 
 interface EditTagButtonProps
@@ -26,27 +32,33 @@ export default function EditTagButton({
   const setOpen = onOpenChange ?? setInternalOpen;
 
   return (
-    <ResponsiveDialog
+    <ResponsiveModal
       open={open}
       onOpenChange={setOpen}
-      title={tag ? "Edit Tag" : "Add New Tag"}
-      dialogClassName="sm:max-w-lg"
-      trigger={
-        trigger !== undefined ? (
+      isNested
+    >
+      <ResponsiveModalTrigger>
+        {trigger !== undefined ? (
           trigger
         ) : (
           <Button type="button" size="sm">
             {tag ? <Pencil /> : <Plus />}
             {tag ? "Edit" : "Add"} Tag
           </Button>
-        )
-      }
-    >
-      <TagDetailsForm
-        onClose={() => setOpen(false)}
-        tag={tag}
-        {...passThroughProps}
-      />
-    </ResponsiveDialog>
+        )}
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>
+            {tag ? "Edit Tag" : "Add New Tag"}
+          </ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <TagDetailsForm
+          onClose={() => setOpen(false)}
+          tag={tag}
+          {...passThroughProps}
+        />
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

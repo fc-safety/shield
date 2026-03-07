@@ -3,7 +3,14 @@ import { CirclePlus, Link, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { CopyableText } from "~/components/copyable-text";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "~/components/responsive-modal";
 import { Button } from "~/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import { useAuth } from "~/contexts/auth-context";
@@ -85,27 +92,29 @@ export default function EditableTagDisplay({
           <>&mdash;</>
         )}
       </div>
-      <ResponsiveDialog
-        open={modelOpen}
-        onOpenChange={setModelOpen}
-        title={
-          <div className="flex items-center gap-1">
-            <CirclePlus className="size-5" /> Registering tag to asset...
-          </div>
-        }
-        description="Follow the steps below to register a new tag to this asset."
-        trigger={null}
-        dialogClassName="sm:max-w-2xl"
-        children={
-          <div className="h-128">
-            {asset ? (
-              <TagAssistant assetToRegister={asset} onClose={() => setModelOpen(false)} />
-            ) : (
-              <>Something went wrong. No asset found.</>
-            )}
-          </div>
-        }
-      />
+      <ResponsiveModal open={modelOpen} onOpenChange={setModelOpen}>
+        <ResponsiveModalContent classNames={{ dialog: "sm:max-w-2xl" }}>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>
+              <div className="flex items-center gap-1">
+                <CirclePlus className="size-5" /> Registering tag to asset...
+              </div>
+            </ResponsiveModalTitle>
+            <ResponsiveModalDescription>
+              Follow the steps below to register a new tag to this asset.
+            </ResponsiveModalDescription>
+          </ResponsiveModalHeader>
+          <ResponsiveModalBody>
+            <div className="h-128">
+              {asset ? (
+                <TagAssistant assetToRegister={asset} onClose={() => setModelOpen(false)} />
+              ) : (
+                <>Something went wrong. No asset found.</>
+              )}
+            </div>
+          </ResponsiveModalBody>
+        </ResponsiveModalContent>
+      </ResponsiveModal>
     </div>
   );
 }

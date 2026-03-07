@@ -20,6 +20,7 @@ import SiteCombobox from "../clients/site-combobox";
 import HelpPopover from "../help-popover";
 import MetadataInput from "../metadata-input";
 import ProductSelector from "../products/product-selector";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 import {
   FormControl,
   FormDescription,
@@ -110,28 +111,32 @@ export default function AssetDetailsForm({
   return (
     <FormProvider {...form}>
       <form
-        className="space-y-4"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={(e) => {
           e.stopPropagation();
           form.handleSubmit(handleSubmit)(e);
         }}
       >
-        <AssetDetailFormFields
-          form={form}
-          showClientSelect={isGlobalAdmin(user) && accessIntent === "system" && !clientId}
-          showSiteSelect={hasMultiSiteVisibility(user) && !siteId}
-          clientId={formClientId}
-          showProductSelect
-          productReadOnly={accessIntent !== "system" && !!asset?.setupOn}
-          nestDrawers={nestDrawers}
-        />
-        <Button
-          className="w-full"
-          type="submit"
-          disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
-        >
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+        <ResponsiveModalBody className="space-y-4">
+          <AssetDetailFormFields
+            form={form}
+            showClientSelect={isGlobalAdmin(user) && accessIntent === "system" && !clientId}
+            showSiteSelect={hasMultiSiteVisibility(user) && !siteId}
+            clientId={formClientId}
+            showProductSelect
+            productReadOnly={accessIntent !== "system" && !!asset?.setupOn}
+            nestDrawers={nestDrawers}
+          />
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>
+          <Button
+            className="w-full"
+            type="submit"
+            disabled={isSubmitting || (!isNew && !isDirty) || !isValid}
+          >
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </ResponsiveModalFooter>
       </form>
     </FormProvider>
   );

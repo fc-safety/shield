@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ResponsiveDialog } from "../../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../../responsive-modal";
 import type { AssetQuestionDetailFormProps } from "./asset-question-detail-form.component";
 import AssetQuestionDetailForm from "./asset-question-detail-form.component";
 
@@ -29,32 +35,35 @@ export default function EditAssetQuestionButton({
   }, [internalOpen, onOpenChange]);
 
   return (
-    <ResponsiveDialog
+    <ResponsiveModal
       open={open}
       onOpenChange={setOpen}
-      title={passthroughProps.assetQuestion ? "Edit Question" : "Add New Question"}
-      dialogClassName="sm:max-w-5xl p-0"
-      classNames={{
-        header: "px-4 pt-4",
-      }}
-      trigger={
-        trigger !== undefined ? (
+      isNested
+    >
+      <ResponsiveModalTrigger>
+        {trigger !== undefined ? (
           trigger
         ) : (
           <Button type="button" size="sm">
             {passthroughProps.assetQuestion ? <Pencil /> : <Plus />}
             {passthroughProps.assetQuestion ? "Edit" : "Add"} Question
           </Button>
-        )
-      }
-    >
-      <AssetQuestionDetailForm
-        onSubmitted={() => {
-          setOpen(false);
-          passthroughProps.onSubmitted?.();
-        }}
-        {...passthroughProps}
-      />
-    </ResponsiveDialog>
+        )}
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-5xl p-0" }}>
+        <ResponsiveModalHeader className="px-4 pt-4">
+          <ResponsiveModalTitle>
+            {passthroughProps.assetQuestion ? "Edit Question" : "Add New Question"}
+          </ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <AssetQuestionDetailForm
+          onSubmitted={() => {
+            setOpen(false);
+            passthroughProps.onSubmitted?.();
+          }}
+          {...passthroughProps}
+        />
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

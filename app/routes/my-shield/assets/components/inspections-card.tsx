@@ -3,7 +3,14 @@ import { BellRing, ChevronRight, SearchCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import AssetInspectionDialog from "~/components/assets/asset-inspection-dialog";
 import HydrationSafeFormattedDate from "~/components/common/hydration-safe-formatted-date";
-import { ResponsiveDialog } from "~/components/responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalDescription,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "~/components/responsive-modal";
 import { SendNotificationsForm } from "~/components/send-notifications-form";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -92,28 +99,31 @@ function NotifyTeamButton({ asset }: { asset: Asset }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={setOpen}
-      title={
-        <span className="flex items-center gap-2">
-          <BellRing className="size-4" /> Notify Your Team
-        </span>
-      }
-      description="Send an inspection reminder notification to select users on your team."
-      trigger={
+    <ResponsiveModal open={open} onOpenChange={setOpen}>
+      <ResponsiveModalTrigger>
         <Button size="sm">
           <BellRing /> Notify Team
         </Button>
-      }
-    >
-      <div className="mt-4">
-        <SendNotificationsForm
-          siteExternalId={asset.site?.externalId}
-          endpointPath={`/api/proxy/assets/${asset.id}/send-reminder-notifications`}
-          onSent={() => setOpen(false)}
-        />
-      </div>
-    </ResponsiveDialog>
+      </ResponsiveModalTrigger>
+      <ResponsiveModalContent>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>
+            <span className="flex items-center gap-2">
+              <BellRing className="size-4" /> Notify Your Team
+            </span>
+          </ResponsiveModalTitle>
+          <ResponsiveModalDescription>
+            Send an inspection reminder notification to select users on your team.
+          </ResponsiveModalDescription>
+        </ResponsiveModalHeader>
+        <div className="mt-4">
+          <SendNotificationsForm
+            siteExternalId={asset.site?.externalId}
+            endpointPath={`/api/proxy/assets/${asset.id}/send-reminder-notifications`}
+            onSent={() => setOpen(false)}
+          />
+        </div>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }

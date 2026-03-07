@@ -10,6 +10,7 @@ import { z } from "zod";
 import { CopyableInput } from "~/components/copyable-input";
 import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { extractErrorMessage } from "~/components/ui/form";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 import { Label } from "~/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
 import { Switch } from "~/components/ui/switch";
@@ -125,7 +126,7 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
   return (
     <FormProvider {...form}>
       <form
-        className="space-y-4"
+        className="flex min-h-0 flex-1 flex-col"
         method="post"
         onSubmit={form.handleSubmit(handleSubmit, (e) => {
           toast.error("Please fix the errors in the form.", {
@@ -134,6 +135,7 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
           });
         })}
       >
+        <ResponsiveModalBody className="space-y-4">
         <Input type="hidden" {...form.register("id")} hidden />
         <Controller
           control={form.control}
@@ -298,9 +300,12 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
             </Field>
           )}
         />
-        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>
+          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </ResponsiveModalFooter>
       </form>
     </FormProvider>
   );

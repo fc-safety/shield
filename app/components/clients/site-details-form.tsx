@@ -21,6 +21,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Label } from "../ui/label";
 import { Skeleton } from "../ui/skeleton";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 import SiteCombobox from "./site-combobox";
 
 export interface SiteDetailsFormProps {
@@ -230,11 +231,12 @@ export default function SiteDetailsForm({
   return (
     <FormProvider {...form}>
       <form
-        className="space-y-4"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={form.handleSubmit(handleSubmit, (e) => {
           console.error("form error", e);
         })}
       >
+        <ResponsiveModalBody className="space-y-4">
         <Input type="hidden" {...form.register("id")} hidden />
         <Input type="hidden" {...form.register("client.connect.id")} hidden />
         <ActiveToggleField />
@@ -463,9 +465,12 @@ export default function SiteDetailsForm({
             )}
           />
         )}
-        <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>
+          <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </ResponsiveModalFooter>
       </form>
     </FormProvider>
   );

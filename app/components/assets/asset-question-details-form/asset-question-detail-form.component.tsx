@@ -42,6 +42,7 @@ import {
 import { createAssetQuestionSchema, updateAssetQuestionSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import { humanize, nullValuesToUndefined } from "~/lib/utils";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../../responsive-modal";
 import {
   AssetQuestionDetailFormProvider,
   useAssetQuestionDetailFormContext,
@@ -257,7 +258,7 @@ function AssetQuestionDetailsFormContent({
   return (
     <FormProvider {...form}>
       <form
-        className="flex"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={form.handleSubmit(handleSubmit, (e) => {
           toast.error("Please fix the errors in the form.", {
             description: extractErrorMessage(e),
@@ -265,7 +266,8 @@ function AssetQuestionDetailsFormContent({
           });
         })}
       >
-        <div className="flex-1 space-y-4 p-4">
+        <div className="flex min-h-0 flex-1">
+        <ResponsiveModalBody className="flex-1 space-y-4 p-4">
           <Input type="hidden" {...form.register("id")} hidden />
           <ActiveToggleFormInput helpPopoverContent="Only active questions will be displayed to inspectors." />
           <FormField
@@ -484,12 +486,14 @@ function AssetQuestionDetailsFormContent({
           )}
 
           <SetMetadataInput requireDynamic={type === "CONFIGURATION"} />
-
+        </ResponsiveModalBody>
+        <FormSidepanel />
+        </div>
+        <ResponsiveModalFooter>
           <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
             {isSubmitting ? "Saving..." : "Save"}
           </Button>
-        </div>
-        <FormSidepanel />
+        </ResponsiveModalFooter>
       </form>
     </FormProvider>
   );

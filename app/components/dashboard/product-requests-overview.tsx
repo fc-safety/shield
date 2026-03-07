@@ -44,9 +44,15 @@ import DateRangeSelect, { type QuickRangeId } from "../date-range-select";
 import DisplayRelativeDate from "../display-relative-date";
 import GradientScrollArea from "../gradient-scroll-area";
 import Icon from "../icons/icon";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+} from "../responsive-modal";
 import { Button } from "../ui/button";
-import { DialogFooter } from "../ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -626,31 +632,30 @@ function ReviewProductRequestModal({
 
   return (
     <>
-      <ResponsiveDialog
-        title="Supply Request Details"
-        open={open}
-        onOpenChange={onOpenChange}
-        dialogClassName="sm:max-w-lg"
-        trigger={<button className="hidden"></button>}
-      >
-        <>
-          <div className="flex flex-col gap-4 py-4">
-            <DataList
-              details={[
-                {
-                  label: "Requestor",
-                  value: request?.requestor && getUserDisplayName(request?.requestor),
-                },
-                {
-                  label: "Site",
-                  value: request?.site?.name,
-                },
-              ]}
-              defaultValue={<>&mdash;</>}
-            />
-            {request ? <ProductRequestCard request={request} /> : <p>No request selected</p>}
-          </div>
-          <DialogFooter className="flex items-center gap-2">
+      <ResponsiveModal open={open} onOpenChange={onOpenChange}>
+        <ResponsiveModalContent classNames={{ dialog: "sm:max-w-lg" }}>
+          <ResponsiveModalHeader>
+            <ResponsiveModalTitle>Supply Request Details</ResponsiveModalTitle>
+          </ResponsiveModalHeader>
+          <ResponsiveModalBody>
+            <div className="flex flex-col gap-4 py-4">
+              <DataList
+                details={[
+                  {
+                    label: "Requestor",
+                    value: request?.requestor && getUserDisplayName(request?.requestor),
+                  },
+                  {
+                    label: "Site",
+                    value: request?.site?.name,
+                  },
+                ]}
+                defaultValue={<>&mdash;</>}
+              />
+              {request ? <ProductRequestCard request={request} /> : <p>No request selected</p>}
+            </div>
+          </ResponsiveModalBody>
+          <ResponsiveModalFooter className="flex items-center gap-2">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
               {/* Close */}
               Done
@@ -670,9 +675,9 @@ function ReviewProductRequestModal({
             >
               Approve
             </Button> */}
-          </DialogFooter>
-        </>
-      </ResponsiveDialog>
+          </ResponsiveModalFooter>
+        </ResponsiveModalContent>
+      </ResponsiveModal>
       {/* <ConfirmationDialog {...confirmAction} /> */}
     </>
   );
