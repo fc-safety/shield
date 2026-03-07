@@ -6,7 +6,6 @@ import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import type { Consumable } from "~/lib/models";
 import { createConsumableSchema, updateConsumableSchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
-import LegacyIdField from "../legacy-id-field";
 import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
@@ -85,12 +84,6 @@ export default function ConsumableDetailsForm({
       <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
         <Input type="hidden" {...form.register("id")} hidden />
         <Input type="hidden" {...form.register("asset.connect.id")} hidden />
-        <LegacyIdField
-          form={form}
-          fieldName="legacyInventoryId"
-          label="Legacy Inventory ID"
-          description="Inventory ID from the legacy Shield system"
-        />
 
         <FormField
           control={form.control}

@@ -1,21 +1,34 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Link2, Loader2, Pencil, Search, SearchX } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { DataOrError } from "~/.server/api-utils";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link2, Loader2, Pencil, Plus, Search, SearchX, Settings, Trash } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useAccessIntent } from "~/contexts/requested-access-context";
+import { useAuthenticatedFetch } from "~/hooks/use-authenticated-fetch";
 import { useBlurOnClose } from "~/hooks/use-blur-on-close";
-import { useModalFetcher } from "~/hooks/use-modal-fetcher";
-import type { Manufacturer, ResultsPage } from "~/lib/models";
-import type { QueryParams } from "~/lib/urls";
+import useConfirmAction from "~/hooks/use-confirm-action";
+import type { Manufacturer } from "~/lib/models";
+import {
+  MANUFACTURERS_QUERY_KEY_PREFIX,
+  getManufacturersForSelectorQueryOptions,
+} from "~/lib/services/manufacturers.service";
 import { cn } from "~/lib/utils";
+import ConfirmationDialog from "../confirmation-dialog";
 import LinkPreview from "../link-preview";
-import { ResponsiveDialog } from "../responsive-dialog";
+import {
+  ResponsiveModal,
+  ResponsiveModalBody,
+  ResponsiveModalContent,
+  ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../ui/empty";
 import CustomTag from "./custom-tag";
+import EditManufacturerButton from "./edit-manufacturer-button";
 
 interface ManufacturerSelectorProps {
   value?: string;
@@ -35,20 +48,37 @@ export default function ManufacturerSelector({
   clientId,
 }: ManufacturerSelectorProps) {
   const accessIntent = useAccessIntent();
+  const { fetchOrThrow } = useAuthenticatedFetch();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [tempValue, setTempValue] = useState(value);
+  const [managing, setManaging] = useState(false);
+  const [editManufacturer, setEditManufacturer] = useState<Manufacturer | null>(null);
 
-  const [manufacturers, setManufacturers] = useState<Manufacturer[]>([]);
-  const {
-    load,
-    data: dataOrError,
-    isLoading,
-  } = useModalFetcher<DataOrError<ResultsPage<Manufacturer>>>({
-    onData: (data) => {
-      if (data.data) {
-        setManufacturers(data.data.results);
-      }
-    },
+  const queryOptions = getManufacturersForSelectorQueryOptions(fetchOrThrow, {
+    clientId,
+    accessIntent,
+  });
+
+  const { data: manufacturers = [], isLoading } = useQuery({
+    ...queryOptions,
+    enabled: open || !!value,
+  });
+
+  const invalidateManufacturers = () => {
+    queryClient.invalidateQueries({
+      predicate: ({ queryKey }) => queryKey[0] === MANUFACTURERS_QUERY_KEY_PREFIX,
+    });
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: (manufacturerId: string) =>
+      fetchOrThrow(`/manufacturers/${manufacturerId}`, { method: "DELETE" }),
+    onSuccess: invalidateManufacturers,
+  });
+
+  const [deleteAction, setDeleteAction] = useConfirmAction({
+    variant: "destructive",
   });
 
   const defaultManufacturer = useMemo(
@@ -61,69 +91,49 @@ export default function ManufacturerSelector({
     open,
   });
 
-  // Preload the manufacturers lazily.
-  const handlePreload = useCallback(() => {
-    if (dataOrError === undefined) {
-      let clientQuery: QueryParams = {};
-      if (clientId) {
-        clientQuery.OR = [{ clientId }, { clientId: "_NULL" }];
-      } else if (accessIntent !== "user") {
-        clientQuery.clientId = "_NULL";
-      }
+  const canManage = (manufacturer: Manufacturer) => {
+    if (accessIntent === "system") return true;
+    return !!manufacturer.clientId && manufacturer.clientId === clientId;
+  };
 
-      load({
-        path: "/api/proxy/manufacturers",
-        query: { limit: 1000, ...clientQuery },
-        accessIntent,
-      });
-    }
-  }, [dataOrError, load, accessIntent, clientId]);
-
-  // Preload the product manufacturers when a value is set.
-  useEffect(() => {
-    if (value) {
-      handlePreload();
-    }
-  }, [value, handlePreload]);
+  const hasManageableItems = useMemo(
+    () => manufacturers.some(canManage),
+    [manufacturers, accessIntent, clientId]
+  );
 
   return (
-    <ResponsiveDialog
-      open={open}
-      onOpenChange={setOpen}
-      dialogClassName="sm:max-w-2xl"
-      trigger={
-        value ? (
-          <ManufacturerCard
-            manufacturer={defaultManufacturer}
-            renderEditButton={() => (
-              <DialogTrigger asChild>
-                <Button type="button" variant="ghost" size="icon" disabled={disabled}>
-                  <Pencil />
-                </Button>
-              </DialogTrigger>
-            )}
-          />
-        ) : (
-          <DialogTrigger asChild>
-            <Button
-              type="button"
-              size="sm"
-              disabled={disabled}
-              className={cn(className)}
-              onMouseEnter={handlePreload}
-              onTouchStart={handlePreload}
-            >
-              <Search />
-              Select Manufacturer
-            </Button>
-          </DialogTrigger>
-        )
-      }
-      title="Find Manufacturer"
-      render={() => (
-        <>
+    <ResponsiveModal open={open} onOpenChange={setOpen}>
+      {value ? (
+        <ManufacturerCard
+          manufacturer={defaultManufacturer}
+          renderEditButton={() => (
+            <ResponsiveModalTrigger>
+              <Button type="button" variant="ghost" size="icon" disabled={disabled}>
+                <Pencil />
+              </Button>
+            </ResponsiveModalTrigger>
+          )}
+        />
+      ) : (
+        <ResponsiveModalTrigger>
+          <Button
+            type="button"
+            size="sm"
+            disabled={disabled}
+            className={cn(className)}
+          >
+            <Search />
+            Select Manufacturer
+          </Button>
+        </ResponsiveModalTrigger>
+      )}
+      <ResponsiveModalContent classNames={{ dialog: "sm:max-w-2xl" }}>
+        <ResponsiveModalHeader>
+          <ResponsiveModalTitle>Find Manufacturer</ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <ResponsiveModalBody>
           {isLoading ? (
-            <div className="flex h-full items-center justify-center">
+            <div className="flex items-center justify-center py-8">
               <Loader2 className="animate-spin" />
             </div>
           ) : manufacturers.length === 0 ? (
@@ -142,31 +152,89 @@ export default function ManufacturerSelector({
           <RadioGroup
             defaultValue="card"
             className="grid grid-cols-2 gap-4 py-2"
-            onValueChange={setTempValue}
+            onValueChange={managing ? undefined : setTempValue}
             value={tempValue ?? ""}
           >
+            <EditManufacturerButton
+              onSubmitted={invalidateManufacturers}
+              trigger={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="bg-primary/5 border-primary text-primary hover:bg-primary/10 hover:text-primary flex h-full min-h-[88px] w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed p-4"
+                >
+                  <Plus className="size-5" />
+                  <span className="text-xs">New Manufacturer</span>
+                </Button>
+              }
+            />
             {manufacturers
               .filter((m) => m.active || m.id === value)
               .sort((a, b) => a.name.localeCompare(b.name))
               .map((manufacturer) => (
-                <div key={manufacturer.id}>
+                <div key={manufacturer.id} className="relative">
                   <RadioGroupItem
                     value={manufacturer.id}
                     id={manufacturer.id}
                     className="peer sr-only"
-                    disabled={!manufacturer.active}
+                    disabled={!manufacturer.active || managing}
                   />
                   <Label
                     htmlFor={manufacturer.id}
-                    className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex h-full flex-col items-center justify-center gap-2 rounded-md border-2 p-4 font-semibold"
+                    className={cn(
+                      "border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex h-full flex-col items-center justify-center gap-2 rounded-md border-2 p-4 font-semibold",
+                      managing && "pointer-events-none"
+                    )}
                   >
                     {manufacturer.clientId && <CustomTag />}
                     {manufacturer.name}
                   </Label>
+                  {managing && canManage(manufacturer) && (
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-md bg-black/50">
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        onClick={() => setEditManufacturer(manufacturer)}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        onClick={() => {
+                          setDeleteAction((draft) => {
+                            draft.open = true;
+                            draft.title = "Delete Manufacturer";
+                            draft.message = `Are you sure you want to delete ${manufacturer.name}?`;
+                            draft.requiredUserInput = manufacturer.name;
+                            draft.onConfirm = () => {
+                              deleteMutation.mutate(manufacturer.id);
+                            };
+                          });
+                        }}
+                      >
+                        <Trash className="size-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
           </RadioGroup>
-          <div className="flex justify-end gap-2">
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter className="flex w-full items-center justify-between gap-2">
+          <Button
+            type="button"
+            variant={managing ? "default" : "outline"}
+            onClick={() => setManaging((m) => !m)}
+            disabled={!hasManageableItems && !managing}
+            title={!hasManageableItems ? "No custom manufacturers to manage" : undefined}
+          >
+            <Settings className="size-4" />
+            {managing ? "Done" : "Manage"}
+          </Button>
+          <div className="flex gap-2">
             <Button variant="secondary" type="button" onClick={() => setOpen(false)}>
               Cancel
             </Button>
@@ -177,14 +245,24 @@ export default function ManufacturerSelector({
                 }
                 setOpen(false);
               }}
-              disabled={!tempValue}
+              disabled={!tempValue || managing}
             >
               Select
             </Button>
           </div>
-        </>
-      )}
-    ></ResponsiveDialog>
+        </ResponsiveModalFooter>
+      </ResponsiveModalContent>
+      <EditManufacturerButton
+        manufacturer={editManufacturer ?? undefined}
+        open={!!editManufacturer}
+        onOpenChange={(open) => {
+          if (!open) setEditManufacturer(null);
+        }}
+        onSubmitted={invalidateManufacturers}
+        trigger={null}
+      />
+      <ConfirmationDialog {...deleteAction} />
+    </ResponsiveModal>
   );
 }
 

@@ -1,12 +1,5 @@
 import DataList from "@/components/data-list";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -25,6 +18,14 @@ import { useProxyImage } from "~/hooks/use-proxy-image";
 import type { Manufacturer, Product, ProductCategory } from "~/lib/models";
 import { getProductsQuery } from "~/lib/services/products.service";
 import { cn, dedupById } from "~/lib/utils";
+import {
+  ResponsiveModal,
+  ResponsiveModalContent,
+  ResponsiveModalFooter,
+  ResponsiveModalHeader,
+  ResponsiveModalTitle,
+  ResponsiveModalTrigger,
+} from "../responsive-modal";
 import { ManufacturerCard } from "./manufacturer-selector";
 import ProductCard from "./product-card";
 import { ProductCategoryCard } from "./product-category-selector";
@@ -264,38 +265,38 @@ export default function ProductSelector({
   const currentStep = useMemo(() => steps.find((s) => s.idx === step), [steps, step]);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <ResponsiveModal open={open} onOpenChange={setOpen}>
       {value ? (
         <ProductCardWithOptimizedImage
           product={defaultProduct}
           renderEditButton={() =>
             readOnly ? null : (
-              <DialogTrigger asChild>
+              <ResponsiveModalTrigger>
                 <Button type="button" variant="ghost" size="icon" disabled={disabled}>
                   <Pencil />
                 </Button>
-              </DialogTrigger>
+              </ResponsiveModalTrigger>
             )
           }
         />
       ) : (
-        <DialogTrigger asChild>
+        <ResponsiveModalTrigger>
           <Button type="button" size="sm" disabled={disabled || readOnly} className={cn(className)}>
             <Search />
             Find Product
           </Button>
-        </DialogTrigger>
+        </ResponsiveModalTrigger>
       )}
-      <DialogContent className="px-0">
-        <DialogHeader className="px-6">
-          <DialogTitle>Find Product</DialogTitle>
-        </DialogHeader>
-        <div className="w-full px-6">
+      <ResponsiveModalContent className="px-0">
+        <ResponsiveModalHeader className="px-6">
+          <ResponsiveModalTitle>Find Product</ResponsiveModalTitle>
+        </ResponsiveModalHeader>
+        <div className="w-full shrink-0 px-6">
           <Progress value={Math.round((step / (maxStep - minStep)) * 100)} className="w-full" />
         </div>
         <ScrollArea
           classNames={{
-            root: "h-96 border-b border-t self-stretch",
+            root: "h-96 shrink border-b border-t self-stretch",
           }}
         >
           {currentStep && (
@@ -338,7 +339,7 @@ export default function ProductSelector({
             </div>
           )}
         </ScrollArea>
-        <div className="flex justify-between px-6">
+        <ResponsiveModalFooter className="flex justify-between px-6">
           <Button
             onClick={stepBackward}
             className={cn(!getCanStepBackward() && "pointer-events-none opacity-0")}
@@ -353,9 +354,9 @@ export default function ProductSelector({
           >
             {currentStep?.nextText ?? "Next"}
           </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveModalFooter>
+      </ResponsiveModalContent>
+    </ResponsiveModal>
   );
 }
 

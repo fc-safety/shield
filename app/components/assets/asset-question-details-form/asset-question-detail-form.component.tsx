@@ -27,7 +27,6 @@ import { toast } from "sonner";
 import type { z } from "zod";
 import ActiveToggleFormInput from "~/components/active-toggle-form-input";
 import HelpPopover from "~/components/help-popover";
-import LegacyIdField from "~/components/legacy-id-field";
 import QuestionResponseTypeDisplay from "~/components/products/question-response-type-display";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { RESPONSE_TYPE_LABELS } from "~/lib/asset-questions/constants";
@@ -485,13 +484,6 @@ function AssetQuestionDetailsFormContent({
           )}
 
           <SetMetadataInput requireDynamic={type === "CONFIGURATION"} />
-
-          <LegacyIdField
-            form={form}
-            fieldName="legacyQuestionId"
-            label="Legacy Question ID"
-            description="Question ID from the legacy Shield system"
-          />
 
           <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>
             {isSubmitting ? "Saving..." : "Save"}

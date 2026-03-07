@@ -18,7 +18,6 @@ import ActiveToggleFormInput from "../active-toggle-form-input";
 import ClientCombobox from "../clients/client-combobox";
 import SiteCombobox from "../clients/site-combobox";
 import HelpPopover from "../help-popover";
-import LegacyIdField from "../legacy-id-field";
 import MetadataInput from "../metadata-input";
 import ProductSelector from "../products/product-selector";
 import {
@@ -374,13 +373,6 @@ export function AssetDetailFormFields({
                   <FormMessage />
                 </FormItem>
               )}
-            />
-
-            <LegacyIdField
-              form={form}
-              fieldName="legacyAssetId"
-              label="Legacy Asset ID"
-              description="Asset ID from the legacy Shield system"
             />
           </div>
         </motion.div>

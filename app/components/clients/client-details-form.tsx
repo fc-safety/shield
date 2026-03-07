@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { useDebounceValue } from "usehooks-ts";
 import { z } from "zod";
 import { CopyableInput } from "~/components/copyable-input";
-import LegacyIdField from "~/components/ui-custom/forms/legacy-id-field";
 import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { extractErrorMessage } from "~/components/ui/form";
 import { Label } from "~/components/ui/label";
@@ -173,12 +172,6 @@ export default function ClientDetailsForm({ client, onSubmitted }: ClientDetails
             )}
           />
         )}
-        <LegacyIdField
-          form={form}
-          fieldName="legacyClientId"
-          label="Legacy Client ID"
-          description="Client ID from the legacy Shield system"
-        />
         <Controller
           control={form.control}
           name="name"

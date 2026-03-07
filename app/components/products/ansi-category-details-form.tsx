@@ -6,6 +6,7 @@ import type { AnsiCategory } from "~/lib/models";
 import { createAnsiCategorySchema, updateAnsiCategorySchema } from "~/lib/schema";
 import { serializeFormJson } from "~/lib/serializers";
 import IconSelector from "../icons/icon-selector";
+import { ResponsiveModalBody, ResponsiveModalFooter } from "../responsive-modal";
 import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
@@ -61,74 +62,78 @@ export default function AnsiCategoryDetailsForm({
   return (
     <Form {...form}>
       <form
-        className="space-y-4"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={(e) => {
           e.stopPropagation();
           form.handleSubmit(handleSubmit)(e);
         }}
       >
-        <Input type="hidden" {...form.register("id")} hidden />
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Color</FormLabel>
-              <FormControl>
-                <Input {...field} type="color" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="icon"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Icon</FormLabel>
-              <FormControl>
-                <IconSelector
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  onBlur={field.onBlur}
-                  color={color}
-                  className="flex"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={!isDirty || !isValid || isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+        <ResponsiveModalBody className="space-y-4">
+          <Input type="hidden" {...form.register("id")} hidden />
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Color</FormLabel>
+                <FormControl>
+                  <Input {...field} type="color" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="icon"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Icon</FormLabel>
+                <FormControl>
+                  <IconSelector
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    color={color}
+                    className="flex"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </ResponsiveModalBody>
+        <ResponsiveModalFooter>
+          <Button type="submit" disabled={!isDirty || !isValid || isSubmitting}>
+            {isSubmitting ? "Saving..." : "Save"}
+          </Button>
+        </ResponsiveModalFooter>
       </form>
     </Form>
   );

@@ -1,4 +1,3 @@
-import LegacyIdField from "@/components/ui-custom/forms/legacy-id-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -285,21 +284,6 @@ export default function SiteDetailsForm({
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
-          />
-        )}
-        {isSiteGroup ? (
-          <LegacyIdField
-            form={form}
-            fieldName="legacyGroupId"
-            label="Legacy Group ID"
-            description="Group ID from the legacy Shield system"
-          />
-        ) : (
-          <LegacyIdField
-            form={form}
-            fieldName="legacySiteId"
-            label="Legacy Site ID"
-            description="Site ID from the legacy Shield system"
           />
         )}
         <Controller
