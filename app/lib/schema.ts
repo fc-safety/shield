@@ -477,7 +477,9 @@ export const createConsumableConfigSchema = z.object({
 
 export const createAssetQuestionConditionSchema = z.object({
   conditionType: z.enum(AssetQuestionConditionTypes),
-  value: z.array(z.string()),
+  value: z
+    .array(z.string().nonempty("A value is required."))
+    .min(1, "At least one value is required."),
   description: z.string().optional(),
 });
 
@@ -505,7 +507,7 @@ export const baseCreateAssetQuestionSchema = z.object({
   type: z.enum(AssetQuestionTypes),
   required: z.boolean().default(false),
   order: z.coerce.number<number>().optional(),
-  prompt: z.string().nonempty(),
+  prompt: z.string().nonempty("Question prompt is required."),
   valueType: z.enum(AssetQuestionResponseTypes),
   selectOptions: z
     .array(
@@ -534,13 +536,16 @@ export const baseCreateAssetQuestionSchema = z.object({
     })
     .partial()
     .optional(),
-  conditions: z.object({
-    createMany: z.object({
-      data: z
-        .array(createAssetQuestionConditionSchema)
-        .min(1, "At least one condition is required"),
-    }),
-  }),
+  conditions: z.object(
+    {
+      createMany: z.object({
+        data: z
+          .array(createAssetQuestionConditionSchema)
+          .min(1, "At least one condition is required"),
+      }),
+    },
+    "At least one condition is required."
+  ),
   files: z
     .object({
       createMany: z.object({

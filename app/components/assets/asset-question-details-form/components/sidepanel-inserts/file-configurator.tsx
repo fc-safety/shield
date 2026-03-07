@@ -2,16 +2,17 @@ import { useMutation } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useId } from "react";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import { Link } from "react-router";
 import type z from "zod";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
 import { slugify } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
+import { EmptySidepanel } from "../empty-sidepanel";
 
 type TForm = Pick<z.infer<typeof updateAssetQuestionSchema>, "files">;
 
@@ -37,49 +38,45 @@ export default function FileConfigurator() {
         </p>
       </div>
       <div className="space-y-6">
-        <FormField
+        <Controller
           control={control}
           name={
             fileAction === "create"
               ? `files.createMany.data.${idx}.name`
               : `files.updateMany.${idx}.data.name`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Display Name</FormLabel>
-              <FormControl>
-                <Input
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  onClick={(e) => e.currentTarget.select()}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Display Name</FieldLabel>
+              <Input
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                onClick={(e) => e.currentTarget.select()}
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             fileAction === "create"
               ? `files.createMany.data.${idx}.url`
               : `files.updateMany.${idx}.data.url`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>File</FormLabel>
-              <FormControl>
-                <FileInput value={value} onValueChange={onChange} onBlur={onBlur} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>File</FieldLabel>
+              <FileInput value={value} onValueChange={onChange} onBlur={onBlur} />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
       </div>
     </div>
   ) : (
-    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
+    <EmptySidepanel />
   );
 }
 

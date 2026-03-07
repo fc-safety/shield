@@ -1,4 +1,3 @@
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -8,11 +7,12 @@ import {
 } from "@/components/ui/select";
 import { OctagonAlert } from "lucide-react";
 import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import type z from "zod";
 import AssetQuestionResponseTypeInput from "~/components/assets/asset-question-response-input";
 import HelpPopover from "~/components/help-popover";
 import { Checkbox } from "~/components/ui/checkbox";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { ActiveAlertLevels, type AssetQuestionResponseType } from "~/lib/models";
 import type {
@@ -24,6 +24,7 @@ import type { ResponseValueImage } from "~/lib/types";
 import { cn, humanize } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
 import { alertTriggerVariants } from "../../utils/styles";
+import { EmptySidepanel } from "../empty-sidepanel";
 
 type TForm = Pick<
   z.infer<typeof updateAssetQuestionSchema>,
@@ -55,89 +56,83 @@ export const AlertTriggerConfigurator = () => {
         </p>
       </div>
       <div className="grid grow gap-2">
-        <FormField
+        <Controller
           control={control}
           name={
             alertAction === "create"
               ? `assetAlertCriteria.createMany.data.${idx}.alertLevel`
               : `assetAlertCriteria.updateMany.${idx}.data.alertLevel`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
               <div className="flex items-center gap-2">
-                <FormLabel>Trigger</FormLabel>
-                <FormControl>
-                  <Select value={value} onValueChange={onChange}>
-                    <SelectTrigger
-                      onBlur={onBlur}
-                      className={cn(alertTriggerVariants({ alertLevel: value }))}
-                    >
-                      <div className="flex items-center gap-1 [&_svg]:size-4 [&_svg]:shrink-0">
-                        {value === "CRITICAL" && <OctagonAlert />}
-                        <SelectValue />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {ActiveAlertLevels.map((level) => (
-                        <SelectItem
-                          key={level}
-                          value={level}
-                          // className={cn(
-                          //   "font-bold",
-                          //   level === "CRITICAL" && "focus:text-purple-700",
-                          //   level === "URGENT" && "focus:text-red-700",
-                          //   level === "WARNING" && "focus:text-yellow-700",
-                          //   level === "INFO" && "focus:text-blue-700",
-                          //   level === "AUDIT" && "focus:text-secondary"
-                          // )}
-                        >
-                          {humanize(level)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormLabel className="w-max shrink-0">level alert when:</FormLabel>
+                <FieldLabel>Trigger</FieldLabel>
+                <Select value={value} onValueChange={onChange}>
+                  <SelectTrigger
+                    onBlur={onBlur}
+                    className={cn(alertTriggerVariants({ alertLevel: value }))}
+                  >
+                    <div className="flex items-center gap-1 [&_svg]:size-4 [&_svg]:shrink-0">
+                      {value === "CRITICAL" && <OctagonAlert />}
+                      <SelectValue />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    {ActiveAlertLevels.map((level) => (
+                      <SelectItem
+                        key={level}
+                        value={level}
+                        // className={cn(
+                        //   "font-bold",
+                        //   level === "CRITICAL" && "focus:text-purple-700",
+                        //   level === "URGENT" && "focus:text-red-700",
+                        //   level === "WARNING" && "focus:text-yellow-700",
+                        //   level === "INFO" && "focus:text-blue-700",
+                        //   level === "AUDIT" && "focus:text-secondary"
+                        // )}
+                      >
+                        {humanize(level)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldLabel className="w-max shrink-0">level alert when:</FieldLabel>
               </div>
-              <FormMessage />
-            </FormItem>
+              <FieldError errors={[fieldState.error]} />
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             alertAction === "create"
               ? `assetAlertCriteria.createMany.data.${idx}.rule`
               : `assetAlertCriteria.updateMany.${idx}.data.rule`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormControl>
-                <AlertTriggerInput
-                  onValueChange={onChange}
-                  onBlur={onBlur}
-                  value={value}
-                  tone={tone}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <AlertTriggerInput
+                onValueChange={onChange}
+                onBlur={onBlur}
+                value={value}
+                tone={tone}
+              />
+              <FieldError errors={[fieldState.error]} />
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             alertAction === "create"
               ? `assetAlertCriteria.createMany.data.${idx}.autoResolve`
               : `assetAlertCriteria.updateMany.${idx}.data.autoResolve`
           }
-          render={({ field: { onChange, value } }) => (
-            <FormItem>
+          render={({ field: { onChange, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
               <div className="flex items-center gap-2">
-                <FormControl>
-                  <Checkbox checked={value} onCheckedChange={onChange} />
-                </FormControl>
-                <FormLabel className="flex items-center gap-1">
+                <Checkbox checked={value} onCheckedChange={onChange} />
+                <FieldLabel className="flex items-center gap-1">
                   Resolve automatically?
                   <HelpPopover>
                     <p>
@@ -145,16 +140,16 @@ export const AlertTriggerConfigurator = () => {
                       prompting any follow-up action.
                     </p>
                   </HelpPopover>
-                </FormLabel>
+                </FieldLabel>
               </div>
-              <FormMessage />
-            </FormItem>
+              <FieldError errors={[fieldState.error]} />
+            </Field>
           )}
         />
       </div>
     </div>
   ) : (
-    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
+    <EmptySidepanel />
   );
 };
 

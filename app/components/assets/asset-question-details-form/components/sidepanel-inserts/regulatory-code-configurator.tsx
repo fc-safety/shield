@@ -1,10 +1,11 @@
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import type z from "zod";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
+import { EmptySidepanel } from "../empty-sidepanel";
 
 type TForm = Pick<z.infer<typeof updateAssetQuestionSchema>, "regulatoryCodes">;
 
@@ -33,144 +34,132 @@ export default function RegulatoryCodeConfigurator() {
         </p>
       </div>
       <div className="space-y-6">
-        <FormField
+        <Controller
           control={control}
           name={
             regulatoryCodeAction === "create"
               ? `regulatoryCodes.create.${idx}.governingBody`
               : `regulatoryCodes.update.${idx}.data.governingBody`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Governing Body / Agency</FormLabel>
-              <FormControl>
-                <Input
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="e.g., ISO, OSHA, FDA, ANSI"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Governing Body / Agency</FieldLabel>
+              <Input
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                placeholder="e.g., ISO, OSHA, FDA, ANSI"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             regulatoryCodeAction === "create"
               ? `regulatoryCodes.create.${idx}.codeIdentifier`
               : `regulatoryCodes.update.${idx}.data.codeIdentifier`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Code Identifier</FormLabel>
-              <FormControl>
-                <Input
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="e.g., ISO-9001, OSHA-1910.147, FDA-21CFR820"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Code Identifier</FieldLabel>
+              <Input
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                placeholder="e.g., ISO-9001, OSHA-1910.147, FDA-21CFR820"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             regulatoryCodeAction === "create"
               ? `regulatoryCodes.create.${idx}.title`
               : `regulatoryCodes.update.${idx}.data.title`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Title (Optional)</FormLabel>
-              <FormControl>
-                <Input
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="Brief title of the regulation"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Title (Optional)</FieldLabel>
+              <Input
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                placeholder="Brief title of the regulation"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             regulatoryCodeAction === "create"
               ? `regulatoryCodes.create.${idx}.section`
               : `regulatoryCodes.update.${idx}.data.section`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Section (Optional)</FormLabel>
-              <FormControl>
-                <Textarea
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="Specific section or clause of the regulation that applies"
-                  rows={2}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Section (Optional)</FieldLabel>
+              <Textarea
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                placeholder="Specific section or clause of the regulation that applies"
+                rows={2}
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             regulatoryCodeAction === "create"
               ? `regulatoryCodes.create.${idx}.sourceUrl`
               : `regulatoryCodes.update.${idx}.data.sourceUrl`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Source URL (Optional)</FormLabel>
-              <FormControl>
-                <Input
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="e.g., https://www.iso.org/standard/12345.html"
-                  type="url"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Source URL (Optional)</FieldLabel>
+              <Input
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                placeholder="e.g., https://www.iso.org/standard/12345.html"
+                type="url"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             regulatoryCodeAction === "create"
               ? `regulatoryCodes.create.${idx}.documentVersion`
               : `regulatoryCodes.update.${idx}.data.documentVersion`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Document Version (Optional)</FormLabel>
-              <FormControl>
-                <Input
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="e.g., 2023-06, Rev 3.1, Version 2.0"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Document Version (Optional)</FieldLabel>
+              <Input
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                placeholder="e.g., 2023-06, Rev 3.1, Version 2.0"
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
           )}
         />
       </div>
     </div>
   ) : (
-    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
+    <EmptySidepanel />
   );
 }
 

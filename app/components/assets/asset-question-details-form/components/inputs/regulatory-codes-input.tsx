@@ -1,10 +1,10 @@
 import { Eraser, Pencil, Plus, ScrollText } from "lucide-react";
 import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import type z from "zod";
 import HelpPopover from "~/components/help-popover";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
 import RegulatoryCodeConfigurator from "../sidepanel-inserts/regulatory-code-configurator";
@@ -92,75 +92,71 @@ export default function RegulatoryCodesInput() {
   };
 
   return (
-    <FormField
+    <Controller
       control={control}
       name="regulatoryCodes"
-      render={() => {
-        return (
-          <FormItem className="gap-0">
-            <FormLabel className="inline-flex items-center gap-2 text-base font-medium">
-              <ScrollText className="size-4" />
-              Regulatory Codes
-              <HelpPopover>
-                <p>
-                  Regulatory codes can be added here to track compliance requirements and
-                  regulations associated with this asset question.
-                </p>
-              </HelpPopover>
-              <Button size="sm" variant="outline" type="button" onClick={handleAddRegulatoryCode}>
-                <Plus /> Add Regulatory Code
-              </Button>
-            </FormLabel>
-            <FormControl>
-              <div className="divide-y-border divide-y">
-                {regulatoryCodes.map(({ idx, key, action, data }) => (
-                  <div className="flex flex-row items-center gap-2 py-1" key={key}>
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      type="button"
-                      onClick={
-                        action === "create"
-                          ? () => handleCancelAddRegulatoryCode(idx)
-                          : () =>
-                              handleDeleteRegulatoryCode(
-                                (data as z.infer<typeof updateAssetQuestionSchema>).id
-                              )
-                      }
-                    >
-                      <Eraser className="text-destructive" />
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="outline"
-                      type="button"
-                      onClick={() => {
-                        setConfiguratorData(idx, action);
-                        openSidepanel(RegulatoryCodeConfigurator.Id);
-                      }}
-                    >
-                      <Pencil />
-                    </Button>
-                    <div className="flex-1 text-sm">
-                      {data.governingBody && (
-                        <span className="font-medium">{data.governingBody}: </span>
-                      )}
-                      <span>{data.codeIdentifier || "No Code"}</span>
-                      {data.title && (
-                        <span className="text-muted-foreground ml-1">- {data.title}</span>
-                      )}
-                      {data.section && (
-                        <span className="text-muted-foreground ml-1">({data.section})</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+      render={({ fieldState }) => (
+        <Field data-invalid={fieldState.invalid} className="gap-0">
+          <FieldLabel className="inline-flex items-center gap-2 text-base font-medium">
+            <ScrollText className="size-4" />
+            Regulatory Codes
+            <HelpPopover>
+              <p>
+                Regulatory codes can be added here to track compliance requirements and
+                regulations associated with this asset question.
+              </p>
+            </HelpPopover>
+            <Button size="sm" variant="outline" type="button" onClick={handleAddRegulatoryCode}>
+              <Plus /> Add Regulatory Code
+            </Button>
+          </FieldLabel>
+          <div className="divide-y-border divide-y">
+            {regulatoryCodes.map(({ idx, key, action, data }) => (
+              <div className="flex flex-row items-center gap-2 py-1" key={key}>
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  type="button"
+                  onClick={
+                    action === "create"
+                      ? () => handleCancelAddRegulatoryCode(idx)
+                      : () =>
+                          handleDeleteRegulatoryCode(
+                            (data as z.infer<typeof updateAssetQuestionSchema>).id
+                          )
+                  }
+                >
+                  <Eraser className="text-destructive" />
+                </Button>
+                <Button
+                  size="icon-sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    setConfiguratorData(idx, action);
+                    openSidepanel(RegulatoryCodeConfigurator.Id);
+                  }}
+                >
+                  <Pencil />
+                </Button>
+                <div className="flex-1 text-sm">
+                  {data.governingBody && (
+                    <span className="font-medium">{data.governingBody}: </span>
+                  )}
+                  <span>{data.codeIdentifier || "No Code"}</span>
+                  {data.title && (
+                    <span className="text-muted-foreground ml-1">- {data.title}</span>
+                  )}
+                  {data.section && (
+                    <span className="text-muted-foreground ml-1">({data.section})</span>
+                  )}
+                </div>
               </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+            ))}
+          </div>
+          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+        </Field>
+      )}
     />
   );
 }

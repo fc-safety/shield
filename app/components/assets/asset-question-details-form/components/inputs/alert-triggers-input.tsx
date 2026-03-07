@@ -1,10 +1,11 @@
 import { BadgeCheck, BellRing, Eraser, Pencil, Plus } from "lucide-react";
 import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import type z from "zod";
+import HelpPopover from "~/components/help-popover";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "~/components/ui/form";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { cn, isNil } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
@@ -54,7 +55,7 @@ export default function AlertTriggersInput() {
           autoResolve: false,
         },
       ],
-      { shouldDirty: true, shouldValidate: true }
+      { shouldDirty: true }
     );
     setData((d) => {
       d.idx = (createAlertTriggers ?? []).length;
@@ -82,43 +83,42 @@ export default function AlertTriggersInput() {
   };
 
   return (
-    <FormField
+    <Controller
       control={control}
       name="assetAlertCriteria"
-      render={() => {
-        return (
-          <FormItem className="gap-0">
-            <FormLabel className="inline-flex items-center gap-2 text-base font-medium">
-              <BellRing className="size-4" />
-              Alert Triggers
-              <Button size="sm" variant="outline" type="button" onClick={handleAddAlertTrigger}>
-                <Plus /> Add Trigger
-              </Button>
-            </FormLabel>
-            <FormControl>
-              <div className="divide-y-border divide-y">
-                {alertTriggers.map(({ idx, key, action, data }) => (
-                  <AlertTrigger
-                    key={key}
-                    idx={idx}
-                    action={action}
-                    className="py-1"
-                    onRemove={
-                      action === "create"
-                        ? () => handleCancelAddAlertTrigger(idx)
-                        : () =>
-                            handleDeleteAlertTrigger(
-                              (data as z.infer<typeof updateAssetQuestionSchema>).id
-                            )
-                    }
-                  />
-                ))}
-              </div>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        );
-      }}
+      render={({ fieldState }) => (
+        <Field data-invalid={fieldState.invalid} className="gap-0">
+          <FieldLabel className="inline-flex items-center gap-2 text-base font-medium">
+            <BellRing className="size-4" />
+            Alert Triggers
+            <HelpPopover>
+              <p>Alert triggers indicate problems with the inspected asset that need attention.</p>
+            </HelpPopover>
+            <Button size="sm" variant="outline" type="button" onClick={handleAddAlertTrigger}>
+              <Plus /> Add Trigger
+            </Button>
+          </FieldLabel>
+          <div className="divide-y-border divide-y">
+            {alertTriggers.map(({ idx, key, action, data }) => (
+              <AlertTrigger
+                key={key}
+                idx={idx}
+                action={action}
+                className="py-1"
+                onRemove={
+                  action === "create"
+                    ? () => handleCancelAddAlertTrigger(idx)
+                    : () =>
+                        handleDeleteAlertTrigger(
+                          (data as z.infer<typeof updateAssetQuestionSchema>).id
+                        )
+                }
+              />
+            ))}
+          </div>
+          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+        </Field>
+      )}
     />
   );
 }

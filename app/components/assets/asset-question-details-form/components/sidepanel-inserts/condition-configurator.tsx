@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import Fuse from "fuse.js";
 import { ChevronsUpDown, Eraser, Loader2, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 import type z from "zod";
 import { conditionTypeVariants } from "~/components/assets/condition-pill";
 import MetadataKeyCombobox from "~/components/metadata-key-combobox";
@@ -16,7 +16,7 @@ import {
   CommandItem,
   CommandList,
 } from "~/components/ui/command";
-import { FormControl, FormField, FormItem, FormLabel } from "~/components/ui/form";
+import { Field, FieldError, FieldLabel } from "~/components/ui/field";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import {
   Select,
@@ -39,6 +39,7 @@ import type { updateAssetQuestionSchema } from "~/lib/schema";
 import { buildPath } from "~/lib/urls";
 import { cn, humanize } from "~/lib/utils";
 import { useAssetQuestionDetailFormContext } from "../../asset-question-detail-form.context";
+import { EmptySidepanel } from "../empty-sidepanel";
 
 type TForm = Pick<z.infer<typeof updateAssetQuestionSchema>, "conditions">;
 
@@ -71,141 +72,138 @@ export const ConditionConfigurator = () => {
         </p>
       </div>
       <div className="space-y-6">
-        <FormField
+        <Controller
           control={control}
           name={
             conditionAction === "create"
               ? `conditions.createMany.data.${idx}.conditionType`
               : `conditions.updateMany.${idx}.data.conditionType`
           }
-          render={({ field: { onChange, onBlur, value } }) => (
-            <FormItem>
-              <FormLabel>Match when the...</FormLabel>
-              <FormControl>
-                <Select
-                  value={value}
-                  onValueChange={(v) => {
-                    setValue(
-                      conditionAction === "create"
-                        ? `conditions.createMany.data.${idx}.value.0`
-                        : `conditions.updateMany.${idx}.data.value.0`,
-                      "",
-                      { shouldDirty: true }
-                    );
-                    onChange(v);
-                  }}
-                >
-                  <SelectTrigger onBlur={onBlur} className={conditionTypeVariants({ type: value })}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AssetQuestionConditionTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {humanize(type)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormControl>
-            </FormItem>
+          render={({ field: { onChange, onBlur, value }, fieldState }) => (
+            <Field>
+              <FieldLabel>Match when the...</FieldLabel>
+              <Select
+                value={value}
+                onValueChange={(v) => {
+                  setValue(
+                    conditionAction === "create"
+                      ? `conditions.createMany.data.${idx}.value.0`
+                      : `conditions.updateMany.${idx}.data.value.0`,
+                    "",
+                    { shouldDirty: true }
+                  );
+                  onChange(v);
+                }}
+              >
+                <SelectTrigger onBlur={onBlur} className={conditionTypeVariants({ type: value })}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AssetQuestionConditionTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {humanize(type)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError errors={[fieldState.error]} />
+            </Field>
           )}
         />
-        <FormField
+        <Controller
           control={control}
           name={
             conditionAction === "create"
               ? `conditions.createMany.data.${idx}.value`
               : `conditions.updateMany.${idx}.data.value`
           }
-          render={({ field: { onChange, onBlur, value: values } }) => (
-            <FormItem>
-              <FormLabel>
+          render={({ field: { onChange, onBlur, value: values }, fieldState }) => (
+            <Field>
+              <FieldLabel>
                 {conditionDataInput?.conditionType === "METADATA"
                   ? "with key..."
                   : "is equal to..."}
-              </FormLabel>
-              <FormControl>
-                {conditionDataInput?.conditionType === "METADATA" ? (
-                  <MatchingValueInput
-                    clientId={clientId}
-                    value={parseMatchingValueInput(values?.at(0), "metadata-key")}
-                    onValueChange={handleMatchingValueInputChange(
-                      (v) => onChange([v]),
-                      "metadata-key",
-                      values?.at(0)
-                    )}
-                    onBlur={onBlur}
-                    conditionType={"METADATA"}
-                    className="flex-1"
-                  />
-                ) : (
-                  <MultivaluesInput
-                    values={values ?? []}
-                    onValuesChange={onChange}
-                    onBlur={onBlur}
-                    renderSingularInput={({ value, onValueChange, onBlur, className }) => (
-                      <MatchingValueInput
-                        clientId={clientId}
-                        value={value}
-                        onValueChange={onValueChange}
-                        onBlur={onBlur}
-                        conditionType={conditionDataInput?.conditionType}
-                        className={className}
-                      />
-                    )}
-                  />
-                )}
-              </FormControl>
-            </FormItem>
+              </FieldLabel>
+              {conditionDataInput?.conditionType === "METADATA" ? (
+                <MatchingValueInput
+                  clientId={clientId}
+                  value={parseMatchingValueInput(values?.at(0), "metadata-key")}
+                  onValueChange={handleMatchingValueInputChange(
+                    (v) => onChange([v]),
+                    "metadata-key",
+                    values?.at(0)
+                  )}
+                  onBlur={onBlur}
+                  conditionType={"METADATA"}
+                  className="flex-1"
+                />
+              ) : (
+                <MultivaluesInput
+                  values={values ?? []}
+                  onValuesChange={onChange}
+                  onBlur={onBlur}
+                  renderSingularInput={({ value, onValueChange, onBlur, className }) => (
+                    <MatchingValueInput
+                      clientId={clientId}
+                      value={value}
+                      onValueChange={onValueChange}
+                      onBlur={onBlur}
+                      conditionType={conditionDataInput?.conditionType}
+                      className={className}
+                    />
+                  )}
+                />
+              )}
+              <FieldError errors={[fieldState.error]} />
+            </Field>
           )}
         />
         {conditionDataInput?.conditionType === "METADATA" && (
-          <FormField
+          <Controller
             control={control}
             name={
               conditionAction === "create"
                 ? `conditions.createMany.data.${idx}.value`
                 : `conditions.updateMany.${idx}.data.value`
             }
-            render={({ field: { onChange, onBlur, value: values } }) => (
-              <FormItem>
-                <FormLabel>is equal to...</FormLabel>
-                <FormControl>
-                  <MultivaluesInput
-                    values={
-                      values?.map((v) => parseMatchingValueInput(v, "metadata-value") ?? "") ?? []
-                    }
-                    onValuesChange={(newMetadataValues) => {
-                      const newValues: string[] = [];
-                      newMetadataValues.forEach(
-                        handleMatchingValueInputChange(
-                          (v) => newValues.push(v),
-                          "metadata-value",
-                          values?.at(0)
-                        )
-                      );
-                      onChange(newValues);
-                    }}
-                    onBlur={onBlur}
-                    renderSingularInput={({ value, onValueChange, onBlur, className }) => (
-                      <MetadataValueCombobox
-                        metadataKey={values?.at(0)?.split(":")?.at(0) ?? ""}
-                        value={value}
-                        onValueChange={onValueChange}
-                        onBlur={onBlur}
-                        className={className}
-                      />
-                    )}
-                  />
-                </FormControl>
-              </FormItem>
+            render={({ field: { onChange, onBlur, value: values }, fieldState }) => (
+              <Field>
+                <FieldLabel>is equal to...</FieldLabel>
+                <MultivaluesInput
+                  values={
+                    values?.map((v) => parseMatchingValueInput(v, "metadata-value") ?? "") ?? []
+                  }
+                  onValuesChange={(newMetadataValues) => {
+                    const newValues: string[] = [];
+                    newMetadataValues.forEach(
+                      handleMatchingValueInputChange(
+                        (v) => newValues.push(v),
+                        "metadata-value",
+                        values?.at(0)
+                      )
+                    );
+                    onChange(newValues);
+                  }}
+                  onBlur={onBlur}
+                  renderSingularInput={({ value, onValueChange, onBlur, className }) => (
+                    <MetadataValueCombobox
+                      metadataKey={values?.at(0)?.split(":")?.at(0) ?? ""}
+                      value={value}
+                      onValueChange={onValueChange}
+                      onBlur={onBlur}
+                      className={className}
+                    />
+                  )}
+                />
+                <FieldError errors={[fieldState.error]} />
+              </Field>
             )}
           />
         )}
       </div>
     </div>
   ) : (
-    <p className="text-muted-foreground w-full text-center text-sm">No data selected.</p>
+    <EmptySidepanel />
   );
 };
 

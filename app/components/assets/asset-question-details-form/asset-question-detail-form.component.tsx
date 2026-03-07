@@ -1,13 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  extractErrorMessage,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  Form as FormProvider,
-} from "@/components/ui/form";
+import { extractErrorMessage, Form as FormProvider } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -22,12 +14,22 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import ActiveToggleFormInput from "~/components/active-toggle-form-input";
 import HelpPopover from "~/components/help-popover";
 import QuestionResponseTypeDisplay from "~/components/products/question-response-type-display";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "~/components/ui/field";
+import { Separator } from "~/components/ui/separator";
 import { useModalFetcher } from "~/hooks/use-modal-fetcher";
 import { RESPONSE_TYPE_LABELS } from "~/lib/asset-questions/constants";
 import { ASSET_QUESTION_TONE_OPTIONS, ASSET_QUESTION_TONES } from "~/lib/constants";
@@ -266,228 +268,272 @@ function AssetQuestionDetailsFormContent({
           });
         })}
       >
-        <div className="flex min-h-0 flex-1">
-        <ResponsiveModalBody className="flex-1 space-y-4 p-4">
-          <Input type="hidden" {...form.register("id")} hidden />
-          <ActiveToggleFormInput helpPopoverContent="Only active questions will be displayed to inspectors." />
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field: { onChange, ...field } }) => (
-              <FormItem>
-                <FormLabel className="inline-flex items-center gap-1">
-                  Type
-                  <HelpPopover>
-                    <p>
-                      The type determines whether this question is displayed during initial setup,
-                      during every subsequent inspection, or both.
-                    </p>
-                    <br />
-                    <p>
-                      Configuration type questions are a special type that is designed to configure
-                      arbitrary metadata on the asset, useful for storing information beyond what
-                      the system readily provides. Examples include subcategories, unique product
-                      types, etc. Used in conjunction with inspection question conditions, these can
-                      be a powerful way to dynamically present questions to inspectors.
-                    </p>
-                  </HelpPopover>
-                </FormLabel>
-                <FormControl>
-                  <RadioGroup {...field} onValueChange={onChange} className="flex gap-4">
-                    {AssetQuestionTypes.map((type, idx) => (
-                      <div key={type} className="flex items-center space-x-2">
-                        <RadioGroupItem value={type} id={"questionStatus" + idx} />
-                        <Label htmlFor={"questionStatus" + idx}>{humanize(type)}</Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="required"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <FormItem>
-                <div className="flex flex-row items-center gap-2 space-y-0">
-                  <FormControl>
-                    <Switch
-                      checked={value}
-                      onCheckedChange={onChange}
-                      className="pt-0"
-                      onBlur={onBlur}
-                    />
-                  </FormControl>
-                  <FormLabel className="inline-flex items-center gap-1">
-                    {value ? (
-                      <span>
-                        <span className="text-urgent font-bold">*</span> Required
-                      </span>
-                    ) : (
-                      "(Optional)"
-                    )}
-                    <HelpPopover>
-                      <p>
-                        Required questions must be answered before the inspection can be completed.
-                      </p>
-                    </HelpPopover>
-                  </FormLabel>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="prompt"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="inline-flex items-center gap-1">
-                  Prompt *
-                  <HelpPopover>
-                    <p>
-                      This is what prompts the response from the inspector, usually a question
-                      relating to the condition of the asset.
-                    </p>
-                  </HelpPopover>
-                </FormLabel>
-                <FormControl>
-                  <Textarea {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="valueType"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <FormItem>
-                <FormLabel className="inline-flex items-center gap-1">
-                  Answer Type *
-                  <HelpPopover>
-                    <p>
-                      The type of answer that is expected from the inspector. This determines what
-                      kind of input is displayed (e.g. text input, dropdown, etc.).
-                    </p>
-                  </HelpPopover>
-                </FormLabel>
-                <FormControl>
-                  <Select value={value} onValueChange={onChange} disabled={!!requiredValueType}>
-                    <SelectTrigger onBlur={onBlur}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent side="top">
-                      {AssetQuestionResponseTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          <QuestionResponseTypeDisplay valueType={type} tone={tone} />
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="relative flex min-h-0 flex-1">
+          <ResponsiveModalBody className="flex-1 space-y-6 p-4">
+            <Input type="hidden" {...form.register("id")} hidden />
 
-          {valueType && SELECT_SUPPORTED_VALUE_TYPES.includes(valueType) && (
-            <FormField
-              control={form.control}
-              name="selectOptions"
-              render={() => (
-                <FormItem>
-                  <FormLabel className="inline-flex items-center gap-1">
-                    {RESPONSE_TYPE_LABELS[valueType]} Options *
-                    <HelpPopover>
-                      <p>The options that are available for the inspector to select from.</p>
-                    </HelpPopover>
-                  </FormLabel>
-                  <FormControl>
-                    <SelectOptionsInput />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-
-          {valueType && TONE_SUPPORTED_VALUE_TYPES.includes(valueType) && (
-            <FormField
-              control={form.control}
-              name="tone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1">
-                    Tone
-                    <HelpPopover classNames={{ content: "space-y-2" }}>
-                      <p>The tone is used to provide visual aids to inspectors.</p>
-                      <p>
-                        For example, a "Positive" tone will display a green checkmark when the
-                        answer is "Yes". "Negative" will display a red X when the answer is "Yes".
-                      </p>
-                    </HelpPopover>
-                  </FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger onBlur={field.onBlur}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ASSET_QUESTION_TONE_OPTIONS.map((tone) => (
-                          <SelectItem key={tone.value} value={tone.value}>
-                            {tone.label}
-                          </SelectItem>
+            {/* Question Setup */}
+            <FieldSet>
+              <FieldLegend>Question Setup</FieldLegend>
+              <FieldGroup>
+                <ActiveToggleFormInput helpPopoverContent="Only active questions will be displayed to inspectors." />
+                <Controller
+                  control={form.control}
+                  name="type"
+                  render={({ field: { onChange, ...field }, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel className="inline-flex items-center gap-1">
+                        Type
+                        <HelpPopover>
+                          <p>
+                            The type determines whether this question is displayed during initial
+                            setup, during every subsequent inspection, or both.
+                          </p>
+                          <br />
+                          <p>
+                            Configuration type questions are a special type that is designed to
+                            configure arbitrary metadata on the asset, useful for storing
+                            information beyond what the system readily provides. Examples include
+                            subcategories, unique product types, etc. Used in conjunction with
+                            inspection question conditions, these can be a powerful way to
+                            dynamically present questions to inspectors.
+                          </p>
+                        </HelpPopover>
+                      </FieldLabel>
+                      <RadioGroup {...field} onValueChange={onChange} className="flex gap-4">
+                        {AssetQuestionTypes.map((type, idx) => (
+                          <div key={type} className="flex items-center space-x-2">
+                            <RadioGroupItem value={type} id={"questionStatus" + idx} />
+                            <Label htmlFor={"questionStatus" + idx}>{humanize(type)}</Label>
+                          </div>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+                      </RadioGroup>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </FieldGroup>
+            </FieldSet>
 
-          <FormField
-            control={form.control}
-            name="helpText"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="inline-flex items-center gap-1">
-                  Help Text
-                  <HelpPopover>
-                    <p>
-                      This is additional, optional text that can be displayed to the inspector to
-                      help them answer the question.
-                    </p>
-                  </HelpPopover>
-                </FormLabel>
+            <Separator />
 
-                <FormControl>
-                  <Textarea {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            {/* Prompt & Response */}
+            <FieldSet>
+              <FieldLegend>Prompt & Response</FieldLegend>
+              <FieldDescription>
+                This is what inspectors see during an inspection. Write a clear prompt that helps
+                them provide an accurate response.
+              </FieldDescription>
+              <FieldGroup>
+                <Controller
+                  control={form.control}
+                  name="required"
+                  render={({ field: { onChange, onBlur, value }, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <div className="flex flex-row items-center gap-2 space-y-0">
+                        <Switch
+                          checked={value}
+                          onCheckedChange={onChange}
+                          className="pt-0"
+                          onBlur={onBlur}
+                        />
+                        <FieldLabel className="inline-flex items-center gap-1">
+                          {value ? (
+                            <span>
+                              <span className="text-urgent font-bold">*</span> This question is
+                              required
+                            </span>
+                          ) : (
+                            "This question is optional"
+                          )}
+                          <HelpPopover>
+                            <p>
+                              Required questions must be answered before the inspection can be
+                              completed.
+                            </p>
+                          </HelpPopover>
+                        </FieldLabel>
+                      </div>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
 
-          {type === "SETUP" && <AutomaticSupplySetupInput />}
+                <Controller
+                  control={form.control}
+                  name="prompt"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel className="inline-flex items-center gap-1">
+                        Prompt *
+                        <HelpPopover>
+                          <p>
+                            This is what prompts the response from the inspector, usually a question
+                            relating to the condition of the asset.
+                          </p>
+                        </HelpPopover>
+                      </FieldLabel>
+                      <Textarea {...field} rows={2} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
 
-          {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && <AlertTriggersInput />}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Controller
+                    control={form.control}
+                    name="valueType"
+                    render={({ field: { onChange, onBlur, value }, fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel className="inline-flex items-center gap-1">
+                          Answer Type *
+                          <HelpPopover>
+                            <p>
+                              The type of answer that is expected from the inspector. This
+                              determines what kind of input is displayed (e.g. text input, dropdown,
+                              etc.).
+                            </p>
+                          </HelpPopover>
+                        </FieldLabel>
+                        <Select
+                          value={value}
+                          onValueChange={onChange}
+                          disabled={!!requiredValueType}
+                        >
+                          <SelectTrigger onBlur={onBlur}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent side="top">
+                            {AssetQuestionResponseTypes.map((type) => (
+                              <SelectItem key={type} value={type}>
+                                <QuestionResponseTypeDisplay valueType={type} tone={tone} />
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
 
-          <ConditionsInput />
+                  {valueType && TONE_SUPPORTED_VALUE_TYPES.includes(valueType) && (
+                    <Controller
+                      control={form.control}
+                      name="tone"
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel className="flex items-center gap-1">
+                            Tone
+                            <HelpPopover classNames={{ content: "space-y-2" }}>
+                              <p>The tone is used to provide visual aids to inspectors.</p>
+                              <p>
+                                For example, a "Positive" tone will display a green checkmark when
+                                the answer is "Yes". "Negative" will display a red X when the answer
+                                is "Yes".
+                              </p>
+                            </HelpPopover>
+                          </FieldLabel>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger onBlur={field.onBlur}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ASSET_QUESTION_TONE_OPTIONS.map((tone) => (
+                                <SelectItem key={tone.value} value={tone.value}>
+                                  {tone.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                        </Field>
+                      )}
+                    />
+                  )}
+                </div>
 
-          <FilesInput />
+                {valueType && SELECT_SUPPORTED_VALUE_TYPES.includes(valueType) && (
+                  <Controller
+                    control={form.control}
+                    name="selectOptions"
+                    render={({ fieldState }) => (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel className="inline-flex items-center gap-1">
+                          {RESPONSE_TYPE_LABELS[valueType]} Options *
+                          <HelpPopover>
+                            <p>The options that are available for the inspector to select from.</p>
+                          </HelpPopover>
+                        </FieldLabel>
+                        <SelectOptionsInput />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )}
+                  />
+                )}
 
-          {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION" || type === "SETUP") && (
-            <RegulatoryCodesInput />
-          )}
+                <Controller
+                  control={form.control}
+                  name="helpText"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel className="inline-flex items-center gap-1">
+                        Help Text
+                        <HelpPopover>
+                          <p>
+                            This is additional, optional text that can be displayed to the inspector
+                            to help them answer the question.
+                          </p>
+                        </HelpPopover>
+                      </FieldLabel>
+                      <Textarea {...field} rows={1} />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </FieldGroup>
+            </FieldSet>
 
-          <SetMetadataInput requireDynamic={type === "CONFIGURATION"} />
-        </ResponsiveModalBody>
-        <FormSidepanel />
+            <Separator />
+
+            {/* Visibility & Alerts */}
+            <FieldSet>
+              <FieldLegend>Visibility & Alerts</FieldLegend>
+              <FieldDescription>
+                Conditions control when this question appears during an inspection. At least one
+                condition is required for the question to be shown.
+              </FieldDescription>
+              <FieldGroup>
+                <ConditionsInput />
+
+                {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION") && (
+                  <AlertTriggersInput />
+                )}
+
+                {type === "SETUP" && <AutomaticSupplySetupInput />}
+              </FieldGroup>
+            </FieldSet>
+
+            <Separator />
+
+            {/* Attachments & Compliance */}
+            <FieldSet>
+              <FieldLegend>Attachments & Compliance</FieldLegend>
+              <FieldDescription>
+                Optionally attach files, regulatory codes, or metadata to provide inspectors with
+                additional context.
+              </FieldDescription>
+              <FieldGroup>
+                <FilesInput />
+
+                {(type === "INSPECTION" || type === "SETUP_AND_INSPECTION" || type === "SETUP") && (
+                  <RegulatoryCodesInput />
+                )}
+
+                <SetMetadataInput requireDynamic={type === "CONFIGURATION"} />
+              </FieldGroup>
+            </FieldSet>
+          </ResponsiveModalBody>
+          <FormSidepanel />
         </div>
         <ResponsiveModalFooter>
           <Button type="submit" disabled={isSubmitting || (!isNew && !isDirty)}>

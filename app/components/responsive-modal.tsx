@@ -176,7 +176,7 @@ function ResponsiveModalFooter({ className, ...props }: React.HTMLAttributes<HTM
   const Comp = isMobile ? DrawerFooter : DialogFooter;
   return (
     <Comp
-      className={cn("bg-background shrink-0 border-t pt-4", isMobile && "pt-2", className)}
+      className={cn("bg-background shrink-0 border-t p-4", isMobile && "pt-2", className)}
       {...props}
     />
   );

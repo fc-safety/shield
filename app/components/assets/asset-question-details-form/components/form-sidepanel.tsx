@@ -46,7 +46,9 @@ export default function FormSidepanel() {
             >
               <PanelRightClose />
             </Button>
-            <div className="h-full w-88 px-4 pb-4">{sidePanel}</div>
+            <ScrollArea classNames={{ root: "h-full w-88" }}>
+              <div className="px-4 pb-4">{sidePanel}</div>
+            </ScrollArea>
           </motion.div>
         )}
       </AnimatePresence>
